@@ -422,3 +422,125 @@ left_join(prop_data, vote_data, by = "state") %>%
 1 DC        70848. democrat  
 2 MS        33748. republican
 ```
+
+## Creating Visualizations in R
+
+Creating data visualizations is an essential piece to any data analysis. For the remainder of Chapter 1, we will learn how we can use some of the `tidyverse` functions to make visualizations to explore the relationship between median household income and median propery value across US states, as well as how this relates to which party each state voted for in the 2016 US election. 
+
+### Using `ggplot` to create a scatter plot
+
+First, take another look at the dataset we have been focusing on - the US state-level property, income and population data from 2015. We can see that there is a row/observation for each state. And the two variables we are interested in visualizing, median household income and median property value, are each in separate columns - thus the data are what we call a tidy data format. This is really important for `ggplot()` and many of the other `tidyverse` functions (as you will learn more in later chapters). 
+
+
+```
+print(prop_data)
+```
+
+```
+# A tibble: 52 x 5
+   state med_income med_prop_val population mean_commute_minutes
+   <chr>      <dbl>        <dbl>      <int>                <dbl>
+ 1 AK         64222       197300     733375                 10.5
+ 2 AL         36924        94800    4830620                 25.3
+ 3 AR         35833        83300    2958208                 22.4
+ 4 AZ         44748       128700    6641928                 20.6
+ 5 CA         53075       252100   38421464                 23.4
+ 6 CO         48098       198900    5278906                 19.5
+ 7 CT         69228       246450    3593222                 24.3
+ 8 DC         70848       475800     647484                 28.3
+ 9 DE         54976       228500     926454                 24.5
+10 FL         43355       125600   19645772                 24.8
+# ... with 42 more rows
+```
+
+### Using `ggplot` to create a scatter plot
+
+To create a scatter plot of these two variables using `ggplot()`, we would do the following: 
+
+1. call the `ggplot()` function
+2. provide the name of the data frame as the first argument
+3. call the aesthetic function to map a column to the x-axis and a column to the y-axis
+4. add a "+" symbol at the end of the `ggplot()` call to add a layer to the plot
+5. call the `geom_point()` function to tell R that we want to represent the data points (which we passed to the aesthetic function) as dots/points to create a scatter plot.
+
+```
+ggplot(prop_data, aes(x = med_income, y = med_prop_val)) +
+    geom_point()
+``` 
+
+![](img/prop_val_vs_income.png) 
+
+
+### Formatting ggplot objects
+
+To format, or change an aspect of your `ggplot()` object, one common and easy way to do this is to add additional layers to your plot object using the + symbol. Here we use the `xlab()` and `ylab()` functions to add layers where we specify the labels for the x and y axis, respectively. There are many more layers we can add to format the plot further, and we will explore these in later chapters.
+
+```
+ggplot(prop_data, aes(x = med_income, y = med_prop_val)) +
+    geom_point() +
+    xlab("Income (USD)") +
+    ylab("Median property value (USD)")    
+```
+
+![](img/prop_val_vs_income_human_labs.png)
+
+
+### Coloring points by group
+Another common thing to do with scatter plots is to colour points by a group/category in the dataset. For example, if we combine our US state-level property, income and population data with the dataset of which party each state voted for in the 2016 US presidential election, we can colour the points in our previous scatter plot to represent who each stated voted for. In this example, we'll walk through code to accomplish this from loading the dataset to creating a visulazation. We will then take a look at the code required to do the same task in Python.
+
+First, we load the `tidyverse` library:
+
+```
+library(tidyverse)
+```
+
+Second, we read the data into variables. Here we call the US state-level property, income and population data "prop_data" and the state-level 2016 US presidential election data "vote_data":
+
+```
+prop_data <- read_csv("data/state_property_data.csv")
+vote_data <- read_csv("data/2016_presidential_election_state_vote.csv")
+```
+
+Third, we create a new object called "combined_data" that we make by piping prop_data into the `filter()` function to remove the territory of PR (because they do not vote in the presidential election), and then we pipe that resultant dataframe to left_join to combine this dataset with the state-level 2016 US presidential election data:
+
+```
+combined_data <- prop_data %>% 
+  filter(state != "PR") %>% 
+  left_join(vote_data)
+```
+
+Finally, we use `ggplot()` to visualize this combined dataset as a scatter plot. We colour each point by the party they voted for in the 2016 US presidential election by adding another argument to our `aes()` function in our `ggplot()` call: color = party:
+
+```
+ggplot(combined_data, aes(x = med_income, y = med_prop_val, color = party)) +
+  geom_point() +
+  xlab("Income (USD)") +
+  ylab("Median property value (USD)")
+```
+
+![](img/prop_val_vs_income_by_party.png)
+
+
+Below, we put it all together in one code chunk, and you can see here that in relatively few lines of R code we are able to create an entire data science workflow:
+
+```
+library(tidyverse)
+
+prop_data <- read_csv("data/state_property_data.csv")
+vote_data <- read_csv("data/2016_presidential_election_state_vote.csv")
+
+combined_data <- prop_data %>% 
+  filter(state != "PR") %>% 
+  left_join(vote_data)
+  
+ggplot(combined_data, aes(x = med_income, y = med_prop_val, color = party)) +
+  geom_point() +
+  xlab("Income (USD)") +
+  ylab("Median property value (USD)")
+```
+
+![](img/prop_val_vs_income_by_party.png)
+
+### What's next?
+
+In the next chapter we are going to dig in and spend more time learning how to load various differently formatted rectangular data sets into R, as well as how to scrape data from the web!
