@@ -79,6 +79,10 @@
 <li class="chapter" data-level="1.5.3" data-path="index.html"><a href="index.html#using-filter-to-subset-a-single-column"><i class="fa fa-check"></i><b>1.5.3</b> Using <code>filter</code> to subset a single column</a></li>
 <li class="chapter" data-level="1.5.4" data-path="index.html"><a href="index.html#using-filter-to-get-rows-with-values-above-a-threshold"><i class="fa fa-check"></i><b>1.5.4</b> Using <code>filter</code> to get rows with values above a threshold</a></li>
 </ul></li>
+<li class="chapter" data-level="1.6" data-path="index.html"><a href="index.html#combining-functions-using-the-pipe-operator"><i class="fa fa-check"></i><b>1.6</b> Combining functions using the pipe operator: %&gt;%</a><ul>
+<li class="chapter" data-level="1.6.1" data-path="index.html"><a href="index.html#using-to-combine-filter-and-select"><i class="fa fa-check"></i><b>1.6.1</b> Using %&gt;% to combine <code>filter</code> and <code>select</code></a></li>
+<li class="chapter" data-level="1.6.2" data-path="index.html"><a href="index.html#using-with-more-than-two-functions"><i class="fa fa-check"></i><b>1.6.2</b> Using %&gt;% with more than two functions</a></li>
+</ul></li>
 </ul></li>
 <li class="chapter" data-level="2" data-path="reading.html"><a href="reading.html"><i class="fa fa-check"></i><b>2</b> Reading in data locally and from the web</a><ul>
 <li class="chapter" data-level="2.1" data-path="reading.html"><a href="reading.html#overview"><i class="fa fa-check"></i><b>2.1</b> Overview</a></li>
@@ -313,6 +317,90 @@ print(prop_data)</code></pre>
  9 IL        47898.       97350.   12873761                 22.6
 10 IN        47194.      111800.    6568645                 23.5
 # ... with 23 more rows</code></pre>
+</div>
+</div>
+<div id="combining-functions-using-the-pipe-operator" class="section level2">
+<h2><span class="header-section-number">1.6</span> Combining functions using the pipe operator: %&gt;%</h2>
+<p>Now we will learn about an efficient way to combine functions in R; the pipe operator %&gt;%. You can think of the pipe as a physical pipe - taking the output from the expression on the left-handside of the pipe and passing it as the input to first expression on the right-handside of the pipe. Let’s look at some examples of this.</p>
+<div id="using-to-combine-filter-and-select" class="section level3">
+<h3><span class="header-section-number">1.6.1</span> Using %&gt;% to combine <code>filter</code> and <code>select</code></h3>
+<p>Remembering our prop_data data frame:</p>
+<pre><code>print(prop_data)</code></pre>
+<pre><code># A tibble: 52 x 5
+   state med_income med_prop_val population mean_commute_minutes
+   &lt;chr&gt;      &lt;dbl&gt;        &lt;dbl&gt;      &lt;int&gt;                &lt;dbl&gt;
+ 1 AK         64222       197300     733375                 10.5
+ 2 AL         36924        94800    4830620                 25.3
+ 3 AR         35833        83300    2958208                 22.4
+ 4 AZ         44748       128700    6641928                 20.6
+ 5 CA         53075       252100   38421464                 23.4
+ 6 CO         48098       198900    5278906                 19.5
+ 7 CT         69228       246450    3593222                 24.3
+ 8 DC         70848       475800     647484                 28.3
+ 9 DE         54976       228500     926454                 24.5
+10 FL         43355       125600   19645772                 24.8
+# ... with 42 more rows</code></pre>
+<p>If we would like to subset the values for median income and median property value for the state of California (“CA”), we can use the functions <code>filter()</code> and <code>select()</code> to do this. First we use <code>filter()</code> to create a data frame object called ca_prop_data that only contains the values for the state of California. We can then use <code>select()</code> on this data frame to subset the values for median income and median property value for California:</p>
+<pre><code>ca_prop_data &lt;- filter(prop_data, state == &quot;CA&quot;)
+select(ca_prop_data, med_income, med_prop_val)</code></pre>
+<pre><code># A tibble: 1 x 2
+  med_income med_prop_val
+       &lt;dbl&gt;        &lt;dbl&gt;
+1     53075.      252100.</code></pre>
+<p>Although this is a valid approach, there is a more efficient and readable approach we could take by using the pipe. With the pipe, we do not need to create an intermediate object to store the output from <code>filter()</code>, instead we can use the pipe to directly send the output of <code>filter()</code> to the input of <code>select()</code>:</p>
+<pre><code>filter(prop_data, state == &quot;CA&quot;) %&gt;% select(med_income, med_prop_val)</code></pre>
+<pre><code># A tibble: 1 x 2
+  med_income med_prop_val
+       &lt;dbl&gt;        &lt;dbl&gt;
+1     53075.      252100.</code></pre>
+<p>But wait? Why does our <code>select()</code> function call look different in these two examples? Well, when you use the pipe, the output of the function on the left is automatically provided as the value for the first argument for the function on the right, and thus you do not specify the value for that argument in that function call.</p>
+<p>As you can see, both of these approaches give us the same output but the second approach is more efficient and readable.</p>
+</div>
+<div id="using-with-more-than-two-functions" class="section level3">
+<h3><span class="header-section-number">1.6.2</span> Using %&gt;% with more than two functions</h3>
+<p>The %&gt;% can be used with any function in R. Additionally, we can pipe together more than two functions. In this example, we will pipe together 3 functions to get the values for median income and which presidential party the states of Washington DC and Mississippi voted for in the 2016 US presidential election.</p>
+<p>To do this, we will load another dataset that contains the party each state voted for in the 2016 US presidential election and join that dataset to our US state-level property, income and population dataset. We will use the <code>read_csv())</code> function, as we did earlier in the chapter, to load this data set.</p>
+<pre><code>vote_data &lt;- read_csv(&quot;2016_presidential_election_state_vote.csv&quot;)
+print(vote_data)</code></pre>
+<pre><code># A tibble: 51 x 2
+   party      state
+   &lt;chr&gt;      &lt;chr&gt;
+ 1 republican AL   
+ 2 republican AK   
+ 3 republican AZ   
+ 4 republican AR   
+ 5 democrat   CA   
+ 6 democrat   CO   
+ 7 democrat   CT   
+ 8 democrat   DE   
+ 9 democrat   DC   
+10 republican FL   
+# ... with 41 more rows</code></pre>
+<p>Given that both data sets have a “state” column, we can join the two datasets on that column using the <code>left_join()</code> function in R. From this larger, joined dataset, we will now be able to <code>filter()</code> and <code>select()</code> the values for median income and which presidential party the states of Washington DC and Mississippi voted for in the 2016 US presidential election.</p>
+<pre><code>left_join(prop_data, vote_data, by = &quot;state&quot;)</code></pre>
+<pre><code># A tibble: 52 x 6
+   state med_income med_prop_val population mean_commute_minutes party     
+   &lt;chr&gt;      &lt;dbl&gt;        &lt;dbl&gt;      &lt;int&gt;                &lt;dbl&gt; &lt;chr&gt;     
+ 1 AK         64222       197300     733375                 10.5 republican
+ 2 AL         36924        94800    4830620                 25.3 republican
+ 3 AR         35833        83300    2958208                 22.4 republican
+ 4 AZ         44748       128700    6641928                 20.6 republican
+ 5 CA         53075       252100   38421464                 23.4 democrat  
+ 6 CO         48098       198900    5278906                 19.5 democrat  
+ 7 CT         69228       246450    3593222                 24.3 democrat  
+ 8 DC         70848       475800     647484                 28.3 democrat  
+ 9 DE         54976       228500     926454                 24.5 democrat  
+10 FL         43355       125600   19645772                 24.8 republican
+# ... with 42 more rows</code></pre>
+<p>We can pipe the output of our join to <code>filter()</code> and the rows for the states of New York and South Dakota. We can <code>filter()</code> on two states by using the or operator. Again, we can use the pipe to send the output of <code>filter()</code> to <code>select()</code>, and use <code>select()</code> to finally subset the values from the state, median income and party voted for columns.</p>
+<pre><code>left_join(prop_data, vote_data, by = &quot;state&quot;) %&gt;%
+    filter(state == &quot;DC&quot; | state == &quot;MS&quot;) %&gt;%
+    select(state, med_income, party)</code></pre>
+<pre><code># A tibble: 2 x 3
+  state med_income party     
+  &lt;chr&gt;      &lt;dbl&gt; &lt;chr&gt;     
+1 DC        70848. democrat  
+2 MS        33748. republican</code></pre>
 
 </div>
 </div>

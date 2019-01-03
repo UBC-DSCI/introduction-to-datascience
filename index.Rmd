@@ -292,3 +292,133 @@ filter(prop_data, mean_commute_minutes > 21.5)
 10 IN        47194.      111800.    6568645                 23.5
 # ... with 23 more rows
 ```
+
+## Combining functions using the pipe operator: %>%
+
+
+Now we will learn about an efficient way to combine functions in R; the pipe operator %>%. You can think of the pipe as a physical pipe - taking the output from the expression on the left-handside of the pipe and passing it as the input to first expression on the right-handside of the pipe. Let's look at some examples of this.
+
+
+### Using %>% to combine `filter` and `select`
+
+Remembering our prop_data data frame: 
+```
+print(prop_data)
+```
+
+```
+# A tibble: 52 x 5
+   state med_income med_prop_val population mean_commute_minutes
+   <chr>      <dbl>        <dbl>      <int>                <dbl>
+ 1 AK         64222       197300     733375                 10.5
+ 2 AL         36924        94800    4830620                 25.3
+ 3 AR         35833        83300    2958208                 22.4
+ 4 AZ         44748       128700    6641928                 20.6
+ 5 CA         53075       252100   38421464                 23.4
+ 6 CO         48098       198900    5278906                 19.5
+ 7 CT         69228       246450    3593222                 24.3
+ 8 DC         70848       475800     647484                 28.3
+ 9 DE         54976       228500     926454                 24.5
+10 FL         43355       125600   19645772                 24.8
+# ... with 42 more rows
+```
+
+If we would like to subset the values for median income and median property value for the state of California ("CA"), we can use the functions `filter()` and `select()` to do this. First we use `filter()` to create a data frame object called ca_prop_data that only contains the values for the state of California. We can then use `select()` on this data frame to subset the values for median income and median property value for California:
+
+```
+ca_prop_data <- filter(prop_data, state == "CA")
+select(ca_prop_data, med_income, med_prop_val)
+```
+
+```
+# A tibble: 1 x 2
+  med_income med_prop_val
+       <dbl>        <dbl>
+1     53075.      252100.
+```
+
+
+Although this is a valid approach, there is a more efficient and readable approach we could take by using the pipe. With the pipe, we do not need to create an intermediate object to store the output from `filter()`, instead we can use the pipe to directly send the output of `filter()` to the input of `select()`:
+
+```
+filter(prop_data, state == "CA") %>% select(med_income, med_prop_val)
+```
+
+```
+# A tibble: 1 x 2
+  med_income med_prop_val
+       <dbl>        <dbl>
+1     53075.      252100.
+```
+
+But wait? Why does our `select()` function call look different in these two examples? Well, when you use the pipe, the output of the function on the left is automatically provided as the value for the first argument for the function on the right, and thus you do not specify the value for that argument in that function call. 
+
+As you can see, both of these approaches give us the same output but the second approach is more efficient and readable.
+
+### Using %>% with more than two functions
+
+The %>% can be used with any function in R. Additionally, we can pipe together more than two functions. In this example, we will pipe together 3 functions to get the values for median income and which presidential party the states of Washington DC and Mississippi voted for in the 2016 US presidential election.
+
+To do this, we will load another dataset that contains the party each state voted for in the 2016 US presidential election and join that dataset to our US state-level property, income and population dataset. We will use the `read_csv())` function, as we did earlier in the chapter, to load this data set.
+
+```
+vote_data <- read_csv("2016_presidential_election_state_vote.csv")
+print(vote_data)
+```
+
+```
+# A tibble: 51 x 2
+   party      state
+   <chr>      <chr>
+ 1 republican AL   
+ 2 republican AK   
+ 3 republican AZ   
+ 4 republican AR   
+ 5 democrat   CA   
+ 6 democrat   CO   
+ 7 democrat   CT   
+ 8 democrat   DE   
+ 9 democrat   DC   
+10 republican FL   
+# ... with 41 more rows
+```
+
+Given that both data sets have a "state" column, we can join the two datasets on that column using the `left_join()` function in R. From this larger, joined dataset, we will now be able to `filter()` and `select()` the values for median income and which presidential party the states of Washington DC and Mississippi voted for in the 2016 US presidential election.
+
+```
+left_join(prop_data, vote_data, by = "state")
+```
+
+```
+# A tibble: 52 x 6
+   state med_income med_prop_val population mean_commute_minutes party     
+   <chr>      <dbl>        <dbl>      <int>                <dbl> <chr>     
+ 1 AK         64222       197300     733375                 10.5 republican
+ 2 AL         36924        94800    4830620                 25.3 republican
+ 3 AR         35833        83300    2958208                 22.4 republican
+ 4 AZ         44748       128700    6641928                 20.6 republican
+ 5 CA         53075       252100   38421464                 23.4 democrat  
+ 6 CO         48098       198900    5278906                 19.5 democrat  
+ 7 CT         69228       246450    3593222                 24.3 democrat  
+ 8 DC         70848       475800     647484                 28.3 democrat  
+ 9 DE         54976       228500     926454                 24.5 democrat  
+10 FL         43355       125600   19645772                 24.8 republican
+# ... with 42 more rows
+```
+
+We can pipe the output of our join to `filter()` and the rows for the states of New York and South Dakota. We can `filter()` on two states by using the or operator. Again, we can use the pipe to send the output of `filter()` to `select()`, and use `select()` to finally subset the values from the state, median income and party voted for columns.
+
+
+```
+left_join(prop_data, vote_data, by = "state") %>%
+    filter(state == "DC" | state == "MS") %>%
+    select(state, med_income, party)
+```
+
+```
+# A tibble: 2 x 3
+  state med_income party     
+  <chr>      <dbl> <chr>     
+1 DC        70848. democrat  
+2 MS        33748. republican
+```
