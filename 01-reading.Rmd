@@ -20,4 +20,143 @@ By the end of the chapter, students will be able to:
 * use the `rvest` `html_nodes`, `html_text` and `html_attr` functions to scrape data from a `.html` file on the web
 * compare downloading tabular data from a plain text file (e.g., `.csv`) from the web versus scraping data from a `.html` file
 
+## Absolute and relative file paths
+
+When you load in a data set a plain text file  (e.g., `.csv`), you need to tell R where that files lives on the computer you are using. We call this the "path" to the file. There are two kinds of paths, relative paths and absolute paths. A relative path is where the file is in respect to where you currently are on the computer (e.g., where the Jupyter notebook file you are working in is). Whereas an absolute path is where the file is in respect to the base or root folder of the computer's filesystem.
+
+If our computer's filesystem looked like the picture below, and we were working in the Jupyter notebook titled "homework_02.ipynb" and we wanted to read in the `.csv` file named `avocado_prices.csv` into our Jupyter notebook using R, we could do this using either a relative or an absolute path. We show what both would be below.
+
+```
+|-- Users
+    |-- guest
+        |-- Documents
+    |-- dawkins
+        |-- Documents
+            |-- dsci-100
+                |-- homework_01
+                |-- homework_02
+                    |-- homework_02.ipynb
+                    |-- data
+                        |-- avocado_prices.csv
+                |-- homework_03
+        |-- Desktop
+```
+
+##### Loading `avocado_prices.csv` using a relative path:
+
+```
+avocado_data <- read_csv("data/avocado_prices.csv")
+```
+
+##### Loading `avocado_prices.csv` using a relative path:
+
+```
+avocado_data <- read_csv("/Users/dawkins/Documents/dsci-100/homework_02/data/avocado_prices.csv")
+```
+
+So which one should you use? Well to ensure your code can be run across different machines, you should choose to use the relative path (and it's also less typing!). 
+
+## Reading tabular data into R
+
+Now we will learn more about reading tabular data into R, as well as how to write tabular data to a file. Last chapter we learned about using the `tidyverse` `read_csv` when the file we read it matches that functions expected defaults (column names are present, `,` is the delimiter/separator and there are no row names in the dataset ). We will now learn how to read files where that is not the case. 
+
+Before we jump into the cases where the `tidyverse` `read_csv` functions expected defaults are not the case, let's revisit how we use this with one that does and thus the only argument we need to give to the function is the path to the file, here "historical_vote.csv".
+
+Here is how the file would look in plain text editor:
+
+```
+election_num,election_year,winner,winner_party,elec_coll_votes_count,elec_coll_votes_perc,pop_votes_perc,pop_votes_perc_marg,pop_votes_count,pop_votes_count_marg,runner-up,runner-up_party,turnout
+10,1824,John Quincy Adams,D.-R.,84/261,32.18%,30.92%,−10.44%,"113,142","−38,221",Andrew Jackson,D.-R.,26.9%
+23,1876,Rutherford Hayes,Rep.,185/369,50.14%,47.92%,−3.00%,"4,034,142","−252,666",Samuel Tilden,Dem.,82.6%
+```
+
+Using `read_csv` to load in R:
+
+```
+library(tidyverse)
+read_csv("historical_vote.csv")
+```
+
+```
+# A tibble: 49 x 13
+   election_num election_year winner            winne… elec_… elec_… pop_v… pop_v… pop_vo… pop_… `run… `run… turn…
+          <int>         <int> <chr>             <chr>  <chr>  <chr>  <chr>  <chr>    <dbl> <chr> <chr> <chr> <chr>
+ 1           10          1824 John Quincy Adams D.-R.  84/261 32.18% 30.92% −10.4…  1.13e⁵ −38,… Andr… D.-R. 26.9%
+ 2           23          1876 Rutherford Hayes  Rep.   185/3… 50.14% 47.92% −3.00%  4.03e⁶ −252… Samu… Dem.  82.6%
+ 3           58          2016 Donald Trump      Rep.   304/5… 56.50% 45.98% −2.10%  6.30e⁷ −2,8… Hill… Dem.  60.2%
+ 4           26          1888 Benjamin Harrison Rep.   233/4… 58.10% 47.80% −0.83%  5.44e⁶ −94,… Grov… Dem.  80.5%
+ 5           54          2000 George W. Bush    Rep.   271/5… 50.37% 47.87% −0.51%  5.05e⁷ −543… Al G… Dem.  54.2%
+ 6           24          1880 James Garfield    Rep.   214/3… 57.99% 48.31% 0.09%   4.45e⁶ 1,898 Winf… Dem.  80.5%
+ 7           44          1960 John Kennedy      Dem.   303/5… 56.42% 49.72% 0.17%   3.42e⁷ 112,… Rich… Rep.  63.8%
+ 8           25          1884 Grover Cleveland  Dem.   219/4… 54.61% 48.85% 0.57%   4.91e⁶ 57,5… Jame… Rep.  78.2%
+ 9           46          1968 Richard Nixon     Rep.   301/5… 55.95% 43.42% 0.70%   3.18e⁷ 511,… Hube… Dem.  62.5%
+10           15          1844 James Polk        Dem.   170/2… 61.82% 49.54% 1.45%   1.34e⁶ 39,4… Henr… Whig  79.2%
+# ... with 39 more rows
+```
+
+
+### `read_delim` as a more flexible method to get tabular data into R
+
+When our tabular data comes in a different format, we can use the `read_delim function()` instead. For example, a different version of this historical votes dataset has no column names and uses tabs as the delimiter instead of commas. 
+
+Here is how the file would look in plain text editor:
+```
+10	1824	John Quincy Adams	D.-R.	84/261	32.18%	30.92%	−10.44%	113,142	−38,221	Andrew Jackson	D.-R.	26.9%
+23	1876	Rutherford Hayes	Rep.	185/369	50.14%	47.92%	−3.00%	4,034,142	−252,666	Samuel Tilden	Dem.	82.6%
+58	2016	Donald Trump	Rep.	304/538	56.50%	45.98%	−2.10%	62,979,636	−2,864,974	Hillary Rodham Clinton	Dem.	60.2%
+```
+
+To get this into R using the `read_delim()` function, we specify the first argument as the path to the file (as done with read_csv), and then provide values to the delim argument (here a tab) and the col_names argument (here false). Both `read_csv()` and `read_delim()` have a `col_names` argument and the default is True. 
+
+
+```
+library(tidyverse)
+read_delim("historical_vote_no_header.tsv",  delim = "\t", col_names = FALSE)
+```
+
+```
+# A tibble: 49 x 13
+      X1    X2 X3                X4    X5      X6     X7     X8            X9 X10        X11           X12   X13  
+   <int> <int> <chr>             <chr> <chr>   <chr>  <chr>  <chr>      <dbl> <chr>      <chr>         <chr> <chr>
+ 1    10  1824 John Quincy Adams D.-R. 84/261  32.18% 30.92% −10.44%   113142 −38,221    Andrew Jacks… D.-R. 26.9%
+ 2    23  1876 Rutherford Hayes  Rep.  185/369 50.14% 47.92% −3.00%   4034142 −252,666   Samuel Tilden Dem.  82.6%
+ 3    58  2016 Donald Trump      Rep.  304/538 56.50% 45.98% −2.10%  62979636 −2,864,974 Hillary Rodh… Dem.  60.2%
+ 4    26  1888 Benjamin Harrison Rep.  233/401 58.10% 47.80% −0.83%   5443633 −94,530    Grover Cleve… Dem.  80.5%
+ 5    54  2000 George W. Bush    Rep.  271/538 50.37% 47.87% −0.51%  50460110 −543,816   Al Gore       Dem.  54.2%
+ 6    24  1880 James Garfield    Rep.  214/369 57.99% 48.31% 0.09%    4453337 1,898      Winfield Sco… Dem.  80.5%
+ 7    44  1960 John Kennedy      Dem.  303/537 56.42% 49.72% 0.17%   34220984 112,827    Richard Nixon Rep.  63.8%
+ 8    25  1884 Grover Cleveland  Dem.  219/401 54.61% 48.85% 0.57%    4914482 57,579     James Blaine  Rep.  78.2%
+ 9    46  1968 Richard Nixon     Rep.  301/538 55.95% 43.42% 0.70%   31783783 511,944    Hubert Humph… Dem.  62.5%
+10    15  1844 James Polk        Dem.  170/275 61.82% 49.54% 1.45%    1339570 39,413     Henry Clay    Whig  79.2%
+# ... with 39 more rows
+```
+
+### Reading tabular data directly from a URL
+We can also use `read_csv()` or `read_delim()` (and related functions) to read in tabular data directly from a url that contains tabular data. In this case, we provide the url as a string to `read_csv()` as the path to the file instead of a path to a local file on our computer. All other arguments that we use are the same as when using these functions with a local file on our computer.
+
+```
+library(tidyverse)
+read_csv("https://github.com/swcarpentry/r-novice-gapminder/raw/gh-pages/data/gapminder_wide.csv")
+```
+
+```
+# A tibble: 142 x 38
+   conti… count… gdpPe… gdpPe… gdpPe… gdpP… gdpP… gdpP… gdpP… gdpP… gdpP… gdpP… gdpP… gdpP… life… life…
+   <chr>  <chr>   <dbl>  <dbl>  <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>
+ 1 Africa Alger…   2449   3014   2551  3247  4183  4910  5745  5681  5023  4797  5288  6223  43.1  45.7
+ 2 Africa Angola   3521   3828   4269  5523  5473  3009  2757  2430  2628  2277  2773  4797  30.0  32.0
+ 3 Africa Benin    1063    960    949  1036  1086  1029  1278  1226  1191  1233  1373  1441  38.2  40.4
+ 4 Africa Botsw…    851    918    984  1215  2264  3215  4551  6206  7954  8647 11004 12570  47.6  49.6
+ 5 Africa Burki…    543    617    723   795   855   743   807   912   932   946  1038  1217  32.0  34.9
+ 6 Africa Burun…    339    380    355   413   464   556   560   622   632   463   446   430  39.0  40.5
+ 7 Africa Camer…   1173   1313   1400  1508  1684  1783  2368  2603  1793  1694  1934  2042  38.5  40.4
+ 8 Africa Centr…   1071   1191   1193  1136  1070  1109   957   845   748   741   739   706  35.5  37.5
+ 9 Africa Chad     1179   1308   1390  1197  1104  1134   798   952  1058  1005  1156  1704  38.1  39.9
+10 Africa Comor…   1103   1211   1407  1876  1938  1173  1267  1316  1247  1174  1076   986  40.7  42.5
+# ... with 132 more rows, and 22 more variables: lifeExp_1962 <dbl>, lifeExp_1967 <dbl>, lifeExp_1972
+#   <dbl>, lifeExp_1977 <dbl>, lifeExp_1982 <dbl>, lifeExp_1987 <dbl>, lifeExp_1992 <dbl>, lifeExp_1997
+#   <dbl>, lifeExp_2002 <dbl>, lifeExp_2007 <dbl>, pop_1952 <dbl>, pop_1957 <dbl>, pop_1962 <dbl>,
+#   pop_1967 <dbl>, pop_1972 <dbl>, pop_1977 <dbl>, pop_1982 <dbl>, pop_1987 <dbl>, pop_1992 <dbl>,
+#   pop_1997 <dbl>, pop_2002 <int>, pop_2007 <int>
+```
 
