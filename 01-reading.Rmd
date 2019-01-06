@@ -249,4 +249,47 @@ Now, many websites are quite large and complex, and so then is their website sou
 
 <iframe width="840" height="473" src="https://www.youtube.com/embed/YdIWI6K64zo" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
- 
+From installing and using the selectorgadget as shown in the video above, we get the two CSS selectors `.housing` and `.result-price` that we can use to scrape information about the square footage and the rental price, respectively. The selector gadget returns them to us as a comma separated list (here `.housing , .result-price`), which is exactly the format we need to provide to R if we are using more than one CSS selector.
+
+### Using `rvest`
+
+Now that we have our CSS selectors we can use `rvest` R package to scrape our desired data from the website. First we start by loading the `rvest` package:
+
+```{r load rvest}
+library(rvest)
+```
+
+> **`library(rvest)` gives error...**
+>
+> If you get an error about R not being able to find the package (e.g., `Error in library(rvest) : there is no package called ‘rvest’`) this is likely because it was not installed. To install the `rvest` package, run the following command once inside R (and then delete that line of code): `install.packages("rvest")`.
+
+Next, we tell R what page we want to scrape by providing the webpage's URL in quotations to the function `read_html`:
+
+```{r specify page}
+page <- read_html("https://vancouver.craigslist.org/search/apa?min_bedrooms=1&max_bedrooms=1&availabilityMode=0&sale_date=all+dates")
+```
+
+> **Are you allowed to scrape that website?**
+>
+> BEFORE scraping data from the web, you should always check whether or not you are ALLOWED to scrape it! You can do this using the following code:
+> ```
+> library(robotstxt)
+> paths_allowed("https://vancouver.craigslist.org/")
+> ```
+> If you see TRUE as the output, go ahead and continue web scraping, if you see FALSE, you need to STOP and pick another website to scrapte.
+
+Then we send the page object to the `html_nodes` function. We also provide that function with the CSS selectors we obtained from the selectorgadget tool. These should be surrounded by quotations. The `html_nodes` function select nodes from the HTML document using CSS selectors. nodes are the HTML tag pairs as well as the content between the tags. For our CSS selector `.result-price` and example node that would be selected would be: `<span class="result-price">$800</span>`
+
+```{r select nodes}
+rent_nodes <- html_nodes(page, ".housing , .result-price")
+head(rent_nodes)
+```
+
+Next we extract the meaningful data from the HTML nodes using the `html_text` function. For our example, this functions only required argument is the an html_nodes object, which we named `rent_nodes`. In the case of this example node: `<span class="result-price">$800</span>`, the `html_text` function would return `$800`.
+
+```{r get text}
+rent_text <- html_text(rent_nodes)
+head(rent_text)
+```
+
+Are we done? Not quite... If you look at the data closely you see that each price is duplicated and that some extra information other than square footage came along with our web scraping. We need to spend some time wrangling to data in R to get it a better shape to answer our questions (the average rental price (per square footage) of the most recently available 1 bedroom apartments in Vancouver from https://vancouver.craigslist.org). But we are much closer to answering this question than we were! Next chapter we will learn more about data wrangling using R and finish answering that question.
