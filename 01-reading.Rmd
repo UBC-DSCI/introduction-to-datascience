@@ -251,6 +251,22 @@ Now, many websites are quite large and complex, and so then is their website sou
 
 From installing and using the selectorgadget as shown in the video above, we get the two CSS selectors `.housing` and `.result-price` that we can use to scrape information about the square footage and the rental price, respectively. The selector gadget returns them to us as a comma separated list (here `.housing , .result-price`), which is exactly the format we need to provide to R if we are using more than one CSS selector.
 
+### Are you allowed to scrape that website?
+
+**BEFORE** scraping data from the web, you should always check whether or not you are **ALLOWED** to scrape it! There are two documents that are important for this: the robots.txt file and reading the website's Terms of Service document. The website's Terms of Service document is probably the more important of the two, and so you should look there first. What happens when we look at Craigslist's Terms of Service document? Well we read this:
+
+> *"You agree not to copy/collect CL content via robots, spiders, scripts, scrapers, crawlers, or any automated or manual equivalent (e.g., by hand). Misleading, unsolicited, and/or unlawful postings/communications/accounts are prohibited, as is buying or selling accounts."*
+>
+> source: https://www.craigslist.org/about/terms.of.use
+
+
+Want to learn more about the legalities of web scraping and crawling? Read this interesting blog post titled ["Web Scraping and Crawling Are Perfectly Legal, Right?" by Benoit Bernard](https://benbernardblog.com/web-scraping-and-crawling-are-perfectly-legal-right/) that you might want to read (this is optional, not required reading).
+
+So what to do now? Well, we shouldn't scrape Craigslist! Let's instead scrape some data on the population of Canadian cities from Wikipedia (who's Terms of Service document does not explicilty say do not scrape). In this video below we demonstrate using the selectorgadget tool to get CSS Selectors from [Wikipedia's Canada](https://en.wikipedia.org/wiki/Canada) page to scrape a table that contains city names and their populations from the 2016 Canadian Census: 
+
+<iframe width="840" height="473" src="https://www.youtube.com/embed/O9HKbdhqYzk" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+
 ### Using `rvest`
 
 Now that we have our CSS selectors we can use `rvest` R package to scrape our desired data from the website. First we start by loading the `rvest` package:
@@ -266,32 +282,22 @@ library(rvest)
 Next, we tell R what page we want to scrape by providing the webpage's URL in quotations to the function `read_html`:
 
 ```{r specify page}
-page <- read_html("https://vancouver.craigslist.org/search/apa?min_bedrooms=1&max_bedrooms=1&availabilityMode=0&sale_date=all+dates")
+page <- read_html("https://en.wikipedia.org/wiki/Canada")
 ```
 
-> **Are you allowed to scrape that website?**
->
-> BEFORE scraping data from the web, you should always check whether or not you are ALLOWED to scrape it! You can do this using the following code:
-> ```
-> library(robotstxt)
-> paths_allowed("https://vancouver.craigslist.org/")
-> ```
-> If you see TRUE as the output, go ahead and continue web scraping, if you see FALSE, you need to STOP and pick another website to scrape.
->
-> Want to learn more? Read this interesting blog post titled ["Web Scraping and Crawling Are Perfectly Legal, Right?" by Benoit Bernard](https://benbernardblog.com/web-scraping-and-crawling-are-perfectly-legal-right/) that you might want to read (this is optional, not required reading).
 
-Then we send the page object to the `html_nodes` function. We also provide that function with the CSS selectors we obtained from the selectorgadget tool. These should be surrounded by quotations. The `html_nodes` function select nodes from the HTML document using CSS selectors. nodes are the HTML tag pairs as well as the content between the tags. For our CSS selector `.result-price` and example node that would be selected would be: `<span class="result-price">$800</span>`
+Then we send the page object to the `html_nodes` function. We also provide that function with the CSS selectors we obtained from the selectorgadget tool. These should be surrounded by quotations. The `html_nodes` function select nodes from the HTML document using CSS selectors. nodes are the HTML tag pairs as well as the content between the tags. For our CSS selector `td:nth-child(5)` and example node that would be selected would be: `<td style="text-align:left;background:#f0f0f0;"><a href="/wiki/London,_Ontario" title="London, Ontario">London</a></td>`
 
 ```{r select nodes}
-rent_nodes <- html_nodes(page, ".housing , .result-price")
-head(rent_nodes)
+population_nodes <- html_nodes(page, "td:nth-child(5) , td:nth-child(7) , .infobox:nth-child(122) td:nth-child(1) , .infobox td:nth-child(3)")
+head(population_nodes)
 ```
 
-Next we extract the meaningful data from the HTML nodes using the `html_text` function. For our example, this functions only required argument is the an html_nodes object, which we named `rent_nodes`. In the case of this example node: `<span class="result-price">$800</span>`, the `html_text` function would return `$800`.
+Next we extract the meaningful data from the HTML nodes using the `html_text` function. For our example, this functions only required argument is the an html_nodes object, which we named `rent_nodes`. In the case of this example node: `<td style="text-align:left;background:#f0f0f0;"><a href="/wiki/London,_Ontario" title="London, Ontario">London</a></td>`, the `html_text` function would return `London`.
 
 ```{r get text}
-rent_text <- html_text(rent_nodes)
-head(rent_text)
+population_text <- html_text(population_nodes)
+head(population_text)
 ```
 
-Are we done? Not quite... If you look at the data closely you see that each price is duplicated and that some extra information other than square footage came along with our web scraping. We need to spend some time wrangling our data in R to get it a better shape to answer our questions (the average rental price (per square footage) of the most recently available 1 bedroom apartments in Vancouver from https://vancouver.craigslist.org). But we are much closer to answering this question than we were! Next chapter we will learn more about data wrangling using R and finish answering that question.
+Are we done? Not quite... If you look at the data closely you see that the data is not in an optimal format for data analysis. Both the city names and population are encoded as characters in a single vector instead of being in a data frame with one character column for city and one numeric column for population (think of how you would organize the data in a spreadsheet). Additionally, the populations contain commas (not useful for programmatically dealing with numbers), and some even contain a line break character at the end (`\n`). Next chapter we will learn more about data wrangling using R so that we can easily clean up this data with a few lines of code.
