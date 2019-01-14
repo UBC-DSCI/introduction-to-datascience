@@ -85,8 +85,10 @@ One common thing that often has to be done to get data into a tidy format is to 
 
 For example, the we read in data below is not in tidy format, but is in a very intuitive format for human understanding:
 
-```
+```{r}
 library(tidyverse)
+```
+```
 hist_vote_wide <- read_csv("historical_vote_wide.csv")
 head(hist_vote_wide)
 ```
@@ -250,6 +252,70 @@ gather(hist_vote_messy,
 20          1980 runnerup Jimmy Carter    Dem  
 ```
 
+## Using `purrr`'s `map*` functions to iterate
+
+Where should you turn when you discover the next step in your data wrangling/cleaning process requires you to apply a function to each column in a data frame? For example, if you wanted to know the maximum value of each column in a data frame, you could use `purrr`'s `map` function to apply the `max` function to each column. For example, let's do that and find that maximum value of each column of the `mtcars` data frame (a built-in data set that comes with R). First, let's peak at an become familiar with the data:
+
+```{r preview data}
+head(mtcars)
+```
+
+Next, we can use `map` to apply the `max` function to each column. `map` takes two arguments, an object (a vector, data frame or list) that you want to apply the function to, and the function that you would like to apply. Here our arguments will be `mtcars` and `max`:
+
+```{r map}
+max_of_columns <- map(mtcars, max)
+max_of_columns
+```
+
+> ##### Note:
+> `purrr` is part of the tidyverse, and so like the `dplyr` and `ggplot` functions, once we call `library(tidyverse)` we do not need to separately load the `purrr` package.
+
+Our output looks a bit weird though? We passed in a data frame, but our output doesn't look like a data frame... And that it because it isn't, its a plain vanilla list:
+
+```{r type out of map}
+typeof(max_of_columns)
+```
+
+So what do we do? Convert this to a data frame? No need, what we should do instead is to use a different `map*` function from the `purrr` package. There are quite a few to choose from, they all work similarly and their name refects the type of output you want from the mapping operation:
+
+| `map` function | Output |
+|----------|--------|
+| `map()` | list |
+| `map_lgl()` | logical vector |
+| `map_int()` | integer vector |
+| `map_dbl()` | double vector |
+| `map_chr()` | character vector |
+| `map_df()` | data frame |
+
+So let's get the column maximum's again, but this time use the `map_df` function to return the output as a data frame:
+
+```{r map df example}
+max_of_columns <- map_df(mtcars, max)
+max_of_columns
+```
+
+Do we always want to use `map_df`? Nope! It depends what we are trying to do. So before you choose your `map*` function, think about your downstream usage of the output of that function.
+
+What if you need to add other arguments to the functions you want to map? For example, what if there were NA values in our columns that we wanted to know the maximum of? Well then we also need to add the argument `na.rm  = TRUE` to the `max` function so that we get a more useful value than NA returned (remember that is what happens with many of the built-in R statistical functions when NA's are present...). What we need to do in that case is do what is called "creating an anonymous function" within the `map_df` function. We do that in the place where we previously specified our max function. Here we will put the two calls to `map_df` right after each other so you can see the difference:
+
+```
+# no additional arguments to the max function 
+map_df(mtcars, max)
+```
+versus
+```
+# adding the na.rm  = TRUE argument to the max function
+map_df(mtcars, function(df) max(df, na.rm  = TRUE))
+```
+
+You can see that's quite a bit of extra typing... So the creators of `purrr` have made a shortcut for this because it is so commonly done. In the shortcut we replace `function(VARIABLE)` with a `~` and replace the `VARIABLE` in the function call with a `.`, see the example below:
+
+```
+# adding the na.rm  = TRUE argument to the max function using the shortcut 
+map_df(mtcars, ~ max(., na.rm  = TRUE))
+```
+
 ## Additional readings/resources
 - [Data transformation chapter](https://r4ds.had.co.nz/transform.html) from [R for Data Science](https://r4ds.had.co.nz/) by Garrett Grolemund & Hadley Wickham
 - [Tidy data chapter](https://r4ds.had.co.nz/tidy-data.html) from [R for Data Science](https://r4ds.had.co.nz/) by Garrett Grolemund & Hadley Wickham
+- [The `map` functions](https://r4ds.had.co.nz/iteration.html#the-map-functions) from [R for Data Science](https://r4ds.had.co.nz/) by Garrett Grolemund & Hadley Wickham
