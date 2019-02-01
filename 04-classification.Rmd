@@ -1,0 +1,435 @@
+# Classification {#classification}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview 
+This chapter serves as an introduction to classification using K-nearest neighbours (k-nn) in the case where we have two quantitative variables that we want to use to predict the class of a third, categorical variable.
+
+## Learning objectives 
+* Recognize situations where a simple classifier would be appropriate for making predictions.
+* Explain the k-nearest neighbour classification algorithm.
+* Interpret the output of a classifier.
+* Compute, by hand, the length of the ordinary, straight (Euclidian) distance line  between points on a graph when there are two explanatory variables/predictors.
+* Describe what a training data set is and how it is used in classification.
+* In a dataset with two explanatory variables/predictors, perform k-nearest neighbour classification in R using `caret::train(method = "knn", ...)` to predict the class of a single new observation.
+
+## Classification
+In many situations, we want to learn how to make predictions based on our experience from past examples. For instance, a doctor wants to diagnose a patient as either diseased or healthy based on some observed characteristics, an email provider would like to assign a given email as "spam" or "non-spam", or an online store wants to predict if an order is fraudulent (or not). These are all examples of classification tasks.
+
+**Classification** is the problem of predicting a qualitative or categorical class/label for an observation (set of data collected from an object, such as a person or an email). It involves assigning an observation to a class (e.g. disease or healthy) on the basis of how similar they are to other observations that have already been classified. These already classified observations that we use as a basis to predict classes for new, unclassfied observations is called a **training set**. We call them a "training set" because we use these observations to train, or teach, our classifier so that we can use it to make predictions on new data that we have not seen previously.
+
+There are many possible classifier methods that we could use to predict a qualitative or categorical class/label for an observation. These classification methods can perform binary classification, where only two classes are involved (e.g. disease or healthy patient), as well as multiclass classification, which involves assigning an object to one of several classes (e.g., private, public, or not for-profit organization). Here we will focus on a simple, and widely used method of classification called **K-nearest neighbors**, but other examples include decision trees, support vector machines and logistic regression.
+
+## Wisconsin Breast Cancer Example:
+Let's start by looking at some Breast Cancer [data](http://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29), which was obtained from the University of Wisconsin Hospitals, Madison from Dr. William H. Wolberg. Each row in the data set represents an observation of a tumour whose diagnosis class is known (benign/non-cancerous or malignant/cancerous) and for each, we have several response variables/predictors (texture, perimeter etc.). We'd like to find which response variables/predictors are most useful for diagnosing benign or malignant tumours, and develop a way to classify future patient tumours when we do not know the label/class (benign/non-cancerous or malignant/cancerous). Being able to do this is important because benign tumours are not normally dangerous, the cells stay in the same place and the tumour stops growing before it gets very large. In malignant tumours, the cells invade the surrounding tissue and spread into nearby organs where they can cause serious damage. (<https://www.worldwidecancerresearch.org/who-we-are/cancer-basics/>)
+ 
+
+<!--http://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.names-->
+
+### Data Exploration
+
+As usual, we start by loading the necessary libraries for our analysis. We have learned about the `tidyverse` before. Today we'll also be loading a new library, `forcats` that allows us to easily manipulate factors in R. Factors are a special categorical type of varibale in R that are very helpful when doing statistics and machine learning with categorical variables.
+
+```{r load libraries, message = FALSE}
+library(tidyverse)
+library(forcats)
+```
+
+The data file we need to read in is a plain vanilla csv with headers, and thus we can use the `read_csv` function with no additional arguments:
+
+```{r read data, message = FALSE}
+cancer <- read_csv("data/clean-wdbc.data.csv")
+head(cancer)
+```
+
+
+#### Variable descriptions
+Breast tumours can be diagnosed by performing a biopsy, a process where tissue is removed from the body to discover the presence of a disease. Traditionally these procedures were quite invasive, but now fine needle asipiration is a type of biopsy that uses a thin needle to examine a small amount of tissue from the tumour. With this method, 10 different variables are typically measured of cell nuclei from a digital image of a fine needle aspirate (FNA) of a breast mass. 
+
+
+![Source: https://www.semanticscholar.org/paper/Breast-Cancer-Diagnosis-and-Prognosis-Via-Linear-P-Mangasarian-Street/3721bb14b16e866115c906336e9d70db096c05b9/figure/0](https://ai2-s2-public.s3.amazonaws.com/figures/2017-08-08/3721bb14b16e866115c906336e9d70db096c05b9/1-Figure1-1.png  "A magnified image of a malignant breast Fine Needle Aspiration.")
+
+A magnified image of a malignant breast Fine Needle Aspiration image. White lines denote the boundary of the cell nuclei.
+
+1. ID number 
+2. Class - diagnosis (M = malignant, B = benign) 
+3. radius (mean of distances from center to points on the perimeter) 
+4. texture (standard deviation of gray-scale values) 
+5. perimeter 
+6. area 
+7. smoothness (local variation in radius lengths) 
+8. compactness ($perimeter^2 / area - 1.0$) 
+9. concavity (severity of concave portions of the contour) 
+10. concave points (number of concave portions of the contour) 
+11. symmetry 
+12. fractal dimension ($"coastline\: approximation" - 1$)
+
+The "worst" or largest (mean of the three largest values) values of these variable were computed for each image. As part of the data preparation, the data have been scaled (we will discuss what this means and why we do it in the next chapter).
+
+Below we use `glimpse` to preview the data frame. This function is similar to head, but can be easier to read when we have a lot of columns:
+
+```{r}
+glimpse(cancer)
+```
+
+We can see from the summary of the data above that `Class` is of type character. We are going to be working with "Class" as a categorical statistical variable so we will convert it to factor using the function `as.factor`.
+
+```{r, echo = TRUE}
+cancer <- cancer %>% 
+  mutate(Class = as.factor(Class)) 
+```
+
+Factors have what are called "levels", which you can think of as categories. We can ask for the levels from the Class column by using the `levels` function. This function should return the name of each category in that column. Given that we only have 2 different values in our `Class` column, "B" and "M", we only expect to get two names back. If we had 4 difference values in the column, we would expect to get 4 back. *Note the use of `unlist` to between `select` and `levels`. This is because `select` outputs a data frame (even though we only select a single column), and levels expects a vector.*
+
+```{r, echo = TRUE}
+cancer %>% 
+  select(Class) %>% 
+  unlist() %>% # turns a data frame into a vector
+  levels()
+```
+
+In our dataset, we have 357 (63\%) benign and 212 (37\%) malignant observations.
+
+```{r}
+cancer %>% 
+  group_by(Class) %>% 
+  tally()
+```
+Let's draw a scatter plot to visualize the relationship between the perimeter and concavity variables. 
+```{r}
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7") # colour palette
+p <- cancer %>%  
+  ggplot(aes(x=Perimeter, y=Concavity, color = Class)) + 
+  geom_point() +
+  scale_x_continuous(name = "Perimeter") +
+  scale_y_continuous(name = "Concavity") +
+  scale_color_manual(values=c(cbPalette[3], cbPalette[2]))
+p
+```
+
+Suppose we have a new observation that is not in the data set with perimeter 1 and concavity 1, would you classify that observation as benign or malignant? What about a new observation with perimeter -1 and concavity -0.5? What about 0 and 1? 
+
+We can see that most of the benign observations are clustered in the lower-left corner and most of the malignant observations are above and to the right of that cluster, though not all the observations follow this pattern. We want to find a way to program a computer to automatically detect patterns.
+
+### K-Nearest Neighbour Classifier
+
+```{r, echo = F}
+## Find the distance between new point and all others in dataset
+euclidDist <- function(point1, point2) {
+    #Returns the Euclidean distance between point1 and point2.
+    #Each argument is an array containing the coordinates of a point."""
+    (sqrt(sum((point1 - point2)^2)))}
+distance_from_point <- function(row) {
+           euclidDist(new_point, row) }
+all_distances <- function(training, new_point){
+    #Returns an array of distances
+    #between each point in the training set
+   # and the new point (which is a row of attributes)
+    distance_from_point <- function(row) {
+           euclidDist(new_point, row)
+}
+      apply(training, MARGIN = 1, distance_from_point)
+}
+table_with_distances <- function(training, new_point){
+    #Augments the training table 
+    # with a column of distances from new_point
+    data.frame(training, Distance = all_distances(training, new_point))
+}
+new_point <- c(2, 4)
+attrs <- c("Perimeter", "Concavity")
+my_distances <- table_with_distances(cancer[,attrs], new_point)
+neighbours <- cancer[order(my_distances$Distance),]
+```
+To classify a new observation as benign or malignant, we find some observations in the training set that are "nearest" to our new observation, and then use that diagnosis (benign or malignant) to make a prediction. Suppose we have a new observation, with perimeter of `r new_point[1]` and concavity of `r new_point[2]` (labelled in red on the scatterplot), whose "Class" is unknown.
+
+```{r, echo = FALSE}
+p + geom_point(aes(x=new_point[1], y=new_point[2]), color=cbPalette[7], size = 2.5) 
+```
+
+We see that the nearest point to this new observation is located at the coordinates (`r round(neighbours[1, c(attrs[1], attrs[2])], 1)`). The idea here is that if a point is close to one another in the scatterplot then the perimeter and concavity values are similar so we may expect that they would have the same diagnosis. 
+
+
+```{r, echo = FALSE}
+p + geom_point(aes(x=new_point[1], y=new_point[2]), 
+               color=cbPalette[7], 
+               size = 2.5) +
+  geom_segment(aes(x = new_point[1], 
+                   y = new_point[2], 
+                   xend = unlist(neighbours[1, attrs[1]]), 
+                   yend = unlist(neighbours[1, attrs[2]])))
+```
+
+```{r, echo = FALSE}
+new_point <- c(0.38, 1.8)
+attrs <- c("Perimeter", "Concavity")
+my_distances <- table_with_distances(cancer[,attrs], new_point)
+neighbours <- cancer[order(my_distances$Distance),]
+```
+Suppose we have another new observation with perimeter `r new_point[1]` and concavity of `r new_point[2]`. Looking at the scatterplot below, how would you classify this red observation? The nearest neighbour to this new point is a **benign** observation at (`r round(neighbours[1, c(attrs[1], attrs[2])], 1)`). 
+```{r, echo = FALSE}
+p + geom_point(aes(x=new_point[1], y=new_point[2]), 
+               color=cbPalette[7], 
+               size = 2.5) +  
+  geom_segment(aes(x = new_point[1], 
+                   y = new_point[2], 
+                   xend = unlist(neighbours[1, attrs[1]]), 
+                   yend = unlist(neighbours[1, attrs[2]])))
+```
+
+We can look at a few points, say $k = 3$, that are closest to the new red observation to predict its class rather than just looking at one. Among those 3 closest points, we look at their class and use the majority class as our prediction for the new observation. <!-- For our red observation at (`r new_point`), the nearest points are: (`r round(neighbours[1, c(attrs[1], attrs[2])], 1)`), (`r round(neighbours[2,  c(attrs[1], attrs[2])],1)`), and (`r round(neighbours[3, c(attrs[1], attrs[2])],1)`). -->
+
+```{r, echo =  FALSE}
+p+ geom_point(aes(x=new_point[1], y=new_point[2]), 
+               color=cbPalette[7], 
+               size = 2.5) +
+  geom_segment(aes(x = new_point[1], y = new_point[2],
+                   xend = unlist(neighbours[1, attrs[1]]),
+                   yend = unlist(neighbours[1, attrs[2]])), color = "black") +
+    geom_segment(aes(x = new_point[1], y = new_point[2],
+                   xend = unlist(neighbours[2, attrs[1]]),
+                   yend = unlist(neighbours[2, attrs[2]])), color = "black")+
+      geom_segment(aes(x = new_point[1], y = new_point[2],
+                   xend = unlist(neighbours[3, attrs[1]]),
+                   yend = unlist(neighbours[3, attrs[2]])), color = "black")
+```
+
+We see that the diagnoses of 2 of the 3 nearest neighbours to our new observation are malignant so we take majority vote and classify our new red observation as malignant.
+
+```{r, echo = F}
+neighbours %>% 
+  select(ID, attrs, Class) %>% 
+  slice(1:3)
+```
+
+Here we chose the $k=3$ nearest observations, but there is nothing special about $k=3$. We could have used $k=4, 5$ or more, though we may want to choose an odd number to avoid ties. We will discuss more about choosing $k$ in the next section. 
+
+#### Distance Between Points When There are Two Attributes
+How do we decide which points are "nearest" to our new observation? We can compute the distance between any pair of points using the following formula: 
+
+$$Distance = \sqrt{(x_a -x_b)^2 + (y_a - y_b)^2}$$
+```{r, echo =F}
+new_point <- c(-1,4.2)
+```
+Suppose we want to classify a new observation with perimeter of `r new_point[1]` and concavity of `r new_point[2]`. Let's calculate the distances between our new point and each of the observations in the training set to find the $k=5$ observations in the training data that are nearest to our new point. 
+
+```{r, echo =F}
+p <- cancer %>%    
+  ggplot(aes(x=Perimeter, y=Concavity, color = Class)) +
+  geom_point() +
+ scale_x_continuous(name = "Perimeter", breaks=seq(-2,4,1)) +
+ scale_y_continuous(name = "Concavity", breaks=seq(-2,4,1)) +
+  scale_color_manual(values=c(cbPalette[3], cbPalette[2])) +
+  geom_point(aes(x=new_point[1], y=new_point[2]), color=cbPalette[7], size = 2.5) 
+p
+p + annotate("path",
+   x=new_point[1]+1.7*cos(seq(0,2*pi,length.out=100)),
+   y=new_point[2]+1.7*sin(seq(0,2*pi,length.out=100)))
+```
+
+```{r, echo = FALSE}
+my_distances <- table_with_distances(cancer[,attrs], new_point)
+neighbours <- my_distances[order(my_distances$Distance),]
+k <- 5
+tab <- data.frame(neighbours[1:k,], cancer[order(my_distances$Distance),][1:k,c("ID","Class")])
+```
+
+ | ID                      |Perimeter | Concavity | Distance          | Class          |
+ | --------------------  |----------------- | -----------------    | ---------------| ----------------- |
+| `r tab[1,4] `       | `r round(tab[1,1],2) `              	| `r round(tab[1,2],2) `             |$\sqrt{-1  - (-1.24))^2 + (4.2 - 4.7)^2}=$ `r round(neighbours[1, "Distance"],2)` |	`r tab[1, "Class"]`  | 
+| `r tab[2,4] `       |`r round(tab[2,1],2) `              |`r round(tab[2,2],2) `               |$\sqrt{(-1 - (-0.29))^2 + (4.2 - 3.99)^2} =$ `r round(neighbours[2, "Distance"],2)`	|`r tab[2, "Class"]`  |
+| `r tab[3,4] `       |`r round(tab[3,1],2) `              |`r round(tab[3,2],2) `        | $\sqrt{(-1 - (-1.08))^2 + (4.2 - 2.63)^2} =$ `r round(neighbours[3, "Distance"],2)` | `r tab[3, "Class"]`|
+| `r tab[4,4] `       |`r round(tab[4,1],2) `              |`r round(tab[4,2],2) `        | $\sqrt{(-1 - (-0.46))^2 + (4.2 - 2.72)^2} =$ `r round(neighbours[4, "Distance"],2)` | `r tab[4, "Class"]`|
+| `r tab[5,4] `       |`r round(tab[5,1],2) `              |`r round(tab[5,2],2) `        | $\sqrt{(-1 - 0.64)^2 + (4.2 - 4.3)^2} =$ `r round(neighbours[5, "Distance"],2)` | `r tab[5, "Class"]`|
+-----------------  -----------------     ----------------- ----------------- 
+
+From the table, we see that 3 of the 5 nearest neighbours to our new observation are malignant so classify our new observation as malignant. 
+
+##### Summary: 
+In order to classify a new observation using a k-nearest neighbor classifier, we have to do the follow steps:
+
+* **Step 1**: Compute the distance between the new observation and each observation in our training set.
+* **Step 2**: Sort the data table in ascending order according to the distances.
+* **Step 3**: Choose the top $k$ rows of the sorted table.
+* **Step 4**: Classify the new observation based on majority vote.
+
+### K-Nearest Neighbours in R 
+We will implement the k-nearest neighbour algorithm in R. Here we will make use of the `caret` (Classification And REgression Training) package in R, which contains a set of tools to help the process of making predictive models. We can use the function `names(getModelInfo())` to see a full list of the algorithms `caret` has to offer. 
+
+```{r}
+library(caret)
+```
+
+Let's suppose we have a new observation with perimeter 0 and concavity 0.5, but its diagnosis is unknown. Suppose we want to use its perimeter and concavity attributes to predict the class of this observation. Let's pick out our 2 desired attributes and store it as a new dataset.
+
+```{r}
+trainingDat <- cancer %>%
+  select("Perimeter", "Concavity")
+glimpse(trainingDat)
+```
+
+We will store the class labels in a vector.
+```{r}
+labels <- cancer$Class
+glimpse(labels)
+```
+
+We will use the function `train()`, where `x` is an object where observations are in rows and the attributes are in columns (e.g. simple matrix, dataframe) and `y` is a numeric or factor vector containing the outcome for each row. The argument `tuneGrid` should be a dataframe with possible "tuning values". For now, just know that this is where we will specify our $k$ and we will use $k =7$ (we will discuss how to choose $k$ in a later section). We will use "knn" as our `method`.
+```{r}
+k <- data.frame(k = 7)
+model_knn <- train(x = data.frame(trainingDat), y = labels, method='knn', tuneGrid = k)
+```
+
+Now we can predict the label of the new observation.
+```{r}
+new_obs <- data.frame(Perimeter = 0, Concavity = 0.5)
+predict(object=model_knn, new_obs)
+```
+Our model classifies this new observation as malignant. How do we know how well our model did? In later sections, we will discuss ways to evaluate our model.
+
+### Multiple Attributes
+So far we have seen how to build a classifier based on only two attributes, but we can use k-nearest neighbours classifier in higher dimensional space. Let's make a scatterplot with 3 variables instead of 2: 
+
+```{r, echo = F}
+library(plotly)
+cancer %>% 
+plot_ly(x = ~ Perimeter, 
+          y = ~ Concavity, 
+          z= ~ Symmetry, 
+          color = ~Class, 
+          colors = c(cbPalette[3], cbPalette[2])) %>% 
+    add_markers()  %>%
+  layout(scene = list(xaxis = list(title = 'Perimeter'),
+                     yaxis = list(title = 'Concavity'),
+                    zaxis = list(title = 'Symmetry')))
+library(scatterplot3d)
+colors <- c(cbPalette[3], cbPalette[2])
+colors <- colors[as.numeric(cancer$Class)]
+with(cancer, scatterplot3d(Perimeter, Concavity, Symmetry, color = colors, pch = 16, angle = 50))
+```
+
+Each attribute can give us new information to help create our classifier. The distance formula for 3-dimensions is
+$$Distance = \sqrt{(x_a -x_b)^2 + (y_a - y_b)^2 + (z_a - z_b)^2}$$
+We can generalize for n-dimensions by
+
+* summing up the squares of the differences between each individual coordinate
+* taking the square root of the sum
+
+Data source:
+W.N. Street, W.H. Wolberg and O.L. Mangasarian 
+	Nuclear feature extraction for breast tumor diagnosis.
+	IS&T/SPIE 1993 International Symposium on Electronic Imaging: Science
+	and Technology, volume 1905, pages 861-870, San Jose, CA, 1993.
+	
+<!-- SECTION about training and testing (remove)
+### Training and Testing
+Sometimes our classifier might make the wrong prediction. A classifier does not need to be right 100\% of the time to be useful, though we don't want the classifier to make too many wrong predictions. How do we measure the accuracy of a classifier? In order to assess our classifier's performance we need to split our data into a **training** set and a **testing** set. 
+* The **training set** is used to build the classifer.  
+* The **testing set** is used to measure the accuracy of the classifier. The testing set contains observations whose true class is known so that can try out our classifier and see what proportion of time the classifier was correct. The proportion we find will serve as our *estimate* of the proportion of all new observations whose class our classifier will accurately predict.
+![Source: https://www.interworks.com/blog/estam/2017/11/13/my-machine-learning-journey-first-weeks](https://www.interworks.com/sites/default/files/Picture6_11.png "Training and Testing Set")
+![A data-flow diagram of training and testing a machine learning model.](https://upload.wikimedia.org/wikipedia/commons/0/09/Supervised_machine_learning_in_a_nutshell.svg "Supervised machine learning data flow")
+Here we will make use of the `caret` (Classification And REgression Training) package in R, which contains a set of tools to help the process of making predictive models. We can use the function `names(getModelInfo())` to see a full list of the algorithms `caret` has to offer. 
+```{r}
+library(class)
+library(caret)
+```
+In order to create our training and our testing set, we will randomly select 2/3 of the observations to be a part of the training set and the remaining 1/3 of the observations we will reserve for the testing set. We can use the function `createDataPartition` to partition the data. For this function, if the `y` argument is a factor, the random sampling occurs within each class and should preserve the distribution of the class variable.
+```{r}
+set.seed(1234)
+index <- createDataPartition(cancer$Class, p=0.66, list=FALSE) #### NOT SURE HOW TO RUN WITH PIPE?
+# Subset training set with index
+training.data <- cancer[index,]
+# Subset test set with index
+test.data <- cancer[-index,]
+training.data %>%
+  group_by(Class) %>%
+  summarize(n = n()) %>%
+  mutate(freq = n / sum(n))
+```
+We have `r nrow(training.data)` observations in our training set. We can draw a scatter plot to visualize the relationship between worst perimeter and worst concavity for our training data.
+```{r}
+ training.data %>%  
+  ggplot(aes(x=Perimeter, y=Concavity, color = Class)) + 
+ # scale_x_continuous(name = "Clump Thickness", breaks=seq(0,10,1)) +
+#  scale_y_continuous(name = "Uniformity of Cell Size", breaks=seq(0,10,1)) +
+  geom_point() + 
+  scale_color_manual(values=c(cbPalette[3], cbPalette[4]))
+```
+### K-Nearest Neighbours in R 
+We will implement the k-nearest neighbour algorithm in R. 
+```{r, echo=T}
+train.label=cancer$Class[index]
+test.label=cancer$Class[-index]
+# Train a model
+model_knn <- train(x = data.frame(training.data[,c(3:ncol(training.data))]), y = train.label, method='knn', preProcess=c("center", "scale"))
+### I get an error message: "Setting row names on a tibble is deprecated." when not a data.frame? 
+# Predict the labels of the test set
+predictions<-predict(object=model_knn, test.data[,c(3:ncol(cancer))])
+```
+We used the training data to teach our classifier. Now we have predictions for each row in the test data. Let's take a look at a subset of the actual class of the test data and the corresponding prediction made by the classifier. We can see in row 20 and 34 our classifier classified a malignant observation as benign.
+```{r}
+data.frame(ID = test.data$ID, Class = test.data$Class, Prediction = predictions)[19:34,]
+```
+Let's see how the classifier did overall: 
+```{r}
+# Evaluate the predictions
+table(Prediction = predictions, Class = test.data$Class) 
+```
+We can see from the contingency table above that the classifier made 7 wrong predictions. It predicted 6 malignant observations as benign and 1 benign observation as malignant.
+```{r}
+# Confusion matrix 
+confusionMatrix(predictions,test.label)
+```
+-->
+
+<!-- 
+```{r} 
+# Train the model with preprocessing
+#model_knn <- train(training.data[, 2:10], train.label, method='knn', preProcess=c("center", "scale"))
+# Predict the labels of the test set
+#predictions<-predict(object=model_knn, test.data[,2:10])
+# Evaluate the predictions
+#table(predictions)
+# Confusion matrix 
+#confusionMatrix(predictions,test.label)
+```
+Data Source
+Source:
+Creators: 
+1. Dr. William H. Wolberg, General Surgery Dept. 
+University of Wisconsin, Clinical Sciences Center 
+Madison, WI 53792 
+wolberg '@' eagle.surgery.wisc.edu 
+2. W. Nick Street, Computer Sciences Dept. 
+University of Wisconsin, 1210 West Dayton St., Madison, WI 53706 
+street '@' cs.wisc.edu 608-262-6619 
+3. Olvi L. Mangasarian, Computer Sciences Dept. 
+University of Wisconsin, 1210 West Dayton St., Madison, WI 53706 
+olvi '@' cs.wisc.edu 
+https://www.inferentialthinking.com/chapters/16/1/nearest-neighbors.html
+https://www.datacamp.com/community/tutorials/machine-learning-in-r
+https://topepo.github.io/caret/data-splitting.html
+-->
+	
+	
+<!-- SCALING SECTION (REMOVE)
+For a k nearest neighbour (knn) classifier, the scale of the variables matter. Since the knn classifier predicts classes by identifying observations that are nearest to it, any variables that are on a large scale will have a much larger effect than variables on a small scale. For example, suppose your dataset has two attributes: salary (in dollars) and years of education. For the knn classifier, a difference of \$1000 is huge compared to a difference of 10 years of education. So salary’s influence on the distance function will usually overpower the influence of years of education. Therefore we need to standardize our variables so that our variables will be on a comparable scale. We can do this with the `scale()` function in R. 
+```{r}
+scaled <- cancer %>% 
+  select(-c(ID,Class)) %>% 
+  scale() 
+cancer_scaled <- data.frame(ID = cancer$ID, Class = cancer$Class, scaled)
+#summary(cancer_scaled)
+```
+Now that we've standardized our data, we can make a scatterplot of the standardized worst perimeter and worst concavity variables. 
+```{r}
+p <- cancer_scaled %>%  
+  ggplot(aes(x=Perimeter, y=Concavity, color = Class)) + 
+  geom_point() +
+  scale_x_continuous(name = "Perimeter", breaks = seq(-2,4, 1))+
+  scale_y_continuous(name = "Concavity", breaks = seq(-2,4, 1)) +
+  scale_color_manual(values=c(cbPalette[3], cbPalette[4]))
+p
+```
+-->
