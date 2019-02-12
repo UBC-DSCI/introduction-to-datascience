@@ -58,3 +58,45 @@ perim_concav <- cancer %>%
 perim_concav
 ```
 
+#### Splitting into training and validation sets
+
+Next, lets split our data into a training and a validation set using `caret`'s `createDataPartition` function. When using this function to split a data set into a training and validation set it takes 3 arguments:
+
+1. the class labels (must be a vector), 
+2. the proportion of the data you would like in the training data set, and 
+3. `list = FALSE`
+
+The `createDataPartition` function returns the row numbers for the training set. 
+
+```{r get indices for training set}
+set.seed(1234) # makes the random selection of rows reproducible
+set_rows <- cancer %>% 
+  select(Class) %>% 
+  unlist() %>% # converts Class from a tibble to a vector
+  createDataPartition(p = 0.60, list = FALSE)
+head(set_rows)
+```
+
+*You will also see in the code above that we use the `set.seed` function. This is because `createDataPartition` uses random sampling to choose which rows will be in the training set, and if we use `set.seed` to specify where the random number generator starts for this process then we can make our analysis reproducible (always get the same random set of observations in the training set).*
+
+Now that we have the row numbers for the training set, we can use the `slice` function to get the rows from the original data set (here `cancer`) to create the training set and the validation sets.
+
+```{r create training and validation sets}
+training_set <- cancer %>% slice(set_rows)
+validation_set <- cancer %>% slice(-set_rows)
+glimpse(training_set)
+```
+
+```{r}
+glimpse(validation_set)
+```
+
+We can see from `glimpse` in the code above that the training set contains 343 observations, while the validation set contains 226 observations. This corresponds to the training set having 60% of the observations from the original data set and the validation set having the other 40% of the observations. We specified this when we set `p = 0.60` when we called `createDataPartition`. 
+
+#### Creating the k-nn classifier
+
+Now 
+
+#### Predict class labels for the validation set
+
+#### Assessing our classifier's accuraccy
