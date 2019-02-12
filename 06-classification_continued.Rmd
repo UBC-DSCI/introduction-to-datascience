@@ -43,7 +43,8 @@ library(tidyverse)
 library(caret)
 
 #load data
-cancer <- read_csv("data/clean-wdbc.data.csv")
+cancer <- read_csv("data/clean-wdbc.data.csv") %>% 
+  mutate(Class = as.factor(Class)) # because we will be doing statistical analysis on a categorical variable
 
 # colour palette
 cbPalette <- c("#56B4E9", "#E69F00","#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999") 
@@ -62,9 +63,9 @@ perim_concav
 
 Next, lets split our data into a training and a validation set using `caret`'s `createDataPartition` function. When using this function to split a data set into a training and validation set it takes 3 arguments:
 
-1. the class labels (must be a vector), 
-2. the proportion of the data you would like in the training data set, and 
-3. `list = FALSE`
+1. `y` (the class labels, must be a vector), 
+2. `p` (the proportion of the data you would like in the training data set), and 
+3. `list = FALSE` (says we want the data back as a matrix instead of a list).
 
 The `createDataPartition` function returns the row numbers for the training set. 
 
@@ -95,8 +96,44 @@ We can see from `glimpse` in the code above that the training set contains 343 o
 
 #### Creating the k-nn classifier
 
-Now 
+Now that we have split our original data set into a training and validation set, we can create our k-nn classifier using the training set. We explained how to do this last chapter, so here we just do it! For the time being we will just choose a single $k$ of 3, and use the predictors concavity and perimeter.
+
+```{r create k-nn classifier}
+X_train <- training_set %>% 
+  select(Concavity, Perimeter) %>% 
+  data.frame()
+Y_train <- training_set %>% 
+  select(Class) %>% 
+  unlist()
+k = data.frame(k = 3)
+model_knn <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
+model_knn
+```
 
 #### Predict class labels for the validation set
 
-#### Assessing our classifier's accuraccy
+Now that we have a k-nn classifier object, we can use it to predict the class labels for our validation set:
+
+```{r predict validation}
+X_validation <- validation_set %>% 
+  select(Concavity, Perimeter) %>% 
+  data.frame()
+Y_validation_predicted <- predict(object = model_knn, X_validation)
+head(Y_validation_predicted)
+```
+
+#### Assessing our classifier's accuracy
+
+Finally we can assess our classifier's accuracy. To do this we need to create vector containing the class labels for the validation set. Next we use the function `confusionMatrix` to get the statistics about the quality of our model, this includes the statistic we are interested: accuracy.  `confusionMatrix` takes two arguments:
+
+1. `data` (the predicted class labels for the validation set), and 
+2. `reference` (the original/measured class labels for the validation set).
+
+```{r accuracy}
+Y_validation <- validation_set %>% 
+  select(Class) %>% 
+  unlist()
+
+model_quality <- confusionMatrix(data = Y_validation_predicted, reference = Y_validation)
+model_quality
+```
