@@ -14,7 +14,7 @@ By the end of the chapter, students will be able to:
 * Using R, evaluate classification accuracy using a validation data set and appropriate metrics.
 * Using R, execute cross-validation in R to choose the number of neighbours.
 * Identify when it is necessary to scale variables before classification and do this using R
-* In a dataset with > 2 attributes, perform k-nearest neighbour classification in R using caret::train(method = "knn", ...) to predict the class of a test dataset.
+* In a dataset with > 2 attributes, perform k-nearest neighbour classification in R using `caret::train(method = "knn", ...)` to predict the class of a test dataset.
 * Describe advantages and disadvantages of the k-nearest neighbour classification algorithm.
 
 
@@ -35,7 +35,7 @@ We try to illustrate this below:
 
 ### Assessing your classifier in R
 
-We can use the `caret` package in R to not only perform k-nn classification, but also to assess how well our classification worked. Let's start by loading the necessary libraries, data (we'll continue exploring the breast cancer data set from last chapter) and making a quick scatter plot of tumour cell concavity versus perimeter, labelling the points be diagnosis class.
+We can use the `caret` package in R to not only perform k-nn classification, but also to assess how well our classification worked. Let's start by loading the necessary libraries, data (we'll continue exploring the breast cancer data set from last chapter) and making a quick scatter plot of tumour cell concavity versus smoothness, labelling the points be diagnosis class.
 
 ```{r precode, message = FALSE, fig.height = 4, fig.width = 5}
 # load libraries
@@ -49,10 +49,10 @@ cancer <- read_csv("data/clean-wdbc.data.csv") %>%
 # colour palette
 cbPalette <- c("#56B4E9", "#E69F00","#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999") 
 
-# create scatter plot of tumour cell concavity versus perimeter, 
+# create scatter plot of tumour cell concavity versus smoothness, 
 # labelling the points be diagnosis class
 perim_concav <- cancer %>%  
-  ggplot(aes(x = Perimeter, y = Concavity, color = Class)) + 
+  ggplot(aes(x = Smoothness, y = Concavity, color = Class)) + 
     geom_point(alpha = 0.5) +
     labs(color = "Diagnosis") + 
     scale_color_manual(labels = c("Benign", "Malignant"), values = cbPalette)
@@ -96,11 +96,11 @@ We can see from `glimpse` in the code above that the training set contains 427 o
 
 #### Creating the k-nn classifier
 
-Now that we have split our original data set into a training and validation set, we can create our k-nn classifier using the training set. We explained how to do this last chapter, so here we just do it! For the time being we will just choose a single $k$ of 3, and use the predictors concavity and perimeter.
+Now that we have split our original data set into a training and validation set, we can create our k-nn classifier using the training set. We explained how to do this last chapter, so here we just do it! For the time being we will just choose a single $k$ of 3, and use the predictors concavity and smoothness.
 
 ```{r create k-nn classifier}
 X_train <- training_set %>% 
-  select(Concavity, Perimeter) %>% 
+  select(Concavity, Smoothness) %>% 
   data.frame()
 Y_train <- training_set %>% 
   select(Class) %>% 
@@ -116,7 +116,7 @@ Now that we have a k-nn classifier object, we can use it to predict the class la
 
 ```{r predict validation}
 X_validation <- validation_set %>% 
-  select(Concavity, Perimeter) %>% 
+  select(Concavity, Smoothness) %>% 
   data.frame()
 Y_validation_predicted <- predict(object = model_knn, X_validation)
 head(Y_validation_predicted)
@@ -144,7 +144,7 @@ A lot of information is output from `confusionMatrix`, but what we are intereste
 model_quality$overall[1]
 ```
 
-From a value of accuracy of 0.9070796, we can say that our k-nn classifier predicted the correct class label ~ 89% of the time. 
+From a value of accuracy of 0.7957746, we can say that our k-nn classifier predicted the correct class label ~ 80% of the time. 
 
 ## Cross-validation for assessing classifier quality
 
@@ -161,7 +161,7 @@ set_rows <- cancer %>%
 training_set <- cancer %>% slice(set_rows)
 validation_set <- cancer %>% slice(-set_rows)
 X_train <- training_set %>% 
-  select(Concavity, Perimeter) %>% 
+  select(Concavity, Smoothness) %>% 
   data.frame()
 Y_train <- training_set %>% 
   select(Class) %>% 
@@ -169,7 +169,7 @@ Y_train <- training_set %>%
 k = data.frame(k = 3)
 model_knn <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
 X_validation <- validation_set %>% 
-  select(Concavity, Perimeter) %>% 
+  select(Concavity, Smoothness) %>% 
   data.frame()
 Y_validation_predicted <- predict(object = model_knn, X_validation)
 Y_validation <- validation_set %>% 
@@ -189,7 +189,7 @@ set_rows <- cancer %>%
 training_set <- cancer %>% slice(set_rows)
 validation_set <- cancer %>% slice(-set_rows)
 X_train <- training_set %>% 
-  select(Concavity, Perimeter) %>% 
+  select(Concavity, Smoothness) %>% 
   data.frame()
 Y_train <- training_set %>% 
   select(Class) %>% 
@@ -197,7 +197,7 @@ Y_train <- training_set %>%
 k = data.frame(k = 3)
 model_knn <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
 X_validation <- validation_set %>% 
-  select(Concavity, Perimeter) %>% 
+  select(Concavity, Smoothness) %>% 
   data.frame()
 Y_validation_predicted <- predict(object = model_knn, X_validation)
 Y_validation <- validation_set %>% 
@@ -207,7 +207,7 @@ model_quality <- confusionMatrix(data = Y_validation_predicted, reference = Y_va
 model_quality$overall[1]
 ```
 
-When we have 3 different shuffles of the data, we get 3 different values for accuracy! 0.8873239, 0.9366197 and 0.915493! Which one is correct? Sadly, there is no easy answer to that question. The best we can do is to do this many times and take the average of the accuracies. Typically this is done is a more structured way so that each observation in the data set is used in a validation set only a single time. The name for this strategy is called cross-validation and we illustrate it below:
+When we have 3 different shuffles of the data, we get 3 different values for accuracy! 0.7957746, 0.8661972 and 0.7676056! Which one is correct? Sadly, there is no easy answer to that question. The best we can do is to do this many times and take the average of the accuracies. Typically this is done is a more structured way so that each observation in the data set is used in a validation set only a single time. The name for this strategy is called cross-validation and we illustrate it below:
 
 <img src="img/cv.png" width="800" />
 
@@ -225,7 +225,7 @@ Then when we create our classifier we add an additional argument to `train`, cal
 
 ```{r }
 X_cancer <- cancer %>% 
-  select(Concavity, Perimeter) %>% 
+  select(Concavity, Smoothness) %>% 
   data.frame()
 Y_cancer <- cancer %>% 
   select(Class) %>% 
@@ -245,8 +245,45 @@ knn_model_cv_10fold
 
 ## Choosing $k$ for k-nn classification
 
-This could be not too bad of an accuracy, however what accuracy you aim for always depends on the downstream application of your analysis. Here, we are trying to predict a very important outcome, tumour cell diagnosis class. And the class label we assign to a real patient may have life or death consequences. Hence, we'd like to do better for this application than 90%. 
+From 5- and 10-fold cross-validate we estimate that the prediction accuracy of our classifier to be ~ 93%. This could be not too bad of an accuracy, however what accuracy you aim for always depends on the downstream application of your analysis. Here, we are trying to predict a very important outcome, tumour cell diagnosis class. And the class label we assign to a real patient may have life or death consequences. Hence, we'd like to do better for this application than 83%. To do this we can use cross-validation in an even bigger way, we can choose a range of possible $k$'s and perform cross-validation to calculate the accuracy for each $k$, and then choose the smallest $k$ which gives us the best cross-validation accuracy. To do this, we will create a vector of values for $k$ instead of providing just 1.
+
+```{r}
+train_control <- trainControl(method="cv", number = 10)
+k = data.frame(k = c(1, 3, 5, 7, 9, 11, 13, 15, 17))
+knn_model_cv_10fold <- train(x = X_cancer, y = Y_cancer, method = "knn", tuneGrid = k, trControl = train_control)
+knn_model_cv_10fold
+```
+
+Then to help us choose $k$ it is very useful to visualize the accuracies as we increase $k$. This will help us choose the smallest $k$ with the biggest accuracy. We can access the results from the cross-validation by accessing the`results` attribute of the `train` object (our classifier).
+
+```{r}
+accuracies <- knn_model_cv_10fold$results
+accuracies 
+```
+
+Now we can plot accuracy versus k:
+
+```{r fig.height = 4, fig.width = 5}
+accuracy_vs_k <- ggplot(accuracies, aes(x = k, y = Accuracy)) +
+  geom_point() +
+  geom_line()
+accuracy_vs_k
+```
 
 
+Based off of the visualization above we typically would choose $k$ to be 3 or 5, given that at this value of $k$ our accuracy is a high as it can be with much larger values of $k$. As you can see there is no exact or perfect answer here, what we are looking for is a value for $k$ where we get a roughly optimal increase of accuracy but at the same time we want to keep $k$ small.
+
+Why do we want to keep $k$ small? Well this is because if we keep increasing $k$ our accuracy actually starts to decrease! Take a look as the plot below as we vary $k$ from 1 to almost the number of observations in the data set:
+
+```{r too much of a good thing}
+train_control <- trainControl(method="cv", number = 10)
+k = data.frame(k = seq(from = 1, to = 499, by = 10))
+knn_model_cv_10fold <- train(x = X_cancer, y = Y_cancer, method = "knn", tuneGrid = k, trControl = train_control)
+accuracies <- knn_model_cv_10fold$results
+accuracy_vs_k <- ggplot(accuracies, aes(x = k, y = Accuracy)) +
+  geom_point() +
+  geom_line()
+accuracy_vs_k
+```
 
 
