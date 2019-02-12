@@ -1,0 +1,60 @@
+# Classification continued {#classification_continued}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview 
+Metrics for classification accuracy; cross-validation to choose the number of neighbours; scaling of variables and other practical considerations.
+
+## Learning objectives 
+By the end of the chapter, students will be able to:
+
+* Describe what a validation data set is and how it is used in classification.
+* Using R, evaluate classification accuracy using a validation data set and appropriate metrics.
+* Using R, execute cross-validation in R to choose the number of neighbours.
+* Identify when it is necessary to scale variables before classification and do this using R
+* In a dataset with > 2 attributes, perform k-nearest neighbour classification in R using caret::train(method = "knn", ...) to predict the class of a test dataset.
+* Describe advantages and disadvantages of the k-nearest neighbour classification algorithm.
+
+
+### Assessing how good your classifier is
+Sometimes our classifier might make the wrong prediction. A classifier does not need to be right 100\% of the time to be useful, though we don't want the classifier to make too many wrong predictions. How do we measure how "good" our classifier is?
+
+One way to assess our classifier's performance can be done by splitting our data into a **training** set and a **validation** set. When we split the data, we make the assumption that there is no order to our originally collected data set. However, if we think that there might be some order to the original data set, then we can randomly shuffle the data before splitting it into a training and validation set.  
+
+<img src="img/training_validation.jpeg" width="600" />
+
+The **training set** is used to build the classifer. Then we can give the observations from the **validation set** (without the labels/classes) to our classifier and predict the labels/classes as if these were new observations that we didn't have the labels/classes for. Then we can see how well our predictions match the true labels/classes for the observations in the **validation set**. We try to illustrate this below:
+
+<img src="img/ML-paradigm.png" width="800" />
+
+### Accuracy
+
+How exactly can we assess how well our predictions match the true labels/classes for the observations in the **validation set**? One way we can do this is to calculate the prediction **accuracy**. This is essentially the proportion of time the classifier was correct. To calculate this we divide the number of correct predictions by the number of predictions made. Other measures for how well our classifier did include precision and recall (which will not be discussed here, but are discussed in other more advanced courses on this topic).
+
+### Assessing our classifier in R
+
+We can use the `caret` package in R to not only perform k-nn classification, but also to assess how well our classification worked. Let's start by loading the necessary libraries, data (we'll continue exploring the breast cancer data set from last chapter) and making a quick scatter plot of tumour cell concavity versus perimeter, labelling the points be diagnosis class.
+
+```{r precode, message = FALSE, fig.height = 4, fig.width = 5}
+# load libraries
+library(tidyverse)
+library(caret)
+
+#load data
+cancer <- read_csv("data/clean-wdbc.data.csv")
+
+# colour palette
+cbPalette <- c("#56B4E9", "#E69F00","#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999") 
+
+# create scatter plot of tumour cell concavity versus perimeter, 
+# labelling the points be diagnosis class
+perim_concav <- cancer %>%  
+  ggplot(aes(x = Perimeter, y = Concavity, color = Class)) + 
+    geom_point(alpha = 0.5) +
+    labs(color = "Diagnosis") + 
+    scale_color_manual(labels = c("Benign", "Malignant"), values = cbPalette)
+perim_concav
+```
+
