@@ -212,6 +212,8 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="7.3" data-path="classification-continued.html"><a href="classification-continued.html#assessing-how-good-your-classifier-is"><i class="fa fa-check"></i><b>7.3</b> Assessing how good your classifier is</a><ul>
 <li class="chapter" data-level="7.3.1" data-path="classification-continued.html"><a href="classification-continued.html#assessing-your-classifier-in-r"><i class="fa fa-check"></i><b>7.3.1</b> Assessing your classifier in R</a></li>
 </ul></li>
+<li class="chapter" data-level="7.4" data-path="classification-continued.html"><a href="classification-continued.html#cross-validation-for-assessing-classifier-quality"><i class="fa fa-check"></i><b>7.4</b> Cross-validation for assessing classifier quality</a></li>
+<li class="chapter" data-level="7.5" data-path="classification-continued.html"><a href="classification-continued.html#choosing-k-for-k-nn-classification"><i class="fa fa-check"></i><b>7.5</b> Choosing <span class="math inline">\(k\)</span> for k-nn classification</a></li>
 </ul></li>
 <li class="divider"></li>
 <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
@@ -296,50 +298,50 @@ perim_concav</code></pre></div>
 set_rows &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">select</span>(Class) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">unlist</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="co"># converts Class from a tibble to a vector</span>
-<span class="st">  </span><span class="kw">createDataPartition</span>(<span class="dt">p =</span> <span class="fl">0.60</span>, <span class="dt">list =</span> <span class="ot">FALSE</span>)
+<span class="st">  </span><span class="kw">createDataPartition</span>(<span class="dt">p =</span> <span class="fl">0.75</span>, <span class="dt">list =</span> <span class="ot">FALSE</span>)
 <span class="kw">head</span>(set_rows)</code></pre></div>
 <pre><code>##      Resample1
 ## [1,]         1
-## [2,]         3
-## [3,]         4
-## [4,]         5
-## [5,]         7
-## [6,]         8</code></pre>
+## [2,]         2
+## [3,]         3
+## [4,]         4
+## [5,]         5
+## [6,]         6</code></pre>
 <p><em>You will also see in the code above that we use the <code>set.seed</code> function. This is because <code>createDataPartition</code> uses random sampling to choose which rows will be in the training set, and if we use <code>set.seed</code> to specify where the random number generator starts for this process then we can make our analysis reproducible (always get the same random set of observations in the training set).</em></p>
 <p>Now that we have the row numbers for the training set, we can use the <code>slice</code> function to get the rows from the original data set (here <code>cancer</code>) to create the training set and the validation sets.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">training_set &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">slice</span>(set_rows)
 validation_set &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">slice</span>(<span class="op">-</span>set_rows)
 <span class="kw">glimpse</span>(training_set)</code></pre></div>
-<pre><code>## Observations: 343
+<pre><code>## Observations: 427
 ## Variables: 12
-## $ ID                &lt;int&gt; 842302, 84300903, 84348301, 84358402, 844359...
-## $ Class             &lt;fct&gt; M, M, M, M, M, M, M, M, M, M, M, M, M, M, M,...
-## $ Radius            &lt;dbl&gt; 1.88503100, 1.51054113, -0.28121702, 1.29743...
-## $ Texture           &lt;dbl&gt; -1.35809849, -0.02395331, 0.13386631, -1.465...
-## $ Perimeter         &lt;dbl&gt; 2.301575480, 1.346290616, -0.249719577, 1.33...
-## $ Area              &lt;dbl&gt; 1.99947816, 1.45500430, -0.54953769, 1.21965...
-## $ Smoothness        &lt;dbl&gt; 1.3065367, 0.5269438, 3.3912907, 0.2203623, ...
-## $ Compactness       &lt;dbl&gt; 2.61436466, 1.08198014, 3.88997467, -0.31311...
-## $ Concavity         &lt;dbl&gt; 2.10767182, 0.85422232, 1.98783917, 0.612639...
-## $ Concave_points    &lt;dbl&gt; 2.29405760, 1.95328166, 2.17387323, 0.728618...
-## $ Symmetry          &lt;dbl&gt; 2.7482041, 1.1512420, 6.0407261, -0.8675896,...
-## $ Fractal_dimension &lt;dbl&gt; 1.93531174, 0.20121416, 4.93067187, -0.39675...</code></pre>
+## $ ID                &lt;int&gt; 842302, 842517, 84300903, 84348301, 84358402...
+## $ Class             &lt;fct&gt; M, M, M, M, M, M, M, M, M, M, M, M, B, B, B,...
+## $ Radius            &lt;dbl&gt; 1.8850310, 1.8043398, 1.5105411, -0.2812170,...
+## $ Texture           &lt;dbl&gt; -1.35809849, -0.36887865, -0.02395331, 0.133...
+## $ Perimeter         &lt;dbl&gt; 2.30157548, 1.53377643, 1.34629062, -0.24971...
+## $ Area              &lt;dbl&gt; 1.99947816, 1.88882702, 1.45500430, -0.54953...
+## $ Smoothness        &lt;dbl&gt; 1.306536657, -0.375281748, 0.526943750, 3.39...
+## $ Compactness       &lt;dbl&gt; 2.61436466, -0.43006581, 1.08198014, 3.88997...
+## $ Concavity         &lt;dbl&gt; 2.10767182, -0.14661996, 0.85422232, 1.98783...
+## $ Concave_points    &lt;dbl&gt; 2.2940576, 1.0861286, 1.9532817, 2.1738732, ...
+## $ Symmetry          &lt;dbl&gt; 2.7482041, -0.2436753, 1.1512420, 6.0407261,...
+## $ Fractal_dimension &lt;dbl&gt; 1.93531174, 0.28094279, 0.20121416, 4.930671...</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">glimpse</span>(validation_set)</code></pre></div>
-<pre><code>## Observations: 226
+<pre><code>## Observations: 142
 ## Variables: 12
-## $ ID                &lt;int&gt; 842517, 843786, 844981, 84501001, 845636, 84...
-## $ Class             &lt;fct&gt; M, M, M, M, M, M, M, M, M, B, B, B, M, M, M,...
-## $ Radius            &lt;dbl&gt; 1.80433981, -0.16535275, -0.16121474, -0.243...
-## $ Texture           &lt;dbl&gt; -0.368878647, -0.313560433, 0.822089979, 2.4...
-## $ Perimeter         &lt;dbl&gt; 1.53377643, -0.11490835, -0.03158132, -0.286...
-## $ Area              &lt;dbl&gt; 1.888827020, -0.244105421, -0.248145066, -0....
-## $ Smoothness        &lt;dbl&gt; -0.375281748, 2.046711944, 1.661295226, 2.31...
-## $ Compactness       &lt;dbl&gt; -0.4300658, 1.7201029, 1.8167112, 5.1083824,...
-## $ Concavity         &lt;dbl&gt; -0.1466200, 1.2621327, 1.2789092, 3.9919204,...
-## $ Concave_points    &lt;dbl&gt; 1.08612862, 0.90509140, 1.39039284, 1.618591...
-## $ Symmetry          &lt;dbl&gt; -0.2436753, 1.7525273, 2.3877562, 2.3683599,...
-## $ Fractal_dimension &lt;dbl&gt; 0.28094279, 2.23983079, 1.28751667, 6.840836...</code></pre>
-<p>We can see from <code>glimpse</code> in the code above that the training set contains 343 observations, while the validation set contains 226 observations. This corresponds to the training set having 60% of the observations from the original data set and the validation set having the other 40% of the observations. We specified this when we set <code>p = 0.60</code> when we called <code>createDataPartition</code>.</p>
+## $ ID                &lt;int&gt; 84458202, 84501001, 84610002, 846226, 846381...
+## $ Class             &lt;fct&gt; M, M, M, M, M, M, M, M, M, M, M, M, M, M, B,...
+## $ Radius            &lt;dbl&gt; 0.16361901, -0.24397494, 0.85880462, 0.97053...
+## $ Texture           &lt;dbl&gt; 0.400695342, 2.440961268, 0.260772799, 0.693...
+## $ Perimeter         &lt;dbl&gt; 0.099361153, -0.286026354, 0.870136167, 1.32...
+## $ Area              &lt;dbl&gt; 0.028834057, -0.297147713, 0.734893708, 0.79...
+## $ Smoothness        &lt;dbl&gt; 1.4466882, 2.3182555, 0.3167164, -1.2556086,...
+## $ Compactness       &lt;dbl&gt; 0.7241483, 5.1083824, 1.9489119, 0.8646116, ...
+## $ Concavity         &lt;dbl&gt; -0.02103534, 3.99192038, 0.59586313, 0.43960...
+## $ Concave_points    &lt;dbl&gt; 0.62364699, 1.61859101, 1.01006256, 0.944645...
+## $ Symmetry          &lt;dbl&gt; 0.4772206, 2.3683599, 1.4405702, 0.4448934, ...
+## $ Fractal_dimension &lt;dbl&gt; 1.72491676, 6.84083682, 1.15463563, 1.016217...</code></pre>
+<p>We can see from <code>glimpse</code> in the code above that the training set contains 427 observations, while the validation set contains 142 observations. This corresponds to the training set having 75% of the observations from the original data set and the validation set having the other 40% of the observations. We specified this when we set <code>p = 0.60</code> when we called <code>createDataPartition</code>.</p>
 </div>
 <div id="creating-the-k-nn-classifier" class="section level4">
 <h4><span class="header-section-number">7.3.1.2</span> Creating the k-nn classifier</h4>
@@ -355,17 +357,17 @@ model_knn &lt;-<span class="st"> </span><span class="kw">train</span>(<span clas
 model_knn</code></pre></div>
 <pre><code>## k-Nearest Neighbors 
 ## 
-## 343 samples
+## 427 samples
 ##   2 predictor
 ##   2 classes: &#39;B&#39;, &#39;M&#39; 
 ## 
 ## No pre-processing
 ## Resampling: Bootstrapped (25 reps) 
-## Summary of sample sizes: 343, 343, 343, 343, 343, 343, ... 
+## Summary of sample sizes: 427, 427, 427, 427, 427, 427, ... 
 ## Resampling results:
 ## 
-##   Accuracy   Kappa    
-##   0.9314839  0.8538238
+##   Accuracy   Kappa   
+##   0.9252196  0.839621
 ## 
 ## Tuning parameter &#39;k&#39; was held constant at a value of 3</code></pre>
 </div>
@@ -377,7 +379,7 @@ model_knn</code></pre></div>
 <span class="st">  </span><span class="kw">data.frame</span>()
 Y_validation_predicted &lt;-<span class="st"> </span><span class="kw">predict</span>(<span class="dt">object =</span> model_knn, X_validation)
 <span class="kw">head</span>(Y_validation_predicted)</code></pre></div>
-<pre><code>## [1] M M M M M M
+<pre><code>## [1] B M M M B M
 ## Levels: B M</code></pre>
 </div>
 <div id="assessing-our-classifiers-accuracy" class="section level4">
@@ -396,32 +398,152 @@ model_quality</code></pre></div>
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
-## Prediction   B   M
-##          B 126   5
-##          M  16  79
+## Prediction  B  M
+##          B 81  8
+##          M  8 45
 ##                                           
-##                Accuracy : 0.9071          
-##                  95% CI : (0.8615, 0.9416)
-##     No Information Rate : 0.6283          
-##     P-Value [Acc &gt; NIR] : &lt;2e-16          
+##                Accuracy : 0.8873          
+##                  95% CI : (0.8235, 0.9342)
+##     No Information Rate : 0.6268          
+##     P-Value [Acc &gt; NIR] : 2.646e-12       
 ##                                           
-##                   Kappa : 0.8062          
-##  Mcnemar&#39;s Test P-Value : 0.0291          
+##                   Kappa : 0.7592          
+##  Mcnemar&#39;s Test P-Value : 1               
 ##                                           
-##             Sensitivity : 0.8873          
-##             Specificity : 0.9405          
-##          Pos Pred Value : 0.9618          
-##          Neg Pred Value : 0.8316          
-##              Prevalence : 0.6283          
-##          Detection Rate : 0.5575          
-##    Detection Prevalence : 0.5796          
-##       Balanced Accuracy : 0.9139          
+##             Sensitivity : 0.9101          
+##             Specificity : 0.8491          
+##          Pos Pred Value : 0.9101          
+##          Neg Pred Value : 0.8491          
+##              Prevalence : 0.6268          
+##          Detection Rate : 0.5704          
+##    Detection Prevalence : 0.6268          
+##       Balanced Accuracy : 0.8796          
 ##                                           
 ##        &#39;Positive&#39; Class : B               
 ## </code></pre>
+<p>A lot of information is output from <code>confusionMatrix</code>, but what we are interested in at this point is accuracy (found on the 6th line of printed output). That single value can be obtained from the <code>confusionMatrix</code> object using base/built-in R subsetting:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">model_quality<span class="op">$</span>overall[<span class="dv">1</span>]</code></pre></div>
+<pre><code>##  Accuracy 
+## 0.8873239</code></pre>
+<p>From a value of accuracy of 0.9070796, we can say that our k-nn classifier predicted the correct class label ~ 89% of the time.</p>
+</div>
+</div>
+</div>
+<div id="cross-validation-for-assessing-classifier-quality" class="section level2">
+<h2><span class="header-section-number">7.4</span> Cross-validation for assessing classifier quality</h2>
+<p>Is that the best estimate of accuracy that we can get? What would happen if we again shuffled the observations in our training and validation sets, would we get the same accuracy? Let’s do and experiment and see. By changing the <code>set.seed</code> value, we can get a different shuffle of the data when we create our training and validation data sets.</p>
+<p>Using <code>set.seed(4321)</code></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">4321</span>) <span class="co"># makes the random selection of rows reproducible</span>
+set_rows &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(Class) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">unlist</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="co"># converts Class from a tibble to a vector</span>
+<span class="st">  </span><span class="kw">createDataPartition</span>(<span class="dt">p =</span> <span class="fl">0.75</span>, <span class="dt">list =</span> <span class="ot">FALSE</span>)
+training_set &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">slice</span>(set_rows)
+validation_set &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">slice</span>(<span class="op">-</span>set_rows)
+X_train &lt;-<span class="st"> </span>training_set <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(Concavity, Perimeter) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">data.frame</span>()
+Y_train &lt;-<span class="st"> </span>training_set <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(Class) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">unlist</span>()
+k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="dv">3</span>)
+model_knn &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_train, <span class="dt">y =</span> Y_train, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k)
+X_validation &lt;-<span class="st"> </span>validation_set <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(Concavity, Perimeter) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">data.frame</span>()
+Y_validation_predicted &lt;-<span class="st"> </span><span class="kw">predict</span>(<span class="dt">object =</span> model_knn, X_validation)
+Y_validation &lt;-<span class="st"> </span>validation_set <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(Class) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">unlist</span>()
+model_quality &lt;-<span class="st"> </span><span class="kw">confusionMatrix</span>(<span class="dt">data =</span> Y_validation_predicted, <span class="dt">reference =</span> Y_validation)
+model_quality<span class="op">$</span>overall[<span class="dv">1</span>]</code></pre></div>
+<pre><code>##  Accuracy 
+## 0.9366197</code></pre>
+<p>Using <code>set.seed(8765)</code></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">8765</span>) <span class="co"># makes the random selection of rows reproducible</span>
+set_rows &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(Class) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">unlist</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="co"># converts Class from a tibble to a vector</span>
+<span class="st">  </span><span class="kw">createDataPartition</span>(<span class="dt">p =</span> <span class="fl">0.75</span>, <span class="dt">list =</span> <span class="ot">FALSE</span>)
+training_set &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">slice</span>(set_rows)
+validation_set &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">slice</span>(<span class="op">-</span>set_rows)
+X_train &lt;-<span class="st"> </span>training_set <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(Concavity, Perimeter) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">data.frame</span>()
+Y_train &lt;-<span class="st"> </span>training_set <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(Class) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">unlist</span>()
+k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="dv">3</span>)
+model_knn &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_train, <span class="dt">y =</span> Y_train, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k)
+X_validation &lt;-<span class="st"> </span>validation_set <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(Concavity, Perimeter) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">data.frame</span>()
+Y_validation_predicted &lt;-<span class="st"> </span><span class="kw">predict</span>(<span class="dt">object =</span> model_knn, X_validation)
+Y_validation &lt;-<span class="st"> </span>validation_set <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(Class) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">unlist</span>()
+model_quality &lt;-<span class="st"> </span><span class="kw">confusionMatrix</span>(<span class="dt">data =</span> Y_validation_predicted, <span class="dt">reference =</span> Y_validation)
+model_quality<span class="op">$</span>overall[<span class="dv">1</span>]</code></pre></div>
+<pre><code>## Accuracy 
+## 0.915493</code></pre>
+<p>When we have 3 different shuffles of the data, we get 3 different values for accuracy! 0.8873239, 0.9366197 and 0.915493! Which one is correct? Sadly, there is no easy answer to that question. The best we can do is to do this many times and take the average of the accuracies. Typically this is done is a more structured way so that each observation in the data set is used in a validation set only a single time. The name for this strategy is called cross-validation and we illustrate it below:</p>
+<p><img src="img/cv.png" width="800" /></p>
+<p>In the picture above, 5 different folds/partitions of the data set are shown, and consequently we call this 5-fold cross-validation. To do 5-fold cross-validation in R with <code>caret</code>, we use another function called <code>trainControl</code>. This function passes additional information to the <code>train</code> function we use to create our classifier. The arguments we pass <code>trainControl</code> are:</p>
+<ol style="list-style-type: decimal">
+<li><code>method</code> (method used for assessing classifier quality, here we specify <code>&quot;cv&quot;</code> for cross-validation)</li>
+<li><code>number</code> (how many folds/partitions of the data set we want to use for cross validation)</li>
+</ol>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">1234</span>)
+train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">5</span>)</code></pre></div>
+<p>Then when we create our classifier we add an additional argument to <code>train</code>, called <code>trControl</code> where we give it the name of the object we created with the <code>trainControl</code> function. Additionally, we do not need to specify a training and a validation set because we are telling <code>train</code> that we are doing cross validation (it will take care creating the folds, calculating the accuracy for each fold and averaging the accuracies for us).</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">X_cancer &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(Concavity, Perimeter) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">data.frame</span>()
+Y_cancer &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(Class) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">unlist</span>()
+k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="dv">3</span>)
+knn_model_cv_5fold &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_cancer, <span class="dt">y =</span> Y_cancer, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k, <span class="dt">trControl =</span> train_control)
+knn_model_cv_5fold</code></pre></div>
+<pre><code>## k-Nearest Neighbors 
+## 
+## 569 samples
+##   2 predictor
+##   2 classes: &#39;B&#39;, &#39;M&#39; 
+## 
+## No pre-processing
+## Resampling: Cross-Validated (5 fold) 
+## Summary of sample sizes: 456, 455, 454, 455, 456 
+## Resampling results:
+## 
+##   Accuracy   Kappa    
+##   0.9298374  0.8501136
+## 
+## Tuning parameter &#39;k&#39; was held constant at a value of 3</code></pre>
+<p>We can choose any number of folds, typically the more the better. However we are limited by computational power. The more folds we choose, the computation it takes, and hence the more time it takes to run the analysis. So for each time you do cross-validation you need to consider the size of the data, and the speed of the algorithm (here k-nn) and the speed of your computer. In practice this is a trial and error process. Here we show what happens when we do 10 folds:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">10</span>)
+knn_model_cv_10fold &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_cancer, <span class="dt">y =</span> Y_cancer, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k, <span class="dt">trControl =</span> train_control)
+knn_model_cv_10fold</code></pre></div>
+<pre><code>## k-Nearest Neighbors 
+## 
+## 569 samples
+##   2 predictor
+##   2 classes: &#39;B&#39;, &#39;M&#39; 
+## 
+## No pre-processing
+## Resampling: Cross-Validated (10 fold) 
+## Summary of sample sizes: 512, 512, 512, 512, 513, 512, ... 
+## Resampling results:
+## 
+##   Accuracy   Kappa    
+##   0.9384366  0.8677272
+## 
+## Tuning parameter &#39;k&#39; was held constant at a value of 3</code></pre>
+</div>
+<div id="choosing-k-for-k-nn-classification" class="section level2">
+<h2><span class="header-section-number">7.5</span> Choosing <span class="math inline">\(k\)</span> for k-nn classification</h2>
+<p>This could be not too bad of an accuracy, however what accuracy you aim for always depends on the downstream application of your analysis. Here, we are trying to predict a very important outcome, tumour cell diagnosis class. And the class label we assign to a real patient may have life or death consequences. Hence, we’d like to do better for this application than 90%.</p>
 
-</div>
-</div>
 </div>
 </div>
             </section>
