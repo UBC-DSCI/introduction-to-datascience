@@ -287,3 +287,62 @@ accuracy_vs_k
 ```
 
 
+## Other ways to increase accuracy
+
+By using cross-validation to choose $k$ we were able to slightly increase our accuracy, but can we still do better? Perhaps. We can start to explore this by taking a look at what is called the training accuracy. Training accuracy is our accuracy if we asked our classifier to make predictions on the training data and then we assessed how well the predictions matched up to the true labels we have for our training data. If they don't match up really well (training accuracy is low) then our classification model might be too simple and adding more information (e.g., additional predictors/explanatory variables) could potentially help. The situation where the training error is low is often called underfitting, or high bias.
+
+The training error can be obtained from using the classifier object returned from `train` (when you don't perform cross-validation) to predict on the training data. Then passing the predictions on the training data and the true observed labels into `confusionMatrix`.
+
+```{r}
+k = data.frame(k = 5)
+knn_model <- train(x = X_cancer, y = Y_cancer, method = "knn", tuneGrid = k)
+training_pred <- predict(knn_model, X_cancer)
+results <- confusionMatrix(training_pred, Y_cancer)
+results
+```
+
+From the complex output, we can see the training accuracy - it is the second accuracy score printed out, here 0.891. Again we can use base/built-in subsetting syntax to directly get the value:
+
+```{r}
+results$overall[1]
+```
+
+Here we see that our training accuracy is high, 0.8910369, but there is still room for improvement! (If it were 1.0 there wouldn't be and we would have a different problem). So let's see if adding additional information (predictors/explanatory variables) might help our model training and consequently (and more importantly) validation accuracy.
+
+*Note - when add more information to the model, $k$ = 5 may no longer be the "best" $k$. So we will want to also choose $k$ again.*
+
+```{r}
+# set-up training data
+X_cancer_all <- cancer %>% 
+  select(-Class, -ID) %>% 
+  data.frame()
+Y_cancer_all <- cancer %>% 
+  select(Class) %>% 
+  unlist()
+
+# set-up classifier specifications
+train_control <- trainControl(method="cv", number = 10)
+k = data.frame(k = seq(from = 1, to = 29, by = 2))
+
+# create classifier
+knn_model_all <- train(x = X_cancer_all, y = Y_cancer_all, method = "knn", tuneGrid = k, trControl = train_control)
+
+# assess training accuracy
+training_pred_all <- predict(knn_model_all, X_cancer_all)
+results_all <- confusionMatrix(training_pred_all, Y_cancer_all)
+results_all$overall[1]
+```
+
+We can see that by including more information (making our classifier more complex by adding additional predictors/explanatory variables) we increased the training accuracy. What about the cross-validation accuracy? And what $k$ should we choose?
+
+```{r fig.height = 4, fig.width = 5}
+accuracies_all <- knn_model_all
+accuracy_vs_k_all <- ggplot(accuracies_all, aes(x = k, y = Accuracy)) +
+  geom_point() +
+  geom_line()
+accuracy_vs_k_all
+```
+
+From the plot above, it seems as though now will more information in our model, we should choose a $k$ of 3. Additionally, with this extra information our validation accuracy has also increased to 0.9648161 with $k = 3$.
+
+

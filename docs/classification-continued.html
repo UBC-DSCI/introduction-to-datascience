@@ -214,6 +214,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </ul></li>
 <li class="chapter" data-level="7.4" data-path="classification-continued.html"><a href="classification-continued.html#cross-validation-for-assessing-classifier-quality"><i class="fa fa-check"></i><b>7.4</b> Cross-validation for assessing classifier quality</a></li>
 <li class="chapter" data-level="7.5" data-path="classification-continued.html"><a href="classification-continued.html#choosing-the-number-of-neighbours-for-k-nn-classification"><i class="fa fa-check"></i><b>7.5</b> Choosing the number of neighbours for k-nn classification</a></li>
+<li class="chapter" data-level="7.6" data-path="classification-continued.html"><a href="classification-continued.html#other-ways-to-increase-accuracy"><i class="fa fa-check"></i><b>7.6</b> Other ways to increase accuracy</a></li>
 </ul></li>
 <li class="divider"></li>
 <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
@@ -601,6 +602,77 @@ accuracy_vs_k &lt;-<span class="st"> </span><span class="kw">ggplot</span>(accur
 <span class="st">  </span><span class="kw">geom_line</span>()
 accuracy_vs_k</code></pre></div>
 <p><img src="bookdown-demo_files/figure-html/unnamed-chunk-9-1.png" width="480" /></p>
+</div>
+<div id="other-ways-to-increase-accuracy" class="section level2">
+<h2><span class="header-section-number">7.6</span> Other ways to increase accuracy</h2>
+<p>By using cross-validation to choose <span class="math inline">\(k\)</span> we were able to slightly increase our accuracy, but can we still do better? Perhaps. We can start to explore this by taking a look at what is called the training accuracy. Training accuracy is our accuracy if we asked our classifier to make predictions on the training data and then we assessed how well the predictions matched up to the true labels we have for our training data. If they don’t match up really well (training accuracy is low) then our classification model might be too simple and adding more information (e.g., additional predictors/explanatory variables) could potentially help. The situation where the training error is low is often called underfitting, or high bias.</p>
+<p>The training error can be obtained from using the classifier object returned from <code>train</code> (when you don’t perform cross-validation) to predict on the training data. Then passing the predictions on the training data and the true observed labels into <code>confusionMatrix</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="dv">5</span>)
+knn_model &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_cancer, <span class="dt">y =</span> Y_cancer, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k)
+training_pred &lt;-<span class="st"> </span><span class="kw">predict</span>(knn_model, X_cancer)
+results &lt;-<span class="st"> </span><span class="kw">confusionMatrix</span>(training_pred, Y_cancer)
+results</code></pre></div>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction   B   M
+##          B 323  28
+##          M  34 184
+##                                           
+##                Accuracy : 0.891           
+##                  95% CI : (0.8625, 0.9154)
+##     No Information Rate : 0.6274          
+##     P-Value [Acc &gt; NIR] : &lt;2e-16          
+##                                           
+##                   Kappa : 0.7683          
+##  Mcnemar&#39;s Test P-Value : 0.5254          
+##                                           
+##             Sensitivity : 0.9048          
+##             Specificity : 0.8679          
+##          Pos Pred Value : 0.9202          
+##          Neg Pred Value : 0.8440          
+##              Prevalence : 0.6274          
+##          Detection Rate : 0.5677          
+##    Detection Prevalence : 0.6169          
+##       Balanced Accuracy : 0.8863          
+##                                           
+##        &#39;Positive&#39; Class : B               
+## </code></pre>
+<p>From the complex output, we can see the training accuracy - it is the second accuracy score printed out, here 0.891. Again we can use base/built-in subsetting syntax to directly get the value:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">results<span class="op">$</span>overall[<span class="dv">1</span>]</code></pre></div>
+<pre><code>##  Accuracy 
+## 0.8910369</code></pre>
+<p>Here we see that our training accuracy is high, 0.8910369, but there is still room for improvement! (If it were 1.0 there wouldn’t be and we would have a different problem). So let’s see if adding additional information (predictors/explanatory variables) might help our model training and consequently (and more importantly) validation accuracy.</p>
+<p><em>Note - when add more information to the model, <span class="math inline">\(k\)</span> = 5 may no longer be the “best” <span class="math inline">\(k\)</span>. So we will want to also choose <span class="math inline">\(k\)</span> again.</em></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># set-up training data</span>
+X_cancer_all &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>Class, <span class="op">-</span>ID) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">data.frame</span>()
+Y_cancer_all &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(Class) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">unlist</span>()
+
+<span class="co"># set-up classifier specifications</span>
+train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">10</span>)
+k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="kw">seq</span>(<span class="dt">from =</span> <span class="dv">1</span>, <span class="dt">to =</span> <span class="dv">29</span>, <span class="dt">by =</span> <span class="dv">2</span>))
+
+<span class="co"># create classifier</span>
+knn_model_all &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_cancer_all, <span class="dt">y =</span> Y_cancer_all, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k, <span class="dt">trControl =</span> train_control)
+
+<span class="co"># assess training accuracy</span>
+training_pred_all &lt;-<span class="st"> </span><span class="kw">predict</span>(knn_model_all, X_cancer_all)
+results_all &lt;-<span class="st"> </span><span class="kw">confusionMatrix</span>(training_pred_all, Y_cancer_all)
+results_all<span class="op">$</span>overall[<span class="dv">1</span>]</code></pre></div>
+<pre><code>##  Accuracy 
+## 0.9666081</code></pre>
+<p>We can see that by including more information (making our classifier more complex by adding additional predictors/explanatory variables) we increased the training accuracy. What about the cross-validation accuracy? And what <span class="math inline">\(k\)</span> should we choose?</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">accuracies_all &lt;-<span class="st"> </span>knn_model_all
+accuracy_vs_k_all &lt;-<span class="st"> </span><span class="kw">ggplot</span>(accuracies_all, <span class="kw">aes</span>(<span class="dt">x =</span> k, <span class="dt">y =</span> Accuracy)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_line</span>()
+accuracy_vs_k_all</code></pre></div>
+<p><img src="bookdown-demo_files/figure-html/unnamed-chunk-13-1.png" width="480" /></p>
+<p>From the plot above, it seems as though now will more information in our model, we should choose a <span class="math inline">\(k\)</span> of 3. Additionally, with this extra information our validation accuracy has also increased to 0.9648161 with <span class="math inline">\(k = 3\)</span>.</p>
 
 </div>
 </div>
