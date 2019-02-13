@@ -205,6 +205,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="6.5.1" data-path="classification.html"><a href="classification.html#k-nearest-neighbours-in-r"><i class="fa fa-check"></i><b>6.5.1</b> K-Nearest Neighbours in R</a></li>
 <li class="chapter" data-level="6.5.2" data-path="classification.html"><a href="classification.html#more-than-two-explanatory-variablespredictors"><i class="fa fa-check"></i><b>6.5.2</b> More than two explanatory variables/predictors</a></li>
 </ul></li>
+<li class="chapter" data-level="6.6" data-path="classification.html"><a href="classification.html#additional-readingsresources-2"><i class="fa fa-check"></i><b>6.6</b> Additional readings/resources</a></li>
 </ul></li>
 <li class="chapter" data-level="7" data-path="classification-continued.html"><a href="classification-continued.html"><i class="fa fa-check"></i><b>7</b> Classification continued</a><ul>
 <li class="chapter" data-level="7.1" data-path="classification-continued.html"><a href="classification-continued.html#overview-5"><i class="fa fa-check"></i><b>7.1</b> Overview</a></li>
@@ -215,6 +216,8 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="7.4" data-path="classification-continued.html"><a href="classification-continued.html#cross-validation-for-assessing-classifier-quality"><i class="fa fa-check"></i><b>7.4</b> Cross-validation for assessing classifier quality</a></li>
 <li class="chapter" data-level="7.5" data-path="classification-continued.html"><a href="classification-continued.html#choosing-the-number-of-neighbours-for-k-nn-classification"><i class="fa fa-check"></i><b>7.5</b> Choosing the number of neighbours for k-nn classification</a></li>
 <li class="chapter" data-level="7.6" data-path="classification-continued.html"><a href="classification-continued.html#other-ways-to-increase-accuracy"><i class="fa fa-check"></i><b>7.6</b> Other ways to increase accuracy</a></li>
+<li class="chapter" data-level="7.7" data-path="classification-continued.html"><a href="classification-continued.html#scaling-your-data"><i class="fa fa-check"></i><b>7.7</b> Scaling your data</a></li>
+<li class="chapter" data-level="7.8" data-path="classification-continued.html"><a href="classification-continued.html#additional-readingsresources-3"><i class="fa fa-check"></i><b>7.8</b> Additional readings/resources</a></li>
 </ul></li>
 <li class="divider"></li>
 <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
@@ -673,6 +676,62 @@ accuracy_vs_k_all &lt;-<span class="st"> </span><span class="kw">ggplot</span>(a
 accuracy_vs_k_all</code></pre></div>
 <p><img src="bookdown-demo_files/figure-html/unnamed-chunk-13-1.png" width="480" /></p>
 <p>From the plot above, it seems as though now will more information in our model, we should choose a <span class="math inline">\(k\)</span> of 3. Additionally, with this extra information our validation accuracy has also increased to 0.9648161 with <span class="math inline">\(k = 3\)</span>.</p>
+</div>
+<div id="scaling-your-data" class="section level2">
+<h2><span class="header-section-number">7.7</span> Scaling your data</h2>
+<p>For a knn classifier, the scale of the variables matter. Since the knn classifier predicts classes by identifying observations that are nearest to it, any variables that are on a large scale will have a much larger effect than variables on a small scale. (Even though they might not actually be more important!) For example, suppose your dataset has two attributes: salary (in dollars) and years of education. For the knn classifier, a difference of $1000 is huge compared to a difference of 10 years of education. For our conceptual understanding and answering of the problem, its the opposite! 10 years of education is huge compared to a difference of $1000 in yearly salary!</p>
+<p>So to prevent an overpowering influence of salary on the distance function we need to standardize our predictors/explanatory variables so that our variables will be on a comparable scale. We can do this with the <code>scale()</code> function in R.</p>
+<p>To illustrate the difference between scaled and non-scaled data, and the effect it can have on k-nn, we will read in the original, un-scaled Wisconsin breast cancer data set (we have been using a scaled version of the data set in the textbook and worksheets up until now).</p>
+<p>Here we get the data from the UCI Machine learning repository, and then get the equivalent columns that we have been working with in the scaled version of the data set (“worst” measures). We also give the data column names (the data set comes with none).</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">unscaled_cancer &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data&quot;</span>, 
+                            <span class="dt">col_names =</span> <span class="ot">FALSE</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(X1, X2, X11<span class="op">:</span>X20)</code></pre></div>
+<pre><code>## Parsed with column specification:
+## cols(
+##   .default = col_double(),
+##   X1 = col_integer(),
+##   X2 = col_character()
+## )</code></pre>
+<pre><code>## See spec(...) for full column specifications.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">colnames</span>(unscaled_cancer) &lt;-<span class="st"> </span><span class="kw">colnames</span>(cancer)
+<span class="kw">head</span>(unscaled_cancer)</code></pre></div>
+<pre><code>## # A tibble: 6 x 12
+##       ID Class Radius Texture Perimeter  Area Smoothness Compactness
+##    &lt;int&gt; &lt;chr&gt;  &lt;dbl&gt;   &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt;
+## 1 8.42e5 M      0.242  0.0787     1.10  0.905       8.59       153. 
+## 2 8.43e5 M      0.181  0.0567     0.544 0.734       3.40        74.1
+## 3 8.43e7 M      0.207  0.0600     0.746 0.787       4.58        94.0
+## 4 8.43e7 M      0.260  0.0974     0.496 1.16        3.44        27.2
+## 5 8.44e7 M      0.181  0.0588     0.757 0.781       5.44        94.4
+## 6 8.44e5 M      0.209  0.0761     0.334 0.890       2.22        27.2
+## # ... with 4 more variables: Concavity &lt;dbl&gt;, Concave_points &lt;dbl&gt;,
+## #   Symmetry &lt;dbl&gt;, Fractal_dimension &lt;dbl&gt;</code></pre>
+<p>Looking at the unscaled data above, you can see that the difference between the values for smoothness measurements are much larger than those for area. Let’s make a scatter plot for these two predictors below (colouring by diagnosis) and then overlay that with a new observation we would like to classify as either benign or malignant with a red dot. We’ll do this for the unscaled and scaled data sets, and put them side-by-side:</p>
+<p><img src="bookdown-demo_files/figure-html/unnamed-chunk-15-1.png" width="960" /></p>
+<p>In the plot with the unscaled data above, its very clear that k-nn would classify the red dot (new observation) as malignant. However, once we scale the data the diagnosis class labelling becomes less clear and appears it would depend upon the choice of <span class="math inline">\(k\)</span>. Hopefully this graphic drives home the message that scaling the data changes things in an important way when we are using algorithms like k-nn that use distance between points as a part of their decision making process.</p>
+<p>How do we scale data in R? The code below demonstrates how we can use the scale function in R to take the <code>unscaled_cancer</code> data and scale it:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">scaled_cancer &lt;-<span class="st"> </span>unscaled_cancer <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(<span class="op">-</span><span class="kw">c</span>(ID,Class)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">scale</span>(<span class="dt">center =</span> <span class="ot">FALSE</span>) 
+scaled_cancer &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">ID =</span> unscaled_cancer<span class="op">$</span>ID, <span class="dt">Class =</span> unscaled_cancer<span class="op">$</span>Class, scaled_cancer)
+<span class="kw">head</span>(scaled_cancer)</code></pre></div>
+<pre><code>##         ID Class      Area Smoothness
+## 1   842302     M 0.6731696  2.4446014
+## 2   842517     M 0.5457187  0.9671389
+## 3 84300903     M 0.5851288  1.3049828
+## 4 84348301     M 0.8595869  0.9805160
+## 5 84358402     M 0.5809648  1.5477637
+## 6   843786     M 0.6619414  0.6310026</code></pre>
+<p>Scaling your data should be a part of the pre-processing you do before you start doing and analysis where distance between points plays a role. And as we learned in the last two chapters, k-nn classification is one of these.</p>
+<blockquote>
+<p>What about centering the data? I’ve heard that is also a data pre-processing step? Yes, it can be helpful but it depends on the algorithm. For k-nn classification centering doesn’t help, nor does it hurt. So you can do it if you would like but you do not have to.</p>
+</blockquote>
+</div>
+<div id="additional-readingsresources-3" class="section level2">
+<h2><span class="header-section-number">7.8</span> Additional readings/resources</h2>
+<ul>
+<li><a href="https://topepo.github.io/caret/index.html">The <code>caret</code> Package</a></li>
+</ul>
 
 </div>
 </div>

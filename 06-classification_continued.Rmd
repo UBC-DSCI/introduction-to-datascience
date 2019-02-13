@@ -345,4 +345,78 @@ accuracy_vs_k_all
 
 From the plot above, it seems as though now will more information in our model, we should choose a $k$ of 3. Additionally, with this extra information our validation accuracy has also increased to 0.9648161 with $k = 3$.
 
+## Scaling your data
 
+For a knn classifier, the scale of the variables matter. Since the knn classifier predicts classes by identifying observations that are nearest to it, any variables that are on a large scale will have a much larger effect than variables on a small scale. (Even though they might not actually be more important!) For example, suppose your dataset has two attributes: salary (in dollars) and years of education. For the knn classifier, a difference of \$1000 is huge compared to a difference of 10 years of education. For our conceptual understanding and answering of the problem, its the opposite! 10 years of education is huge compared to a difference of \$1000 in yearly salary!
+
+So to prevent an overpowering influence of salary on the distance function we need to standardize our predictors/explanatory variables so that our variables will be on a comparable scale. We can do this with the `scale()` function in R. 
+
+To illustrate the difference between scaled and non-scaled data, and the effect it can have on k-nn, we will read in the original, un-scaled Wisconsin breast cancer data set (we have been using a scaled version of the data set in the textbook and worksheets up until now).
+
+Here we get the data from the UCI Machine learning repository, and then get the equivalent columns that we have been working with in the scaled version of the data set ("worst" measures). We also give the data column names (the data set comes with none).
+
+```{r}
+unscaled_cancer <- read_csv("https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data", 
+                            col_names = FALSE) %>% 
+  select(X1, X2, X11:X20)
+colnames(unscaled_cancer) <- colnames(cancer)
+head(unscaled_cancer)
+```
+
+Looking at the unscaled data above, you can see that the difference between the values for smoothness measurements are much larger than those for area. Let's make a scatter plot for these two predictors below (colouring by diagnosis) and then overlay that with a new observation we would like to classify as either benign or malignant with a red dot. We'll do this for the unscaled and scaled data sets, and put them side-by-side:
+
+```{r warning = FALSE, echo =  FALSE,  fig.height = 4, fig.width = 10}
+unscaled_cancer <- unscaled_cancer %>% 
+  select(ID, Class, Area, Smoothness)
+new_obs <- tibble(ID = 99999, Class = "unknown", Area = 3.7, Smoothness = 5.3)
+unscaled_cancer <- bind_rows(unscaled_cancer, new_obs)
+
+unscaled <- ggplot(unscaled_cancer, aes(x = Area, y = Smoothness, color = Class)) +
+    geom_point(alpha = 0.6) +
+    labs(color = "Diagnosis") + 
+    scale_color_manual(labels = c("Benign", "Malignant"), values = c("#56B4E9", "#E69F00", "red")) +
+    labs(color = "Diagnosis") + 
+    ggtitle("unscaled data") +
+    #geom_point(aes(x = 40.73, y = 0.1506), color = cbPalette[6], size = 2.5) + 
+    coord_equal(ratio = 1) +
+    xlim(c(0, 6)) + # zooming into only data that falls between 0 and 86 on the x-axis
+    ylim(c(0, 6))
+
+scaled_cancer <- unscaled_cancer %>% 
+  select(-c(ID,Class)) %>% 
+  scale(center = FALSE) 
+scaled_cancer <- data.frame(ID = unscaled_cancer$ID, Class = unscaled_cancer$Class, scaled_cancer)
+
+scaled <- ggplot(scaled_cancer, aes(x = Area, y = Smoothness, color = Class)) +
+    geom_point(alpha = 0.6) +
+    labs(color = "Diagnosis") + 
+    scale_color_manual(labels = c("Benign", "Malignant"), values = c("#56B4E9", "#E69F00", "red")) +
+    labs(color = "Diagnosis") + 
+    ggtitle("scaled data") +
+    coord_equal(ratio = 1) +
+    #geom_point(aes(x = 0.008637332, y = -1.114815397), color = cbPalette[6], size = 2.5) #+
+    #xlim(c(-2, 3.9)) # zooming into only data that falls between 0 and ~ 3.9 on the x-axis
+    xlim(c(0, 6)) + # zooming into only data that falls between 0 and 86 on the x-axis
+    ylim(c(0, 6))
+    
+gridExtra::grid.arrange(unscaled, scaled, ncol = 2)
+```
+
+In the plot with the unscaled data above, its very clear that k-nn would classify the red dot (new observation) as malignant. However, once we scale the data the diagnosis class labelling becomes less clear and appears it would depend upon the choice of $k$. Hopefully this graphic drives home the message that scaling the data changes things in an important way when we are using algorithms like k-nn that use distance between points as a part of their decision making process.
+
+How do we scale data in R? The code below demonstrates how we can use the scale function in R to take the `unscaled_cancer` data and scale it:
+
+```{r}
+scaled_cancer <- unscaled_cancer %>% 
+  select(-c(ID,Class)) %>% 
+  scale(center = FALSE) 
+scaled_cancer <- data.frame(ID = unscaled_cancer$ID, Class = unscaled_cancer$Class, scaled_cancer)
+head(scaled_cancer)
+```
+
+Scaling your data should be a part of the pre-processing you do before you start doing and analysis where distance between points plays a role. And as we learned in the last two chapters, k-nn classification is one of these.
+
+> What about centering the data? I've heard that is also a data pre-processing step? Yes, it can be helpful but it depends on the algorithm. For k-nn classification centering doesn't help, nor does it hurt. So you can do it if you would like but you do not have to.
+
+## Additional readings/resources
+- [The `caret` Package](https://topepo.github.io/caret/index.html)
