@@ -216,8 +216,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="7.4" data-path="classification-continued.html"><a href="classification-continued.html#cross-validation-for-assessing-classifier-quality"><i class="fa fa-check"></i><b>7.4</b> Cross-validation for assessing classifier quality</a></li>
 <li class="chapter" data-level="7.5" data-path="classification-continued.html"><a href="classification-continued.html#choosing-the-number-of-neighbours-for-k-nn-classification"><i class="fa fa-check"></i><b>7.5</b> Choosing the number of neighbours for k-nn classification</a></li>
 <li class="chapter" data-level="7.6" data-path="classification-continued.html"><a href="classification-continued.html#other-ways-to-increase-accuracy"><i class="fa fa-check"></i><b>7.6</b> Other ways to increase accuracy</a></li>
-<li class="chapter" data-level="7.7" data-path="classification-continued.html"><a href="classification-continued.html#scaling-your-data"><i class="fa fa-check"></i><b>7.7</b> Scaling your data</a></li>
-<li class="chapter" data-level="7.8" data-path="classification-continued.html"><a href="classification-continued.html#additional-readingsresources-3"><i class="fa fa-check"></i><b>7.8</b> Additional readings/resources</a></li>
+<li class="chapter" data-level="7.7" data-path="classification-continued.html"><a href="classification-continued.html#test-data-set"><i class="fa fa-check"></i><b>7.7</b> Test data set</a></li>
+<li class="chapter" data-level="7.8" data-path="classification-continued.html"><a href="classification-continued.html#scaling-your-data"><i class="fa fa-check"></i><b>7.8</b> Scaling your data</a></li>
+<li class="chapter" data-level="7.9" data-path="classification-continued.html"><a href="classification-continued.html#additional-readingsresources-3"><i class="fa fa-check"></i><b>7.9</b> Additional readings/resources</a></li>
 </ul></li>
 <li class="divider"></li>
 <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
@@ -593,7 +594,7 @@ accuracies </code></pre></div>
 <span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_line</span>()
 accuracy_vs_k</code></pre></div>
-<p><img src="bookdown-demo_files/figure-html/unnamed-chunk-8-1.png" width="480" /></p>
+<p><img src="bookdown-demo_files/figure-html/find_k-1.png" width="480" /></p>
 <p>Based off of the visualization above we typically would choose <span class="math inline">\(k\)</span> to be ~ 5, given that at this value of <span class="math inline">\(k\)</span> our accuracy is a high as it can be with much larger values of <span class="math inline">\(k\)</span>. As you can see there is no exact or perfect answer here, what we are looking for is a value for <span class="math inline">\(k\)</span> where we get a roughly optimal increase of accuracy but at the same time we want to keep <span class="math inline">\(k\)</span> small.</p>
 <p>Why do we want to keep <span class="math inline">\(k\)</span> small? Well this is because if we keep increasing <span class="math inline">\(k\)</span> our accuracy actually starts to decrease! Take a look as the plot below as we vary <span class="math inline">\(k\)</span> from 1 to almost the number of observations in the data set:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">10</span>)
@@ -604,7 +605,7 @@ accuracy_vs_k_lots &lt;-<span class="st"> </span><span class="kw">ggplot</span>(
 <span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_line</span>()
 accuracy_vs_k_lots</code></pre></div>
-<p><img src="bookdown-demo_files/figure-html/unnamed-chunk-9-1.png" width="480" /></p>
+<p><img src="bookdown-demo_files/figure-html/lots_of_ks-1.png" width="480" /></p>
 </div>
 <div id="other-ways-to-increase-accuracy" class="section level2">
 <h2><span class="header-section-number">7.6</span> Other ways to increase accuracy</h2>
@@ -674,11 +675,24 @@ accuracy_vs_k_all &lt;-<span class="st"> </span><span class="kw">ggplot</span>(a
 <span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_line</span>()
 accuracy_vs_k_all</code></pre></div>
-<p><img src="bookdown-demo_files/figure-html/unnamed-chunk-13-1.png" width="480" /></p>
+<p><img src="bookdown-demo_files/figure-html/more_info-1.png" width="480" /></p>
 <p>From the plot above, it seems as though now will more information in our model, we should choose a <span class="math inline">\(k\)</span> of 3. Additionally, with this extra information our validation accuracy has also increased to 0.9648161 with <span class="math inline">\(k = 3\)</span>.</p>
 </div>
+<div id="test-data-set" class="section level2">
+<h2><span class="header-section-number">7.7</span> Test data set</h2>
+<p>In addition to a training and validation sets, in practice we really split our data set into 3 different sets:</p>
+<ol style="list-style-type: decimal">
+<li>training</li>
+<li>validation</li>
+<li>testing</li>
+</ol>
+<p>What is the testing set and what purpose does this third set serve? Typically create the testing set at the very beginning of our analysis, leave it a the locked box so that it plays no role while we a fiddling with things (usually through cross validation) like choosing <span class="math inline">\(k\)</span>, or the number of predictors/explanatory variables to put in the classifier. After we have settled on all the settings (e.g., <span class="math inline">\(k\)</span> and number of predictors) for our classifier and we have no plans to EVER change them again we re-train the classifier on the entire training set (i.e., don’t do cross validation) with those settings and then predict on testing set observations. We then take those predictions and compare them to the true labels of the test set and come up with a test accuracy measure. This typically looks something like this:</p>
+<p><img src="img/testing.png" width="400"/></p>
+<p>source: <a href="https://towardsdatascience.com/train-test-split-and-cross-validation-in-python-80b61beca4b6" class="uri">https://towardsdatascience.com/train-test-split-and-cross-validation-in-python-80b61beca4b6</a></p>
+<p>Why do we have this super special test set? This is so we do not violate the golden rule of statistical/machine learning: YOU CANNOT USE THE TEST DATA TO BUILD THE MODEL!!! If you do, this is analagous to a student cheating on a midterm.</p>
+</div>
 <div id="scaling-your-data" class="section level2">
-<h2><span class="header-section-number">7.7</span> Scaling your data</h2>
+<h2><span class="header-section-number">7.8</span> Scaling your data</h2>
 <p>For a knn classifier, the scale of the variables matter. Since the knn classifier predicts classes by identifying observations that are nearest to it, any variables that are on a large scale will have a much larger effect than variables on a small scale. (Even though they might not actually be more important!) For example, suppose your dataset has two attributes: salary (in dollars) and years of education. For the knn classifier, a difference of $1000 is huge compared to a difference of 10 years of education. For our conceptual understanding and answering of the problem, its the opposite! 10 years of education is huge compared to a difference of $1000 in yearly salary!</p>
 <p>So to prevent an overpowering influence of salary on the distance function we need to standardize our predictors/explanatory variables so that our variables will be on a comparable scale. We can do this with the <code>scale()</code> function in R.</p>
 <p>To illustrate the difference between scaled and non-scaled data, and the effect it can have on k-nn, we will read in the original, un-scaled Wisconsin breast cancer data set (we have been using a scaled version of the data set in the textbook and worksheets up until now).</p>
@@ -707,7 +721,7 @@ accuracy_vs_k_all</code></pre></div>
 ## # ... with 4 more variables: Concavity &lt;dbl&gt;, Concave_points &lt;dbl&gt;,
 ## #   Symmetry &lt;dbl&gt;, Fractal_dimension &lt;dbl&gt;</code></pre>
 <p>Looking at the unscaled data above, you can see that the difference between the values for smoothness measurements are much larger than those for area. Let’s make a scatter plot for these two predictors below (colouring by diagnosis) and then overlay that with a new observation we would like to classify as either benign or malignant with a red dot. We’ll do this for the unscaled and scaled data sets, and put them side-by-side:</p>
-<p><img src="bookdown-demo_files/figure-html/unnamed-chunk-15-1.png" width="960" /></p>
+<p><img src="bookdown-demo_files/figure-html/unnamed-chunk-12-1.png" width="960" /></p>
 <p>In the plot with the unscaled data above, its very clear that k-nn would classify the red dot (new observation) as malignant. However, once we scale the data the diagnosis class labelling becomes less clear and appears it would depend upon the choice of <span class="math inline">\(k\)</span>. Hopefully this graphic drives home the message that scaling the data changes things in an important way when we are using algorithms like k-nn that use distance between points as a part of their decision making process.</p>
 <p>How do we scale data in R? The code below demonstrates how we can use the scale function in R to take the <code>unscaled_cancer</code> data and scale it:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">scaled_cancer &lt;-<span class="st"> </span>unscaled_cancer <span class="op">%&gt;%</span><span class="st"> </span>
@@ -728,7 +742,7 @@ scaled_cancer &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<
 </blockquote>
 </div>
 <div id="additional-readingsresources-3" class="section level2">
-<h2><span class="header-section-number">7.8</span> Additional readings/resources</h2>
+<h2><span class="header-section-number">7.9</span> Additional readings/resources</h2>
 <ul>
 <li><a href="https://topepo.github.io/caret/index.html">The <code>caret</code> Package</a></li>
 </ul>

@@ -263,7 +263,7 @@ accuracies
 
 Now we can plot accuracy versus k:
 
-```{r fig.height = 4, fig.width = 5}
+```{r find_k, fig.height = 4, fig.width = 5}
 accuracy_vs_k <- ggplot(accuracies, aes(x = k, y = Accuracy)) +
   geom_point() +
   geom_line()
@@ -275,7 +275,7 @@ Based off of the visualization above we typically would choose $k$ to be ~ 5, gi
 
 Why do we want to keep $k$ small? Well this is because if we keep increasing $k$ our accuracy actually starts to decrease! Take a look as the plot below as we vary $k$ from 1 to almost the number of observations in the data set:
 
-```{r fig.height = 4, fig.width = 5}
+```{r lots_of_ks, fig.height = 4, fig.width = 5}
 train_control <- trainControl(method="cv", number = 10)
 k_lots = data.frame(k = seq(from = 1, to = 499, by = 10))
 knn_model_cv_10fold_lots <- train(x = X_cancer, y = Y_cancer, method = "knn", tuneGrid = k_lots, trControl = train_control)
@@ -335,7 +335,7 @@ results_all$overall[1]
 
 We can see that by including more information (making our classifier more complex by adding additional predictors/explanatory variables) we increased the training accuracy. What about the cross-validation accuracy? And what $k$ should we choose?
 
-```{r fig.height = 4, fig.width = 5}
+```{r more_info, fig.height = 4, fig.width = 5}
 accuracies_all <- knn_model_all
 accuracy_vs_k_all <- ggplot(accuracies_all, aes(x = k, y = Accuracy)) +
   geom_point() +
@@ -344,6 +344,22 @@ accuracy_vs_k_all
 ```
 
 From the plot above, it seems as though now will more information in our model, we should choose a $k$ of 3. Additionally, with this extra information our validation accuracy has also increased to 0.9648161 with $k = 3$.
+
+## Test data set
+
+In addition to a training and validation sets, in practice we really split our data set into 3 different sets:
+
+1. training 
+2. validation
+3. testing
+
+What is the testing set and what purpose does this third set serve? Typically create the testing set at the very beginning of our analysis, leave it a the locked box so that it plays no role while we a fiddling with things (usually through cross validation) like choosing $k$, or the number of predictors/explanatory variables to put in the classifier. After we have settled on all the settings (e.g., $k$ and number of predictors) for our classifier and we have no plans to EVER change them again we re-train the classifier on the entire training set (i.e., don't do cross validation) with those settings and then predict on testing set observations. We then take those predictions and compare them to the true labels of the test set and come up with a test accuracy measure. This typically looks something like this:
+
+<img src="img/testing.png" width="400"/>
+
+source: https://towardsdatascience.com/train-test-split-and-cross-validation-in-python-80b61beca4b6
+
+Why do we have this super special test set? This is so we do not violate the golden rule of statistical/machine learning: YOU CANNOT USE THE TEST DATA TO BUILD THE MODEL!!! If you do, this is analagous to a student cheating on a midterm.
 
 ## Scaling your data
 
@@ -417,6 +433,8 @@ head(scaled_cancer)
 Scaling your data should be a part of the pre-processing you do before you start doing and analysis where distance between points plays a role. And as we learned in the last two chapters, k-nn classification is one of these.
 
 > What about centering the data? I've heard that is also a data pre-processing step? Yes, it can be helpful but it depends on the algorithm. For k-nn classification centering doesn't help, nor does it hurt. So you can do it if you would like but you do not have to.
+
+
 
 ## Additional readings/resources
 - [The `caret` Package](https://topepo.github.io/caret/index.html)
