@@ -19,7 +19,7 @@ By the end of the chapter, students will be able to:
 * Describe advantages and disadvantages of the k-nearest neighbour regression approach.
 
 ## Regression 
-We can use regression as a method to answer a very similar question to classification (e.g., use past information to predict future values) but in the case of regression the what we want to predict are not class labels, but instead numerical values. An example regression prediction question would be can we use hours spent on exercise each week to predict marathon race time? Another example regression prediction question, that we'll explore in the text book, is can we use house square footage to predict house sale price? For this question we will use a data set from Sacremento that is part of the `caret` package.
+We can use regression as a method to answer a very similar question to classification (can we use past information to predict future observations?), but in the case of regression the goal is to predict numerical values instead of class labels. An example regression prediction question would be: can we use hours spent on exercise each week to predict marathon race time? And another example regression prediction question is: can we use house size (livable square feet) to predict house sale price? We will use this question to explore regression in this text book. For this we will use a real estate data set from Sacremento, California that is part of the `caret` package.
 
 ## Sacremento real estate example
 
@@ -34,7 +34,7 @@ data(Sacramento)
 head(Sacramento)
 ```
 
-Next look at the data in a plot where we place the predictor/explanatory variable on the x-axis and the target/response variable on the y-axis (this is what we would like to predict):
+We are interested in the columns `sqft` (which is the house size in livable square feet) and `price`, which is the house size in US dollars (USD). Let's now visaulize the data as a scatter plot where we place the predictor/explanatory variable, house size, on the x-axis and the target/response variable, price, on the y-axis (this is what we would like to predict):
 
 ```{r eda, message = FALSE, fig.height = 4, fig.width = 5}
 eda <- ggplot(Sacramento, aes(x = sqft, y = price)) +
@@ -46,20 +46,21 @@ eda
 ```
 
 
-From looking at the visualization above, we see that as house size (square footage) increases, so does house price. Thus, we can reason that house size might be a useful predictor of house price and we can use the size of the house to predict a house price for a home that has not yet sold (and consequently we do not know the house price). 
+From looking at the visualization above, we see that as house size (square footage) increases, so does house price. Thus, we can reason that house size might be a useful predictor of house price and perhaps we can use the size of the house to predict the price a house will be sold at (for a home that has not yet sold and thus consequently we do not know the house price). 
 
 ## K-nearest neighbours regression
 
-Let's take a small sample of the data above and walk through how K-nearest neighbours (knn) regression works before we dive in to creating our model. To take a small sample, we'll use the function `sample_n`.
+Let's take a small sample of the data above and walk through how K-nearest neighbours (knn) regression works before we dive in to creating our model and assessing how well it predicts house price. To take a small random sample of size 30 , we'll use the function `sample_n`. This function takes two arguments:
 
-
+1. `tbl` (a data frame-like object to sample from)
+2. `size` (the number of observations/rows to be randomly selected/sampled)
 
 ```{r}
 set.seed(2019)
 small_sacramento <- sample_n(Sacramento, size = 30)
 ```
 
-Next let's say we come across a new house we are interested in purchasing, and its 2000 square feet! Its advertised list price is $350,000 should we give them what they are asking? Or is that overpriced and we should offer less? Perhaps we cannot directly answer that, but we can get close by using the data we have to predict the sale price given the sale prices we have already observed.
+Next let's say we come across a new house we are interested in purchasing, and it is 2000 square feet! Its advertised list price is $350,000 should we give them what they are asking? Or is that overpriced and we should offer less? Perhaps we cannot directly answer that, but we can get close by using the data we have to predict the sale price given the sale prices we have already observed.
 
 Given the data in the plot below, we have no observations of a house that has sold that is 2000 square feet, so how can we predict the price? 
 
@@ -138,14 +139,33 @@ Y_test <- Sacramento %>%
   unlist()
 ```
 
-Next, we'll use cross-validation to choose $k$. Instead of accuracy, we will use $R^2$ as our cross-validation score for how good of a model we have for prediction.
+Next, we'll use cross-validation to choose $k$. In k-nn classification, we used accuracy to see how well our predictions matched the true labels. Here in the context of k-nn regression we will use  root mean square error ($RMSE$) instead. If the predictions are very close to the true values, then $RMSE$ will be small. If, on the other-hand, the predictions are very different to the true values, then $RMSE$ will be quite large. Thus, when we are doing cross validation to choose $k$, we want to choose the $k$ that gives us the smallest $RMSE$.
+
+The mathematical formula for calculation $RMSE$ is shown below: 
+
+$$RMSE = \sqrt{\frac{1}{n}\sum\limits_{i=1}^{\infty}(y_i - \hat{y_i})^2}$$
+
+Where:
+
+- $n$ is the number of observations
+- $y_i$ is the observed value for the $ith$ observation
+- $\hat{y_i}$ is the forcasted/predicted value for the $ith$ observation
+
+A key feature the formula for RMSE is the distance between the observed target/response variable value, $y$, and the prediction target/response variable value, $\hat{y_i}$, for each observation (from 1 to $i$).
+
+Now that we know how we can assess how well our model predicts a numerical value, let's use R to perform cross-validation and to choose the optimal $k$.
 
 ```{r choose_k, fig.height = 4, fig.width = 5}
 train_control <- trainControl(method = "cv", number = 10)
-k_lots = data.frame(k = seq(from = 1, to = 300, by = 25)) # makes a column of k's, from 1 to 25
+# makes a column of k's, from 1 to 100 in increments of 10
+k_lots = data.frame(k = seq(from = 1, to = 100, by = 10)) 
 
 set.seed(1234)
-knn_reg_cv_10 <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k_lots, trControl = train_control, metric = "Rsquared")
+knn_reg_cv_10 <- train(x = X_train, 
+                       y = Y_train, 
+                       method = "knn", 
+                       tuneGrid = k_lots, 
+                       trControl = train_control) 
 knn_reg_cv_10
 
 ggplot(knn_reg_cv_10$results, aes(x = k, y = Rsquared)) +
@@ -153,7 +173,7 @@ ggplot(knn_reg_cv_10$results, aes(x = k, y = Rsquared)) +
   geom_line()
 ```
 
-Here we see that the best $k$ for this model is 76. 
+Here we see that the smallest $RMSE$ is from the model where $k$ = 51. Thus the best $k$ for this model is 51. 
 
 ## Assessing model goodness with the test set
 
@@ -162,7 +182,7 @@ Next we re-train our k-nn model on the entire training data set (do not perform 
 In the case of k-nn regression we use the function `defaultSummary` instead of `confusionMatrix` (which we used with knn classification). This is because our predictions are not class labels, but values, and as such the type of model goodness score is calculated differently. `defaultSummary` expects a data frame where one column is the observed target/response variable values from the test data, and a second column of the predicted values for the test data.
 
 ```{r retrain}
-k = data.frame(k = 76)
+k = data.frame(k = 51)
 
 set.seed(1234)
 knn_reg_final <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
@@ -172,3 +192,5 @@ modelvalues <- data.frame(obs = Y_test, pred = test_pred)
 test_results <- defaultSummary(modelvalues)
 test_results
 ```
+
+Our test error as assessed by $RMSE$ is 91620.4. 
