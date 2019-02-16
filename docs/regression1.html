@@ -225,6 +225,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="8.2" data-path="regression1.html"><a href="regression1.html#learning-objectives-2"><i class="fa fa-check"></i><b>8.2</b> Learning objectives</a></li>
 <li class="chapter" data-level="8.3" data-path="regression1.html"><a href="regression1.html#regression"><i class="fa fa-check"></i><b>8.3</b> Regression</a></li>
 <li class="chapter" data-level="8.4" data-path="regression1.html"><a href="regression1.html#sacremento-real-estate-example"><i class="fa fa-check"></i><b>8.4</b> Sacremento real estate example</a></li>
+<li class="chapter" data-level="8.5" data-path="regression1.html"><a href="regression1.html#k-nearest-neighbours-regression"><i class="fa fa-check"></i><b>8.5</b> K-nearest neighbours regression</a></li>
+<li class="chapter" data-level="8.6" data-path="regression1.html"><a href="regression1.html#assessing-a-knn-regression-model"><i class="fa fa-check"></i><b>8.6</b> Assessing a knn regression model</a></li>
+<li class="chapter" data-level="8.7" data-path="regression1.html"><a href="regression1.html#assessing-model-goodness-with-the-test-set"><i class="fa fa-check"></i><b>8.7</b> Assessing model goodness with the test set</a></li>
 </ul></li>
 <li class="divider"></li>
 <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
@@ -272,8 +275,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <div id="sacremento-real-estate-example" class="section level2">
 <h2><span class="header-section-number">8.4</span> Sacremento real estate example</h2>
 <p>Let’s start by loading the libraries we need and previewing the data set. The data set comes with the <code>caret</code> package, so as soon as we load the <code>caret</code> library and type <code>data(Sacramento)</code> we are able to access it as a data frame named <code>Sacramento</code>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(tidyverse)
-<span class="kw">library</span>(forcats)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(tidyverse)</code></pre></div>
+<pre><code>## Warning: package &#39;tibble&#39; was built under R version 3.5.2</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(scales)
 <span class="kw">library</span>(caret)
 
 <span class="kw">data</span>(Sacramento)
@@ -287,12 +291,145 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 ## 6 SACRAMENTO z95841    3     1 1122       Condo 89921 38.66260 -121.3278</code></pre>
 <p>Next look at the data in a plot where we place the predictor/explanatory variable on the x-axis and the target/response variable on the y-axis (this is what we would like to predict):</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">eda &lt;-<span class="st"> </span><span class="kw">ggplot</span>(Sacramento, <span class="kw">aes</span>(<span class="dt">x =</span> sqft, <span class="dt">y =</span> price)) <span class="op">+</span>
-<span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span>
 <span class="st">  </span><span class="kw">xlab</span>(<span class="st">&quot;House size (square footage)&quot;</span>) <span class="op">+</span>
-<span class="st">  </span><span class="kw">ylab</span>(<span class="st">&quot;Price (USD)&quot;</span>)
+<span class="st">  </span><span class="kw">ylab</span>(<span class="st">&quot;Price (USD)&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">labels=</span><span class="kw">dollar_format</span>()) 
 eda</code></pre></div>
 <p><img src="bookdown-demo_files/figure-html/eda-1.png" width="480" /></p>
 <p>From looking at the visualization above, we see that as house size (square footage) increases, so does house price. Thus, we can reason that house size might be a useful predictor of house price and we can use the size of the house to predict a house price for a home that has not yet sold (and consequently we do not know the house price).</p>
+</div>
+<div id="k-nearest-neighbours-regression" class="section level2">
+<h2><span class="header-section-number">8.5</span> K-nearest neighbours regression</h2>
+<p>Let’s take a small sample of the data above and walk through how K-nearest neighbours (knn) regression works before we dive in to creating our model. To take a small sample, we’ll use the function <code>sample_n</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">2019</span>)
+small_sacramento &lt;-<span class="st"> </span><span class="kw">sample_n</span>(Sacramento, <span class="dt">size =</span> <span class="dv">30</span>)</code></pre></div>
+<p>Next let’s say we come across a new house we are interested in purchasing, and its 2000 square feet! Its advertised list price is $350,000 should we give them what they are asking? Or is that overpriced and we should offer less? Perhaps we cannot directly answer that, but we can get close by using the data we have to predict the sale price given the sale prices we have already observed.</p>
+<p>Given the data in the plot below, we have no observations of a house that has sold that is 2000 square feet, so how can we predict the price?</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">small_plot &lt;-<span class="st"> </span><span class="kw">ggplot</span>(small_sacramento, <span class="kw">aes</span>(<span class="dt">x =</span> sqft, <span class="dt">y =</span> price)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">xlab</span>(<span class="st">&quot;House size (square footage)&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">ylab</span>(<span class="st">&quot;Price (USD)&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">labels=</span><span class="kw">dollar_format</span>()) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_vline</span>(<span class="dt">xintercept =</span> <span class="dv">2000</span>, <span class="dt">linetype =</span> <span class="st">&quot;dotted&quot;</span>) 
+small_plot</code></pre></div>
+<p><img src="bookdown-demo_files/figure-html/small_eda-1.png" width="480" /></p>
+<p>What we can do is use the neighbouring points to suggest/predict what the price should be. For the example above, below we find and label the 5 nearest neighbours to our observation of a house that is 2000 square feet:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">small_sacramento <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">diff =</span> <span class="kw">abs</span>(<span class="dv">2000</span> <span class="op">-</span><span class="st"> </span>sqft)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">arrange</span>(diff) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">head</span>(<span class="dv">5</span>)</code></pre></div>
+<pre><code>##         city    zip beds baths sqft        type  price latitude longitude
+## 1 SACRAMENTO z95835    4     2 1910 Residential 300500 38.67745 -121.4948
+## 2 SACRAMENTO z95825    3     2 1720 Residential 290000 38.56786 -121.4107
+## 3   ANTELOPE z95843    3     2 1669 Residential 168750 38.71846 -121.3709
+## 4    LINCOLN z95648    3     2 1650 Residential 276500 38.84412 -121.2748
+## 5 SACRAMENTO z95827    5     3 2367 Residential 315537 38.55599 -121.3404
+##   diff
+## 1   90
+## 2  280
+## 3  331
+## 4  350
+## 5  367</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">small_plot <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_segment</span>(<span class="kw">aes</span>(<span class="dt">x =</span> <span class="dv">2000</span>, <span class="dt">y =</span> <span class="dv">300500</span>, <span class="dt">xend =</span> <span class="dv">1910</span>, <span class="dt">yend =</span> <span class="dv">300500</span>), <span class="dt">col =</span> <span class="st">&quot;orange&quot;</span>) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">geom_segment</span>(<span class="kw">aes</span>(<span class="dt">x =</span> <span class="dv">2000</span>, <span class="dt">y =</span> <span class="dv">290000</span>, <span class="dt">xend =</span> <span class="dv">1720</span>, <span class="dt">yend =</span> <span class="dv">290000</span>), <span class="dt">col =</span> <span class="st">&quot;orange&quot;</span>) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">geom_segment</span>(<span class="kw">aes</span>(<span class="dt">x =</span> <span class="dv">2000</span>, <span class="dt">y =</span> <span class="dv">168750</span>, <span class="dt">xend =</span> <span class="dv">1669</span>, <span class="dt">yend =</span> <span class="dv">168750</span>), <span class="dt">col =</span> <span class="st">&quot;orange&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_segment</span>(<span class="kw">aes</span>(<span class="dt">x =</span> <span class="dv">2000</span>, <span class="dt">y =</span> <span class="dv">276500</span>, <span class="dt">xend =</span> <span class="dv">1650</span>, <span class="dt">yend =</span> <span class="dv">276500</span>), <span class="dt">col =</span> <span class="st">&quot;orange&quot;</span>) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">geom_segment</span>(<span class="kw">aes</span>(<span class="dt">x =</span> <span class="dv">2000</span>, <span class="dt">y =</span> <span class="dv">315537</span>, <span class="dt">xend =</span> <span class="dv">2367</span>, <span class="dt">yend =</span> <span class="dv">315537</span>), <span class="dt">col =</span> <span class="st">&quot;orange&quot;</span>) </code></pre></div>
+<p><img src="bookdown-demo_files/figure-html/knn3-1.png" width="480" /></p>
+<p>Now that we have the 5 nearest neighbours to our new observation that we would like to predict the price for, we can use their values to predict a selling price for the home we are interested in buying that is 2000 square feet. Specifically, we can take the mean (or average) of these 5 values as our predicted value.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">small_sacramento <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">diff =</span> <span class="kw">abs</span>(<span class="dv">2000</span> <span class="op">-</span><span class="st"> </span>sqft)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">arrange</span>(diff) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">head</span>(<span class="dv">5</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">summarise</span>(<span class="dt">predicted =</span> <span class="kw">mean</span>(price))</code></pre></div>
+<pre><code>##   predicted
+## 1  270257.4</code></pre>
+<p>Our predicted price is $270,257.40, which is much less than $350,000, and so perhaps we might want to offer less than the list price that the house is advertised at. Simple right? Not quite. We have all the same unanswered questions here with k-nn regression that we had with k-nn classification. Which <span class="math inline">\(k\)</span> do we choose? And, is our model any good at making predictions? We’ll shortly address how to answer these questions in the context of k-nn regression.</p>
+</div>
+<div id="assessing-a-knn-regression-model" class="section level2">
+<h2><span class="header-section-number">8.6</span> Assessing a knn regression model</h2>
+<p>As usual, we should start by putting some test data away in a lock box that we can come back to after we choose our final model, so let’s take care of that business now. For the remainder of the chapter we’ll work with the full data set.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">2019</span>) <span class="co"># makes the random selection of rows reproducible</span>
+training_rows &lt;-<span class="st"> </span>Sacramento <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(price) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">unlist</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="co"># converts Class from a tibble to a vector</span>
+<span class="st">  </span><span class="kw">createDataPartition</span>(<span class="dt">p =</span> <span class="fl">0.6</span>, <span class="dt">list =</span> <span class="ot">FALSE</span>)
+
+X_train &lt;-<span class="st"> </span>Sacramento <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(sqft) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">slice</span>(training_rows) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">data.frame</span>()
+
+Y_train &lt;-<span class="st"> </span>Sacramento <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(price) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">slice</span>(training_rows) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">unlist</span>()
+
+X_test &lt;-<span class="st"> </span>Sacramento <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(sqft) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">slice</span>(<span class="op">-</span>training_rows) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">data.frame</span>()
+
+Y_test &lt;-<span class="st"> </span>Sacramento <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(price) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">slice</span>(<span class="op">-</span>training_rows) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">unlist</span>()</code></pre></div>
+<p>Next, we’ll use cross-validation to choose <span class="math inline">\(k\)</span>. Instead of accuracy, we will use <span class="math inline">\(R^2\)</span> as our cross-validation score for how good of a model we have for prediction.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method =</span> <span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">10</span>)
+k_lots =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="kw">seq</span>(<span class="dt">from =</span> <span class="dv">1</span>, <span class="dt">to =</span> <span class="dv">300</span>, <span class="dt">by =</span> <span class="dv">25</span>)) <span class="co"># makes a column of k&#39;s, from 1 to 25</span>
+
+<span class="kw">set.seed</span>(<span class="dv">1234</span>)
+knn_reg_cv_<span class="dv">10</span> &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_train, <span class="dt">y =</span> Y_train, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k_lots, <span class="dt">trControl =</span> train_control, <span class="dt">metric =</span> <span class="st">&quot;Rsquared&quot;</span>)
+knn_reg_cv_<span class="dv">10</span></code></pre></div>
+<pre><code>## k-Nearest Neighbors 
+## 
+## 561 samples
+##   1 predictor
+## 
+## No pre-processing
+## Resampling: Cross-Validated (10 fold) 
+## Summary of sample sizes: 505, 505, 505, 505, 505, 505, ... 
+## Resampling results across tuning parameters:
+## 
+##   k    RMSE       Rsquared   MAE     
+##     1  110214.34  0.3643214  82765.68
+##    26   83428.65  0.5694362  62301.06
+##    51   83129.92  0.5739339  61646.80
+##    76   83448.83  0.5784049  61761.68
+##   101   84664.94  0.5734551  62281.74
+##   126   85947.91  0.5731613  62876.29
+##   151   87508.41  0.5698278  63683.03
+##   176   89254.37  0.5671782  64669.90
+##   201   91386.34  0.5633833  65983.60
+##   226   93298.46  0.5605334  67186.52
+##   251   95280.62  0.5584013  68468.53
+##   276   97592.76  0.5550169  70065.03
+## 
+## Rsquared was used to select the optimal model using the largest value.
+## The final value used for the model was k = 76.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(knn_reg_cv_<span class="dv">10</span><span class="op">$</span>results, <span class="kw">aes</span>(<span class="dt">x =</span> k, <span class="dt">y =</span> Rsquared)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_line</span>()</code></pre></div>
+<p><img src="bookdown-demo_files/figure-html/choose_k-1.png" width="480" /></p>
+<p>Here we see that the best <span class="math inline">\(k\)</span> for this model is 76.</p>
+</div>
+<div id="assessing-model-goodness-with-the-test-set" class="section level2">
+<h2><span class="header-section-number">8.7</span> Assessing model goodness with the test set</h2>
+<p>Next we re-train our k-nn model on the entire training data set (do not perform cross validation) and then predict on the test data set to assess how well our model does.</p>
+<p>In the case of k-nn regression we use the function <code>defaultSummary</code> instead of <code>confusionMatrix</code> (which we used with knn classification). This is because our predictions are not class labels, but values, and as such the type of model goodness score is calculated differently. <code>defaultSummary</code> expects a data frame where one column is the observed target/response variable values from the test data, and a second column of the predicted values for the test data.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="dv">76</span>)
+
+<span class="kw">set.seed</span>(<span class="dv">1234</span>)
+knn_reg_final &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_train, <span class="dt">y =</span> Y_train, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k)
+
+test_pred &lt;-<span class="st"> </span><span class="kw">predict</span>(knn_reg_final, X_test)
+modelvalues &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">obs =</span> Y_test, <span class="dt">pred =</span> test_pred)
+test_results &lt;-<span class="st"> </span><span class="kw">defaultSummary</span>(modelvalues)
+test_results</code></pre></div>
+<pre><code>##       RMSE   Rsquared        MAE 
+## 93323.9016     0.5705 63954.8969</code></pre>
 
 </div>
 </div>
@@ -343,6 +480,19 @@ gitbook.start({
 });
 </script>
 
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "";
+    if (src === "" || src === "true") src = "https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:" && /^https?:/.test(src))
+      src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
 </body>
 
 </html>

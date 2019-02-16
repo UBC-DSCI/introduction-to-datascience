@@ -27,7 +27,7 @@ Let's start by loading the libraries we need and previewing the data set. The da
 
 ```{r load, message = FALSE}
 library(tidyverse)
-library(forcats)
+library(scales)
 library(caret)
 
 data(Sacramento)
@@ -38,15 +38,137 @@ Next look at the data in a plot where we place the predictor/explanatory variabl
 
 ```{r eda, message = FALSE, fig.height = 4, fig.width = 5}
 eda <- ggplot(Sacramento, aes(x = sqft, y = price)) +
-  geom_point() +
+  geom_point(alpha = 0.5) +
   xlab("House size (square footage)") +
-  ylab("Price (USD)")
+  ylab("Price (USD)") +
+  scale_y_continuous(labels=dollar_format()) 
 eda
 ```
 
 
 From looking at the visualization above, we see that as house size (square footage) increases, so does house price. Thus, we can reason that house size might be a useful predictor of house price and we can use the size of the house to predict a house price for a home that has not yet sold (and consequently we do not know the house price). 
 
+## K-nearest neighbours regression
+
+Let's take a small sample of the data above and walk through how K-nearest neighbours (knn) regression works before we dive in to creating our model. To take a small sample, we'll use the function `sample_n`.
 
 
 
+```{r}
+set.seed(2019)
+small_sacramento <- sample_n(Sacramento, size = 30)
+```
+
+Next let's say we come across a new house we are interested in purchasing, and its 2000 square feet! Its advertised list price is $350,000 should we give them what they are asking? Or is that overpriced and we should offer less? Perhaps we cannot directly answer that, but we can get close by using the data we have to predict the sale price given the sale prices we have already observed.
+
+Given the data in the plot below, we have no observations of a house that has sold that is 2000 square feet, so how can we predict the price? 
+
+```{r small_eda, fig.height = 4, fig.width = 5}
+small_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
+  geom_point() +
+  xlab("House size (square footage)") +
+  ylab("Price (USD)") +
+  scale_y_continuous(labels=dollar_format()) +
+  geom_vline(xintercept = 2000, linetype = "dotted") 
+small_plot
+```
+
+What we can do is use the neighbouring points to suggest/predict what the price should be. For the example above, below we find and label the 5 nearest neighbours to our observation of a house that is 2000 square feet:
+
+```{r find k3}
+small_sacramento %>% 
+  mutate(diff = abs(2000 - sqft)) %>% 
+  arrange(diff) %>% 
+  head(5)
+```
+
+
+```{r knn3, fig.height = 4, fig.width = 5}
+small_plot +
+  geom_segment(aes(x = 2000, y = 300500, xend = 1910, yend = 300500), col = "orange") + 
+  geom_segment(aes(x = 2000, y = 290000, xend = 1720, yend = 290000), col = "orange") + 
+  geom_segment(aes(x = 2000, y = 168750, xend = 1669, yend = 168750), col = "orange") +
+  geom_segment(aes(x = 2000, y = 276500, xend = 1650, yend = 276500), col = "orange") + 
+  geom_segment(aes(x = 2000, y = 315537, xend = 2367, yend = 315537), col = "orange") 
+
+```
+
+Now that we have the 5 nearest neighbours to our new observation that we would like to predict the price for, we can use their values to predict a selling price for the home we are interested in buying that is 2000 square feet. Specifically, we can take the mean (or average) of these 5 values as our predicted value.
+
+```{r predicted}
+small_sacramento %>% 
+  mutate(diff = abs(2000 - sqft)) %>% 
+  arrange(diff) %>% 
+  head(5) %>% 
+  summarise(predicted = mean(price))
+
+```
+
+Our predicted price is \$270,257.40, which is much less than \$350,000, and so perhaps we might want to offer less than the list price that the house is advertised at. Simple right? Not quite. We have all the same unanswered questions here with k-nn regression that we had with k-nn classification. Which $k$ do we choose? And, is our model any good at making predictions? We'll shortly address how to answer these questions in the context of k-nn regression.
+
+## Assessing a knn regression model
+
+As usual, we should start by putting some test data away in a lock box that we can come back to after we choose our final model, so let's take care of that business now. For the remainder of the chapter we'll work with the full data set.
+
+```{r test_train_split}
+set.seed(2019) # makes the random selection of rows reproducible
+training_rows <- Sacramento %>% 
+  select(price) %>% 
+  unlist() %>% # converts Class from a tibble to a vector
+  createDataPartition(p = 0.6, list = FALSE)
+
+X_train <- Sacramento %>% 
+  select(sqft) %>% 
+  slice(training_rows) %>% 
+  data.frame()
+
+Y_train <- Sacramento %>% 
+  select(price) %>% 
+  slice(training_rows) %>% 
+  unlist()
+
+X_test <- Sacramento %>% 
+  select(sqft) %>% 
+  slice(-training_rows) %>% 
+  data.frame()
+
+Y_test <- Sacramento %>% 
+  select(price) %>% 
+  slice(-training_rows) %>% 
+  unlist()
+```
+
+Next, we'll use cross-validation to choose $k$. Instead of accuracy, we will use $R^2$ as our cross-validation score for how good of a model we have for prediction.
+
+```{r choose_k, fig.height = 4, fig.width = 5}
+train_control <- trainControl(method = "cv", number = 10)
+k_lots = data.frame(k = seq(from = 1, to = 300, by = 25)) # makes a column of k's, from 1 to 25
+
+set.seed(1234)
+knn_reg_cv_10 <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k_lots, trControl = train_control, metric = "Rsquared")
+knn_reg_cv_10
+
+ggplot(knn_reg_cv_10$results, aes(x = k, y = Rsquared)) +
+  geom_point() +
+  geom_line()
+```
+
+Here we see that the best $k$ for this model is 76. 
+
+## Assessing model goodness with the test set
+
+Next we re-train our k-nn model on the entire training data set (do not perform cross validation) and then predict on the test data set to assess how well our model does. 
+
+In the case of k-nn regression we use the function `defaultSummary` instead of `confusionMatrix` (which we used with knn classification). This is because our predictions are not class labels, but values, and as such the type of model goodness score is calculated differently. `defaultSummary` expects a data frame where one column is the observed target/response variable values from the test data, and a second column of the predicted values for the test data.
+
+```{r retrain}
+k = data.frame(k = 76)
+
+set.seed(1234)
+knn_reg_final <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
+
+test_pred <- predict(knn_reg_final, X_test)
+modelvalues <- data.frame(obs = Y_test, pred = test_pred)
+test_results <- defaultSummary(modelvalues)
+test_results
+```
