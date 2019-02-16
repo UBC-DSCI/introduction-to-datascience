@@ -78,7 +78,7 @@ set_rows <- cancer %>%
 head(set_rows)
 ```
 
-*You will also see in the code above that we use the `set.seed` function. This is because `createDataPartition` uses random sampling to choose which rows will be in the training set, and if we use `set.seed` to specify where the random number generator starts for this process then we can make our analysis reproducible (always get the same random set of observations in the training set).*
+*You will also see in the code above that we use the `set.seed` function. This is because `createDataPartition` uses random sampling to choose which rows will be in the training set, and if we use `set.seed` to specify where the random number generator starts for this process then we can make our analysis reproducible (always get the same random set of observations in the training set). We should always set a seed before any function that uses a random process. We'll point out where as we work through this code.*
 
 Now that we have the row numbers for the training set, we can use the `slice` function to get the rows from the original data set (here `cancer`) to create the training set and the validation sets.
 
@@ -106,9 +106,13 @@ Y_train <- training_set %>%
   select(Class) %>% 
   unlist()
 k = data.frame(k = 3)
+
+set.seed(1234)
 model_knn <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
 model_knn
 ```
+
+*We set the seed above calling the train function because if there were a tie, the winning class is randomly chosen. In k-nn classification where $k$ = 3 and there are only 2 classes this will never happen, however, if our $k$ was divisible by 2, or if we had more than two possible class labels we could find ourselves in a situtation where we do have a tie.*
 
 #### Predict class labels for the validation set
 
@@ -121,6 +125,8 @@ X_validation <- validation_set %>%
 Y_validation_predicted <- predict(object = model_knn, X_validation)
 head(Y_validation_predicted)
 ```
+
+
 
 #### Assessing our classifier's accuracy
 
@@ -217,7 +223,6 @@ In the picture above, 5 different folds/partitions of the data set are shown, an
 2. `number` (how many folds/partitions of the data set we want to use for cross validation)
 
 ```{r}
-set.seed(1234)
 train_control <- trainControl(method="cv", number = 5)
 ```
 
@@ -231,14 +236,20 @@ Y_cancer <- cancer %>%
   select(Class) %>% 
   unlist()
 k = data.frame(k = 3)
+
+set.seed(1234)
 knn_model_cv_5fold <- train(x = X_cancer, y = Y_cancer, method = "knn", tuneGrid = k, trControl = train_control)
 knn_model_cv_5fold
 ```
+
+*This time we set the seed when we call `train` not only because of the potential for ties, but also because we are doing cross-validation. Cross-validation uses a random process to select which observations are included in which folds.*
 
 We can choose any number of folds, typically the more the better. However we are limited by computational power. The more folds we choose, the computation it takes, and hence the more time it takes to run the analysis. So for each time you do cross-validation you need to consider the size of the data, and the speed of the algorithm (here k-nn) and the speed of your computer. In practice this is a trial and error process. Here we show what happens when we do 10 folds:
 
 ```{r}
 train_control <- trainControl(method="cv", number = 10)
+
+set.seed(1234)
 knn_model_cv_10fold <- train(x = X_cancer, y = Y_cancer, method = "knn", tuneGrid = k, trControl = train_control)
 knn_model_cv_10fold
 ```
@@ -250,6 +261,8 @@ From 5- and 10-fold cross-validate we estimate that the prediction accuracy of o
 ```{r}
 train_control <- trainControl(method="cv", number = 10)
 k = data.frame(k = c(1, 3, 5, 7, 9, 11, 13, 15, 17))
+
+set.seed(1234)
 knn_model_cv_10fold <- train(x = X_cancer, y = Y_cancer, method = "knn", tuneGrid = k, trControl = train_control)
 knn_model_cv_10fold
 ```
@@ -271,13 +284,14 @@ accuracy_vs_k
 ```
 
 
-Based off of the visualization above we typically would choose $k$ to be ~ 5, given that at this value of $k$ our accuracy is a high as it can be with much larger values of $k$. As you can see there is no exact or perfect answer here, what we are looking for is a value for $k$ where we get a roughly optimal increase of accuracy but at the same time we want to keep $k$ small.
+Based off of the visualization above we typically would choose $k$ to be ~ 11, given that at this value of $k$ our accuracy is a high as it can be with much larger values of $k$. As you can see there is no exact or perfect answer here, what we are looking for is a value for $k$ where we get a roughly optimal increase of accuracy but at the same time we want to keep $k$ small.
 
 Why do we want to keep $k$ small? Well this is because if we keep increasing $k$ our accuracy actually starts to decrease! Take a look as the plot below as we vary $k$ from 1 to almost the number of observations in the data set:
 
 ```{r lots_of_ks, fig.height = 4, fig.width = 5}
 train_control <- trainControl(method="cv", number = 10)
 k_lots = data.frame(k = seq(from = 1, to = 499, by = 10))
+set.seed(1234)
 knn_model_cv_10fold_lots <- train(x = X_cancer, y = Y_cancer, method = "knn", tuneGrid = k_lots, trControl = train_control)
 accuracies_lots <- knn_model_cv_10fold_lots$results
 accuracy_vs_k_lots <- ggplot(accuracies_lots, aes(x = k, y = Accuracy)) +
@@ -294,22 +308,23 @@ By using cross-validation to choose $k$ we were able to slightly increase our ac
 The training error can be obtained from using the classifier object returned from `train` (when you don't perform cross-validation) to predict on the training data. Then passing the predictions on the training data and the true observed labels into `confusionMatrix`.
 
 ```{r}
-k = data.frame(k = 5)
+k = data.frame(k = 11)
+set.seed(1234)
 knn_model <- train(x = X_cancer, y = Y_cancer, method = "knn", tuneGrid = k)
 training_pred <- predict(knn_model, X_cancer)
 results <- confusionMatrix(training_pred, Y_cancer)
 results
 ```
 
-From the complex output, we can see the training accuracy - it is the second accuracy score printed out, here 0.891. Again we can use base/built-in subsetting syntax to directly get the value:
+From the complex output, we can see the training accuracy, here 0.8752. Again we can use base/built-in subsetting syntax to directly get the value:
 
 ```{r}
 results$overall[1]
 ```
 
-Here we see that our training accuracy is high, 0.8910369, but there is still room for improvement! (If it were 1.0 there wouldn't be and we would have a different problem). So let's see if adding additional information (predictors/explanatory variables) might help our model training and consequently (and more importantly) validation accuracy.
+Here we see that our training accuracy is high, 0.8752197, but there is still room for improvement! (If it were 1.0 there wouldn't be and we would have a different problem). So let's see if adding additional information (predictors/explanatory variables) might help our model training and consequently (and more importantly) validation accuracy.
 
-*Note - when add more information to the model, $k$ = 5 may no longer be the "best" $k$. So we will want to also choose $k$ again.*
+*Note - when add more information to the model, $k$ = 11 may no longer be the "best" $k$. So we will want to also choose $k$ again.*
 
 ```{r}
 # set-up training data
@@ -325,6 +340,7 @@ train_control <- trainControl(method="cv", number = 10)
 k = data.frame(k = seq(from = 1, to = 29, by = 2))
 
 # create classifier
+set.seed(1234)
 knn_model_all <- train(x = X_cancer_all, y = Y_cancer_all, method = "knn", tuneGrid = k, trControl = train_control)
 
 # assess training accuracy
@@ -343,7 +359,7 @@ accuracy_vs_k_all <- ggplot(accuracies_all, aes(x = k, y = Accuracy)) +
 accuracy_vs_k_all
 ```
 
-From the plot above, it seems as though now will more information in our model, we should choose a $k$ of 3. Additionally, with this extra information our validation accuracy has also increased to 0.9648161 with $k = 3$.
+From the plot above, it seems as though now will more information in our model, we should choose a $k$ of 7. Additionally, with this extra information our validation accuracy has also increased with $k = 7$.
 
 ## Test data set
 

@@ -27,7 +27,7 @@
 <meta name="author" content="Samuel Hinshaw">
 
 
-<meta name="date" content="2019-02-13">
+<meta name="date" content="2019-02-15">
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -312,7 +312,7 @@ set_rows &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><spa
 ## [4,]         4
 ## [5,]         5
 ## [6,]         6</code></pre>
-<p><em>You will also see in the code above that we use the <code>set.seed</code> function. This is because <code>createDataPartition</code> uses random sampling to choose which rows will be in the training set, and if we use <code>set.seed</code> to specify where the random number generator starts for this process then we can make our analysis reproducible (always get the same random set of observations in the training set).</em></p>
+<p><em>You will also see in the code above that we use the <code>set.seed</code> function. This is because <code>createDataPartition</code> uses random sampling to choose which rows will be in the training set, and if we use <code>set.seed</code> to specify where the random number generator starts for this process then we can make our analysis reproducible (always get the same random set of observations in the training set). We should always set a seed before any function that uses a random process. We’ll point out where as we work through this code.</em></p>
 <p>Now that we have the row numbers for the training set, we can use the <code>slice</code> function to get the rows from the original data set (here <code>cancer</code>) to create the training set and the validation sets.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">training_set &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">slice</span>(set_rows)
 validation_set &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">slice</span>(<span class="op">-</span>set_rows)
@@ -358,6 +358,8 @@ Y_train &lt;-<span class="st"> </span>training_set <span class="op">%&gt;%</span
 <span class="st">  </span><span class="kw">select</span>(Class) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">unlist</span>()
 k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="dv">3</span>)
+
+<span class="kw">set.seed</span>(<span class="dv">1234</span>)
 model_knn &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_train, <span class="dt">y =</span> Y_train, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k)
 model_knn</code></pre></div>
 <pre><code>## k-Nearest Neighbors 
@@ -372,9 +374,10 @@ model_knn</code></pre></div>
 ## Resampling results:
 ## 
 ##   Accuracy   Kappa    
-##   0.8286472  0.6331781
+##   0.8399266  0.6575533
 ## 
 ## Tuning parameter &#39;k&#39; was held constant at a value of 3</code></pre>
+<p><em>We set the seed above calling the train function because if there were a tie, the winning class is randomly chosen. In k-nn classification where <span class="math inline">\(k\)</span> = 3 and there are only 2 classes this will never happen, however, if our <span class="math inline">\(k\)</span> was divisible by 2, or if we had more than two possible class labels we could find ourselves in a situtation where we do have a tie.</em></p>
 </div>
 <div id="predict-class-labels-for-the-validation-set" class="section level4">
 <h4><span class="header-section-number">7.3.1.3</span> Predict class labels for the validation set</h4>
@@ -498,8 +501,7 @@ model_quality<span class="op">$</span>overall[<span class="dv">1</span>]</code><
 <li><code>method</code> (method used for assessing classifier quality, here we specify <code>&quot;cv&quot;</code> for cross-validation)</li>
 <li><code>number</code> (how many folds/partitions of the data set we want to use for cross validation)</li>
 </ol>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">1234</span>)
-train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">5</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">5</span>)</code></pre></div>
 <p>Then when we create our classifier we add an additional argument to <code>train</code>, called <code>trControl</code> where we give it the name of the object we created with the <code>trainControl</code> function. Additionally, we do not need to specify a training and a validation set because we are telling <code>train</code> that we are doing cross validation (it will take care creating the folds, calculating the accuracy for each fold and averaging the accuracies for us).</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">X_cancer &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">select</span>(Concavity, Smoothness) <span class="op">%&gt;%</span><span class="st"> </span>
@@ -508,6 +510,8 @@ Y_cancer &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><spa
 <span class="st">  </span><span class="kw">select</span>(Class) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">unlist</span>()
 k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="dv">3</span>)
+
+<span class="kw">set.seed</span>(<span class="dv">1234</span>)
 knn_model_cv_5fold &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_cancer, <span class="dt">y =</span> Y_cancer, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k, <span class="dt">trControl =</span> train_control)
 knn_model_cv_5fold</code></pre></div>
 <pre><code>## k-Nearest Neighbors 
@@ -525,8 +529,11 @@ knn_model_cv_5fold</code></pre></div>
 ##   0.8329714  0.6439188
 ## 
 ## Tuning parameter &#39;k&#39; was held constant at a value of 3</code></pre>
+<p><em>This time we set the seed when we call <code>train</code> not only because of the potential for ties, but also because we are doing cross-validation. Cross-validation uses a random process to select which observations are included in which folds.</em></p>
 <p>We can choose any number of folds, typically the more the better. However we are limited by computational power. The more folds we choose, the computation it takes, and hence the more time it takes to run the analysis. So for each time you do cross-validation you need to consider the size of the data, and the speed of the algorithm (here k-nn) and the speed of your computer. In practice this is a trial and error process. Here we show what happens when we do 10 folds:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">10</span>)
+
+<span class="kw">set.seed</span>(<span class="dv">1234</span>)
 knn_model_cv_10fold &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_cancer, <span class="dt">y =</span> Y_cancer, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k, <span class="dt">trControl =</span> train_control)
 knn_model_cv_10fold</code></pre></div>
 <pre><code>## k-Nearest Neighbors 
@@ -537,11 +544,11 @@ knn_model_cv_10fold</code></pre></div>
 ## 
 ## No pre-processing
 ## Resampling: Cross-Validated (10 fold) 
-## Summary of sample sizes: 512, 512, 512, 512, 513, 512, ... 
+## Summary of sample sizes: 513, 512, 513, 512, 511, 512, ... 
 ## Resampling results:
 ## 
 ##   Accuracy   Kappa    
-##   0.8348274  0.6478331
+##   0.8400203  0.6608629
 ## 
 ## Tuning parameter &#39;k&#39; was held constant at a value of 3</code></pre>
 </div>
@@ -550,6 +557,8 @@ knn_model_cv_10fold</code></pre></div>
 <p>From 5- and 10-fold cross-validate we estimate that the prediction accuracy of our classifier to be ~ 83%. This could be not too bad of an accuracy, however what accuracy you aim for always depends on the downstream application of your analysis. Here, we are trying to predict a very important outcome, tumour cell diagnosis class. And the class label we assign to a real patient may have life or death consequences. Hence, we’d like to do better for this application than 83%. To do this we can use cross-validation in an even bigger way, we can choose a range of possible <span class="math inline">\(k\)</span>’s and perform cross-validation to calculate the accuracy for each <span class="math inline">\(k\)</span>, and then choose the smallest <span class="math inline">\(k\)</span> which gives us the best cross-validation accuracy. To do this, we will create a vector of values for <span class="math inline">\(k\)</span> instead of providing just 1.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">10</span>)
 k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">7</span>, <span class="dv">9</span>, <span class="dv">11</span>, <span class="dv">13</span>, <span class="dv">15</span>, <span class="dv">17</span>))
+
+<span class="kw">set.seed</span>(<span class="dv">1234</span>)
 knn_model_cv_10fold &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_cancer, <span class="dt">y =</span> Y_cancer, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k, <span class="dt">trControl =</span> train_control)
 knn_model_cv_10fold</code></pre></div>
 <pre><code>## k-Nearest Neighbors 
@@ -560,45 +569,46 @@ knn_model_cv_10fold</code></pre></div>
 ## 
 ## No pre-processing
 ## Resampling: Cross-Validated (10 fold) 
-## Summary of sample sizes: 512, 512, 512, 513, 512, 513, ... 
+## Summary of sample sizes: 513, 512, 513, 512, 511, 512, ... 
 ## Resampling results across tuning parameters:
 ## 
 ##   k   Accuracy   Kappa    
-##    1  0.7963832  0.5670877
-##    3  0.8314115  0.6404103
-##    5  0.8506168  0.6801179
-##    7  0.8487371  0.6769444
-##    9  0.8487987  0.6767625
-##   11  0.8487987  0.6792620
-##   13  0.8523075  0.6864837
-##   15  0.8506147  0.6832103
-##   17  0.8453191  0.6723945
+##    1  0.8155475  0.6064615
+##    3  0.8400203  0.6608629
+##    5  0.8416515  0.6626622
+##    7  0.8434059  0.6650644
+##    9  0.8506406  0.6800368
+##   11  0.8612296  0.7025280
+##   13  0.8525484  0.6852467
+##   15  0.8576582  0.6942935
+##   17  0.8576582  0.6938875
 ## 
 ## Accuracy was used to select the optimal model using the largest value.
-## The final value used for the model was k = 13.</code></pre>
+## The final value used for the model was k = 11.</code></pre>
 <p>Then to help us choose <span class="math inline">\(k\)</span> it is very useful to visualize the accuracies as we increase <span class="math inline">\(k\)</span>. This will help us choose the smallest <span class="math inline">\(k\)</span> with the biggest accuracy. We can access the results from the cross-validation by accessing the<code>results</code> attribute of the <code>train</code> object (our classifier).</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">accuracies &lt;-<span class="st"> </span>knn_model_cv_10fold<span class="op">$</span>results
 accuracies </code></pre></div>
 <pre><code>##    k  Accuracy     Kappa AccuracySD    KappaSD
-## 1  1 0.7963832 0.5670877 0.05622999 0.12358847
-## 2  3 0.8314115 0.6404103 0.04120719 0.08810393
-## 3  5 0.8506168 0.6801179 0.03665860 0.07545675
-## 4  7 0.8487371 0.6769444 0.04424770 0.08841509
-## 5  9 0.8487987 0.6767625 0.04459822 0.09055035
-## 6 11 0.8487987 0.6792620 0.04898351 0.09868306
-## 7 13 0.8523075 0.6864837 0.04759324 0.09660905
-## 8 15 0.8506147 0.6832103 0.05352744 0.10941241
-## 9 17 0.8453191 0.6723945 0.05520681 0.11219591</code></pre>
+## 1  1 0.8155475 0.6064615 0.05316182 0.11272822
+## 2  3 0.8400203 0.6608629 0.02453021 0.05161054
+## 3  5 0.8416515 0.6626622 0.03184238 0.07022825
+## 4  7 0.8434059 0.6650644 0.03710158 0.08316742
+## 5  9 0.8506406 0.6800368 0.03879376 0.08643835
+## 6 11 0.8612296 0.7025280 0.04205264 0.09318005
+## 7 13 0.8525484 0.6852467 0.03735006 0.08372607
+## 8 15 0.8576582 0.6942935 0.03449374 0.07757659
+## 9 17 0.8576582 0.6938875 0.03245033 0.07574435</code></pre>
 <p>Now we can plot accuracy versus k:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">accuracy_vs_k &lt;-<span class="st"> </span><span class="kw">ggplot</span>(accuracies, <span class="kw">aes</span>(<span class="dt">x =</span> k, <span class="dt">y =</span> Accuracy)) <span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_line</span>()
 accuracy_vs_k</code></pre></div>
 <p><img src="bookdown-demo_files/figure-html/find_k-1.png" width="480" /></p>
-<p>Based off of the visualization above we typically would choose <span class="math inline">\(k\)</span> to be ~ 5, given that at this value of <span class="math inline">\(k\)</span> our accuracy is a high as it can be with much larger values of <span class="math inline">\(k\)</span>. As you can see there is no exact or perfect answer here, what we are looking for is a value for <span class="math inline">\(k\)</span> where we get a roughly optimal increase of accuracy but at the same time we want to keep <span class="math inline">\(k\)</span> small.</p>
+<p>Based off of the visualization above we typically would choose <span class="math inline">\(k\)</span> to be ~ 11, given that at this value of <span class="math inline">\(k\)</span> our accuracy is a high as it can be with much larger values of <span class="math inline">\(k\)</span>. As you can see there is no exact or perfect answer here, what we are looking for is a value for <span class="math inline">\(k\)</span> where we get a roughly optimal increase of accuracy but at the same time we want to keep <span class="math inline">\(k\)</span> small.</p>
 <p>Why do we want to keep <span class="math inline">\(k\)</span> small? Well this is because if we keep increasing <span class="math inline">\(k\)</span> our accuracy actually starts to decrease! Take a look as the plot below as we vary <span class="math inline">\(k\)</span> from 1 to almost the number of observations in the data set:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">10</span>)
 k_lots =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="kw">seq</span>(<span class="dt">from =</span> <span class="dv">1</span>, <span class="dt">to =</span> <span class="dv">499</span>, <span class="dt">by =</span> <span class="dv">10</span>))
+<span class="kw">set.seed</span>(<span class="dv">1234</span>)
 knn_model_cv_10fold_lots &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_cancer, <span class="dt">y =</span> Y_cancer, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k_lots, <span class="dt">trControl =</span> train_control)
 accuracies_lots &lt;-<span class="st"> </span>knn_model_cv_10fold_lots<span class="op">$</span>results
 accuracy_vs_k_lots &lt;-<span class="st"> </span><span class="kw">ggplot</span>(accuracies_lots, <span class="kw">aes</span>(<span class="dt">x =</span> k, <span class="dt">y =</span> Accuracy)) <span class="op">+</span>
@@ -611,7 +621,8 @@ accuracy_vs_k_lots</code></pre></div>
 <h2><span class="header-section-number">7.6</span> Other ways to increase accuracy</h2>
 <p>By using cross-validation to choose <span class="math inline">\(k\)</span> we were able to slightly increase our accuracy, but can we still do better? Perhaps. We can start to explore this by taking a look at what is called the training accuracy. Training accuracy is our accuracy if we asked our classifier to make predictions on the training data and then we assessed how well the predictions matched up to the true labels we have for our training data. If they don’t match up really well (training accuracy is low) then our classification model might be too simple and adding more information (e.g., additional predictors/explanatory variables) could potentially help. The situation where the training accuracy is low is often called underfitting, or high bias.</p>
 <p>The training error can be obtained from using the classifier object returned from <code>train</code> (when you don’t perform cross-validation) to predict on the training data. Then passing the predictions on the training data and the true observed labels into <code>confusionMatrix</code>.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="dv">5</span>)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="dv">11</span>)
+<span class="kw">set.seed</span>(<span class="dv">1234</span>)
 knn_model &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_cancer, <span class="dt">y =</span> Y_cancer, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k)
 training_pred &lt;-<span class="st"> </span><span class="kw">predict</span>(knn_model, X_cancer)
 results &lt;-<span class="st"> </span><span class="kw">confusionMatrix</span>(training_pred, Y_cancer)
@@ -620,34 +631,34 @@ results</code></pre></div>
 ## 
 ##           Reference
 ## Prediction   B   M
-##          B 323  28
-##          M  34 184
+##          B 322  36
+##          M  35 176
 ##                                           
-##                Accuracy : 0.891           
-##                  95% CI : (0.8625, 0.9154)
+##                Accuracy : 0.8752          
+##                  95% CI : (0.8452, 0.9012)
 ##     No Information Rate : 0.6274          
 ##     P-Value [Acc &gt; NIR] : &lt;2e-16          
 ##                                           
-##                   Kappa : 0.7683          
-##  Mcnemar&#39;s Test P-Value : 0.5254          
+##                   Kappa : 0.7329          
+##  Mcnemar&#39;s Test P-Value : 1               
 ##                                           
-##             Sensitivity : 0.9048          
-##             Specificity : 0.8679          
-##          Pos Pred Value : 0.9202          
-##          Neg Pred Value : 0.8440          
+##             Sensitivity : 0.9020          
+##             Specificity : 0.8302          
+##          Pos Pred Value : 0.8994          
+##          Neg Pred Value : 0.8341          
 ##              Prevalence : 0.6274          
-##          Detection Rate : 0.5677          
-##    Detection Prevalence : 0.6169          
-##       Balanced Accuracy : 0.8863          
+##          Detection Rate : 0.5659          
+##    Detection Prevalence : 0.6292          
+##       Balanced Accuracy : 0.8661          
 ##                                           
 ##        &#39;Positive&#39; Class : B               
 ## </code></pre>
-<p>From the complex output, we can see the training accuracy - it is the second accuracy score printed out, here 0.891. Again we can use base/built-in subsetting syntax to directly get the value:</p>
+<p>From the complex output, we can see the training accuracy, here 0.8752. Again we can use base/built-in subsetting syntax to directly get the value:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">results<span class="op">$</span>overall[<span class="dv">1</span>]</code></pre></div>
 <pre><code>##  Accuracy 
-## 0.8910369</code></pre>
-<p>Here we see that our training accuracy is high, 0.8910369, but there is still room for improvement! (If it were 1.0 there wouldn’t be and we would have a different problem). So let’s see if adding additional information (predictors/explanatory variables) might help our model training and consequently (and more importantly) validation accuracy.</p>
-<p><em>Note - when add more information to the model, <span class="math inline">\(k\)</span> = 5 may no longer be the “best” <span class="math inline">\(k\)</span>. So we will want to also choose <span class="math inline">\(k\)</span> again.</em></p>
+## 0.8752197</code></pre>
+<p>Here we see that our training accuracy is high, 0.8752197, but there is still room for improvement! (If it were 1.0 there wouldn’t be and we would have a different problem). So let’s see if adding additional information (predictors/explanatory variables) might help our model training and consequently (and more importantly) validation accuracy.</p>
+<p><em>Note - when add more information to the model, <span class="math inline">\(k\)</span> = 11 may no longer be the “best” <span class="math inline">\(k\)</span>. So we will want to also choose <span class="math inline">\(k\)</span> again.</em></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># set-up training data</span>
 X_cancer_all &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>Class, <span class="op">-</span>ID) <span class="op">%&gt;%</span><span class="st"> </span>
@@ -661,6 +672,7 @@ train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>
 k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="kw">seq</span>(<span class="dt">from =</span> <span class="dv">1</span>, <span class="dt">to =</span> <span class="dv">29</span>, <span class="dt">by =</span> <span class="dv">2</span>))
 
 <span class="co"># create classifier</span>
+<span class="kw">set.seed</span>(<span class="dv">1234</span>)
 knn_model_all &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_cancer_all, <span class="dt">y =</span> Y_cancer_all, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k, <span class="dt">trControl =</span> train_control)
 
 <span class="co"># assess training accuracy</span>
@@ -668,7 +680,7 @@ training_pred_all &lt;-<span class="st"> </span><span class="kw">predict</span>(
 results_all &lt;-<span class="st"> </span><span class="kw">confusionMatrix</span>(training_pred_all, Y_cancer_all)
 results_all<span class="op">$</span>overall[<span class="dv">1</span>]</code></pre></div>
 <pre><code>##  Accuracy 
-## 0.9666081</code></pre>
+## 0.9718805</code></pre>
 <p>We can see that by including more information (making our classifier more complex by adding additional predictors/explanatory variables) we increased the training accuracy. What about the cross-validation accuracy? And what <span class="math inline">\(k\)</span> should we choose?</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">accuracies_all &lt;-<span class="st"> </span>knn_model_all
 accuracy_vs_k_all &lt;-<span class="st"> </span><span class="kw">ggplot</span>(accuracies_all, <span class="kw">aes</span>(<span class="dt">x =</span> k, <span class="dt">y =</span> Accuracy)) <span class="op">+</span>
@@ -676,7 +688,7 @@ accuracy_vs_k_all &lt;-<span class="st"> </span><span class="kw">ggplot</span>(a
 <span class="st">  </span><span class="kw">geom_line</span>()
 accuracy_vs_k_all</code></pre></div>
 <p><img src="bookdown-demo_files/figure-html/more_info-1.png" width="480" /></p>
-<p>From the plot above, it seems as though now will more information in our model, we should choose a <span class="math inline">\(k\)</span> of 3. Additionally, with this extra information our validation accuracy has also increased to 0.9648161 with <span class="math inline">\(k = 3\)</span>.</p>
+<p>From the plot above, it seems as though now will more information in our model, we should choose a <span class="math inline">\(k\)</span> of 7. Additionally, with this extra information our validation accuracy has also increased with <span class="math inline">\(k = 7\)</span>.</p>
 </div>
 <div id="test-data-set" class="section level2">
 <h2><span class="header-section-number">7.7</span> Test data set</h2>
