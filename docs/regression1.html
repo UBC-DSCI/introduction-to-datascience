@@ -51,6 +51,43 @@
 
 
 
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
 
 <link rel="stylesheet" href="style.css" type="text/css" />
 </head>
@@ -187,6 +224,7 @@
 <li class="chapter" data-level="8.1" data-path="regression1.html"><a href="regression1.html#overview-6"><i class="fa fa-check"></i><b>8.1</b> Overview</a></li>
 <li class="chapter" data-level="8.2" data-path="regression1.html"><a href="regression1.html#learning-objectives-2"><i class="fa fa-check"></i><b>8.2</b> Learning objectives</a></li>
 <li class="chapter" data-level="8.3" data-path="regression1.html"><a href="regression1.html#regression"><i class="fa fa-check"></i><b>8.3</b> Regression</a></li>
+<li class="chapter" data-level="8.4" data-path="regression1.html"><a href="regression1.html#sacremento-real-estate-example"><i class="fa fa-check"></i><b>8.4</b> Sacremento real estate example</a></li>
 </ul></li>
 <li class="divider"></li>
 <li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
@@ -230,6 +268,31 @@
 <div id="regression" class="section level2">
 <h2><span class="header-section-number">8.3</span> Regression</h2>
 <p>We can use regression as a method to answer a very similar question to classification (e.g., use past information to predict future values) but in the case of regression the what we want to predict are not class labels, but instead numerical values. An example regression prediction question would be can we use hours spent on exercise each week to predict marathon race time? Another example regression prediction question, that we’ll explore in the text book, is can we use house square footage to predict house sale price? For this question we will use a data set from Sacremento that is part of the <code>caret</code> package.</p>
+</div>
+<div id="sacremento-real-estate-example" class="section level2">
+<h2><span class="header-section-number">8.4</span> Sacremento real estate example</h2>
+<p>Let’s start by loading the libraries we need and previewing the data set. The data set comes with the <code>caret</code> package, so as soon as we load the <code>caret</code> library and type <code>data(Sacramento)</code> we are able to access it as a data frame named <code>Sacramento</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(tidyverse)
+<span class="kw">library</span>(forcats)
+<span class="kw">library</span>(caret)
+
+<span class="kw">data</span>(Sacramento)
+<span class="kw">head</span>(Sacramento)</code></pre></div>
+<pre><code>##         city    zip beds baths sqft        type price latitude longitude
+## 1 SACRAMENTO z95838    2     1  836 Residential 59222 38.63191 -121.4349
+## 2 SACRAMENTO z95823    3     1 1167 Residential 68212 38.47890 -121.4310
+## 3 SACRAMENTO z95815    2     1  796 Residential 68880 38.61830 -121.4438
+## 4 SACRAMENTO z95815    2     1  852 Residential 69307 38.61684 -121.4391
+## 5 SACRAMENTO z95824    2     1  797 Residential 81900 38.51947 -121.4358
+## 6 SACRAMENTO z95841    3     1 1122       Condo 89921 38.66260 -121.3278</code></pre>
+<p>Next look at the data in a plot where we place the predictor/explanatory variable on the x-axis and the target/response variable on the y-axis (this is what we would like to predict):</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">eda &lt;-<span class="st"> </span><span class="kw">ggplot</span>(Sacramento, <span class="kw">aes</span>(<span class="dt">x =</span> sqft, <span class="dt">y =</span> price)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">xlab</span>(<span class="st">&quot;House size (square footage)&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">ylab</span>(<span class="st">&quot;Price (USD)&quot;</span>)
+eda</code></pre></div>
+<p><img src="bookdown-demo_files/figure-html/eda-1.png" width="480" /></p>
+<p>From looking at the visualization above, we see that as house size (square footage) increases, so does house price. Thus, we can reason that house size might be a useful predictor of house price and we can use the size of the house to predict a house price for a home that has not yet sold (and consequently we do not know the house price).</p>
 
 </div>
 </div>
