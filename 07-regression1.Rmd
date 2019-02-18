@@ -29,6 +29,7 @@ Let's start by loading the libraries we need and previewing the data set. The da
 library(tidyverse)
 library(scales)
 library(caret)
+library(gridExtra)
 
 data(Sacramento)
 head(Sacramento)
@@ -38,7 +39,7 @@ We are interested in the columns `sqft` (which is the house size in livable squa
 
 ```{r eda, message = FALSE, fig.height = 4, fig.width = 5}
 eda <- ggplot(Sacramento, aes(x = sqft, y = price)) +
-  geom_point(alpha = 0.5) +
+  geom_point(alpha = 0.4) +
   xlab("House size (square footage)") +
   ylab("Price (USD)") +
   scale_y_continuous(labels=dollar_format()) 
@@ -158,7 +159,7 @@ Now that we know how we can assess how well our model predicts a numerical value
 ```{r choose_k, fig.height = 4, fig.width = 5}
 train_control <- trainControl(method = "cv", number = 10)
 # makes a column of k's, from 1 to 100 in increments of 10
-k_lots = data.frame(k = seq(from = 1, to = 100, by = 10)) 
+k_lots = data.frame(k = seq(from = 1, to = 500, by = 5)) 
 
 set.seed(1234)
 knn_reg_cv_10 <- train(x = X_train, 
@@ -166,14 +167,39 @@ knn_reg_cv_10 <- train(x = X_train,
                        method = "knn", 
                        tuneGrid = k_lots, 
                        trControl = train_control) 
-knn_reg_cv_10
 
-ggplot(knn_reg_cv_10$results, aes(x = k, y = Rsquared)) +
+ggplot(knn_reg_cv_10$results, aes(x = k, y = RMSE)) +
   geom_point() +
   geom_line()
+knn_reg_cv_10$method
 ```
 
 Here we see that the smallest $RMSE$ is from the model where $k$ = 51. Thus the best $k$ for this model is 51. 
+
+## How do different k's affect k-nn regression predictions
+
+```{r echo = FALSE, fig.height = 12, fig.width = 10}
+get_predictions <- function(num_neighbours, X, Y){
+  k = data.frame(k = num_neighbours)
+  set.seed(1234)
+  knn_reg <- train(x = X, y = Y, method = "knn", tuneGrid = k)
+  predictions <- data.frame(sqft = seq(from = 500, to = 5000, by = 1))
+  predictions$price <- predict(knn_reg, data.frame(sqft = seq(from = 500, to = 5000, by = 1)))
+  plot <- eda +
+    geom_line(data = predictions, aes(x = sqft, y = price), color = "blue") +
+    ggtitle(paste0("k = ", k))
+}
+
+k1 <- get_predictions(1, X_train, Y_train)
+k10 <- get_predictions(10, X_train, Y_train)
+k25 <- get_predictions(25, X_train, Y_train)
+k56 <- get_predictions(56, X_train, Y_train)
+k250 <- get_predictions(250, X_train, Y_train)
+k450 <- get_predictions(450, X_train, Y_train)
+
+grid.arrange(k1, k10, k25, k56, k250, k450, ncol = 2)
+```
+
 
 ## Assessing model goodness with the test set
 
@@ -193,4 +219,15 @@ test_results <- defaultSummary(modelvalues)
 test_results
 ```
 
-Our test error as assessed by $RMSE$ is 91620.4. 
+Our final model's test error as assessed by $RMSE$ is 91620.4. And what does our final model when we predict across all possible house sizes we might encounter in the Sacremento area? We can easily visualize this for simple k-nn regressions (where we have only )
+
+```{r predict_all}
+set.seed(1234)
+predictions_all <- data.frame(sqft = seq(from = 500, to = 5000, by = 1))
+predictions_all$price <- predict(knn_reg_final, data.frame(sqft = seq(from = 500, to = 5000, by = 1)))
+plot <- eda + 
+  geom_line(data = predictions_all, aes(x = sqft, y = price), color = "blue") +
+  ggtitle(paste0("k = ", 51))
+```
+
+
