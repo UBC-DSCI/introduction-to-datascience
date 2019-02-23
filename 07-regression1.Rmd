@@ -178,7 +178,7 @@ Here we see that the smallest $RMSE$ is from the model where $k$ = 51. Thus the 
 
 ## How do different k's affect k-nn regression predictions
 
-Below we plot the predicted values for house price from our k-nn regression models for 6 different values for $k$ where the only predictor is home size. For each model, we predict a price for every possible home size across the range of home sizes we observed in the data set (here 500 to 5000 square feet) and we plot the predicted prices as a blue line:
+Below we plot the predicted values for house price from our k-nn regression models for 6 different values for $k$ where the only predictor is home size. For each model, we predict a price for every possible home size across the range of home sizes we observed in the data set (here 500 to 4250 square feet) and we plot the predicted prices as a blue line:
 
 ```{r echo = FALSE, fig.height = 12, fig.width = 10}
 get_predictions <- function(num_neighbours, X, Y){
@@ -187,8 +187,8 @@ get_predictions <- function(num_neighbours, X, Y){
   set.seed(1234)
   knn_reg <- train(x = X, y = Y, method = "knn", tuneGrid = k)
   set.seed(1234)
-  predictions <- data.frame(sqft = seq(from = 500, to = 5000, by = 1))
-  predictions$price <- predict(knn_reg, data.frame(sqft = seq(from = 500, to = 5000, by = 1)))
+  predictions <- data.frame(sqft = seq(from = 500, to = 4250, by = 1))
+  predictions$price <- predict(knn_reg, data.frame(sqft = seq(from = 500, to = 4250, by = 1)))
   plot <- ggplot(data, aes(x = sqft, y = price)) +
     geom_point(alpha = 0.4) +
     xlab("House size (square footage)") +
@@ -214,6 +214,8 @@ What about the plot where $k$ is quite large, say $k$ = 450, for example? When $
 
 Ideally, what we want is neither of the two examples discussed above. Instead, we would like a model with low variance (so that it will transer/generalize well to other data sets, meaning that it isn't too dependent on the observations that happen to be in the training set we had) **and** low bias (one where the model/predicted values matches the actual observed values very well). If we explore the other values for $k$, in particular $k$ = 51 (the optimal $k$ as suggested by cross-validation), we can see it has a lower bias than our model with a very high $k$ (e.g., 450), and thus the model/predicted values better match the actual observed values than the high $k$ model. Additionally, it has lower variance than our model with a very low $k$ (e.g., 1) and thus it should better transer/generalize to other data sets compared to the low $k$ model.
 
+Finally, how the choice of $k$ affects k-nn regression also carries over to how the choice of $k$ affects k-nn classification. It is simply easier to show this through pictures for a k-nn regression problem which is why we waited until now to discuss this.
+
 ## Assessing model goodness with the test set
 
 Next we re-train our k-nn model on the entire training data set (do not perform cross validation) and then predict on the test data set to assess how well our model does. 
@@ -236,9 +238,9 @@ Our final model's test error as assessed by $RMSE$ is 91620.4. And what does our
 
 ```{r predict_all, fig.height = 4, fig.width = 5}
 set.seed(1234)
-predictions_all <- data.frame(sqft = seq(from = 500, to = 5000, by = 1))
+predictions_all <- data.frame(sqft = seq(from = 500, to = 4250, by = 1))
 predictions_all$price <- predict(knn_reg_final, 
-                                 data.frame(sqft = seq(from = 500, to = 5000, by = 1)))
+                                 data.frame(sqft = seq(from = 500, to = 4250, by = 1)))
 train_data <- bind_cols(X_train, data.frame(price = Y_train)) #combines X_train and Y_train to be on data set
 plot_final <- ggplot(train_data, aes(x = sqft, y = price)) +
     geom_point(alpha = 0.4) +
