@@ -42,7 +42,7 @@ eda <- ggplot(Sacramento, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
   xlab("House size (square footage)") +
   ylab("Price (USD)") +
-  scale_y_continuous(labels=dollar_format()) 
+  scale_y_continuous(labels = dollar_format()) 
 eda
 ```
 
@@ -178,14 +178,22 @@ Here we see that the smallest $RMSE$ is from the model where $k$ = 51. Thus the 
 
 ## How do different k's affect k-nn regression predictions
 
+Below we plot the predicted values for house price from performing k-nn regression where the only predictor is home sizea across 6 different values for $k$. For these plots, we predict a price for every possible home size in the range of home sizes we observed in the data set (here 500 to 5000 square feet) and we plot the predicted prices as a blue line:
+
 ```{r echo = FALSE, fig.height = 12, fig.width = 10}
 get_predictions <- function(num_neighbours, X, Y){
+  data <- bind_cols(X, data.frame(price = Y))
   k = data.frame(k = num_neighbours)
   set.seed(1234)
   knn_reg <- train(x = X, y = Y, method = "knn", tuneGrid = k)
+  set.seed(1234)
   predictions <- data.frame(sqft = seq(from = 500, to = 5000, by = 1))
   predictions$price <- predict(knn_reg, data.frame(sqft = seq(from = 500, to = 5000, by = 1)))
-  plot <- eda +
+  plot <- ggplot(data, aes(x = sqft, y = price)) +
+    geom_point(alpha = 0.4) +
+    xlab("House size (square footage)") +
+    ylab("Price (USD)") +
+    scale_y_continuous(labels = dollar_format())  +
     geom_line(data = predictions, aes(x = sqft, y = price), color = "blue") +
     ggtitle(paste0("k = ", k))
 }
@@ -200,6 +208,11 @@ k450 <- get_predictions(450, X_train, Y_train)
 grid.arrange(k1, k10, k25, k56, k250, k450, ncol = 2)
 ```
 
+From the plots above, we see that when $k$ = 1, the blue line runs perfectly through all of our training observations. This happens because our predicted values for a given region, depend on just a single observation. A model like this model has high variance and consequently low bias. It has high variance because the flexible blue line follows the training observations very closely, and if we were to change any one of the training observation data points we would change the flexible blue line quite a lot. It has low bias because the model/predicted values matches the actual observed values very well. 
+
+What about the plot where $k$ is quite large, say $k$ = 450 for example? When $k$ = 450 for this data set the blue line is extremely smooth, and almost flat. This happens because our predicted values for a given region, depend on many many neighbouring observations, 450 to be exact! A model like this model has low variance and consequently high bias. It has low variance because the smooth, inflexible blue line does not follow the training observations very closely, and if we were to change any one of the training observation data points it really wouldn't affect the shape of the smooth blue line at all. It has high bias because the model/predicted values does not match the actual observed values very well. 
+
+What we want, is a model with low variance (so that it will transer/generalize well to other data sets, and isn't too dependent on the observations that happen to be in the training set we had) AND low bias (one where the model/predicted values matches the actual observed values very well). 
 
 ## Assessing model goodness with the test set
 
