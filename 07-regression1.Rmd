@@ -201,18 +201,18 @@ get_predictions <- function(num_neighbours, X, Y){
 k1 <- get_predictions(1, X_train, Y_train)
 k10 <- get_predictions(10, X_train, Y_train)
 k25 <- get_predictions(25, X_train, Y_train)
-k56 <- get_predictions(56, X_train, Y_train)
+k51 <- get_predictions(51, X_train, Y_train)
 k250 <- get_predictions(250, X_train, Y_train)
 k450 <- get_predictions(450, X_train, Y_train)
 
-grid.arrange(k1, k10, k25, k56, k250, k450, ncol = 2)
+grid.arrange(k1, k10, k25, k51, k250, k450, ncol = 2)
 ```
 
 From the plots above, we see that when $k$ = 1, the blue line runs perfectly through all of our training observations. This happens because our predicted values for a given region, depend on just a single observation. A model like this model has high variance and consequently low bias. It has high variance because the flexible blue line follows the training observations very closely, and if we were to change any one of the training observation data points we would change the flexible blue line quite a lot. It has low bias because the model/predicted values matches the actual observed values very well. 
 
-What about the plot where $k$ is quite large, say $k$ = 450 for example? When $k$ = 450 for this data set the blue line is extremely smooth, and almost flat. This happens because our predicted values for a given region, depend on many many neighbouring observations, 450 to be exact! A model like this model has low variance and consequently high bias. It has low variance because the smooth, inflexible blue line does not follow the training observations very closely, and if we were to change any one of the training observation data points it really wouldn't affect the shape of the smooth blue line at all. It has high bias because the model/predicted values does not match the actual observed values very well. 
+What about the plot where $k$ is quite large, say $k$ = 450 for example? When $k$ = 450 for this data set, the blue line is extremely smooth, and almost flat. This happens because our predicted values for a given region, depend on many many neighbouring observations, 450 to be exact! A model like this has low variance and consequently high bias. It has low variance because the smooth, inflexible blue line does not follow the training observations very closely, and if we were to change any one of the training observation data points it really wouldn't affect the shape of the smooth blue line at all. It has high bias because the model/predicted values does not match the actual observed values very well. 
 
-What we want, is a model with low variance (so that it will transer/generalize well to other data sets, and isn't too dependent on the observations that happen to be in the training set we had) AND low bias (one where the model/predicted values matches the actual observed values very well). If we explore the other values for $k$, in particular $k$ = 56 (the optimal $k$ as suggested by cross-validation), we can see it has a lower bias than our model with a very high $k$ (e.g., 450), and thus the model/predicted values better match the actual observed values than the high $k$ model. Additionally, it has lower variance than our model with a very low $k$ (e.g., 1) and thus it should transer/generalize well to other data sets than the low $k$ model.
+What we want, is a model with low variance (so that it will transer/generalize well to other data sets, and isn't too dependent on the observations that happen to be in the training set we had) AND low bias (one where the model/predicted values matches the actual observed values very well). If we explore the other values for $k$, in particular $k$ = 51 (the optimal $k$ as suggested by cross-validation), we can see it has a lower bias than our model with a very high $k$ (e.g., 450), and thus the model/predicted values better match the actual observed values than the high $k$ model. Additionally, it has lower variance than our model with a very low $k$ (e.g., 1) and thus it should transer/generalize well to other data sets than the low $k$ model.
 
 ## Assessing model goodness with the test set
 
@@ -232,15 +232,22 @@ test_results <- defaultSummary(modelvalues)
 test_results
 ```
 
-Our final model's test error as assessed by $RMSE$ is 91620.4. And what does our final model when we predict across all possible house sizes we might encounter in the Sacremento area? We can easily visualize this for simple k-nn regressions (where we have only )
+Our final model's test error as assessed by $RMSE$ is 91620.4. And what does our final model look like when we predict across all possible house sizes we might encounter in the Sacremento area? We plotted it above where we explored how $k$ affects k-nn regression, but we show it again now, along with the code for how we generated it:
 
-```{r predict_all}
+```{r predict_all, fig.height = 4, fig.width = 5}
 set.seed(1234)
 predictions_all <- data.frame(sqft = seq(from = 500, to = 5000, by = 1))
-predictions_all$price <- predict(knn_reg_final, data.frame(sqft = seq(from = 500, to = 5000, by = 1)))
-plot <- eda + 
-  geom_line(data = predictions_all, aes(x = sqft, y = price), color = "blue") +
-  ggtitle(paste0("k = ", 51))
+predictions_all$price <- predict(knn_reg_final, 
+                                 data.frame(sqft = seq(from = 500, to = 5000, by = 1)))
+train_data <- bind_cols(X_train, data.frame(price = Y_train)) #combines X_train and Y_train to be on data set
+plot_final <- ggplot(train_data, aes(x = sqft, y = price)) +
+    geom_point(alpha = 0.4) +
+    xlab("House size (square footage)") +
+    ylab("Price (USD)") +
+    scale_y_continuous(labels = dollar_format())  +
+    geom_line(data = predictions_all, aes(x = sqft, y = price), color = "blue") +
+    ggtitle("k = 51")
+plot_final
 ```
 
 
