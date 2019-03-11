@@ -11,4 +11,51 @@ By the end of the chapter, students will be able to:
 * Compare and contrast predictions obtained from k-nearest neighbour regression to those obtained using simple ordinary least squares regression from the same dataset.
 
 ## $RMSE$ versus $RMPSE$
-The output we get from `caret` for our model error labels it `RMSE` for root mean square error. We showed the equation for calculating this above. We have used the more general notation of $RMSE$ in this textbook as well, however, in other texts, papers and courses you may come across $RMPSE$ as well. What is $RMPSE$? $RMPSE$ stands for root mean prediction square error. The same formula is used to calculate $RMPSE$ and $RMSE$, however these separate terms exists to specify what the error is being calculated on. $RMPSE$ is specifically referring to the error when predicting on future data (e.g., the validation set or the testing set), not the training set. So if you do choose to use the term $RMSE$ as opposed to $RMPSE$, ensure that you provide the correct context about what error you are reporting (r.g., training, validation or test).
+The error output we have been getting from `caret` to assess how well our k-nn regression models predict is labelled as `RMSE` for root mean square error. The equation for calculating $RMSE$ is shown in [the previous chapter](regression1.html#assessing-a-knn-regression-model). So far, we have called this error $RMSE$ in this textbook as well, however, in certain contexts the correct term becomes $RMPSE$, which stands for root mean square prediction error. The same formula is used to calculate $RMPSE$ and $RMSE$, however these separate terms exists to specify what the error is being calculated on. $RMPSE$ is specifically referring to the error when predicting on future data (e.g., the validation set(s), or the testing set), not the training set. Whereas, $RMSE$ is specifically referring to the error when predicting on the training data set and is an attempt to get at model goodness of fit on the data used to fit the model. From this point on in the course, we will be using the terms $RMPSE$ and $RMSE$ in their appropriate contexts.
+
+## Linear regression
+k-nn is not the only the other type of regression, there are many and one common and quite useful type of regression is called linear regression. Linear regression is similar to k-nn regression in that the target/response variable is expected to be quantitative, however, one way it varies quite differently is how the training data is used to predict a value for a new observation. Instead of looking at the $k$-nearest neighbours and averaging over their values for a prediction, in linear regression all the training data points are used to create a straight line of "best fit", and then the line is used to "look-up" the predicted value.
+
+For example, let's revisit the smaller version of the Sacramento housing data set and the prediction case where we come across a new house we are interested in purchasing, and it is 2000 square feet! Its advertised list price is $350,000 should we give them what they are asking? Or is that overpriced and we should offer less? 
+
+To answer this question using linear regression, we use the data we have to draw the straight line of "best fit" through our existing data points:
+
+```{r linReg1, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5}
+library(tidyverse)
+library(scales)
+library(caret)
+library(gridExtra)
+
+data(Sacramento)
+set.seed(2019)
+small_sacramento <- sample_n(Sacramento, size = 30)
+
+small_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
+  geom_point() +
+  xlab("House size (square footage)") +
+  ylab("Price (USD)") +
+  scale_y_continuous(labels=dollar_format()) +
+  geom_smooth(method = "lm", se = FALSE) 
+small_plot
+```
+
+Then we can use this line to "look up" the predicted price given the value we have for the predictor/explanatory variable (here 2000 square feet). 
+
+```{r linReg2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5}
+small_model <- lm(price ~ sqft, data = small_sacramento)
+prediction <- predict(small_model, data.frame(sqft = 2000))
+
+small_plot + 
+  geom_vline(xintercept = 2000, linetype = "dotted") +
+  geom_point(aes(x = 2000, y = prediction[[1]], color = "red", size = 2.5)) +
+  theme(legend.position="none")
+
+print(prediction[[1]])
+```
+
+Using linear regression on this small data set to predict the sale price for a 2000 square foot house we get a predicted value of \$287178.80 USD. But wait a minute... How exactly does linear regression choose the line of "best fit"? Many different lines could be drawn through the data points, we show some examples below:
+
+```{r severalLines, echo = FALSE, fig.height = 4, fig.width = 5}
+
+
+```
