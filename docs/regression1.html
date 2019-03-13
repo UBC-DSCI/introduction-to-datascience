@@ -27,7 +27,7 @@
 <meta name="author" content="Samuel Hinshaw">
 
 
-<meta name="date" content="2019-03-11">
+<meta name="date" content="2019-03-13">
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -243,6 +243,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li class="chapter" data-level="9.2" data-path="regression2.html"><a href="regression2.html#learning-objectives-3"><i class="fa fa-check"></i><b>9.2</b> Learning objectives</a></li>
 <li class="chapter" data-level="9.3" data-path="regression2.html"><a href="regression2.html#rmse-versus-rmpse"><i class="fa fa-check"></i><b>9.3</b> <span class="math inline">\(RMSE\)</span> versus <span class="math inline">\(RMPSE\)</span></a></li>
 <li class="chapter" data-level="9.4" data-path="regression2.html"><a href="regression2.html#linear-regression"><i class="fa fa-check"></i><b>9.4</b> Linear regression</a></li>
+<li class="chapter" data-level="9.5" data-path="regression2.html"><a href="regression2.html#linear-regression-in-r-using-caret"><i class="fa fa-check"></i><b>9.5</b> Linear regression in R using <code>caret</code></a></li>
+<li class="chapter" data-level="9.6" data-path="regression2.html"><a href="regression2.html#comparing-linear-and-k-nn-regression"><i class="fa fa-check"></i><b>9.6</b> Comparing linear and k-nn regression</a></li>
+<li class="chapter" data-level="9.7" data-path="regression2.html"><a href="regression2.html#additional-readingsresources-4"><i class="fa fa-check"></i><b>9.7</b> Additional readings/resources</a></li>
 </ul></li>
 <li class="chapter" data-level="10" data-path="regression3.html"><a href="regression3.html"><i class="fa fa-check"></i><b>10</b> Regression, continued some more…</a><ul>
 <li class="chapter" data-level="10.1" data-path="regression3.html"><a href="regression3.html#overview-8"><i class="fa fa-check"></i><b>10.1</b> Overview</a></li>
@@ -295,7 +298,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </div>
 <div id="regression" class="section level2">
 <h2><span class="header-section-number">8.3</span> Regression</h2>
-<p>We can use regression as a method to answer a very similar question to classification (can we use past information to predict future observations?), but in the case of regression the goal is to predict numerical values instead of class labels. An example regression prediction question would be: can we use hours spent on exercise each week to predict marathon race time? And another example regression prediction question is: can we use house size (livable square feet) to predict house sale price? We will use this question to explore regression in this text book. For this we will use a real estate data set from Sacremento, California that is part of the <code>caret</code> package.</p>
+<p>We can use regression as a method to answer a very similar question to classification (can we use past information to predict future observations?), but in the case of regression the goal is to predict numerical values instead of class labels. An example regression prediction question would be: can we use hours spent on exercise each week to predict marathon race time? And another example regression prediction question is: can we use house size (livable square feet) to predict house sale price? We will use regression to explore this question in the rest of this chapter, using a real estate data set from Sacremento, California that is available in the <code>caret</code> package. <em>Note: in addition to prediction, regression can also be used to model the relationship between two or more variables, but here we will focus only on prediction.</em></p>
 </div>
 <div id="sacremento-real-estate-example" class="section level2">
 <h2><span class="header-section-number">8.4</span> Sacremento real estate example</h2>
@@ -327,7 +330,8 @@ eda</code></pre></div>
 </div>
 <div id="k-nearest-neighbours-regression" class="section level2">
 <h2><span class="header-section-number">8.5</span> K-nearest neighbours regression</h2>
-<p>Let’s take a small sample of the data above and walk through how K-nearest neighbours (knn) regression works before we dive in to creating our model and assessing how well it predicts house price. To take a small random sample of size 30 , we’ll use the function <code>sample_n</code>. This function takes two arguments:</p>
+<p>Let’s take a small sample of the data above and walk through how K-nearest neighbours (knn) regression works before we dive in to creating our model and assessing how well it predicts house price. This subsample is taken only to be able to illustrate the mechanics of k-nn regression with a few data points, later in this chapter we will use all the data.</p>
+<p>To take a small random sample of size 30 , we’ll use the function <code>sample_n</code>. This function takes two arguments:</p>
 <ol style="list-style-type: decimal">
 <li><code>tbl</code> (a data frame-like object to sample from)</li>
 <li><code>size</code> (the number of observations/rows to be randomly selected/sampled)</li>
@@ -442,7 +446,7 @@ knn_reg_cv_<span class="dv">10</span> &lt;-<span class="st"> </span><span class=
 <h2><span class="header-section-number">8.7</span> How do different k’s affect k-nn regression predictions</h2>
 <p>Below we plot the predicted values for house price from our k-nn regression models for 6 different values for <span class="math inline">\(k\)</span> where the only predictor is home size. For each model, we predict a price for every possible home size across the range of home sizes we observed in the data set (here 500 to 4250 square feet) and we plot the predicted prices as a blue line:</p>
 <p><img src="bookdown-demo_files/figure-html/unnamed-chunk-2-1.png" width="960" /></p>
-<p>From the plots above, we see that when <span class="math inline">\(k\)</span> = 1, the blue line runs perfectly through almost all of our training observations. This happens because our predicted values for a given region, depend on just a single observation. A model like this has high variance and low bias. It has high variance because the flexible blue line follows the training observations very closely, and if we were to change any one of the training observation data points we would change the flexible blue line quite a lot. This means that the blue line matches the data we happen to have in this training data set, however, if we were to collect another training data set from the Sacramento real estate market it likely wouldn’t match those observations as well. However, it has low bias because the model/predicted values matches the actual observed values in this training data set very well. Another term that we use to collectively describe this kind of model is overfitting.</p>
+<p>From the plots above, we see that when <span class="math inline">\(k\)</span> = 1, the blue line runs perfectly through almost all of our training observations. This happens because our predicted values for a given region, depend on just a single observation. A model like this has high variance and low bias. It has high variance because the flexible blue line follows the training observations very closely, and if we were to change any one of the training observation data points we would change the flexible blue line quite a lot. This means that the blue line matches the data we happen to have in this training data set, however, if we were to collect another training data set from the Sacramento real estate market it likely wouldn’t match those observations as well. However, it has low bias because the model/predicted values matches the actual observed values in this training data set very well. Another term that we use to collectively describe this phenomenon is overfitting.</p>
 <p>What about the plot where <span class="math inline">\(k\)</span> is quite large, say <span class="math inline">\(k\)</span> = 450, for example? When <span class="math inline">\(k\)</span> = 450 for this data set, the blue line is extremely smooth, and almost flat. This happens because our predicted values for a given x value (here home size), depend on many many neighbouring observations, 450 to be exact! A model like this has low variance and high bias. It has low variance because the smooth, inflexible blue line does not follow the training observations very closely, and if we were to change any one of the training observation data points it really wouldn’t affect the shape of the smooth blue line at all. This means that although the blue line matches does not match the data we happen to have in this particular training data set perfectly, if we were to collect another training data set from the Sacramento real estate market it likely would match those observations equally as well as it matches those in this training data set. This model also has high bias because the model/predicted values does not match the actual observed values very well. Another term that we use to collectively describe this kind of model is underfitting.</p>
 <p>Ideally, what we want is neither of the two examples discussed above. Instead, we would like a model with low variance (so that it will transer/generalize well to other data sets, meaning that it isn’t too dependent on the observations that happen to be in the training set we had) <strong>and</strong> low bias (one where the model/predicted values matches the actual observed values very well). If we explore the other values for <span class="math inline">\(k\)</span>, in particular <span class="math inline">\(k\)</span> = 51 (the optimal <span class="math inline">\(k\)</span> as suggested by cross-validation), we can see it has a lower bias than our model with a very high <span class="math inline">\(k\)</span> (e.g., 450), and thus the model/predicted values better match the actual observed values than the high <span class="math inline">\(k\)</span> model. Additionally, it has lower variance than our model with a very low <span class="math inline">\(k\)</span> (e.g., 1) and thus it should better transer/generalize to other data sets compared to the low <span class="math inline">\(k\)</span> model.</p>
 <p>Finally, how the choice of <span class="math inline">\(k\)</span> affects k-nn regression also carries over to how the choice of <span class="math inline">\(k\)</span> affects k-nn classification. It is simply easier to show this through pictures for a k-nn regression problem which is why we waited until now to discuss this.</p>
@@ -494,7 +498,7 @@ plot_final</code></pre></div>
 <h3><span class="header-section-number">8.9.2</span> Limitations of k-nn regression</h3>
 <ol style="list-style-type: decimal">
 <li>As data gets bigger and bigger, k-nn gets slower and slower, quite quickly</li>
-<li>Does not perform well with a large number of predictors</li>
+<li>Does not perform well with a large number of predictors unless the size of the training set is exponentially larger</li>
 <li>Does not predict well beyond the range of values input in your training data</li>
 </ol>
 
