@@ -20,7 +20,7 @@ As in k-nn classification, in k-nn regression we can have multiple predictors. W
 We will now demonstrate a multi-variate k-nn regression analysis usin the `caret` package on the Sacramento real estate data (also used in the the last two chapters in this book). This time we will use house size (measured in square feet) as well as number of bathrooms as our predictors, and continue to use house sale price as our outcome/target variable that we are trying to predict.
 
 Let's first load the libraries and the data:
-```{r load stuff, warning = FALSE}
+```{r load stuff, warning = FALSE, message = FALSE}
 library(tidyverse)
 library(caret)
 library(GGally)
@@ -80,7 +80,7 @@ Y_test <- scaled_Sacramento %>%
 ```
 
 Next, we'll use 10-fold cross-validation to choose $k$:
-```{r mult_choose_k}
+```{r mult_choose_k, fig.height = 4, fig.width = 5}
 train_control <- trainControl(method = "cv", number = 10)
 # makes a column of k's, from 1 to 100 in increments of 10
 k_lots = data.frame(k = seq(from = 1, to = 500, by = 5)) 
@@ -114,3 +114,168 @@ knn_mult_test_results[[1]]
 ```
 
 This time when we performed k-nn regression on the same data set, but also included number of bathrooms as a predictor we obtained a RMSPE test error of 90108.49. This compares to a RMSPE test error of 91620.40 when we used only house size as the single predictor. What do the predictions from this model look like overlaid on the data?
+
+```{r knnMultViz, echo = FALSE}
+library(plotly)
+
+train_data <- bind_cols(X_train, tibble(price = Y_train))
+# mult_knn_predictions <- data.frame(sqft = seq(from = min(train_data$sqft), to = max(train_data$sqft), length = 2000),
+#                                   baths = seq(from = min(train_data$baths), to = max(train_data$baths), length = 2000 ))
+# mult_knn_predictions <- mult_knn_predictions %>% 
+#   mutate(price = predict(knn_mult_reg_final, mult_knn_predictions))
+#   
+# train_data %>% 
+# plot_ly(x = ~ as.numeric(sqft), 
+#         z = ~ as.integer(price), 
+#         y = ~ as.numeric(baths),
+#         opacity = 0.4,
+#         size = 150) %>% 
+#   add_markers()  %>%
+#   layout(scene = list(xaxis = list(title = 'House size (square feet)'), 
+#                      zaxis = list(title = 'Price (USD)'),
+#                      yaxis = list(title = 'Number of bathrooms'))) %>% 
+#   add_trace(data = mult_knn_predictions,
+#               type = "mesh3d",
+#               x = ~ sqft, 
+#               y = ~ baths, 
+#               z = ~ price)
+
+# Define 3D scatterplot points --------------------------------------------
+# Get coordinates of points for 3D scatterplot
+x_values <- train_data$sqft %>% 
+  round(3)
+y_values <- train_data$baths %>% 
+  round(3)
+z_values <- train_data$price %>% 
+  round(3)
+
+# Define regression plane -------------------------------------------------
+# Construct x and y grid elements
+sqft <- seq(from = min(x_values), to = max(x_values), length = 50)
+baths <- seq(from = min(y_values), to = max(y_values), length = 50)
+
+# Construct z grid by computing
+# 1) fitted beta coefficients
+# 2) fitted values of outer product of x_grid and y_grid
+# 3) extracting z_grid (matrix needs to be of specific dimensions)
+# beta_hat <- house_prices %>% 
+#   lm(log10_price ~ log10_size + yr_built, data = .) %>% 
+#   coef()
+fitted_values <- crossing(sqft, baths) %>% 
+  mutate(price = predict(knn_mult_reg_final, .))
+
+z_grid <- fitted_values %>% 
+   pull(price) %>%
+   matrix(nrow = length(sqft))
+
+x_grid <- sqft
+y_grid <- baths
+
+train_data %>% 
+plot_ly() %>% 
+  add_markers(x = ~ as.numeric(sqft), 
+        z = ~ as.integer(price), 
+        y = ~ as.numeric(baths),
+        marker = list(size = 5, opacity = 0.4)) %>% 
+  layout(scene = list(xaxis = list(title = 'House size (square feet)'), 
+                     zaxis = list(title = 'Price (USD)'),
+                     yaxis = list(title = 'Number of bathrooms'))) %>% 
+  add_surface(x = ~ x_grid, 
+              y = ~ y_grid, 
+              z = ~ z_grid,
+              colors = "red")
+```
+
+
+```{r}
+# library(tidyverse)
+# library(plotly)
+# library(moderndive)
+# 
+# 
+# # Preprocess data ---------------------------------------------------------
+# set.seed(76)
+# data(house_prices)
+# 
+# # Re-scale price and size (square footage) by log10 and take a subsample of points
+# house_prices <- house_prices %>%
+#   mutate(
+#     log10_price = log10(price),
+#     log10_size = log10(sqft_living)
+#   ) %>%
+#   sample_n(500)
+# 
+# 
+# # Define 3D scatterplot points --------------------------------------------
+# # Get coordinates of points for 3D scatterplot
+# x_values <- house_prices$log10_size %>% 
+#   round(3)
+# y_values <- house_prices$yr_built %>% 
+#   round(3)
+# z_values <- house_prices$log10_price %>% 
+#   round(3)
+# 
+# 
+# # Define regression plane -------------------------------------------------
+# # Construct x and y grid elements
+# x_grid <- seq(from = min(x_values), to = max(x_values), length = 50)
+# y_grid <- seq(from = min(y_values), to = max(y_values), length = 50)
+# 
+# # Construct z grid by computing
+# # 1) fitted beta coefficients
+# # 2) fitted values of outer product of x_grid and y_grid
+# # 3) extracting z_grid (matrix needs to be of specific dimensions)
+# beta_hat <- house_prices %>% 
+#   lm(log10_price ~ log10_size + yr_built, data = .) %>% 
+#   coef()
+# fitted_values <- crossing(y_grid, x_grid) %>% 
+#   mutate(z_grid = beta_hat[1] + beta_hat[2]*x_grid + beta_hat[3]*y_grid)
+# z_grid <- fitted_values %>% 
+#   pull(z_grid) %>%
+#   matrix(nrow = length(x_grid)) %>%
+#   t()
+# 
+# # Define text element for each point in plane
+# text_grid <- fitted_values %>% 
+#   pull(z_grid) %>%
+#   round(3) %>% 
+#   as.character() %>% 
+#   paste("log10(price): ", ., sep = "") %>% 
+#   matrix(nrow = length(x_grid)) %>%
+#   t()
+# 
+# 
+# # Plot using plotly -------------------------------------------------------
+# plot_ly() %>%
+#   # 3D scatterplot:
+#   add_markers(
+#     x = x_values,
+#     y = y_values,
+#     z = z_values,
+#     marker = list(size = 5)#,
+#     #hoverinfo = 'text',
+#     #text = ~paste(
+#     #  "log10(price): ", z_values, "<br>",
+#     #  "year: ", y_values, "<br>",
+#     #  "log10(size): ", x_values 
+#     #)
+#   ) %>%
+#   # Regression plane:
+#   add_surface(
+#     x = x_grid,
+#     y = y_grid,
+#     z = z_grid#,
+#     #hoverinfo = 'text',
+#     #text = text_grid
+#   ) #%>%
+#   # Axes labels and title:
+#   # layout(
+#   #   title = "3D scatterplot and regression plane",
+#   #   scene = list(
+#   #     zaxis = list(title = "y: log10(price)"),
+#   #     yaxis = list(title = "x2: year"),
+#   #     xaxis = list(title = "x1: log10(size)")
+#   #   )
+#   # )
+```
+
