@@ -1,12 +1,116 @@
 # Regression, continued some more... {#regression3}
 
 ## Overview 
-This week will introduce the bootstrap, first by visualizing bootstrap samples and their fitted regression lines for cases where there is a response variable of interest and a single explanatory variable. An intuitive case will be made for what the ensemble of slopes represents, Then we work through examples from multiple regression, emphasizing the scientific interpretation and relevance of the mix of negative/positive slopes. We will emphasize that this is a jumping off point for the study of statistical inference.
+This week we will work through some examples of multiple regression in the prediction context. We will emphasize the interpretation and relevance of the mix of negative/positive slopes in this context. We will then discuss another application of regression; modelling the relationship between two or more variables so that we can better understand or describe it. We will emphasize that this is a jumping off point for the study of statistical inference.
 
 ## Learning objectives 
 By the end of the chapter, students will be able to:
 
-* Explain in words or using drawings, how bootstrap samples can be generated from a single sample.
-* From a single sample, generate multiple samples through bootstrapping using R.
-* In R, overlay the ordinary least squares regression lines from multiple bootstrapped samples on a single plot. 
-* Discuss what the collection of these slopes represents.
+* In a dataset with > 2 variables, perform k-nn regression in R using `caret`'s `train` with `method = "k-nn"` to predict the values for a test dataset.
+* In a dataset with > 2 variables, perform simple ordinary least squares regression in R using `caret`'s `train` with `method = "lm"` to predict the values for a test dataset.
+* ~~Explain in words or using drawings, how bootstrap samples can be generated from a single sample.~~
+* ~~From a single sample, generate multiple samples through bootstrapping using R.~~
+* ~~In R, overlay the ordinary least squares regression lines from multiple bootstrapped samples on a single plot.~~
+* ~~Discuss what the collection of these slopes represents.~~
+
+## Multivariate k-nn regression
+
+As in k-nn classification, in k-nn regression we can have multiple predictors. When we have multiple predictors in k-nn regression, we have the same concern regarding the scale of the predictors. This is because as in k-nn classification, in k-nn regression predictions are made by identifying the $k$ observations that are nearest to the new point we want to predict, and any variables that are on a large scale will have a much larger effect than variables on a small scale. Thus, once we start performing multivariate k-nn regression we need to use the `scale` function in R on our predictors to ensure this doesn't happen.
+
+We will now demonstrate a multi-variate k-nn regression analysis usin the `caret` package on the Sacramento real estate data (also used in the the last two chapters in this book). This time we will use house size (measured in square feet) as well as number of bathrooms as our predictors, and continue to use house sale price as our outcome/target variable that we are trying to predict.
+
+Let's first load the libraries and the data:
+```{r load stuff, warning = FALSE}
+library(tidyverse)
+library(caret)
+library(GGally)
+data("Sacramento")
+head(Sacramento)
+```
+
+It is always a good practice to do exploratory data analysis, such as visualizing the data, before we start modeling the data. Thus the first thing we will do is use ggpairs (from the `GGally` package) to plot all the variables we are interested in using in our analyses:
+
+```{r ggpairs, fig.height = 4, fig.width = 5}
+plot_pairs <- Sacramento %>% 
+  select(price, sqft, baths) %>% 
+  ggpairs()
+plot_pairs
+```
+
+From this we can see that generally, as both house size and number of bathrooms increase, so does price. Does adding the number of baths to our model improve our ability to predict house price? To answer that question, we will have to come up with the test error for a k-nn regression model using house size and number of baths, and then we can compare it to the test error for the model we previously came up with that only used house size to see if it is smaller (decreased test error indicates increased prediction quality). Let's do that now!
+
+Looking at the data above, we can see that `sqft` and `beds` (number of bedrooms) are on vastly different scales. Thus we need to apply the `scale` function to these columns before we start our analysis:
+
+```{r scaling}
+scaled_Sacramento <- Sacramento %>% 
+  select(price, sqft, baths) %>% 
+  mutate(sqft = scale(sqft, center = FALSE),
+         baths = scale(baths, center = FALSE))
+head(scaled_Sacramento)
+```
+
+Now we can split our data into a trained and test set as we did before:
+
+```{r mult_test_train_split}
+set.seed(2019) # makes the random selection of rows reproducible
+training_rows <- scaled_Sacramento %>% 
+  select(price) %>% 
+  unlist() %>% # converts Class from a tibble to a vector
+  createDataPartition(p = 0.6, list = FALSE)
+
+X_train <- scaled_Sacramento %>% 
+  select(sqft, baths) %>% 
+  slice(training_rows) %>% 
+  data.frame()
+
+Y_train <- scaled_Sacramento %>% 
+  select(price) %>% 
+  slice(training_rows) %>% 
+  unlist()
+
+X_test <- scaled_Sacramento %>% 
+  select(sqft, baths) %>% 
+  slice(-training_rows) %>% 
+  data.frame()
+
+Y_test <- scaled_Sacramento %>% 
+  select(price) %>% 
+  slice(-training_rows) %>% 
+  unlist()
+```
+
+Next, we'll use 10-fold cross-validation to choose $k$:
+```{r mult_choose_k}
+train_control <- trainControl(method = "cv", number = 10)
+# makes a column of k's, from 1 to 100 in increments of 10
+k_lots = data.frame(k = seq(from = 1, to = 500, by = 5)) 
+
+set.seed(1234)
+knn_reg_cv_10 <- train(x = X_train, 
+                       y = Y_train, 
+                       method = "knn", 
+                       tuneGrid = k_lots, 
+                       trControl = train_control) 
+
+ggplot(knn_reg_cv_10$results, aes(x = k, y = RMSE)) +
+  geom_point() +
+  geom_line()
+knn_reg_cv_10$method
+```
+Here we see that the smallest $RMSE$ is from the model where $k$ = 31. Thus the best $k$ for this model, with two predictors, is 31. 
+
+Now that we have chosen $k$, we need to re-train the model on the entire training data set with $k$ = 31, and after that we can use that model to predict on the test data to get our test error. At that point we will also visualize the model predictions overlaid on top of the data. This time the predictions will be a plane in 3-D space, instead of a line in 2-D space, as we have 2 predictors instead of 3. 
+
+```{r re-train}
+k = data.frame(k = 31)
+
+set.seed(1234)
+knn_mult_reg_final <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
+
+test_pred <- predict(knn_mult_reg_final, X_test)
+modelvalues <- data.frame(obs = Y_test, pred = test_pred)
+knn_mult_test_results <- defaultSummary(modelvalues)
+knn_mult_test_results[[1]]
+```
+
+This time when we performed k-nn regression on the same data set, but also included number of bathrooms as a predictor we obtained a RMSPE test error of 90108.49. This compares to a RMSPE test error of 91620.40 when we used only house size as the single predictor. What do the predictions from this model look like overlaid on the data?
