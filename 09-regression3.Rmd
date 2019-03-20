@@ -116,26 +116,6 @@ This time when we performed k-nn regression on the same data set, but also inclu
 library(plotly)
 
 train_data <- bind_cols(X_train, tibble(price = Y_train))
-# mult_knn_predictions <- data.frame(sqft = seq(from = min(train_data$sqft), to = max(train_data$sqft), length = 2000),
-#                                   baths = seq(from = min(train_data$baths), to = max(train_data$baths), length = 2000 ))
-# mult_knn_predictions <- mult_knn_predictions %>% 
-#   mutate(price = predict(knn_mult_reg_final, mult_knn_predictions))
-#   
-# train_data %>% 
-# plot_ly(x = ~ as.numeric(sqft), 
-#         z = ~ as.integer(price), 
-#         y = ~ as.numeric(baths),
-#         opacity = 0.4,
-#         size = 150) %>% 
-#   add_markers()  %>%
-#   layout(scene = list(xaxis = list(title = 'House size (square feet)'), 
-#                      zaxis = list(title = 'Price (USD)'),
-#                      yaxis = list(title = 'Number of bathrooms'))) %>% 
-#   add_trace(data = mult_knn_predictions,
-#               type = "mesh3d",
-#               x = ~ sqft, 
-#               y = ~ baths, 
-#               z = ~ price)
 
 # Define 3D scatterplot points --------------------------------------------
 # Get coordinates of points for 3D scatterplot
@@ -173,19 +153,145 @@ plot_ly() %>%
   add_markers(x = ~ as.numeric(sqft), 
         z = ~ as.integer(price), 
         y = ~ as.numeric(baths),
-        marker = list(size = 5, opacity = 0.4)) %>% 
-  layout(scene = list(xaxis = list(title = 'House size (square feet)'), 
+        marker = list(size = 5, opacity = 0.4, color = "red")) %>% 
+  layout(scene = list(xaxis = list(title = 'Scaled house size (square feet)'), 
                      zaxis = list(title = 'Price (USD)'),
-                     yaxis = list(title = 'Number of bathrooms'))) %>% 
+                     yaxis = list(title = 'Scaled number of bathrooms'))) %>% 
   add_surface(x = ~ x_grid, 
               y = ~ y_grid, 
               z = ~ z_grid,
-              colors = "red")
+              colorbar=list(title='Price (USD)'))
 ```
+
+We can see that the predictions in this case, where we have 2 predictors, form a plane instead of a line. Because the newly added predictor, number of bathrooms, is correlated with price (USD) (meaning as price changes, so does number of bathrooms) we get additional and useful information for making our predictions. For example, in this model we would predict that the cost of a house with a scaled house size of ~ 0.52 a scaled number bathrooms of ~ 1.13 would cost less than the same sized house with a higher scaled number bathrooms (e.g., ~ 2.11). Without having the additional predictor of number of bathrooms, we would predict the same price for these two houses. 
 
 ## Multivariate linear regression
 
-TBD
+We could also try to create a prediction model for the data above using linear regression instead of k-nn regression. To do this, we follow a very similar approach to what we did using `caret` for k-nn regression, however, we do not need to use cross-validation to choose $k$. We also do not need to scale the data for linear regression as it does not use a distance between points calculation in its algorithm. We demonstrate how to do this below:
+
+Now we can split our data into a trained and test set as we did before:
+
+```{r lm_mult_test_train_split}
+set.seed(2019) # makes the random selection of rows reproducible
+training_rows <- Sacramento %>% 
+  select(price) %>% 
+  unlist() %>% # converts Class from a tibble to a vector
+  createDataPartition(p = 0.6, list = FALSE)
+
+lm_X_train <- Sacramento %>% 
+  select(sqft, baths) %>% 
+  slice(training_rows) %>% 
+  data.frame()
+
+lm_Y_train <- Sacramento %>% 
+  select(price) %>% 
+  slice(training_rows) %>% 
+  unlist()
+
+lm_X_test <- Sacramento %>% 
+  select(sqft, baths) %>% 
+  slice(-training_rows) %>% 
+  data.frame()
+
+lm_Y_test <- Sacramento %>% 
+  select(price) %>% 
+  slice(-training_rows) %>% 
+  unlist()
+```
+
+Now we can fit the model on the training set using the `method = "lm"` argument in the train function:
+```{r fitlm}
+lm_mult_reg_final <- train(x = lm_X_train, y = lm_Y_train, method = "lm")
+```
+
+What does our model predictions look like in the case of linear regression when we have two predictors? We illustrate this below:
+
+```{r 3DlinReg, echo = FALSE, message = FALSE, warning = FALSE}
+lm_train_data <- bind_cols(lm_X_train, tibble(price = lm_Y_train))
+
+# Define 3D scatterplot points --------------------------------------------
+# Get coordinates of points for 3D scatterplot
+lm_x_values <- lm_train_data$sqft %>% 
+  round(3)
+lm_y_values <- lm_train_data$baths %>% 
+  round(3)
+lm_z_values <- lm_train_data$price %>% 
+  round(3)
+
+# Define regression plane -------------------------------------------------
+# Construct x and y grid elements
+sqft <- seq(from = min(lm_x_values), to = max(lm_x_values), length = 50)
+baths <- seq(from = min(lm_y_values), to = max(lm_y_values), length = 50)
+
+# Construct z grid by computing
+# 1) fitted beta coefficients
+# 2) fitted values of outer product of x_grid and y_grid
+# 3) extracting z_grid (matrix needs to be of specific dimensions)
+# beta_hat <- house_prices %>% 
+#   lm(log10_price ~ log10_size + yr_built, data = .) %>% 
+#   coef()
+lm_fitted_values <- crossing(sqft, baths) %>% 
+  mutate(price = predict(lm_mult_reg_final, .))
+
+lm_z_grid <- lm_fitted_values %>% 
+   pull(price) %>%
+   matrix(nrow = length(sqft))
+
+lm_x_grid <- sqft
+lm_y_grid <- baths
+
+lm_train_data %>% 
+plot_ly() %>% 
+  add_markers(x = ~ as.numeric(sqft), 
+        z = ~ as.integer(price), 
+        y = ~ as.numeric(baths),
+        marker = list(size = 5, opacity = 0.4, color = "red")) %>% 
+  layout(scene = list(xaxis = list(title = 'Scaled house size (square feet)'), 
+                     zaxis = list(title = 'Price (USD)'),
+                     yaxis = list(title = 'Scaled number of bathrooms'))) %>% 
+  add_surface(x = ~ lm_x_grid, 
+              y = ~ lm_y_grid, 
+              z = ~ lm_z_grid,
+              colorbar=list(title='Price (USD)'))
+```
+We see that the predictions from linear regression with two predictors form a plane as well, but this plane differs from the one we get from k-nn regression in its flexibility. The plane from k-nn regression above was more flexible and more closely followed the shape of the training data. The plane from linear regression however is constrained to being linear (i.e., a flat plane). As discussed this can be advantageous in one aspect, which is that for each predictor, we can get a slope from linear regression, and thus describe the plane mathematically. We can extract those slope values from our model object as shown below:
+
+```{r getslopes}
+lm_mult_reg_final$finalModel
+```
+And then use those slopes, to write a mathematical equation to describe the prediction plane:
+
+Remembering that the equation for a plane is: 
+
+$$Y = \beta_0 + \beta_1X_1 + \beta_2X_2$$
+Where:
+
+- $\beta_0$ is the y-intercept of the line (the value where the line cuts the y-axis)
+- $\beta_1$ is the slope for the first predictor
+- $X_1$ is the first predictor
+- $\beta_2$ is the slope for the second predictor
+- $X_2$ is the second predictor
+
+We can then write:
+
+$$house\: price = \beta_0 + \beta_1  \:house\: size + + \beta_2  \:number\: of \: bathrooms$$
+
+And finally, fill in the values for $\beta_0$, $\beta_1$ and $\beta_2$ from the model output above:
+
+$$house\: price = 25284.3 + 140.3*house\: size+ -7116.0 *  \:number\: of \: bathrooms$$
+
+OK great, so this model is more interpretable than the multivariate k-nn regression model (i.e., we can write a mathematical equation that explains how each predictor is affecting the predictions), but as always, we should look at the test error and ask whether linear regression is doing a better job of predicting compared to k-nn regression in this multivariate regression case? To do that we can use this linear regression model to predict on the test data to get our test error.
+
+```{r getRMSPE}
+test_pred_lm <- predict(lm_mult_reg_final, lm_X_test)
+lm_modelvalues <- data.frame(obs = lm_Y_test, pred = test_pred_lm)
+lm_mult_test_results <- defaultSummary(lm_modelvalues)
+lm_mult_test_results[[1]]
+```
+
+We get that the $RMSPE$ for the multivariate linear regression model of 86778.87. This prediction error is less than the prediction error for the multivariate k-nn regression model, indicating that we should likely choose linear regression for predictions of house price on this data set. But wait, we should also ask if this more complex model is doing a better job of predicting compared to our simple linear regression model with only a single predictor (house size). Revisiting last chapter, we see that our $RMSPE$ for our simple linear regression model with only a single predictor was 86688.47 which is less than that for our more complex model. Thus, again for interpretability sake as well as performance, we should in the end choose the simple linear regression model for this data set. 
+
+Should we always end up choosing a simple linear regression as our model? No! And you never know what model will be the best until you go through this process. Exploratory data analysis can give you some hints, but until you look at the test error to compare the models you don't really know.
 
 ## Additional readings/resources
 - Chapters 6 - 11 of [Modern Dive](https://moderndive.com/) Statistical Inference via Data Science by Chester Ismay and Albert Y. Kim
