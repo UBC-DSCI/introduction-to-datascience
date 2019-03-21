@@ -257,7 +257,7 @@ plot_ly() %>%
 We see that the predictions from linear regression with two predictors form a plane as well, but this plane differs from the one we get from k-nn regression in its flexibility. The plane from k-nn regression above was more flexible and more closely followed the shape of the training data. The plane from linear regression however is constrained to being linear (i.e., a flat plane). As discussed this can be advantageous in one aspect, which is that for each predictor, we can get a slope from linear regression, and thus describe the plane mathematically. We can extract those slope values from our model object as shown below:
 
 ```{r getslopes}
-lm_mult_reg_final$finalModel
+lm_mult_reg_final$finalModel$coefficients
 ```
 And then use those slopes, to write a mathematical equation to describe the prediction plane:
 
@@ -274,11 +274,11 @@ Where:
 
 We can then write:
 
-$$house\: price = \beta_0 + \beta_1  \:house\: size + + \beta_2  \:number\: of \: bathrooms$$
+$$house\: price = \beta_0 + \beta_1  \:house\: size + \beta_2  \:number\: of \: bathrooms$$
 
 And finally, fill in the values for $\beta_0$, $\beta_1$ and $\beta_2$ from the model output above:
 
-$$house\: price = 25284.3 + 140.3*house\: size+ -7116.0 *  \:number\: of \: bathrooms$$
+$$house\: price = 25284.3344 + 140.2523*house\: size -7115.9565 *  \:number\: of \: bathrooms$$
 
 OK great, so this model is more interpretable than the multivariate k-nn regression model (i.e., we can write a mathematical equation that explains how each predictor is affecting the predictions), but as always, we should look at the test error and ask whether linear regression is doing a better job of predicting compared to k-nn regression in this multivariate regression case? To do that we can use this linear regression model to predict on the test data to get our test error.
 
@@ -292,6 +292,24 @@ lm_mult_test_results[[1]]
 We get that the $RMSPE$ for the multivariate linear regression model of 86778.87. This prediction error is less than the prediction error for the multivariate k-nn regression model, indicating that we should likely choose linear regression for predictions of house price on this data set. But wait, we should also ask if this more complex model is doing a better job of predicting compared to our simple linear regression model with only a single predictor (house size). Revisiting last chapter, we see that our $RMSPE$ for our simple linear regression model with only a single predictor was 86688.47 which is less than that for our more complex model. Thus, again for interpretability sake as well as performance, we should in the end choose the simple linear regression model for this data set. 
 
 Should we always end up choosing a simple linear regression as our model? No! And you never know what model will be the best until you go through this process. Exploratory data analysis can give you some hints, but until you look at the test error to compare the models you don't really know.
+
+## The other side of regression
+
+So far in this textbook we have used regression only in the context of prediction, however, regression is also a powerful method to understand and/or describe the relationship between a quantitative outcome/response variable and one or more explanatory variables. Extending the case we have been working with in this chapter (where we are interested in house price as the outcome/response variable), we could also, or instead, be interested in describing the individual effects of house size and the number of bathrooms on house price, quantifying how big each of these effects are, and assessing how accurately we can estimate each of these effects.
+
+Using linear regression to answer such questions sits under the umbrella of statistical inference. Here we will only introduce this topic at a very high-level, but it is an important field that is widely used in Statistics and Data Science and is taught in many Statistical courses. 
+
+In statistical inference we acknowledge that we can only measure some of all the possible observations that exist in the world for the thing we are interested in quantifying. And so what we do, is use the measurements that we do have to infer/make a guess about what the true quantity would be if we could measure every possible thing. One example of statistical inference would be to try to estimate/come up with a best guess to the proportion of undergraduates who have an iphone. 
+
+<img src="img/sampling.001.jpeg" width="600">
+
+We cannot possibly ask all existing undergraduates if they have an iphone, so what can we do? Well, what statistical inference suggests that instead of asking all undergraduates (which we cannot do), we instead ask a random (and representative) sample of undergraduates if they have an iphone. 
+
+<img src="img/sampling.002.jpeg" width="600">
+
+From this sample of data we calculate the proportion of undergraduates that have an iphone. We can then use this proportion as an estimate/best guess of the proportion of all undergradautes that have an iphone. We know the proportion we calculated is not exactly right, but we think it should be close and it's the best we can do (since we cannot possibly ask all undergraduates and get the exact truth). Since we know that it's not exaclty right, we also try to use the data we have collected to come up with a plausible range where we think the true proportion of all undergradautes that have an iphone lies. 
+
+Now here in this chapter in the context of linear regression, we are not talking about estimating a proportion, instead we are instead usually interested in estimating the slope/coefficient of the relationship between the outcome/response variable and one or more predictor variables. Again, in this case, whatever we are measuring is usually just a sample of all the things we could measure. Here in this chapter it is a sample of observations measuring the sale and house characteristics of 932 (out of > 180,000) homes in Sacramento. Fitting our linear model, we did come up with an estimate for the slope for the relationship between house sale price and home size as 175.9. We know this number is not the true slope for the relationship between these two variables, however this is the best guess/estimate we can come up with given the data that we have. The next step of regression in this statistical inference perspective would be to use the data we have come up with a plausible range for where we think the value for the true slope would lie. We will not go into the details of how to do this in this course, but this will be covered in following Statistics courses. However, if you are very interested we will say that boostrapping to generate confidence intervals would be one approach that would let you do this and we point you to the additional readings for this chapter to learn more if you are interested. 
 
 ## Additional readings/resources
 - Chapters 6 - 11 of [Modern Dive](https://moderndive.com/) Statistical Inference via Data Science by Chester Ismay and Albert Y. Kim
