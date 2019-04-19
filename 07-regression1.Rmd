@@ -1,9 +1,5 @@
 # Introduction to regression through K-nearest neighbours {#regression1}
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 ## Overview 
 Introduction to regression using K-nearest neighbours (k-nn). We will focus on prediction in cases where there is a response variable of interest and a single explanatory variable.
 
@@ -38,7 +34,7 @@ head(Sacramento)
 
 We are interested in the columns `sqft` (which is the house size in livable square feet) and `price`, which is the house size in US dollars (USD). Let's now visaulize the data as a scatter plot where we place the predictor/explanatory variable, house size, on the x-axis and the target/response variable, price, on the y-axis (this is what we would like to predict):
 
-```{r eda, message = FALSE, fig.height = 4, fig.width = 5}
+```{r edaRegr, message = FALSE, fig.height = 4, fig.width = 5}
 eda <- ggplot(Sacramento, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
   xlab("House size (square footage)") +
@@ -68,7 +64,7 @@ Next let's say we come across a new house we are interested in purchasing, and i
 
 Given the data in the plot below, we have no observations of a house that has sold that is 2000 square feet, so how can we predict the price? 
 
-```{r small_eda, fig.height = 4, fig.width = 5}
+```{r small_eda_regr, fig.height = 4, fig.width = 5}
 small_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
   geom_point() +
   xlab("House size (square footage)") +
@@ -88,7 +84,7 @@ small_sacramento %>%
 ```
 
 
-```{r knn3, fig.height = 4, fig.width = 5}
+```{r knn3_example, fig.height = 4, fig.width = 5}
 small_plot +
   geom_segment(aes(x = 2000, y = 300500, xend = 1910, yend = 300500), col = "orange") + 
   geom_segment(aes(x = 2000, y = 290000, xend = 1720, yend = 290000), col = "orange") + 
@@ -100,7 +96,7 @@ small_plot +
 
 Now that we have the 5 nearest neighbours to our new observation that we would like to predict the price for, we can use their values to predict a selling price for the home we are interested in buying that is 2000 square feet. Specifically, we can take the mean (or average) of these 5 values as our predicted value.
 
-```{r predicted}
+```{r predicted_knn}
 prediction <- small_sacramento %>% 
   mutate(diff = abs(2000 - sqft)) %>% 
   arrange(diff) %>% 
@@ -109,7 +105,7 @@ prediction <- small_sacramento %>%
 prediction
 ```
 
-```{r predictedViz, echo = FALSE, fig.height = 4, fig.width = 5}
+```{r predictedViz_knn, echo = FALSE, fig.height = 4, fig.width = 5}
 small_plot +
   geom_segment(aes(x = 2000, y = 300500, xend = 1910, yend = 300500), col = "orange") + 
   geom_segment(aes(x = 2000, y = 290000, xend = 1720, yend = 290000), col = "orange") + 
@@ -169,7 +165,7 @@ A key feature the formula for RMSE is the distance between the observed target/r
 
 Now that we know how we can assess how well our model predicts a numerical value, let's use R to perform cross-validation and to choose the optimal $k$.
 
-```{r choose_k, fig.height = 4, fig.width = 5}
+```{r choose_k_knn, fig.height = 4, fig.width = 5}
 train_control <- trainControl(method = "cv", number = 10)
 # makes a column of k's, from 1 to 100 in increments of 10
 k_lots = data.frame(k = seq(from = 1, to = 500, by = 5)) 
@@ -193,7 +189,7 @@ Here we see that the smallest $RMSE$ is from the model where $k$ = 51. Thus the 
 
 Below we plot the predicted values for house price from our k-nn regression models for 6 different values for $k$ where the only predictor is home size. For each model, we predict a price for every possible home size across the range of home sizes we observed in the data set (here 500 to 4250 square feet) and we plot the predicted prices as a blue line:
 
-```{r echo = FALSE, fig.height = 12, fig.width = 10}
+```{r howK, echo = FALSE, fig.height = 12, fig.width = 10}
 get_predictions <- function(num_neighbours, X, Y){
   data <- bind_cols(X, data.frame(price = Y))
   k = data.frame(k = num_neighbours)
