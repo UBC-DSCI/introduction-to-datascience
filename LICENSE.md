@@ -1,9 +1,9 @@
-CC BY 2.5 CA
+**CC BY 2.5 CA**
 
 An Introduction to Data Science is
 made available under the **Creative Commons Attribution 2.5 Canada License** ([CC BY 2.5 CA](https://creativecommons.org/licenses/by/2.5/ca/)). 
 
-This is a human-readable summary of (and not a substitute for) the license, which is available in the following languages: 
+This is a human-readable summary of (and not a substitute for) the license: 
 
 ## You are free to:
 **Share** — copy and redistribute the material in any medium or format
