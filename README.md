@@ -8,11 +8,15 @@ First, you need to ensure the following libraries/executables are available on y
 `
 sudo apt-get pandoc, pandoc-citeproc, libssl-dev, libxml2-dev
 `
+
 Then before rendering the book, you need to install a collection of R packages:
+
 `
 install.packages(c("e1071", "rvest", "tidyverse", "caret", "bookdown", "plotly", "gridExtra", "GGally"))
 `
+
 Finally, you can render the book with the following R code:
+
 `
 bookdown::render_book('index.Rmd', 'bookdown::gitbook')
 `
