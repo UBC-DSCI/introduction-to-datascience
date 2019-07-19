@@ -21,7 +21,7 @@ For example, let's revisit the smaller version of the Sacramento housing data se
 
 To answer this question using linear regression, we use the data we have to draw the straight line of "best fit" through our existing data points:
 
-```{r linReg1, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5}
+```{r 08-lin-reg1, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5}
 library(tidyverse)
 library(scales)
 library(caret)
@@ -42,7 +42,7 @@ small_plot
 
 Then we can use this line to "look up" the predicted price given the value we have for the predictor/explanatory variable (here 2000 square feet). 
 
-```{r linReg2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5}
+```{r 08-lin-reg2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5}
 small_model <- lm(price ~ sqft, data = small_sacramento)
 prediction <- predict(small_model, data.frame(sqft = 2000))
 
@@ -56,7 +56,7 @@ print(prediction[[1]])
 
 Using linear regression on this small data set to predict the sale price for a 2000 square foot house we get a predicted value of \$287178.80 USD. But wait a minute... How exactly does linear regression choose the line of "best fit"? Many different lines could be drawn through the data points, we show some examples below:
 
-```{r severalLines, echo = FALSE, fig.height = 4, fig.width = 5}
+```{r 08-several-lines, echo = FALSE, fig.height = 4, fig.width = 5}
 
 small_plot + 
   geom_abline(intercept = -64542.23, slope = 190, color = "green") +
@@ -66,7 +66,7 @@ small_plot +
 
 Linear regression chooses the straight line of "best fit" by choosing the line that minimzes the **average** vertical distance between itself and each of the observed data points. From the lines shown above, that is the blue line. What exactly do we mean by the vertical distance between the predicted values (which fall along the line of "best fit") and the observed data points? We illustrate these distances in the plot below with a red line:
 
-```{r verticalDistToMin,  echo = FALSE, fig.height = 4, fig.width = 5}
+```{r 08-verticalDistToMin,  echo = FALSE, fig.height = 4, fig.width = 5}
 small_sacramento <- small_sacramento %>% 
   mutate(predicted = predict(small_model))
 small_plot +
@@ -83,7 +83,7 @@ We can perform linear regression in R using the `caret` package in a very simila
 
 As usual, we should start by putting some test data away in a lock box that we can come back to after we choose our final model, so let's take care of that business now. 
 
-```{r test_train_split_again}
+```{r 08-test-train-split-again}
 set.seed(2019) # makes the random selection of rows reproducible
 training_rows <- Sacramento %>% 
   select(price) %>% 
@@ -114,7 +114,7 @@ Y_test <- Sacramento %>%
 
 Now that we have our training data, we fit our linear regression model:
 
-```{r fitLM, fig.height = 4, fig.width = 5}
+```{r 08-fitLM, fig.height = 4, fig.width = 5}
 lm_model <- train(x = X_train, 
                       y = Y_train, 
                       method = "lm") 
@@ -122,7 +122,7 @@ lm_model <- train(x = X_train,
 
 And finally, we predict on the test data set to assess how well our model does:
 
-```{r assessFinal}
+```{r 08-assessFinal}
 test_pred <- predict(lm_model, X_test)
 lm_modelvalues <- data.frame(obs = Y_test, pred = test_pred)
 lm_test_results <- defaultSummary(lm_modelvalues)
@@ -133,7 +133,7 @@ Our final model's test error as assessed by $RMSPE$ is 86688.47. Remember that t
 
 And what does our final linear regression model look like when we predict across all possible house sizes we might encounter in the Sacremento area? There is a plotting function in the `tidyverse`, `geom_smooth`, that allows us to do this easily by adding a layer on our plot with the linear regression predicted line of "best fit". The default for this adds a plausible range to this line that we are not interested in at this point, so to avoid plotting it, we provide the argument `se = FALSE` in our call to `geom_smooth`.
 
-```{r lm_predict_all, fig.height = 4, fig.width = 5}
+```{r 08-lm-predict-all, fig.height = 4, fig.width = 5}
 
 train_data <- bind_cols(X_train, data.frame(price = Y_train))
 
@@ -150,7 +150,7 @@ lm_plot_final
 
 Now that we have a general understanding of both linear and k-nn regression, we can start to compare and contrast these methods as well as the predictions made by them. To start, let's look at the visualization of the linear regression model predictions for the Sacramento real estate data (predicting price from house size) and the "best" k-nn regression model obtained from the same problem:
 
-```{r compareRegression, echo = FALSE, fig.height = 4, fig.width = 10}
+```{r 08-compareRegression, echo = FALSE, fig.height = 4, fig.width = 10}
 k = data.frame(k = 51)
 set.seed(1234)
 knn_reg_final <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
