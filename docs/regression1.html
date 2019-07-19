@@ -1,43 +1,43 @@
 <!DOCTYPE html>
-<html >
-
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
 <head>
 
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Introduction to Data Science</title>
-  <meta name="description" content="This is an open source textbook for teaching Introductory Data Science.">
-  <meta name="generator" content="bookdown 0.7 and GitBook 2.6.7">
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Chapter 8 Introduction to regression through K-nearest neighbours | Introduction to Data Science</title>
+  <meta name="description" content="This is an open source textbook for teaching introductory data science." />
+  <meta name="generator" content="bookdown 0.11 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Introduction to Data Science" />
+  <meta property="og:title" content="Chapter 8 Introduction to regression through K-nearest neighbours | Introduction to Data Science" />
   <meta property="og:type" content="book" />
   
   
-  <meta property="og:description" content="This is an open source textbook for teaching Introductory Data Science." />
-  <meta name="github-repo" content="rstudio/bookdown-demo" />
+  <meta property="og:description" content="This is an open source textbook for teaching introductory data science." />
+  
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Introduction to Data Science" />
+  <meta name="twitter:title" content="Chapter 8 Introduction to regression through K-nearest neighbours | Introduction to Data Science" />
   
-  <meta name="twitter:description" content="This is an open source textbook for teaching Introductory Data Science." />
+  <meta name="twitter:description" content="This is an open source textbook for teaching introductory data science." />
   
 
-<meta name="author" content="Tiffany-Anne Timbers">
-<meta name="author" content="Melissa Lee">
-<meta name="author" content="Samuel Hinshaw">
+<meta name="author" content="Tiffany-Anne Timbers" />
+<meta name="author" content="Melissa Lee" />
+<meta name="author" content="Trevor Campbell" />
 
 
-<meta name="date" content="2019-04-19">
+<meta name="date" content="2019-07-03" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
 <link rel="prev" href="classification-continued.html">
 <link rel="next" href="regression2.html">
 <script src="libs/jquery-2.2.3/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
 <link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
@@ -50,12 +50,12 @@
 
 
 <script src="libs/htmlwidgets-1.3/htmlwidgets.js"></script>
-<script src="libs/plotly-binding-4.8.0.9000/plotly.js"></script>
+<script src="libs/plotly-binding-4.9.0/plotly.js"></script>
 <script src="libs/typedarray-0.1/typedarray.min.js"></script>
 <link href="libs/crosstalk-1.0.0/css/crosstalk.css" rel="stylesheet" />
 <script src="libs/crosstalk-1.0.0/js/crosstalk.min.js"></script>
-<link href="libs/plotly-htmlwidgets-css-1.42.5/plotly-htmlwidgets.css" rel="stylesheet" />
-<script src="libs/plotly-main-1.42.5/plotly-latest.min.js"></script>
+<link href="libs/plotly-htmlwidgets-css-1.46.1/plotly-htmlwidgets.css" rel="stylesheet" />
+<script src="libs/plotly-main-1.46.1/plotly-latest.min.js"></script>
 
 
 <style type="text/css">
@@ -331,14 +331,14 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 ## 4 SACRAMENTO z95815    2     1  852 Residential 69307 38.61684 -121.4391
 ## 5 SACRAMENTO z95824    2     1  797 Residential 81900 38.51947 -121.4358
 ## 6 SACRAMENTO z95841    3     1 1122       Condo 89921 38.66260 -121.3278</code></pre>
-<p>We are interested in the columns <code>sqft</code> (which is the house size in livable square feet) and <code>price</code>, which is the house size in US dollars (USD). Let’s now visaulize the data as a scatter plot where we place the predictor/explanatory variable, house size, on the x-axis and the target/response variable, price, on the y-axis (this is what we would like to predict):</p>
+<p>We are interested in the columns <code>sqft</code> (which is the house size in livable square feet) and <code>price</code>, which is the house size in US dollars (USD). Let’s now visualize the data as a scatter plot where we place the predictor/explanatory variable, house size, on the x-axis and the target/response variable, price, on the y-axis (this is what we would like to predict):</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">eda &lt;-<span class="st"> </span><span class="kw">ggplot</span>(Sacramento, <span class="kw">aes</span>(<span class="dt">x =</span> sqft, <span class="dt">y =</span> price)) <span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">alpha =</span> <span class="fl">0.4</span>) <span class="op">+</span>
 <span class="st">  </span><span class="kw">xlab</span>(<span class="st">&quot;House size (square footage)&quot;</span>) <span class="op">+</span>
 <span class="st">  </span><span class="kw">ylab</span>(<span class="st">&quot;Price (USD)&quot;</span>) <span class="op">+</span>
 <span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">labels =</span> <span class="kw">dollar_format</span>()) 
 eda</code></pre></div>
-<p><img src="bookdown-demo_files/figure-html/edaRegr-1.png" width="480" /></p>
+<p><img src="_main_files/figure-html/edaRegr-1.png" width="480" /></p>
 <p>From looking at the visualization above, we see that as house size (square footage) increases, so does house price. Thus, we can reason that house size might be a useful predictor of house price and perhaps we can use the size of the house to predict the price a house will be sold at (for a home that has not yet sold and thus consequently we do not know the house price).</p>
 </div>
 <div id="k-nearest-neighbours-regression" class="section level2">
@@ -360,7 +360,7 @@ small_sacramento &lt;-<span class="st"> </span><span class="kw">sample_n</span>(
 <span class="st">  </span><span class="kw">scale_y_continuous</span>(<span class="dt">labels=</span><span class="kw">dollar_format</span>()) <span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_vline</span>(<span class="dt">xintercept =</span> <span class="dv">2000</span>, <span class="dt">linetype =</span> <span class="st">&quot;dotted&quot;</span>) 
 small_plot</code></pre></div>
-<p><img src="bookdown-demo_files/figure-html/small_eda_regr-1.png" width="480" /></p>
+<p><img src="_main_files/figure-html/small_eda_regr-1.png" width="480" /></p>
 <p>What we can do is use the neighbouring points to suggest/predict what the price should be. For the example above, below we find and label the 5 nearest neighbours to our observation of a house that is 2000 square feet:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">small_sacramento <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">mutate</span>(<span class="dt">diff =</span> <span class="kw">abs</span>(<span class="dv">2000</span> <span class="op">-</span><span class="st"> </span>sqft)) <span class="op">%&gt;%</span><span class="st"> </span>
@@ -384,7 +384,7 @@ small_plot</code></pre></div>
 <span class="st">  </span><span class="kw">geom_segment</span>(<span class="kw">aes</span>(<span class="dt">x =</span> <span class="dv">2000</span>, <span class="dt">y =</span> <span class="dv">168750</span>, <span class="dt">xend =</span> <span class="dv">1669</span>, <span class="dt">yend =</span> <span class="dv">168750</span>), <span class="dt">col =</span> <span class="st">&quot;orange&quot;</span>) <span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_segment</span>(<span class="kw">aes</span>(<span class="dt">x =</span> <span class="dv">2000</span>, <span class="dt">y =</span> <span class="dv">276500</span>, <span class="dt">xend =</span> <span class="dv">1650</span>, <span class="dt">yend =</span> <span class="dv">276500</span>), <span class="dt">col =</span> <span class="st">&quot;orange&quot;</span>) <span class="op">+</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">geom_segment</span>(<span class="kw">aes</span>(<span class="dt">x =</span> <span class="dv">2000</span>, <span class="dt">y =</span> <span class="dv">315537</span>, <span class="dt">xend =</span> <span class="dv">2367</span>, <span class="dt">yend =</span> <span class="dv">315537</span>), <span class="dt">col =</span> <span class="st">&quot;orange&quot;</span>) </code></pre></div>
-<p><img src="bookdown-demo_files/figure-html/knn3_example-1.png" width="480" /></p>
+<p><img src="_main_files/figure-html/knn3_example-1.png" width="480" /></p>
 <p>Now that we have the 5 nearest neighbours to our new observation that we would like to predict the price for, we can use their values to predict a selling price for the home we are interested in buying that is 2000 square feet. Specifically, we can take the mean (or average) of these 5 values as our predicted value.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">prediction &lt;-<span class="st"> </span>small_sacramento <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">mutate</span>(<span class="dt">diff =</span> <span class="kw">abs</span>(<span class="dv">2000</span> <span class="op">-</span><span class="st"> </span>sqft)) <span class="op">%&gt;%</span><span class="st"> </span>
@@ -394,7 +394,7 @@ small_plot</code></pre></div>
 prediction</code></pre></div>
 <pre><code>##   predicted
 ## 1  270257.4</code></pre>
-<p><img src="bookdown-demo_files/figure-html/predictedViz_knn-1.png" width="480" /></p>
+<p><img src="_main_files/figure-html/predictedViz_knn-1.png" width="480" /></p>
 <p>Our predicted price is $270,257.40 (shown as a red point above), which is much less than $350,000, and so perhaps we might want to offer less than the list price that the house is advertised at. Simple right? Not quite. We have all the same unanswered questions here with k-nn regression that we had with k-nn classification. Which <span class="math inline">\(k\)</span> do we choose? And, is our model any good at making predictions? We’ll shortly address how to answer these questions in the context of k-nn regression.</p>
 </div>
 <div id="assessing-a-knn-regression-model" class="section level2">
@@ -426,7 +426,7 @@ Y_test &lt;-<span class="st"> </span>Sacramento <span class="op">%&gt;%</span><s
 <span class="st">  </span><span class="kw">slice</span>(<span class="op">-</span>training_rows) <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">unlist</span>()</code></pre></div>
 <p>Next, we’ll use cross-validation to choose <span class="math inline">\(k\)</span>. In k-nn classification, we used accuracy to see how well our predictions matched the true labels. Here in the context of k-nn regression we will use root mean square error (<span class="math inline">\(RMSE\)</span>) instead. If the predictions are very close to the true values, then <span class="math inline">\(RMSE\)</span> will be small. If, on the other-hand, the predictions are very different to the true values, then <span class="math inline">\(RMSE\)</span> will be quite large. Thus, when we are doing cross validation to choose <span class="math inline">\(k\)</span>, we want to choose the <span class="math inline">\(k\)</span> that gives us the smallest <span class="math inline">\(RMSE\)</span>.</p>
-<p>The mathematical formula for calculation <span class="math inline">\(RMSE\)</span> is shown below:</p>
+<p>The mathematical formula for calculating <span class="math inline">\(RMSE\)</span> is shown below:</p>
 <p><span class="math display">\[RMSE = \sqrt{\frac{1}{n}\sum\limits_{i=1}^{n}(y_i - \hat{y_i})^2}\]</span></p>
 <p>Where:</p>
 <ul>
@@ -437,7 +437,7 @@ Y_test &lt;-<span class="st"> </span>Sacramento <span class="op">%&gt;%</span><s
 <p>A key feature the formula for RMSE is the distance between the observed target/response variable value, <span class="math inline">\(y\)</span>, and the prediction target/response variable value, <span class="math inline">\(\hat{y_i}\)</span>, for each observation (from 1 to <span class="math inline">\(i\)</span>).</p>
 <p>Now that we know how we can assess how well our model predicts a numerical value, let’s use R to perform cross-validation and to choose the optimal <span class="math inline">\(k\)</span>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method =</span> <span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">10</span>)
-<span class="co"># makes a column of k&#39;s, from 1 to 100 in increments of 10</span>
+<span class="co"># makes a column of k&#39;s, from 1 to 500 in increments of 5</span>
 k_lots =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="kw">seq</span>(<span class="dt">from =</span> <span class="dv">1</span>, <span class="dt">to =</span> <span class="dv">500</span>, <span class="dt">by =</span> <span class="dv">5</span>)) 
 
 <span class="kw">set.seed</span>(<span class="dv">1234</span>)
@@ -450,7 +450,7 @@ knn_reg_cv_<span class="dv">10</span> &lt;-<span class="st"> </span><span class=
 <span class="kw">ggplot</span>(knn_reg_cv_<span class="dv">10</span><span class="op">$</span>results, <span class="kw">aes</span>(<span class="dt">x =</span> k, <span class="dt">y =</span> RMSE)) <span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_line</span>()</code></pre></div>
-<p><img src="bookdown-demo_files/figure-html/choose_k_knn-1.png" width="480" /></p>
+<p><img src="_main_files/figure-html/choose_k_knn-1.png" width="480" /></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">knn_reg_cv_<span class="dv">10</span><span class="op">$</span>method</code></pre></div>
 <pre><code>## [1] &quot;knn&quot;</code></pre>
 <p>Here we see that the smallest <span class="math inline">\(RMSE\)</span> is from the model where <span class="math inline">\(k\)</span> = 51. Thus the best <span class="math inline">\(k\)</span> for this model is 51.</p>
@@ -458,7 +458,7 @@ knn_reg_cv_<span class="dv">10</span> &lt;-<span class="st"> </span><span class=
 <div id="how-do-different-ks-affect-k-nn-regression-predictions" class="section level2">
 <h2><span class="header-section-number">8.7</span> How do different k’s affect k-nn regression predictions</h2>
 <p>Below we plot the predicted values for house price from our k-nn regression models for 6 different values for <span class="math inline">\(k\)</span> where the only predictor is home size. For each model, we predict a price for every possible home size across the range of home sizes we observed in the data set (here 500 to 4250 square feet) and we plot the predicted prices as a blue line:</p>
-<p><img src="bookdown-demo_files/figure-html/howK-1.png" width="960" /></p>
+<p><img src="_main_files/figure-html/howK-1.png" width="960" /></p>
 <p>From the plots above, we see that when <span class="math inline">\(k\)</span> = 1, the blue line runs perfectly through almost all of our training observations. This happens because our predicted values for a given region, depend on just a single observation. A model like this has high variance and low bias. It has high variance because the flexible blue line follows the training observations very closely, and if we were to change any one of the training observation data points we would change the flexible blue line quite a lot. This means that the blue line matches the data we happen to have in this training data set, however, if we were to collect another training data set from the Sacramento real estate market it likely wouldn’t match those observations as well. However, it has low bias because the model/predicted values matches the actual observed values in this training data set very well. Another term that we use to collectively describe this phenomenon is overfitting.</p>
 <p>What about the plot where <span class="math inline">\(k\)</span> is quite large, say <span class="math inline">\(k\)</span> = 450, for example? When <span class="math inline">\(k\)</span> = 450 for this data set, the blue line is extremely smooth, and almost flat. This happens because our predicted values for a given x value (here home size), depend on many many neighbouring observations, 450 to be exact! A model like this has low variance and high bias. It has low variance because the smooth, inflexible blue line does not follow the training observations very closely, and if we were to change any one of the training observation data points it really wouldn’t affect the shape of the smooth blue line at all. This means that although the blue line matches does not match the data we happen to have in this particular training data set perfectly, if we were to collect another training data set from the Sacramento real estate market it likely would match those observations equally as well as it matches those in this training data set. This model also has high bias because the model/predicted values does not match the actual observed values very well. Another term that we use to collectively describe this kind of model is underfitting.</p>
 <p>Ideally, what we want is neither of the two examples discussed above. Instead, we would like a model with low variance (so that it will transer/generalize well to other data sets, meaning that it isn’t too dependent on the observations that happen to be in the training set we had) <strong>and</strong> low bias (one where the model/predicted values matches the actual observed values very well). If we explore the other values for <span class="math inline">\(k\)</span>, in particular <span class="math inline">\(k\)</span> = 51 (the optimal <span class="math inline">\(k\)</span> as suggested by cross-validation), we can see it has a lower bias than our model with a very high <span class="math inline">\(k\)</span> (e.g., 450), and thus the model/predicted values better match the actual observed values than the high <span class="math inline">\(k\)</span> model. Additionally, it has lower variance than our model with a very low <span class="math inline">\(k\)</span> (e.g., 1) and thus it should better transer/generalize to other data sets compared to the low <span class="math inline">\(k\)</span> model.</p>
@@ -480,7 +480,7 @@ test_results</code></pre></div>
 <pre><code>##         RMSE     Rsquared          MAE 
 ## 9.162040e+04 5.785061e-01 6.370486e+04</code></pre>
 <p>Our final model’s test error as assessed by <span class="math inline">\(RMSE\)</span> is 91620.4. But what does this <span class="math inline">\(RMSE\)</span> score mean? When we calculated test set prediction accuracy when we performed k-nn classification the highest possible value was 1, and if we got an value close to that it was easy to assess how well our model did on at least one new data set that had never been used to choose our model (so we didn’t violate the golden rule of statistical/machine learning). So what about <span class="math inline">\(RMSE\)</span>, what is it out of? Unfortunately there is no scale for <span class="math inline">\(RMSE\)</span> (instead it is measured in the units of the target/response variable), and so it is a bit hard to interpret. For now, let’s consider this approach to thinking about <span class="math inline">\(RMSE\)</span> from our testing data set: as long as its not WAY worse than the cross-validation <span class="math inline">\(RMSPE\)</span> of our best model then we can say that we’re not doing too much worse on the test data than we did on the training data, and so it appears to be generalizing OK to a new data set it has never seen before. In future courses on statistical/machine learning we will learn more about how to interpret <span class="math inline">\(RMSE\)</span> from our testing data set and other ways to assess our model.</p>
-<p>And what does our final model look like when we predict across all possible house sizes we might encounter in the Sacremento area? We plotted it above where we explored how <span class="math inline">\(k\)</span> affects k-nn regression, but we show it again now, along with the code for how we generated it:</p>
+<p>And what does our final model look like when we predict across all possible house sizes we might encounter in the Sacramento area? We plotted it above where we explored how <span class="math inline">\(k\)</span> affects k-nn regression, but we show it again now, along with the code for how we generated it:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">1234</span>)
 predictions_all &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">sqft =</span> <span class="kw">seq</span>(<span class="dt">from =</span> <span class="dv">500</span>, <span class="dt">to =</span> <span class="dv">4250</span>, <span class="dt">by =</span> <span class="dv">1</span>))
 predictions_all<span class="op">$</span>price &lt;-<span class="st"> </span><span class="kw">predict</span>(knn_reg_final, 
@@ -494,7 +494,7 @@ plot_final &lt;-<span class="st"> </span><span class="kw">ggplot</span>(train_da
 <span class="st">    </span><span class="kw">geom_line</span>(<span class="dt">data =</span> predictions_all, <span class="kw">aes</span>(<span class="dt">x =</span> sqft, <span class="dt">y =</span> price), <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>) <span class="op">+</span>
 <span class="st">    </span><span class="kw">ggtitle</span>(<span class="st">&quot;k = 51&quot;</span>)
 plot_final</code></pre></div>
-<p><img src="bookdown-demo_files/figure-html/predict_all-1.png" width="480" /></p>
+<p><img src="_main_files/figure-html/predict_all-1.png" width="480" /></p>
 </div>
 <div id="strengths-and-limitations-of-k-nn-regression" class="section level2">
 <h2><span class="header-section-number">8.9</span> Strengths and limitations of k-nn regression</h2>
@@ -544,7 +544,7 @@ gitbook.start({
 "google": false,
 "linkedin": false,
 "weibo": false,
-"instapper": false,
+"instapaper": false,
 "vk": false,
 "all": ["facebook", "google", "twitter", "linkedin", "weibo", "instapaper"]
 },
@@ -557,7 +557,11 @@ gitbook.start({
 "link": "https://github.com/rstudio/bookdown-demo/edit/master/07-regression1.Rmd",
 "text": "Edit"
 },
-"download": ["bookdown-demo.pdf", "bookdown-demo.epub"],
+"history": {
+"link": null,
+"text": null
+},
+"download": ["_main.pdf", "_main.epub"],
 "toc": {
 "collapse": "subsection"
 }
@@ -571,7 +575,7 @@ gitbook.start({
     var script = document.createElement("script");
     script.type = "text/javascript";
     var src = "";
-    if (src === "" || src === "true") src = "https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
     if (location.protocol !== "file:" && /^https?:/.test(src))
       src = src.replace(/^https?:/, '');
     script.src = src;
