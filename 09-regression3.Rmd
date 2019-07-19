@@ -17,7 +17,7 @@ As in k-nn classification, in k-nn regression we can have multiple predictors. W
 We will now demonstrate a multi-variate k-nn regression analysis usin the `caret` package on the Sacramento real estate data (also used in the the last two chapters in this book). This time we will use house size (measured in square feet) as well as number of bathrooms as our predictors, and continue to use house sale price as our outcome/target variable that we are trying to predict.
 
 Let's first load the libraries and the data:
-```{r load stuff, warning = FALSE, message = FALSE}
+```{r 09-load-stuff, warning = FALSE, message = FALSE}
 library(tidyverse)
 library(caret)
 library(GGally)
@@ -27,7 +27,7 @@ head(Sacramento)
 
 It is always a good practice to do exploratory data analysis, such as visualizing the data, before we start modeling the data. Thus the first thing we will do is use ggpairs (from the `GGally` package) to plot all the variables we are interested in using in our analyses:
 
-```{r ggpairs, fig.height = 4, fig.width = 5}
+```{r 09-ggpairs, fig.height = 4, fig.width = 5}
 plot_pairs <- Sacramento %>% 
   select(price, sqft, baths) %>% 
   ggpairs()
@@ -38,7 +38,7 @@ From this we can see that generally, as both house size and number of bathrooms 
 
 Looking at the data above, we can see that `sqft` and `beds` (number of bedrooms) are on vastly different scales. Thus we need to apply the `scale` function to these columns before we start our analysis:
 
-```{r scaling}
+```{r 09-scaling}
 scaled_Sacramento <- Sacramento %>% 
   select(price, sqft, baths) %>% 
   mutate(sqft = scale(sqft, center = FALSE),
@@ -48,7 +48,7 @@ head(scaled_Sacramento)
 
 Now we can split our data into a trained and test set as we did before:
 
-```{r mult_test_train_split}
+```{r 09-mult-test-train-split}
 set.seed(2019) # makes the random selection of rows reproducible
 training_rows <- scaled_Sacramento %>% 
   select(price) %>% 
@@ -77,7 +77,7 @@ Y_test <- scaled_Sacramento %>%
 ```
 
 Next, we'll use 10-fold cross-validation to choose $k$:
-```{r mult_choose_k, fig.height = 4, fig.width = 5}
+```{r 09-mult-choose-k, fig.height = 4, fig.width = 5}
 train_control <- trainControl(method = "cv", number = 10)
 # makes a column of k's, from 1 to 500 in increments of 5
 k_lots = data.frame(k = seq(from = 1, to = 500, by = 5)) 
@@ -98,7 +98,7 @@ Here we see that the smallest $RMSE$ is from the model where $k$ = 31. Thus the 
 
 Now that we have chosen $k$, we need to re-train the model on the entire training data set with $k$ = 31, and after that we can use that model to predict on the test data to get our test error. At that point we will also visualize the model predictions overlaid on top of the data. This time the predictions will be a plane in 3-D space, instead of a line in 2-D space, as we have 2 predictors instead of 3. 
 
-```{r re-train}
+```{r 09-re-train}
 k = data.frame(k = 31)
 
 set.seed(1234)
@@ -112,7 +112,7 @@ knn_mult_test_results[[1]]
 
 This time when we performed k-nn regression on the same data set, but also included number of bathrooms as a predictor we obtained a RMSPE test error of 90108.49. This compares to a RMSPE test error of 91620.40 when we used only house size as the single predictor. What do the predictions from this model look like overlaid on the data?
 
-```{r knnMultViz, echo = FALSE, message = FALSE, warning = FALSE}
+```{r 09-knn-mult-viz, echo = FALSE, message = FALSE, warning = FALSE}
 library(plotly)
 
 train_data <- bind_cols(X_train, tibble(price = Y_train))
@@ -171,7 +171,7 @@ We could also try to create a prediction model for the data above using linear r
 
 Now we can split our data into a trained and test set as we did before:
 
-```{r lm_mult_test_train_split}
+```{r 09-lm-mult-test-train-split}
 set.seed(2019) # makes the random selection of rows reproducible
 training_rows <- Sacramento %>% 
   select(price) %>% 
@@ -200,13 +200,13 @@ lm_Y_test <- Sacramento %>%
 ```
 
 Now we can fit the model on the training set using the `method = "lm"` argument in the train function:
-```{r fitlm}
+```{r 09-fitlm}
 lm_mult_reg_final <- train(x = lm_X_train, y = lm_Y_train, method = "lm")
 ```
 
 What does our model predictions look like in the case of linear regression when we have two predictors? We illustrate this below:
 
-```{r 3DlinReg, echo = FALSE, message = FALSE, warning = FALSE}
+```{r 09-3DlinReg, echo = FALSE, message = FALSE, warning = FALSE}
 lm_train_data <- bind_cols(lm_X_train, tibble(price = lm_Y_train))
 
 # Define 3D scatterplot points --------------------------------------------
@@ -256,7 +256,7 @@ plot_ly() %>%
 ```
 We see that the predictions from linear regression with two predictors form a plane as well, but this plane differs from the one we get from k-nn regression in its flexibility. The plane from k-nn regression above was more flexible and more closely followed the shape of the training data. The plane from linear regression however is constrained to being linear (i.e., a flat plane). As discussed this can be advantageous in one aspect, which is that for each predictor, we can get a slope from linear regression, and thus describe the plane mathematically. We can extract those slope values from our model object as shown below:
 
-```{r getslopes}
+```{r 09-get-slopes}
 lm_mult_reg_final$finalModel$coefficients
 ```
 And then use those slopes, to write a mathematical equation to describe the prediction plane:
@@ -282,7 +282,7 @@ $$house\: price = 25284.3344 + 140.2523*house\: size -7115.9565 *  \:number\: of
 
 OK great, so this model is more interpretable than the multivariate k-nn regression model (i.e., we can write a mathematical equation that explains how each predictor is affecting the predictions), but as always, we should look at the test error and ask whether linear regression is doing a better job of predicting compared to k-nn regression in this multivariate regression case? To do that we can use this linear regression model to predict on the test data to get our test error.
 
-```{r getRMSPE}
+```{r 09-get-RMSPE}
 test_pred_lm <- predict(lm_mult_reg_final, lm_X_test)
 lm_modelvalues <- data.frame(obs = lm_Y_test, pred = test_pred_lm)
 lm_mult_test_results <- defaultSummary(lm_modelvalues)
