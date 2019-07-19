@@ -26,7 +26,7 @@ Another major difference between clustering and classification is in how success
 
 What if we had some customer data, and we wanted to learn more about the types of customers we had so that we could come up with better products and/or promotions to increase our business in a data-driven way. For example, let's consider this data below, where we have assessed customer loyalty and customer satisfaction:
 
-```{r echo = FALSE, message = FALSE, warning = FALSE}
+```{r 10-toy-example-data, echo = FALSE, message = FALSE, warning = FALSE}
 library(tidyverse)
 data <- tibble(loyalty = c(7, 7.5, 8, 7, 3, 1, 8, 4, 2, 7, 6, 7, 6, 5, 9, 7, 9, 5, 2),
                csat = c(1, 1, 2, 2, 2, 3, 3, 4, 4, 6, 6, 7, 7, 7, 8, 8, 9, 9, 3),
@@ -52,7 +52,7 @@ data <- tibble(loyalty = c(7, 7.5, 8, 7, 3, 1, 8, 4, 2, 7, 6, 7, 6, 5, 9, 7, 9, 
 marketing_data <- data[,1:2]
 ```
 
-```{r Example, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35}
+```{r 10-toy-example-plot, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35}
 base <- ggplot(data, aes(y = loyalty, x = csat)) +
   geom_point() +
   xlab("Customer satisfaction") +
@@ -67,7 +67,7 @@ data modified from: http://www.segmentationstudyguide.com/using-cluster-analysis
 
 From this data we might ask whether there are sub-groups within our customers? For example do we have customers with high loyalty and high satisfaction? What about low satisfaction and high loyalty? One way to answer such a question is to apply K-means clustering analysis. When we do such an analysis on this data set we identify 3 customer subgroups within our data set:
 
-```{r clusteringExample, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 5}
+```{r 10-toy-example-clustering, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 5}
 ggplot(data, aes(y = loyalty, x = csat, color = cluster)) +
   geom_point() +
   xlab("Customer satisfaction") +
@@ -95,13 +95,13 @@ Watch the video linked to below for an explanation of the K-means clustering alg
 
 Let's take a look at the data we plotted above:
 
-```{r clustering}
+```{r 10-clustering}
 head(marketing_data)
 ```
 
 To peform Kmeans clustering in R, we use the `kmeans` function. It takes at least two arguments, the data frame containing the data you wish to cluster, and K, the number of clusters (here we choose K = 3). Given that the K-means algorithm uses a random start to begin the algorithm, to make this reproducible, we need to set the seed. 
 
-```{r}
+```{r 10-kmeans}
 set.seed(1234)
 marketing_clust <- kmeans(marketing_data, centers = 3)
 marketing_clust
@@ -109,7 +109,7 @@ marketing_clust
 
 As you can see above, the clustering object returned has a lot of information about our analysis that we need to explore. Let's take a look at it now. To do this, we will call in help from the `broom` package so that we get the model output back in a tidy data format. Let's first start by getting the cluster identification for each point and plotting that on the scatter plot. To do that we use the augment function. Augment takes in the model and the original data frame, and returns a data frame with the data and the cluster assignments for each point:
 
-```{r plot_clusters}
+```{r 10-plot-clusters-1}
 library(broom)
 
 clustered_data <- augment(marketing_clust, marketing_data)
@@ -118,7 +118,7 @@ head(clustered_data)
 
 Now that we have this data frame, we can easily plot the data (i.e., cluster assignments of each point):
 
-```{r plotClusters, fig.height = 4, fig.width = 4.35}
+```{r 10-plot-clusters-2, fig.height = 4, fig.width = 4.35}
 
 cluster_plot <- ggplot(clustered_data, aes(x = csat, y = loyalty, colour = .cluster)) +
   geom_point()
@@ -131,13 +131,13 @@ As mentioned above, we need to choose a K to perform K-means clustering. How sho
 
 We can get at the total within-cluster sum of squares (`tot.withinss`) from our clustering using `broom`'s `glance` function (it gives model-level statistics). For example:
 
-```{r glance}
+```{r 10-glance}
 glance(marketing_clust)
 ```
 
 Let's calculate the total within-cluster sum of squares for our data for a variety of K's (say 1 - 9) and then plot them against K. To do this we will create a data frame with a column named `k`, for each of the K's we want to try our clustering with. Then we use `map` to apply the `kmeans` function to each K. We also use `map` to then apply `glance` to each of the clustering models we performed (one for each K). In the end we end up with a complex data frame with 3 columns, one for K, one for the models, and one for the model statistics (output of `glance`, which is a data frame):
 
-```{r chooseKmeansK, fig.height = 4, fig.width = 4.35}
+```{r 10-choose-k, fig.height = 4, fig.width = 4.35}
 marketing_clust_ks <- tibble(k = 1:9) %>%
   mutate(marketing_clusts = map(k, ~kmeans(marketing_data, .x)),
          glanced = map(marketing_clusts, glance)) 
@@ -146,7 +146,7 @@ head(marketing_clust_ks)
 
 What we need to do next, is get the value for the total within-cluster sum of squares (`tot.withinss`) from the `glanced` column. Given that each item in this column is a data frame, we will need to use the `unnest` function to unpack the data frames in the `glanced` column. 
 
-```{r get_totwithinss}
+```{r 10-get-total-within-sumsqs}
 clustering_statistics <- marketing_clust_ks %>%
   unnest(glanced)
 
@@ -155,7 +155,7 @@ head(clustering_statistics)
 
 Now that we have `tot.withinss` and `k` as columns in a data frame, we can make a plot to choose K:
 
-```{r plotToChooseKforKmeans, fig.height = 4, fig.width = 4.35}
+```{r 10-plot-choose-k, fig.height = 4, fig.width = 4.35}
 elbow_plot <- ggplot(clustering_statistics, aes(x = k, y = tot.withinss)) +
   geom_point() +
   geom_line() +
