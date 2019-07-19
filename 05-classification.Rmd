@@ -29,14 +29,14 @@ Answering this question is important because traditional, non-data driven method
 
 As usual, we start by loading the necessary libraries for our analysis. We have learned about the `tidyverse` before. Today we'll also be loading a new library, `forcats` that allows us to easily manipulate factors in R. Factors are a special categorical type of variable in R that are very helpful when doing statistical inference and machine learning with categorical variables.
 
-```{r load libraries, message = FALSE}
+```{r 05-load-libraries, message = FALSE}
 library(tidyverse)
 library(forcats)
 ```
 
 The data file we need to read in is a plain vanilla csv with headers, and thus we can use the `read_csv` function with no additional arguments:
 
-```{r read data, message = FALSE}
+```{r 05-read-data, message = FALSE}
 cancer <- read_csv("data/clean-wdbc.data.csv")
 head(cancer)
 ```
@@ -67,20 +67,20 @@ The "worst" (mean of the three largest values) values of these variable were com
 
 Below we use `glimpse` to preview the data frame. This function is similar to head, but can be easier to read when we have a lot of columns:
 
-```{r}
+```{r 05-glimpse}
 glimpse(cancer)
 ```
 
 We can see from the summary of the data above that `Class` is of type character. We are going to be working with `Class` as a categorical statistical variable so we will convert it to factor using the function `as.factor`.
 
-```{r, echo = TRUE}
+```{r 05-class, echo = TRUE}
 cancer <- cancer %>% 
   mutate(Class = as.factor(Class)) 
 ```
 
 Factors have what are called "levels", which you can think of as categories. We can ask for the levels from the `Class` column by using the `levels` function. This function should return the name of each category in that column. Given that we only have 2 different values in our `Class` column, "B" and "M", we only expect to get two names back. If we had 4 difference values in the column, we would expect to get 4 back. *Note the use of `unlist` to between `select` and `levels`. This is because `select` outputs a data frame (even though we only select a single column), and levels expects a vector.*
 
-```{r, echo = TRUE}
+```{r 05-levels, echo = TRUE}
 cancer %>% 
   select(Class) %>% 
   unlist() %>% # turns a data frame into a vector
@@ -89,7 +89,7 @@ cancer %>%
 
 Before we start doing any modelling, Let's explore out dataset. Below we use the `tidyverse`'s `group_by` + `summarize` function to see that we have 357 (63\%) benign and 212 (37\%) malignant tumour observations.
 
-```{r tally}
+```{r 05-tally}
 num_obs <- nrow(cancer)
 cancer %>% 
   group_by(Class) %>% 
@@ -99,7 +99,7 @@ cancer %>%
 
 Next, let's draw a scatter plot to visualize the relationship between the perimeter and concavity variables. To avoid `ggplot's` default pallete, we define our own here and specify to use it in the `scale_color_manual` function. In that function we also make the category labels of "B" and "M" something more readable, "Benign" and "Malignant", respectively.
 
-```{r fig.height = 4, fig.width = 5}
+```{r 05-scatter, fig.height = 4, fig.width = 5}
 # colour palette
 cbPalette <- c("#56B4E9", "#E69F00","#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999") 
 
@@ -115,7 +115,7 @@ In this visualization, we can see that the observations that are labelled as ben
 
 ### K-Nearest Neighbour Classifier
 
-```{r, echo = F}
+```{r 05-knn-0, echo = F}
 ## Find the distance between new point and all others in dataset
 euclidDist <- function(point1, point2) {
     #Returns the Euclidean distance between point1 and point2.
@@ -146,7 +146,7 @@ To classify a new observation as benign or malignant, we find some observations 
 
 Let's walk through an example; suppose we have a new observation, with perimeter of `r new_point[1]` and concavity of `r new_point[2]` (labelled in red on the scatterplot), whose diagnosis "Class" is unknown.
 
-```{r, echo = FALSE, fig.height = 4, fig.width = 5}
+```{r 05-knn-1, echo = FALSE, fig.height = 4, fig.width = 5}
 perim_concav + 
   geom_point(aes(x=new_point[1], y=new_point[2]), color=cbPalette[6], size = 2.5) 
 ```
@@ -154,7 +154,7 @@ perim_concav +
 We see that the nearest point to this new observation is located at the coordinates (`r round(neighbours[1, c(attrs[1], attrs[2])], 1)`). The idea here is that if a point is close to one another in the scatterplot then the perimeter and concavity values are similar so we may expect that they would have the same diagnosis. 
 
 
-```{r, echo = FALSE, fig.height = 4, fig.width = 5}
+```{r 05-knn-2, echo = FALSE, fig.height = 4, fig.width = 5}
 perim_concav + geom_point(aes(x=new_point[1], y=new_point[2]), 
                color=cbPalette[6], 
                size = 2.5) +
@@ -164,7 +164,7 @@ perim_concav + geom_point(aes(x=new_point[1], y=new_point[2]),
                    yend = unlist(neighbours[1, attrs[2]])), color = "black")
 ```
 
-```{r, echo = FALSE}
+```{r 05-knn-3, echo = FALSE}
 new_point <- c(0.38, 1.8)
 attrs <- c("Perimeter", "Concavity")
 my_distances <- table_with_distances(cancer[,attrs], new_point)
@@ -173,7 +173,7 @@ neighbours <- cancer[order(my_distances$Distance),]
 
 Suppose we have another new observation with perimeter `r new_point[1]` and concavity of `r new_point[2]`. Looking at the scatterplot below, how would you classify this red observation? The nearest neighbour to this new point is a **benign** observation at (`r round(neighbours[1, c(attrs[1], attrs[2])], 1)`). Does this seem like the right prediction to make? Probably not if you consider the other nearby points...
 
-```{r, echo = FALSE, fig.height = 4, fig.width = 5}
+```{r 05-knn-4, echo = FALSE, fig.height = 4, fig.width = 5}
 perim_concav + geom_point(aes(x=new_point[1], y=new_point[2]), 
                color=cbPalette[6], 
                size = 2.5) +  
@@ -187,7 +187,7 @@ So instead of just using the one nearest neighbour, we can consider several neig
 
 We see that the diagnoses of 2 of the 3 nearest neighbours to our new observation are malignant so we take majority vote and classify our new red observation as malignant. <!-- For our red observation at (`r new_point`), the nearest points are: (`r round(neighbours[1, c(attrs[1], attrs[2])], 1)`), (`r round(neighbours[2,  c(attrs[1], attrs[2])],1)`), and (`r round(neighbours[3, c(attrs[1], attrs[2])],1)`). -->
 
-```{r, echo =  FALSE, fig.height = 4, fig.width = 5}
+```{r 05-knn-5, echo =  FALSE, fig.height = 4, fig.width = 5}
 perim_concav + geom_point(aes(x=new_point[1], y=new_point[2]), 
                color=cbPalette[6], 
                size = 2.5) +
@@ -204,7 +204,7 @@ perim_concav + geom_point(aes(x=new_point[1], y=new_point[2]),
 
 
 
-```{r, echo = F}
+```{r 05-knn-6, echo = F}
 #neighbours %>% 
 #  select(ID, attrs, Class) %>% 
 #  slice(1:3)
@@ -217,12 +217,12 @@ Here we chose the $k=3$ nearest observations, but there is nothing special about
 How do we decide which points are "nearest" to our new observation? We can compute the distance between any pair of points using the following formula: 
 
 $$Distance = \sqrt{(x_a -x_b)^2 + (y_a - y_b)^2}$$
-```{r, echo =F}
+```{r 05-multiknn-0, echo =F}
 new_point <- c(-1,4.2)
 ```
 Suppose we want to classify a new observation with perimeter of `r new_point[1]` and concavity of `r new_point[2]`. Let's calculate the distances between our new point and each of the observations in the training set to find the $k=5$ observations in the training data that are nearest to our new point. 
 
-```{r, echo = F, fig.height = 4, fig.width = 5}
+```{r 05-multiknn-1, echo = F, fig.height = 4, fig.width = 5}
 perim_concav <- cancer %>%    
   ggplot(aes(x=Perimeter, y=Concavity, color = Class)) + 
     geom_point() +
@@ -235,7 +235,7 @@ perim_concav
 ```
 
 
-```{r}
+```{r 05-multiknn-2}
 new_obs_Perimeter <- -1
 new_obs_Concavity <- 4.2
 cancer %>% select(ID, Perimeter, Concavity, Class) %>% 
@@ -246,7 +246,7 @@ cancer %>% select(ID, Perimeter, Concavity, Class) %>%
 
 From this, we see that 3 of the 5 nearest neighbours to our new observation are malignant so classify our new observation as malignant. We circle those 5 in the plot below:
 
-```{r, echo = FALSE}
+```{r 05-multiknn-3, echo = FALSE}
 perim_concav + annotate("path", 
                         x=new_point[1] + 1.7 * cos(seq(0,2 * pi, 
                                                        length.out = 100)),
@@ -254,7 +254,7 @@ perim_concav + annotate("path",
                                                        length.out = 100)))
 ```
 
-```{r, echo = FALSE}
+```{r 05-multiknn-4, echo = FALSE}
 my_distances <- table_with_distances(cancer[,attrs], new_point)
 neighbours <- my_distances[order(my_distances$Distance),]
 k <- 5
@@ -287,20 +287,20 @@ We will use the k-nearest neighbour (k-nn) algorithm in R by making use of the `
 
 We start off by loading the `caret` library:
 
-```{r}
+```{r 05-caret}
 library(caret)
 ```
 
 Let's again suppose we have a new observation with perimeter -1 and concavity 4.2, but its diagnosis is unknown (as in our example above). Suppose we again want to use the perimeter and concavity explanatory variables/predictors to predict the diagnosis class of this observation. Let's pick out our 2 desired variables and store it as a new dataset named `cancer_train`
 
-```{r}
+```{r 05-caret-2}
 cancer_train <- cancer %>%
   select("Perimeter", "Concavity")
 head(cancer_train)
 ```
 
 Next, we store the diagnosis class labels (column `Class`) as a vector.
-```{r}
+```{r 05-caret-3}
 cancer_labels <- cancer %>% 
   select(Class) %>% 
   unlist()
@@ -308,14 +308,14 @@ head(cancer_labels)
 ```
 
 We will use the function `train()`, where the argument `x` is a data frame object containing the explanatory variables/predictors, and `y` is a numeric or factor vector containing the outcomes/labels/classes. `x` and `y` should come from your original data frame and be in the same order. The argument `tuneGrid` should be a dataframe with possible "tuning values". For now, just know that this is where we will specify our $k$ (the number of nearest neighbours) and we will use $k =5$ (we will discuss how to choose $k$ in a later section). We will use "knn" as our `method`. *Note - the `caret` package expects `data.frames` and not `tibbles` (which are special kind data frames). This is a bit annoying, and I expect this to change in the future, but for now we have to change `tibbles` to `data.frames` when using `caret`.*
-```{r}
+```{r 05-train}
 k <- data.frame(k = 5)
 model_knn <- train(x = data.frame(cancer_train), y = cancer_labels, method='knn', tuneGrid = k)
 ```
 
 Now we can create a `data.frame` with our new observation and predict the label of the new observation using the `predict` function:
 
-```{r}
+```{r 05-predict}
 new_obs <- data.frame(Perimeter = -1, Concavity = 4.2)
 predict(object = model_knn, new_obs)
 ```
@@ -325,7 +325,7 @@ Our model classifies this new observation as malignant. How do we know how well 
 ### More than two explanatory variables/predictors
 So far we have seen how to build a classifier based on only explanatory variables/predictors, but we can use the k-nearest neighbours classifier in higher dimensional space. Let's make a scatterplot with 3 variables instead of 2: 
 
-```{r, echo = F}
+```{r 05-more, echo = F}
 library(plotly)
 cancer %>% 
 plot_ly(x = ~ Perimeter, 
