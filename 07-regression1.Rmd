@@ -22,7 +22,7 @@ We can use regression as a method to answer a very similar question to classific
 
 Let's start by loading the libraries we need and previewing the data set. The data set comes with the `caret` package, so as soon as we load the `caret` library and type `data(Sacramento)` we are able to access it as a data frame named `Sacramento`.
 
-```{r load, message = FALSE}
+```{r 07-load, message = FALSE}
 library(tidyverse)
 library(scales)
 library(caret)
@@ -34,7 +34,7 @@ head(Sacramento)
 
 We are interested in the columns `sqft` (which is the house size in livable square feet) and `price`, which is the house size in US dollars (USD). Let's now visualize the data as a scatter plot where we place the predictor/explanatory variable, house size, on the x-axis and the target/response variable, price, on the y-axis (this is what we would like to predict):
 
-```{r edaRegr, message = FALSE, fig.height = 4, fig.width = 5}
+```{r 07-edaRegr, message = FALSE, fig.height = 4, fig.width = 5}
 eda <- ggplot(Sacramento, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
   xlab("House size (square footage)") +
@@ -64,7 +64,7 @@ Next let's say we come across a new house we are interested in purchasing, and i
 
 Given the data in the plot below, we have no observations of a house that has sold that is 2000 square feet, so how can we predict the price? 
 
-```{r small_eda_regr, fig.height = 4, fig.width = 5}
+```{r 07-small-eda-regr, fig.height = 4, fig.width = 5}
 small_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
   geom_point() +
   xlab("House size (square footage)") +
@@ -76,7 +76,7 @@ small_plot
 
 What we can do is use the neighbouring points to suggest/predict what the price should be. For the example above, below we find and label the 5 nearest neighbours to our observation of a house that is 2000 square feet:
 
-```{r find k3}
+```{r 07-find-k3}
 small_sacramento %>% 
   mutate(diff = abs(2000 - sqft)) %>% 
   arrange(diff) %>% 
@@ -84,7 +84,7 @@ small_sacramento %>%
 ```
 
 
-```{r knn3_example, fig.height = 4, fig.width = 5}
+```{r 07-knn3-example, fig.height = 4, fig.width = 5}
 small_plot +
   geom_segment(aes(x = 2000, y = 300500, xend = 1910, yend = 300500), col = "orange") + 
   geom_segment(aes(x = 2000, y = 290000, xend = 1720, yend = 290000), col = "orange") + 
@@ -96,7 +96,7 @@ small_plot +
 
 Now that we have the 5 nearest neighbours to our new observation that we would like to predict the price for, we can use their values to predict a selling price for the home we are interested in buying that is 2000 square feet. Specifically, we can take the mean (or average) of these 5 values as our predicted value.
 
-```{r predicted_knn}
+```{r 07-predicted-knn}
 prediction <- small_sacramento %>% 
   mutate(diff = abs(2000 - sqft)) %>% 
   arrange(diff) %>% 
@@ -105,7 +105,7 @@ prediction <- small_sacramento %>%
 prediction
 ```
 
-```{r predictedViz_knn, echo = FALSE, fig.height = 4, fig.width = 5}
+```{r 07-predictedViz-knn, echo = FALSE, fig.height = 4, fig.width = 5}
 small_plot +
   geom_segment(aes(x = 2000, y = 300500, xend = 1910, yend = 300500), col = "orange") + 
   geom_segment(aes(x = 2000, y = 290000, xend = 1720, yend = 290000), col = "orange") + 
@@ -121,7 +121,7 @@ Our predicted price is \$270,257.40 (shown as a red point above), which is much 
 
 As usual, we should start by putting some test data away in a lock box that we can come back to after we choose our final model, so let's take care of that business now. For the remainder of the chapter we'll work with the full data set.
 
-```{r test_train_split}
+```{r 07-test-train-split}
 set.seed(2019) # makes the random selection of rows reproducible
 training_rows <- Sacramento %>% 
   select(price) %>% 
@@ -165,7 +165,7 @@ A key feature the formula for RMSE is the distance between the observed target/r
 
 Now that we know how we can assess how well our model predicts a numerical value, let's use R to perform cross-validation and to choose the optimal $k$.
 
-```{r choose_k_knn, fig.height = 4, fig.width = 5}
+```{r 07-choose-k-knn, fig.height = 4, fig.width = 5}
 train_control <- trainControl(method = "cv", number = 10)
 # makes a column of k's, from 1 to 500 in increments of 5
 k_lots = data.frame(k = seq(from = 1, to = 500, by = 5)) 
@@ -189,7 +189,7 @@ Here we see that the smallest $RMSE$ is from the model where $k$ = 51. Thus the 
 
 Below we plot the predicted values for house price from our k-nn regression models for 6 different values for $k$ where the only predictor is home size. For each model, we predict a price for every possible home size across the range of home sizes we observed in the data set (here 500 to 4250 square feet) and we plot the predicted prices as a blue line:
 
-```{r howK, echo = FALSE, fig.height = 12, fig.width = 10}
+```{r 07-howK, echo = FALSE, fig.height = 12, fig.width = 10}
 get_predictions <- function(num_neighbours, X, Y){
   data <- bind_cols(X, data.frame(price = Y))
   k = data.frame(k = num_neighbours)
@@ -231,7 +231,7 @@ Next we re-train our k-nn model on the entire training data set (do not perform 
 
 In the case of k-nn regression we use the function `defaultSummary` instead of `confusionMatrix` (which we used with knn classification). This is because our predictions are not class labels, but values, and as such the type of model goodness score is calculated differently. `defaultSummary` expects a data frame where one column is the observed target/response variable values from the test data, and a second column of the predicted values for the test data.
 
-```{r retrain}
+```{r 07-retrain}
 k = data.frame(k = 51)
 
 set.seed(1234)
@@ -247,7 +247,7 @@ Our final model's test error as assessed by $RMSE$ is 91620.4. But what does thi
 
 And what does our final model look like when we predict across all possible house sizes we might encounter in the Sacramento area? We plotted it above where we explored how $k$ affects k-nn regression, but we show it again now, along with the code for how we generated it:
 
-```{r predict_all, fig.height = 4, fig.width = 5}
+```{r 07-predict-all, fig.height = 4, fig.width = 5}
 set.seed(1234)
 predictions_all <- data.frame(sqft = seq(from = 500, to = 4250, by = 1))
 predictions_all$price <- predict(knn_reg_final, 
