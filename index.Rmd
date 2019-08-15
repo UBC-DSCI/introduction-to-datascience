@@ -79,19 +79,24 @@ We have created a short demo video to help you get started and introduce you to 
 However, the best way to learn how to write and run code and formattable text in a Jupyter notebook is to do it. So we have also created this worksheet as a step-by-step guide through it: https://github.com/UBC-DSCI/dsci-100/blob/master/materials/worksheet_01/worksheet_01.ipynb
 
 
-## Loading a tabular dataset
+## Loading a spreadsheet-like dataset
 
-Often, the first thing we need to do in data analysis is to load a dataset into R. Once we get our data into R, we would like to work with it as a data frame object. You can think of data frames as a spreadsheet-like object, where the rows are the observations collected/measured and the columns are the variables. 
+Often, the first thing we need to do in data analysis is to load a dataset into R. When we bring spreadsheet-like (think Microsof Excel tables) data, generally shaped like a rectangle, into R it is represented as what we call a "data frame" object. It is very similar to a spreadsheet where the rows are the observations collected/measured and the columns are the variables. 
 
-The first data set we will work with is in a comma-separated file, or `.csv`, format. There are many functions available in R we could use to load a `.csv` file, but we are going to use `read_csv()` from the `tidyverse` package because it is fast it creates a "special" variant of the base R data frame object with several nice properties we'll discuss in further detail later in the course.
+<img src="img/spreadsheet_vs_dataframe.PNG" width="850"/>
 
-In it's most basic use case, `read_csv()` expects that:
+The first data set we will learn how to load into R is in particular spreadsheet format called comma-separated file, or `.csv` for short. These files end in `.csv` and can be opened open and saved from common spreadsheet programs like Microsoft Excel and Google sheets. There are many functions available in R we could use to load a `.csv` file, but we are going to use `read_csv`. This function was not included in the base installation of R, and so to be able to use it we have to load it from somewhere else - an R library called the `tidyverse` (more on this later). 
+
+> **In case you might be interested...** 
+> Why the `read_csv` function from the `tidyverse` instead of the base R function `read.csv`? This is because `read_csv` is faster than `read.csv` and it creates a nicer variant of the base R data frame object, called a tibble, that has several helpful properties we'll discuss in further detail later in the course.
+
+In it's most basic use case, `read_csv` expects that:
 
 - column names are present
 - `,` is the delimiter/separator
 -  there are no row names in the dataset 
 
-Let's explore how to do this! We will load a `.csv` file named "state_property_data.csv" that is in the same directory/folder as our notebook/script. This data file is from https://datausa.io/ and has US state-level property, income and population data from 2015. If we were to open this data in a plain text editor, it would look like this:
+Let's explore how to do this! We will load a `.csv` file named "state_property_data.csv" that is in the same folder as the file that contains this code. This data file is from https://datausa.io/ and has US state-level property, income and population data from 2015. If we were to open this data in a plain text editor, it would look like this:
 
 ```
 state,med_income,med_prop_val,population,mean_commute_minutes
@@ -102,63 +107,33 @@ AZ,44748,128700,6641928,20.58786
 CA,53075,252100,38421464,23.38085172
 ```
 
-Here we now load the data into R. To do this, we first need to load the `tidyverse` library. We do this using the library function. Next we call the `read_csv()` and pass it a single argument, the path to the file - "state_property_data.csv" - as a string. This is the only argument we need to provide for this file because it satisfies the default arguments of the `read_csv` function that we just discussed. Later in the course, we'll learn more about how to deal with files where the default arguments are not appropriate, for example tab separated files or files with no headers.
+Below we demonstrate the code used to load the data into R. To do this, we first need to load the `tidyverse` library. We do this using the library function. Next we call the `read_csv` function and pass it a single argument, the name of the file - "state_property_data.csv". We have to put quotes around filenames and other letters and words that we use in our code to distinguish it from the special words that make up R programming language.  This is the only argument we need to provide for this file because our file satifies everthing else the `read_csv` function expects of files in the default use case (which we just discussed). Later in the course, we'll learn more about how to deal with files where the default arguments are not appropriate, for example files that use spaces or tabs to separate the columns, or with no column names (headers).
 
-```
+```{r load state property data, warning=FALSE, message=FALSE}
 library(tidyverse)
 read_csv("state_property_data.csv")
 ```
 
-```
-# A tibble: 52 x 5
-   state med_income med_prop_val population mean_commute_minutes
-   <chr>      <dbl>        <dbl>      <int>                <dbl>
- 1 AK         64222       197300     733375                 10.5
- 2 AL         36924        94800    4830620                 25.3
- 3 AR         35833        83300    2958208                 22.4
- 4 AZ         44748       128700    6641928                 20.6
- 5 CA         53075       252100   38421464                 23.4
- 6 CO         48098       198900    5278906                 19.5
- 7 CT         69228       246450    3593222                 24.3
- 8 DC         70848       475800     647484                 28.3
- 9 DE         54976       228500     926454                 24.5
-10 FL         43355       125600   19645772                 24.8
-# ... with 42 more rows
-```
 
 ## Assigning value to an object
 
-When we loaded the US state-level property, income and population data in the last slide using `read_csv()`, we did not assign the output of this function to an object, so it was merely printed to the console and not stored anywhere. This is not that useful - what we would like to do is assign the output of the `read_csv()` function, a data frame, to an object so that we can use it later for analysis and visualization. 
+When we loaded the US state-level property, income and population data in R above using `read_csv`, we did not give this object name, so it was merely printed to the screen and we cannot do anything else with it. This is not that useful - what we would like to do is give the output of the `read_csv` function, a data frame, a name so that we can use it later for analysis and visualization. 
 
-To assign value to an object in R, there are two possible ways - using either the assignment symbol or the equals symbol (as is done in Python). From a style perspective, the assignment symbol is prefered and is what we will use in this course. 
+To assign name to something in R, there are two possible ways - using either the assignment symbol (`<-`) or the equals symbol (`=`). From a style perspective, the assignment symbol is prefered and is what we will use in this course. 
 
-Do note however, that the assignment symbol has a very different meaning with function argument definitions and is only used in special cases. In general, we use the equals symbol during function argument definitions.
+Let's now use the assignment symbol to name the US state-level property, income and population data data frame object, that we get from `read_csv`, `prop_data`.
 
-Let's now use the assignment symbol to store the US state-level property, income and population data in a data frame object that we call prop_data.
-
-```
+```{r load data with name}
 prop_data <- read_csv("state_property_data.csv")
+```
+
+
+Wait a minute! Nothing happened this time! Or at least it looks like that. But actually something did happen, the data was read in and now has the name `prop_data` associated with it. And we can use that name to access the data and do things with it. First we will print it to the screen using the `print()` function.
+
+
+```{r print}
 print(prop_data)
 ```
-
-To preview the prop_data object, we can use the `print()` function.
-
-```
-# A tibble: 52 x 5
-   state med_income med_prop_val population mean_commute_minutes
-   <chr>      <dbl>        <dbl>      <int>                <dbl>
- 1 AK         64222       197300     733375                 10.5
- 2 AL         36924        94800    4830620                 25.3
- 3 AR         35833        83300    2958208                 22.4
- 4 AZ         44748       128700    6641928                 20.6
- 5 CA         53075       252100   38421464                 23.4
- 6 CO         48098       198900    5278906                 19.5
- 7 CT         69228       246450    3593222                 24.3
- 8 DC         70848       475800     647484                 28.3
- 9 DE         54976       228500     926454                 24.5
-10 FL         43355       125600   19645772                 24.8
-# ... with 42 more rows
-``` 
 
 ## Subsetting data frames with `select` & `filter`
 
