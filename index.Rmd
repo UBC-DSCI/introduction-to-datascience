@@ -127,20 +127,20 @@ read_csv("state_property_vote.csv")
 
 When we loaded the US state-level property, income, population and voting data in R above using `read_csv`, we did not give this data frame a name, so it was merely printed to the screen and we cannot do anything else with it. This is not that useful - what we would like to do is give the output of the `read_csv` function, a data frame, a name so that we can use it later for analysis and visualization. 
 
-To assign name to something in R, there are two possible ways - using either the assignment symbol (`<-`) or the equals symbol (`=`). From a style perspective, the assignment symbol is prefered and is what we will use in this course. 
+To assign name to something in R, there are two possible ways - using either the assignment symbol (`<-`) or the equals symbol (`=`). From a style perspective, the assignment symbol is prefered and is what we will use in this course. When we name something in R using the assignment symbol, `<-`, we do not need to surround it with quotes like the filename. This is because we are formally telling R about this word and giving it a value. Only characters and words that act as values need to be surrounded by quotes.
 
-Let's now use the assignment symbol to name the US state-level property, income, population and voting data frame, that we get from `read_csv`, `prop_data`.
+Let's now use the assignment symbol to name the US state-level property, income, population and voting data frame, that we get from `read_csv`, `us_data`.
 
 ```{r load data with name}
-prop_data <- read_csv("state_property_vote.csv")
+us_data <- read_csv("state_property_vote.csv")
 ```
 
 
-Wait a minute! Nothing happened this time! Or at least it looks like that. But actually something did happen, the data was read in and now has the name `prop_data` associated with it. And we can use that name to access the data frame and do things with it. First we will print it to the screen using the `print()` function.
+Wait a minute! Nothing happened this time! Or at least it looks like that. But actually something did happen, the data was read in and now has the name `us_data` associated with it. And we can use that name to access the data frame and do things with it. First we will type the name of the data frame to print it to the screen.
 
 
 ```{r print}
-print(prop_data)
+us_data
 ```
 
 ## Subsetting data frames with `select` & `filter`
@@ -150,7 +150,7 @@ Now, we are going to learn how to subset parts of data from a data frame in R us
 Before we start using `select` and `filter`, let's take a look at the US state-level property, income and population data again to familiarize ourselves with it. We will do this by printing the data we loaded earlier in the chapter to the screen. 
 
 ```{r print data again}
-print(prop_data)
+us_data
 ```
 
 
@@ -164,11 +164,12 @@ When we look at the data frame we see there are 6 columns:
 
 There are 52 rows in this dataset (corresponding to the 51 US states and the US territory, Puerto Rico). 
 
-Now let's use `select` to subset the state column from this data frame. To use `select` to subset the state column, we'll provide the function with two arguments. The first argument is the name of the data frame object, here `prop_data`. The second argument is the column name that we want to subset, here `state`. `select` returns a single column (the state column that we asked for) as a data frame.
+Now let's use `select` to subset the state column from this data frame. To use `select` to subset the state column, we'll provide the function with two arguments. The first argument is the name of the data frame object, here `us_data`. The second argument is the column name that we want to subset, here `state`. `select` returns a single column (the state column that we asked for) as a data frame.
 
 
 ```{r}
-select(prop_data, state)
+state_column <- select(us_data, state)
+state_column
 ```
 
 
@@ -177,7 +178,8 @@ select(prop_data, state)
 We can also use `select()` to subset multiple columns. Again, the first argument is the name of the data frame. Then we list all the columns we want as arguments separated by commas. Here the list was three columns: state, median property value and mean commute time in minutes.
 
 ```{r}
-select(prop_data, state, med_prop_val, mean_commute_minutes)
+three_columns <- select(us_data, state, med_prop_val, mean_commute_minutes)
+three_columns
 ```
 
 
@@ -186,17 +188,19 @@ select(prop_data, state, med_prop_val, mean_commute_minutes)
 We can also use `select` to subest a range of columns using the colon. For example, to get all the columns from state to med_prop_val we provide the second arugument to `select` as `state:med_prop_val`.
 
 ```{r}
-select(prop_data, state:med_prop_val)
+column_range <- select(us_data, state:med_prop_val)
+column_range
 ```
 
 ### Using `filter` to subset a single row
 
-We can use the `filter` function to subset rows with desired values from a data frame of interest. Again, our first argument is the name of the data frame object, `prop_data`. The second argument is a logical statement to filter the rows, here we say that we are interested in rows where state equals NY (for New York).
+We can use the `filter` function to subset rows with desired values from a data frame of interest. Again, our first argument is the name of the data frame object, `us_data`. The second argument is a logical statement to filter the rows, here we say that we are interested in rows where state equals NY (for New York). To make this comparison we use the equivalency operator `==` to compare the values of the `state` column with the value "NY". Similar to when we loaded the data file and put quotes around the filename, here we need to put quotes around "NY" to tell R that this is a character value and not one of the special words that make up R programming language, nor one of the names we have given to data frames in the code we have already written.
 
 Filter returns a data frame that has all the columns of the input data frame but with only the rows we asked for in our filter statement. 
 
 ```{r}
-filter(prop_data, state == "NY")
+new_york <- filter(us_data, state == "NY")
+new_york
 ```
 
 ### Using `filter` to get rows with values above a threshold
@@ -207,7 +211,8 @@ If we are interested in finding information about the states who have a longer m
 We see that `filter()` returns to use a data frame with 33 rows indicating that there are 33 states with longer commute times on average than New York.
 
 ```{r}
-filter(prop_data, mean_commute_minutes > 21.5)
+long_commutes <- filter(us_data, mean_commute_minutes > 21.5)
+long_commutes
 ```
 
 
@@ -221,7 +226,7 @@ First, take another look at the dataset we have been focusing on - the US state-
 
 
 ```{r}
-print(prop_data)
+print(us_data)
 ```
 
 ### Using `ggplot` to create a scatter plot
@@ -235,7 +240,7 @@ To create a scatter plot of these two variables using the `ggplot` function, we 
 5. call the `geom_point` function to tell R that we want to represent the data points as dots/points to create a scatter plot.
 
 ```{r prop_val_vs_income, fig.width=4.75, fig.height=4, warning=FALSE}
-ggplot(prop_data, aes(x = med_income, y = med_prop_val)) +
+ggplot(us_data, aes(x = med_income, y = med_prop_val)) +
     geom_point()
 ``` 
 
@@ -245,7 +250,7 @@ ggplot(prop_data, aes(x = med_income, y = med_prop_val)) +
 One common and easy way to format, or change an aspect of your `ggplot` visualization is to add additional layers to your plot object using the `+` symbol. Here we use the `xlab` and `ylab` functions to add layers where we specify human readable labels for the x and y axis, respectively. There are many more layers we can add to format the plot further, and we will explore these in later chapters.
 
 ```{r prop_val_vs_income_human_labs, fig.width=4.75, fig.height=4, warning=FALSE}
-ggplot(prop_data, aes(x = med_income, y = med_prop_val)) +
+ggplot(us_data, aes(x = med_income, y = med_prop_val)) +
     geom_point() +
     xlab("Income (USD)") +
     ylab("Median property value (USD)")    
@@ -259,7 +264,31 @@ given that we have the party each state voted for in the 2016 US Presidential el
 To do this we modify our scatter plot code above, specifically we add a colour argument to the `aes` function and we give that the value of the column we would like to colour the points by, here party:
 
 ```{r scatter colour by party, fig.width=4.75, fig.height=4, warning=FALSE}
-ggplot(prop_data, aes(x = med_income, y = med_prop_val, color = party)) +
+ggplot(us_data, aes(x = med_income, y = med_prop_val, color = party)) +
+  geom_point() +
+  xlab("Income (USD)") +
+  ylab("Median property value (USD)")
+```
+
+From making this data visualization we see that one data point has the label of "not applicable" instead of "democrat" or "republican". Let's use filter to look at the row that contains the "not applicable" value in the party column:
+
+```{r}
+missing_party <- filter(us_data, party == "not applicable")
+missing_party
+```
+
+
+Ah, this explains it! That row in the dataset is actually not a US state, it is the US territory of Peurto Rico. Similar to other US territories, Puerto Rico resident's cannot vote for the US President. Hence the "not applicable" label. Let's remove this row from the data frame and rename the data frame `vote_data`. To do this we use the opposite of the equivalency operator, `==`, for our filter statement, the not equivalent operator, `!=` .
+
+```{r}
+vote_data <- filter(us_data, party != "not applicable")
+vote_data
+```
+
+Now we see that the data frame has 51 rows, these correspond to the 50 states and the District of Columbia - all regions where residents can vote in the US presidential election. Let's now recreate the scatter plot we created above using this data frame:
+
+```{r scatter colour by party no PR, fig.width=4.75, fig.height=4, warning=FALSE}
+ggplot(vote_data, aes(x = med_income, y = med_prop_val, color = party)) +
   geom_point() +
   xlab("Income (USD)") +
   ylab("Median property value (USD)")
@@ -273,9 +302,11 @@ Below, we put it all together in one code chunk, and you can see here that in re
 ```{r nachos to cheesecake, fig.width=4.75, fig.height=4, warning=FALSE, message=FALSE}
 library(tidyverse)
 
-prop_data <- read_csv("state_property_vote.csv")
+us_data <- read_csv("state_property_vote.csv")
 
-ggplot(prop_data, aes(x = med_income, y = med_prop_val, color = party)) +
+vote_data <- filter(us_data, party != "not applicable")
+
+ggplot(vote_data, aes(x = med_income, y = med_prop_val, color = party)) +
   geom_point() +
   xlab("Income (USD)") +
   ylab("Median property value (USD)")
