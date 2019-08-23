@@ -26,7 +26,7 @@
 <meta name="author" content="Trevor Campbell" />
 
 
-<meta name="date" content="2019-08-16" />
+<meta name="date" content="2019-08-23" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -317,7 +317,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h1><span class="header-section-number">Chapter 2</span> Reading in data locally and from the web</h1>
 <div id="overview" class="section level2">
 <h2><span class="header-section-number">2.1</span> Overview</h2>
-<p>Learn to read in various cases of tabular data sets locally and from the web. Once read in, these data sets will be used to walk through a real world Data Science application that includes wrangling the data into a useable format and creating an effective data visualization.</p>
+<p>Learn to read in various types of tabular data sets locally and from the web. Once read in, these data sets will be used to walk through a real world Data Science application that includes wrangling the data into a useable format and creating an effective data visualization.</p>
 </div>
 <div id="chapter-learning-objectives-1" class="section level2">
 <h2><span class="header-section-number">2.2</span> Chapter learning objectives</h2>
@@ -530,15 +530,24 @@ read_csv(&quot;https://github.com/swcarpentry/r-novice-gapminder/raw/gh-pages/da
 <h3><span class="header-section-number">2.5.3</span> Using <code>rvest</code></h3>
 <p>Now that we have our CSS selectors we can use <code>rvest</code> R package to scrape our desired data from the website. First we start by loading the <code>rvest</code> package:</p>
 <div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb45-1" title="1"><span class="kw">library</span>(rvest)</a></code></pre></div>
+<pre><code>## Loading required package: xml2</code></pre>
+<pre><code>## 
+## Attaching package: &#39;rvest&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:purrr&#39;:
+## 
+##     pluck</code></pre>
+<pre><code>## The following object is masked from &#39;package:readr&#39;:
+## 
+##     guess_encoding</code></pre>
 <blockquote>
 <p><strong><code>library(rvest)</code> gives error…</strong></p>
 <p>If you get an error about R not being able to find the package (e.g., <code>Error in library(rvest) : there is no package called ‘rvest’</code>) this is likely because it was not installed. To install the <code>rvest</code> package, run the following command once inside R (and then delete that line of code): <code>install.packages("rvest")</code>.</p>
 </blockquote>
 <p>Next, we tell R what page we want to scrape by providing the webpage’s URL in quotations to the function <code>read_html</code>:</p>
-<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb46-1" title="1">page &lt;-<span class="st"> </span><span class="kw">read_html</span>(<span class="st">&quot;https://en.wikipedia.org/wiki/Canada&quot;</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb50-1" title="1">page &lt;-<span class="st"> </span><span class="kw">read_html</span>(<span class="st">&quot;https://en.wikipedia.org/wiki/Canada&quot;</span>)</a></code></pre></div>
 <p>Then we send the page object to the <code>html_nodes</code> function. We also provide that function with the CSS selectors we obtained from the selectorgadget tool. These should be surrounded by quotations. The <code>html_nodes</code> function select nodes from the HTML document using CSS selectors. nodes are the HTML tag pairs as well as the content between the tags. For our CSS selector <code>td:nth-child(5)</code> and example node that would be selected would be: <code>&lt;td style="text-align:left;background:#f0f0f0;"&gt;&lt;a href="/wiki/London,_Ontario" title="London, Ontario"&gt;London&lt;/a&gt;&lt;/td&gt;</code></p>
-<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb47-1" title="1">population_nodes &lt;-<span class="st"> </span><span class="kw">html_nodes</span>(page, <span class="st">&quot;td:nth-child(5) , td:nth-child(7) , .infobox:nth-child(122) td:nth-child(1) , .infobox td:nth-child(3)&quot;</span>)</a>
-<a class="sourceLine" id="cb47-2" title="2"><span class="kw">head</span>(population_nodes)</a></code></pre></div>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb51-1" title="1">population_nodes &lt;-<span class="st"> </span><span class="kw">html_nodes</span>(page, <span class="st">&quot;td:nth-child(5) , td:nth-child(7) , .infobox:nth-child(122) td:nth-child(1) , .infobox td:nth-child(3)&quot;</span>)</a>
+<a class="sourceLine" id="cb51-2" title="2"><span class="kw">head</span>(population_nodes)</a></code></pre></div>
 <pre><code>## {xml_nodeset (6)}
 ## [1] &lt;td style=&quot;text-align:right;&quot;&gt;5,928,040&lt;/td&gt;
 ## [2] &lt;td style=&quot;text-align:left;background:#f0f0f0;&quot;&gt;&lt;a href=&quot;/wiki/Londo ...
@@ -547,8 +556,8 @@ read_csv(&quot;https://github.com/swcarpentry/r-novice-gapminder/raw/gh-pages/da
 ## [5] &lt;td style=&quot;text-align:left;background:#f0f0f0;&quot;&gt;\n&lt;a href=&quot;/wiki/St. ...
 ## [6] &lt;td style=&quot;text-align:right;&quot;&gt;406,074\n&lt;/td&gt;</code></pre>
 <p>Next we extract the meaningful data from the HTML nodes using the <code>html_text</code> function. For our example, this functions only required argument is the an html_nodes object, which we named <code>rent_nodes</code>. In the case of this example node: <code>&lt;td style="text-align:left;background:#f0f0f0;"&gt;&lt;a href="/wiki/London,_Ontario" title="London, Ontario"&gt;London&lt;/a&gt;&lt;/td&gt;</code>, the <code>html_text</code> function would return <code>London</code>.</p>
-<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb49-1" title="1">population_text &lt;-<span class="st"> </span><span class="kw">html_text</span>(population_nodes)</a>
-<a class="sourceLine" id="cb49-2" title="2"><span class="kw">head</span>(population_text)</a></code></pre></div>
+<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb53-1" title="1">population_text &lt;-<span class="st"> </span><span class="kw">html_text</span>(population_nodes)</a>
+<a class="sourceLine" id="cb53-2" title="2"><span class="kw">head</span>(population_text)</a></code></pre></div>
 <pre><code>## [1] &quot;5,928,040&quot;              &quot;London&quot;                
 ## [3] &quot;494,069\n&quot;              &quot;4,098,927&quot;             
 ## [5] &quot;St. Catharines–Niagara&quot; &quot;406,074\n&quot;</code></pre>

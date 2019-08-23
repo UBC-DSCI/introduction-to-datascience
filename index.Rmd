@@ -40,9 +40,13 @@ This course uses Jupyter and the R programming language to illustrate how to sol
 1. Predicting a class/category for a new observation/measurement (e.g., cancerous or benign tumour)
 2. Predicting a value for a new observation/measurement (e.g., 10 km race time for 20 year old females with a BMI of 25).
 3. Finding previously unknown/unlabelled subgroups in your data (e.g., products commonly bought together on Amazon)
-4. Estimating an average or a proportion from a sample (e.g., the proportion of undergraduate students that own an iphone)
+4. Estimating an average or a proportion from a representative sample (group of people or units) and using that estimate to generalize to the broader population  (e.g., the proportion of undergraduate students that own an iphone)
 
-This book/course is structured so that learners spend the first four chapters learning how to use R to load, wrangle/clean and visualize data. The remaining chapters cover solutions to the four problems discussed above. 
+For each of these problems, we map them to the type of data analysis question being asked and discuss what kinds of data are neded to answer such questions. 
+
+<!---FIGURE ON DATA ANALYSIS QUESTIONS TO GO HERE--->
+
+This book/course is structured so that learners spend the first four chapters learning how to use R to load, wrangle/clean and visualize data while answering descriptive and exploratory data analysis questions. The remaining chapters cover solutions to the four problems discussed above, which are useful for answering predictive and inferential data analysis questions. Causal and mechanistic data analysis questions are beyond the scope of this course.
 
 ## Chapter learning objectives
 
@@ -162,7 +166,7 @@ When we look at the data frame we see there are 6 columns:
 5. Mean communte time in minutes
 6. The party each state voted for in the 2016 US presidential election
 
-There are 52 rows in this dataset (corresponding to the 51 US states and the US territory, Puerto Rico). 
+There are 52 rows in this dataset (corresponding to the 50 US states, the District of Columbia and the US territory, Puerto Rico). 
 
 Now let's use `select` to subset the state column from this data frame. To use `select` to subset the state column, we'll provide the function with two arguments. The first argument is the name of the data frame object, here `us_data`. The second argument is the column name that we want to subset, here `state`. `select` returns a single column (the state column that we asked for) as a data frame.
 
@@ -218,7 +222,7 @@ long_commutes
 
 ## Creating Visualizations in R
 
-Creating data visualizations is an essential piece to any data analysis. For the remainder of Chapter 1, we will learn how we can use some of the `tidyverse` functions to make visualizations to explore the relationship between median household income and median propery value across US states, as well as how this relates to which party each state voted for in the 2016 US election. 
+Creating data visualizations is an essential piece to any data analysis. For the remainder of Chapter 1, we will learn how we can use some of the `tidyverse` functions to make visualizations to explore if there is a relationship between median household income and median propery value across these US regions, as well as whether there is a pattern in which party each state voted for in the 2016 US election. This is an example of an exploratory data analysis question, as we are looking for relationships and patterns within the data set we have, but are not trying to generalize what we find beyond this data set. 
 
 ### Using `ggplot` to create a scatter plot
 
@@ -244,7 +248,6 @@ ggplot(us_data, aes(x = med_income, y = med_prop_val)) +
     geom_point()
 ``` 
 
-
 ### Formatting ggplot objects
 
 One common and easy way to format, or change an aspect of your `ggplot` visualization is to add additional layers to your plot object using the `+` symbol. Here we use the `xlab` and `ylab` functions to add layers where we specify human readable labels for the x and y axis, respectively. There are many more layers we can add to format the plot further, and we will explore these in later chapters.
@@ -256,14 +259,17 @@ ggplot(us_data, aes(x = med_income, y = med_prop_val)) +
     ylab("Median property value (USD)")    
 ```
 
-### Coloring points by group
-Another common thing to do with scatter plots is to colour points by a group/category in the dataset. For example,
-given that we have the party each state voted for in the 2016 US Presidential election in the column named `party`, we can colour the points in our previous scatter plot to represent who each stated voted for. 
+From this visualization we see that for the 52 US regions in this data set, as median household income increases so does median property value. When we see two variables do this, we call this a positive relationship. Because of the data point in the lower left-hand corner, drawing a straight line through these points wouldn't fit very well. When a straight-line doesn't fit the data well we say that it's non-linear. Because the increasing pattern is fairly clear (not fuzzy) we can say that the relationship is strong. 
 
+Learning how to describe data visualizations is a very useful skill and we will do this for you in our course (as we did above) until we get to Chapter 4 which focuses on data visualization. There we will explicitly teach you how to do this yourself, and how to not over-state or over-interpret the results from a data visualization.
+
+### Coloring points by group
+Remembering the second part of our exploratory data analysis question: when considering the relationship between median household income and median property value, **is there a pattern in which party each state voted for in the 2016 US election?** One common way to explore this is to colour the data points on a scatter plot by a group/category in the data set. For example,
+given that we have the party each state voted for in the 2016 US Presidential election in the column named `party`, we can colour the points in our previous scatter plot to represent who each stated voted for. 
 
 To do this we modify our scatter plot code above, specifically we add a colour argument to the `aes` function and we give that the value of the column we would like to colour the points by, here party:
 
-```{r scatter colour by party, fig.width=4.75, fig.height=4, warning=FALSE}
+```{r scatter colour by party, fig.width=5.75, fig.height=4, warning=FALSE}
 ggplot(us_data, aes(x = med_income, y = med_prop_val, color = party)) +
   geom_point() +
   xlab("Income (USD)") +
@@ -287,19 +293,22 @@ vote_data
 
 Now we see that the data frame has 51 rows, these correspond to the 50 states and the District of Columbia - all regions where residents can vote in the US presidential election. Let's now recreate the scatter plot we created above using this data frame:
 
-```{r scatter colour by party no PR, fig.width=4.75, fig.height=4, warning=FALSE}
+```{r scatter colour by party no PR, fig.width=5.75, fig.height=4, warning=FALSE}
 ggplot(vote_data, aes(x = med_income, y = med_prop_val, color = party)) +
   geom_point() +
   xlab("Income (USD)") +
   ylab("Median property value (USD)")
 ```
 
+What do we see when considering the second part of our exploratory question? Do we see a pattern in how certain states voted in the 2016 Presidential election? We do! Most of the US States who voted for the Republican candidate in the 2016 US Presidential election had lower median household income and lower median property values (data points primarily fall in lower left-hand side of the scatter plot), whereas most of the US states who voted for the Democratic candidate in the 2016 US Presidential election had higher median household income and higher median property values (data points primarily fall in the upper right-hand side of the scatter plot).
+
+Does this mean that rich states usually vote for Democrats and poorer states generally vote for Republicans? Or could we use this data visualization on its own to predict who each state will elect in the next presidential election? The answer to both these questions is no. What we can do with this exploratory data analysis is use it to create new hypotheses and ideas to pose new questions (like the ones at the beginning of this paragraph). Answering those questions would likely involve gathering additional data and doing more complex analyses, which we will see some examples of later in this course.
 
 ### Putting it all together
 
 Below, we put it all together in one code chunk, and you can see here that in relatively few lines of R code we are able to create an entire data science workflow:
 
-```{r nachos to cheesecake, fig.width=4.75, fig.height=4, warning=FALSE, message=FALSE}
+```{r nachos to cheesecake, fig.width=5.75, fig.height=4, warning=FALSE, message=FALSE}
 library(tidyverse)
 
 us_data <- read_csv("state_property_vote.csv")
