@@ -31,6 +31,10 @@ output:
   bookdown::epub_book: default
 ---
 
+```{r setup, include=FALSE}
+library(forcats)
+```
+
 # Introduction to Data Science
 
 This is an open source textbook aimed at introducing undergraduate students to Data Science. It was originally written for the University of British Columbia's [DSCI 100 - Introduction to Data Science](https://ubc-dsci.github.io/dsci-100/) course. In this book, we define data science as the processes used to obtain value (i.e., insight) from data through reproducible and auditable processes. 
@@ -294,7 +298,7 @@ ggplot(us_data, aes(x = med_income, y = med_prop_val)) +
 One common and easy way to format your `ggplot` visualization is to add additional layers to the plot object using the `+` symbol. 
 For example, we can use the `xlab` and `ylab` functions to add layers where we specify human readable labels for the x and y axes. 
 Again, since we are specifying words (e.g. `"Income (USD)"`) as arguments to `xlab` and `ylab`, we surround them with double quotes.
-There are many more layers we can  add to format the plot further, and we will explore these in later chapters.
+There are many more layers we can add to format the plot further, and we will explore these in later chapters.
 
 ```{r prop_val_vs_income_human_labs, fig.width=4.75, fig.height=4, warning=FALSE}
 ggplot(us_data, aes(x = med_income, y = med_prop_val)) +
@@ -304,9 +308,9 @@ ggplot(us_data, aes(x = med_income, y = med_prop_val)) +
 ```
 
 From this visualization we see that for the 52 US regions in this data set, as median household income increases so does median property value. When we see 
-two variables do this, we call this a *positive relationship*. Because of the data point in the lower left-hand corner, drawing a straight line through these 
-points wouldn't fit very well. When a straight-line doesn't fit the data well we say that it's non-linear. Because the increasing pattern is fairly clear 
-(not fuzzy) we can say that the relationship is strong. 
+two variables do this, we call this a *positive relationship*. Because the increasing pattern is fairly clear 
+(not fuzzy) we can say that the relationship is strong. Because of the data point in the lower left-hand corner, drawing a straight line through these 
+points wouldn't fit very well. When a straight-line doesn't fit the data well we say that it's non-linear. However, we should have caution when using one point to claim non-linearity. As we will see later, this might be due to a single point not really belonging in the data set (this is often called an outlier).
 
 Learning how to describe data visualizations is a very useful skill. We will provide descriptions for you in this course (as we did above) until we get to Chapter 4, 
 which focuses on data visualization. Then, we will explicitly teach you how to do this yourself, and how to not over-state or over-interpret the results 
@@ -321,6 +325,10 @@ scatter plot to represent who each stated voted for.
 
 To do this we modify our scatter plot code above. Specifically, we will add an argument to the `aes` function, specifying that the points should be coloured by the `party` column:
 
+```{r relevel factors for colour, include=FALSE}
+us_data <- us_data %>% mutate(party = factor(party, levels = c("Republican", "Not applicable", "Democrat")))
+```
+
 ```{r scatter colour by party, fig.width=5.75, fig.height=4, warning=FALSE}
 ggplot(us_data, aes(x = med_income, y = med_prop_val, color = party)) +
   geom_point() +
@@ -332,7 +340,7 @@ This data visualization shows that the one data point we singled out earlier on 
 Let's use filter to look at the row that contains the "not applicable" value in the party column:
 
 ```{r}
-missing_party <- filter(us_data, party == "not applicable")
+missing_party <- filter(us_data, party == "Not Applicable")
 missing_party
 ```
 
@@ -342,7 +350,7 @@ cannot vote in presidential elections. Hence the "not applicable" label. Let's r
 To do this, we use the opposite of the equivalency operator (`==`) for our filter statement, the not equivalent operator (`!=`).
 
 ```{r}
-vote_data <- filter(us_data, party != "not applicable")
+vote_data <- filter(us_data, party != "Not Applicable")
 vote_data
 ```
 
@@ -375,7 +383,7 @@ library(tidyverse)
 
 us_data <- read_csv("state_property_vote.csv")
 
-vote_data <- filter(us_data, party != "not applicable")
+vote_data <- filter(us_data, party != "Not Applicable")
 
 ggplot(vote_data, aes(x = med_income, y = med_prop_val, color = party)) +
   geom_point() +
