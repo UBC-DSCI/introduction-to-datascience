@@ -193,9 +193,49 @@ If the `.xlsx` file has multiple sheets, then you have to use the `sheet` argume
 
 As with plain text files, you should always try to explore the data file before importing it into R. This helps you decide which arguments you need to use to successfully load the data into R. If you do not have the Excel program on your computer, there are other free programs you can use to preview the file. Examples include Google Sheets and Libre Office. 
 
-## Reading data from a Database
+## Reading data from a database
 
-TBD
+Another very common form of data that is read into R for the purpose of data analysis is data stored in a relational database. Common database software you might encounter include SQLite, MySQL, PosgreSQL, Oracle, and many more. All of these employ the SQL query language to pull data from the database. Thankfully several R packages have been written that allow R to connect to relational databases and use the R programming language as the front end (what the user types in) to pull data from them so that you do not have to learn the SQL query language for standard data extraction cases. In this book we will give examples of how to do this using R and the SQLite and PosgreSQL databases.
+
+### Reading data from a SQLite database
+
+SQLite is probably the simplest relational database that one can use in combination with R. SQLite databases are self-contained and usually stored and accessed locally on one computer. Data is usually stored in a file with a `.db` extension. Similar to Excel files, these are not plain text files and cannot be read in a plain text editor. 
+
+The first thing you need to do to read data into R from a database is to connect to the database. We do that using the `dbConnect` function from the `DBI` R package. This does not read in the data, but simply tells R where the database is.
+
+```{r}
+library(DBI)
+con_state_data <- dbConnect(RSQLite::SQLite(), "data/state_property_vote.db")
+```
+
+Often times relational databases have many tables, and their power comes from the useful ways they can be joined. Thus anytime you want to access data from a relational database you need to know the table names. You can get the names of all the tables in the database using the `dbListTables` function:
+
+```{r}
+tables <- dbListTables(con_state_data)
+tables
+```
+
+We only get one table name returned form calling `dbListTables`, and this tells us that there is only one table in this data base. To reference a table in the database so we can do things like select columns and filter rows, we use the `tbl` function from the `dbplyr` package:
+
+```{r}
+library(dbplyr)
+state_db <- tbl(con_state_data, "state")
+state_db
+```
+
+Although it looks like we just got a data frame from the database, we didn't! It is a reference, it is showing us data that is still in the SQLite database (note the first two lines of the output). It does this because often times databases are more efficient selecting, filtering and joiining large datasets than R is. And in some cases, the database will not even be on your laptop, but on a more powerful machine. So R is lazy and waits to bring this data into R's memory until you explicitly tell it to do so using the `dbplyr` `collect` function.
+
+Here we will filter for only states that voted for the Republican candidate in the 2016 Presidential election, and then use `collect` to finally bring this data into R as a data frame. 
+
+```{r}
+republican_db <- filter(state_db, party == "Republican")
+republican_db
+```
+
+```{r}
+republican_data <- collect(republican_db)
+republican_data
+```
 
 ## Writing data from R to a `.csv` file
 
