@@ -21,7 +21,6 @@ main <- function(){
   write.table(data, 
             file = paste0(path_no_prefix, "_meta-data.csv"),
             sep = ",",
-            col.names = FALSE,
             row.names = FALSE,
             quote = FALSE,
             append = TRUE)

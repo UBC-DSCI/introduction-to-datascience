@@ -21,6 +21,7 @@ By the end of the chapter, students will be able to:
 * use the `DBI` library's `dbconnect` fucntion to connect to a SQLite database file, and query that file using functions the `dbplyr` library
 
 *Bonus material for this week:*
+
 * use the `rvest` library's `html_nodes`, `html_text` and `html_attr` functions to scrape data from a `.html` file on the web
 * compare downloading tabular data from a plain text file (e.g., `.csv`) from the web versus scraping data from a `.html` file
 
@@ -54,9 +55,9 @@ See this video for another explanation:
 
 *Source: [Udacity course "Linux Command Line Basics"](https://www.udacity.com/course/linux-command-line-basics--ud595)*
 
-## Reading tabular data into R
+## Reading tabular data from a plain text file into R
 
-Now we will learn more about reading tabular data into R, as well as how to write tabular data to a file. Last chapter we learned about using the `tidyverse` `read_csv` when the file we read it matches that functions expected defaults (column names are present, `,` is the delimiter/separator and there are no row names in the dataset ). We will now learn how to read files where that is not the case. 
+Now we will learn more about reading tabular data from a plain text file  into R, as well as how to write tabular data to a file. Last chapter we learned about using the `tidyverse` `read_csv` when the file we read it matches that functions expected defaults (column names are present, `,` is the delimiter/separator and there are no row names in the dataset ). We will now learn how to read files where that is not the case. 
 
 Before we jump into the cases where the `tidyverse` `read_csv` functions expected defaults are not the case, let's revisit how we use this with one that does and thus the only argument we need to give to the function is the path to the file, here "data/state_property_vote.csv".
 
@@ -68,9 +69,32 @@ head -n 10 data/state_property_vote.csv
 
 Using `read_csv` to load in R:
 
-```{r}
+```{r load data, warning=FALSE, message=FALSE}
 library(tidyverse)
-read_csv("data/state_property_vote.csv")
+us_data <- read_csv("data/state_property_vote.csv")
+us_data
+```
+
+### Skipping rows when reading in data
+
+Often times information about how data was collected, or other relevant information, is included at the top of the data file. This information is usually written in sentence and paragraph form, with no delimiter because it is not organized into columns. An example of this is shown below:
+
+```{bash, echo=FALSE, comment=NA}
+head -n 13 data/state_property_vote_meta-data.csv
+```
+
+Using `read_csv` as we did previously does not allow us to correctly load the data into R. In the case of this file we end up only reading in one column of the data set:
+
+```{r}
+us_data <- read_csv("data/state_property_vote_meta-data.csv")
+us_data
+```
+
+To successfully read data like this into R, the `skip` argument can be useful to R how many lines to skip before reading in the data. In the example above, we would set this value to 3:
+
+```{r}
+us_data <- read_csv("data/state_property_vote_meta-data.csv", skip = 3)
+us_data
 ```
 
 ### `read_delim` as a more flexible method to get tabular data into R
@@ -78,43 +102,29 @@ read_csv("data/state_property_vote.csv")
 When our tabular data comes in a different format, we can use the `read_delim function()` instead. For example, a different version of this same dataset has no column names and uses tabs as the delimiter instead of commas. 
 
 Here is how the file would look in plain text editor:
-```
-10	1824	John Quincy Adams	D.-R.	84/261	32.18%	30.92%	−10.44%	113,142	−38,221	Andrew Jackson	D.-R.	26.9%
-23	1876	Rutherford Hayes	Rep.	185/369	50.14%	47.92%	−3.00%	4,034,142	−252,666	Samuel Tilden	Dem.	82.6%
-58	2016	Donald Trump	Rep.	304/538	56.50%	45.98%	−2.10%	62,979,636	−2,864,974	Hillary Rodham Clinton	Dem.	60.2%
+
+```{bash, echo=FALSE, comment=NA}
+head -n 10 data/state_property_vote.tsv
 ```
 
 To get this into R using the `read_delim()` function, we specify the first argument as the path to the file (as done with read_csv), and then provide values to the delim argument (here a tab) and the col_names argument (here false). Both `read_csv()` and `read_delim()` have a `col_names` argument and the default is True. 
 
 
-```
+```{r}
 library(tidyverse)
-read_delim("historical_vote_no_header.tsv",  delim = "\t", col_names = FALSE)
+us_data <- read_delim("data/state_property_vote.tsv",  delim = "\t", col_names = FALSE)
+us_data
 ```
 
-```
-# A tibble: 49 x 13
-      X1    X2 X3                X4    X5      X6     X7     X8            X9 X10        X11           X12   X13  
-   <int> <int> <chr>             <chr> <chr>   <chr>  <chr>  <chr>      <dbl> <chr>      <chr>         <chr> <chr>
- 1    10  1824 John Quincy Adams D.-R. 84/261  32.18% 30.92% −10.44%   113142 −38,221    Andrew Jacks… D.-R. 26.9%
- 2    23  1876 Rutherford Hayes  Rep.  185/369 50.14% 47.92% −3.00%   4034142 −252,666   Samuel Tilden Dem.  82.6%
- 3    58  2016 Donald Trump      Rep.  304/538 56.50% 45.98% −2.10%  62979636 −2,864,974 Hillary Rodh… Dem.  60.2%
- 4    26  1888 Benjamin Harrison Rep.  233/401 58.10% 47.80% −0.83%   5443633 −94,530    Grover Cleve… Dem.  80.5%
- 5    54  2000 George W. Bush    Rep.  271/538 50.37% 47.87% −0.51%  50460110 −543,816   Al Gore       Dem.  54.2%
- 6    24  1880 James Garfield    Rep.  214/369 57.99% 48.31% 0.09%    4453337 1,898      Winfield Sco… Dem.  80.5%
- 7    44  1960 John Kennedy      Dem.  303/537 56.42% 49.72% 0.17%   34220984 112,827    Richard Nixon Rep.  63.8%
- 8    25  1884 Grover Cleveland  Dem.  219/401 54.61% 48.85% 0.57%    4914482 57,579     James Blaine  Rep.  78.2%
- 9    46  1968 Richard Nixon     Rep.  301/538 55.95% 43.42% 0.70%   31783783 511,944    Hubert Humph… Dem.  62.5%
-10    15  1844 James Polk        Dem.  170/275 61.82% 49.54% 1.45%    1339570 39,413     Henry Clay    Whig  79.2%
-# ... with 39 more rows
-```
+Data frames in R need to have column names, thus if you read data into R as a data frame without column names then R assigns column names for them. If you used the `read_*` functions to read the data into R, then R gives each column a name of X1, X2, ..., XN, where N is the number of columns in the data set.
 
 ### Reading tabular data directly from a URL
 We can also use `read_csv()` or `read_delim()` (and related functions) to read in tabular data directly from a url that contains tabular data. In this case, we provide the url as a string to `read_csv()` as the path to the file instead of a path to a local file on our computer. All other arguments that we use are the same as when using these functions with a local file on our computer.
 
 ```{r}
 library(tidyverse)
-read_csv("https://github.com/UBC-DSCI/introduction-to-datascience/blob/master/state_property_vote.csv")
+us_data <- read_csv("https://raw.githubusercontent.com/UBC-DSCI/introduction-to-datascience/master/state_property_vote.csv")
+us_data
 ```
 
 ### Previewing a data file before reading it into R
@@ -123,6 +133,70 @@ In all the examples above, we gave you previews of the data file before we read 
 
 <iframe width="840" height="473" src="https://www.youtube.com/embed/6orO4YMAyeQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
+
+## Reading data from an Microsoft Excel file
+
+One of the most widely used spreadsheet software is Microsoft Excel, thus it is very likely that one day you will need to load data into R from an Excel spreadsheet. To be able to do this, a key thing to know is that even though a `.csv` file loaded in Excel looks almost identical to a `.xlsx` (file extension for a typical Excel file) file in Excel, these are two very different file types in reality and because of that you need to use different tools to load these types of files into R. `.csv` files are plain text files, meaning that the characters you see when you open the file in a plain text editor are the same that you would see in Microsoft excel. This is not the case for `.xlsx` files. Below we show what a `.xlsx` file would look like in a plain text editor: 
+
+```
+,?'O
+    _rels/.rels???J1??>E?{7?
+<?V????w8?'J???'QrJ???Tf?d??d?o?wZ'?ф??@>?4'?|??hlIo??Fǟ
+t                                                       8f??3wn
+????t??u"/
+          %~Ed2Ɩ??<?w??
+                       ?Pd(??J-?E???7?'t(?-GZ?????y?ߎ??c~N?g[^_r?4
+                                                                  yG?O
+                                                                      ?K??G?RPX?<??,?'O[Content_Types].xml???n?0E%?J
+                                                                                                                    ]TUE袏e??O??c[???????6q??s??d?m???ƻ\???H?^????3}	?rZY? ?:L60?^?????XTP+?|?3???"~?3T1W3???ޓ,?#p?R?!??w(??R???[S?D?kP?P!XS(?i?t?$?ei
+оX?ܒa??4VT?,D?Jq
+                D
+                 ?????u?]??;??L?.8AhfNv}߼?hHF*җ??Jr?Q?%?g?U??CtX"8x>?.|????5j?/$???JE?c??~ݜ??4iw?????E;?+?S??w?cV+?:???2l???=?2nݡl?????;|?V??????c'?????9?P&Bcj,?'OdocProps/app.xml??1
+                                                     ?0???k????A?u?U?]ȝ??{#?:;/<?g?Cߩd????M+?=???Z?O??R+??u?P?X?̔ KV@??M$??a???d,??_???4??5v?R????9D????t??Fk?Ú'P?=?,?'OdocProps/core.xml??MO?0
+                                                             ??J?{???3j?h'??(q??U4J
+                                                                                   ??=i?I'?b??[v?ޙ!??{gk?
+                                                                                                         F2????v5yj7??"J???,?d???J???C??ƚl??4?-?$ۤ??`$?4t?K?.;?%c?J-Q҉??G<??ɑZ-H????
+                                                  X????z???6?????~q??X??ٗ6?????q^>??tH???*?D???M?g
+??D?????????ݐ?d?:g).ے?3.??׉uԟ?ǟj?P?F؝,?'Oxl/_rels/workbook.xml.rels??Ak1??J?{7???R?^J?kk@Hf7??I?L???E]A?Þ?{a??`f?????b?6xUQ?@o?m}??o????X{???Q?????;?y?\?
+                        O
+?YY??4΀?L??S??k?252j??
+??V ?C?g?C]???????
+?
+???E??TENyf6%
+             ?Y????|??:%???}^ N?Q?ۤ?N'????)??F?\??P?G??,?'O'xl/printerSettings/printerSettings1.bin?Wmn? 
+                                                                                                        ??Sp>?G???q?#
+                                                                                                                     ?I??ڒ5R'???q????(?L
+??m??8F?5<	L`?ݍ-?`?A??2{dp??9R#?>7??Xu???ꋝ/?X??HI?|?
+                                                          ??r)???\?VA8?2dFfq???I]]o
+5`??<͘??6uA	?
+```
+
+This type file representation allows Excel files to store additional things that you cannot store in a `.csv` file, such as fonts, text formatting, graphics, multiple sheets and more. 
+
+Can we read Excel files into R if they look like that in a plain text editor? The answer is yes, but to do this easily we need to use an R package developed specifically for this purpose, called the `readxl` package. 
+
+```{r}
+library(readxl)
+us_data <- read_excel("data/state_property_vote.xlsx")
+us_data
+```
+
+If the `.xlsx` file has multiple sheets, then you have to use the `sheet` argument to specify either the sheet number or name. You can also specify cell ranges usig the `range` argument in case the sheet contains multiple tables (a sad thing that happens to many Excel spreadsheets).
+
+As with plain text files, you should always try to explore the data file before importing it into R. This helps you decide which arguments you need to use to successfully load the data into R. If you do not have the Excel program on your computer, there are other free programs you can use to preview the file. Examples include Google Sheets and Libre Office. 
+
+## Reading data from a Database
+
+TBD
+
+## Writing data from R to a `.csv` file
+
+At the middle and end of a data analysis, we often want to write the data frame that we have changed (either through filtering and subsetting or summarizing) to a file so that we can share it with others, or use it for another step in our analysis. The most straightforward way to do this is to use the `tidyverse`'s `write_csv` function. The default arguments for this file are to include column names and use a comma (`,`) as the delimiter. Below we demonstrate creating a new version of the US state-level property, income, population and voting data from 2015 and 2016 that does not contain the territory of Puerto Rico, and then writing this to a `.csv` file:
+
+```{r}
+state_data <- filter(us_data, state != "PR")
+write_csv(state_data, "data/us_states_only.csv")
+```
 
 ## Scraping data off the web using R
 
