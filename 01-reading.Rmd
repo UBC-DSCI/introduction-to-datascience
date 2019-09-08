@@ -2,7 +2,7 @@
 
 ## Overview 
 
-Learn to read in spreadsheet-like data of various formats from your local device and from the web. Reading data into R is the gateway to any data analysis. If you can't get it in, you can't analyze it. Additionally, there are many ways to read data into R and if you spend more time upfront matching the data reading method to the type of data you have, you will have to spend less time re-formatting, cleaning and wrangling your data (this is the second step to all data analyses). It's like making sure your shoes are tied well before going for a run so that you don't trip on the laces!
+Learn to read in spreadsheet-like data of various formats into R from your local device and from the web. Reading data into R is the gateway to any data analysis. If you can't get it in, you can't analyze it. Additionally, there are many ways to read data into R and if you spend more time upfront matching the data reading method to the type of data you have, you will have to spend less time re-formatting, cleaning and wrangling your data (this is the second step to all data analyses). It's like making sure your shoes are tied well before going for a run so that you don't trip on the laces!
 
 ## Chapter learning objectives
 By the end of the chapter, students will be able to:
@@ -27,7 +27,8 @@ By the end of the chapter, students will be able to:
 * use `readxl` library's `read_excel` function and arguments to load a sheet from an excel file into R
 * connect to a database using the `DBI` library's `dbConnect` function
 * list the tables in a database using the `RSQLite` library's `dbListTables` function
-* create a table object using the `tbl` function and query the database using functions from the `dbplyr` library
+* create a reference to a database table that is queriable using the `tbl` from the `dbplyr` library
+* retrieve data from a database query and bring it into R using the `collect` function from the `dbplyr` library
 
 * *optional*: scrape data from the web
   * read/scrape data from an internet URL using the rvest `html_nodes` and `html_text` functions
@@ -39,7 +40,7 @@ When you load virtually any data set into R you need to tell R where that files 
 
 The place the file lives on your computer is called the "path". You can think of the path as directions to the file. There are two kinds of paths, relative paths and absolute paths. A relative path is where the file is in respect to where you currently are on the computer (e.g., where the Jupyter notebook file you are working in is). Whereas an absolute path is where the file is in respect to the base or root folder of the computer's filesystem.
 
-If our computer's filesystem looked like the picture below, and we were working in the Jupyter notebook titled "worksheetk_02.ipynb" and we wanted to read in the `.csv` file named `happiness_report.csv` into our Jupyter notebook using R, we could do this using either a relative or an absolute path. We show what both would be below.
+If our computer's filesystem looked like the picture below, and we were working in the Jupyter notebook titled `worksheetk_02.ipynb` and we wanted to read in the `.csv` file named `happiness_report.csv` into our Jupyter notebook using R, we could do this using either a relative or an absolute path. We show what both would be below.
 
 <img src="img/file-system-for-export-to-intro-datascience.svg" width="840">
 
@@ -65,17 +66,17 @@ See this video for another explanation:
 
 ## Reading tabular data from a plain text file into R
 
-Now we will learn more about reading tabular data from a plain text file  into R, as well as how to write tabular data to a file. Last chapter we learned about using the `tidyverse` `read_csv` when the file we read it matches that functions expected defaults (column names are present, `,` is the delimiter/separator and there are no row names in the dataset ). We will now learn how to read files where that is not the case. 
+Now we will learn more about reading tabular data from a plain text file  into R, as well as how to write tabular data to a file. Last chapter we learned about using the `tidyverse` `read_csv` function when reading files that match that functions expected defaults (column names are present and commas, `,`, are used as the delimiter/separator between columns). In this section, we will learn how to read files do not satisfy the default expectations of `read_csv`. 
 
-Before we jump into the cases where the `tidyverse` `read_csv` functions expected defaults are not the case, let's revisit how we use this with one that does and thus the only argument we need to give to the function is the path to the file, here "data/state_property_vote.csv".
+Before we jump into the cases where the `tidyverse` `read_csv` functions expected defaults are not the case, let's revisit how we use this with one that does and thus the only argument we need to give to the function is the path to the file, here `data/state_property_vote.csv`. We put `data/` before the name of the file when we are loading the data set because this data set is located in a sub-folder, named `data`, relative to where we are running our R code.
 
-Here is how the file would look in plain text editor:
+Here is what the file would look in plain text editor:
 
 ```{bash, echo=FALSE, comment=NA}
 head -n 10 data/state_property_vote.csv
 ```
 
-Using `read_csv` to load in R:
+And here is a review of how we can use `read_csv` to load in R:
 
 ```{r load data, warning=FALSE, message=FALSE}
 library(tidyverse)
@@ -98,7 +99,7 @@ us_data <- read_csv("data/state_property_vote_meta-data.csv")
 us_data
 ```
 
-To successfully read data like this into R, the `skip` argument can be useful to R how many lines to skip before reading in the data. In the example above, we would set this value to 3:
+To successfully read data like this into R, the `skip` argument can be useful to tell R how many lines to skip before it should start reading in the data. In the example above, we would set this value to 3:
 
 ```{r}
 us_data <- read_csv("data/state_property_vote_meta-data.csv", skip = 3)
@@ -115,11 +116,10 @@ Here is how the file would look in plain text editor:
 head -n 10 data/state_property_vote.tsv
 ```
 
-To get this into R using the `read_delim()` function, we specify the first argument as the path to the file (as done with read_csv), and then provide values to the delim argument (here a tab) and the col_names argument (here false). Both `read_csv()` and `read_delim()` have a `col_names` argument and the default is True. 
+To get this into R using the `read_delim()` function, we specify the first argument as the path to the file (as done with `read_csv`), and then provide values to the `delim` argument (here a tab, which we represent by `"\t"`) and the `col_names` argument (here we specify that there are no column names be assigning it the value of `FALSE`). Both `read_csv()` and `read_delim()` have a `col_names` argument and the default is `TRUE`. 
 
 
 ```{r}
-library(tidyverse)
 us_data <- read_delim("data/state_property_vote.tsv",  delim = "\t", col_names = FALSE)
 us_data
 ```
@@ -127,10 +127,9 @@ us_data
 Data frames in R need to have column names, thus if you read data into R as a data frame without column names then R assigns column names for them. If you used the `read_*` functions to read the data into R, then R gives each column a name of X1, X2, ..., XN, where N is the number of columns in the data set.
 
 ### Reading tabular data directly from a URL
-We can also use `read_csv()` or `read_delim()` (and related functions) to read in tabular data directly from a url that contains tabular data. In this case, we provide the url as a string to `read_csv()` as the path to the file instead of a path to a local file on our computer. All other arguments that we use are the same as when using these functions with a local file on our computer.
+We can also use `read_csv()` or `read_delim()` (and related functions) to read in tabular data directly from a url that contains tabular data. In this case, we provide the url to `read_csv()` as the path to the file instead of a path to a local file on our computer. Similar to when we specify a path on our local computer, here we need to surround the url by quotes. All other arguments that we use are the same as when using these functions with a local file on our computer.
 
 ```{r}
-library(tidyverse)
 us_data <- read_csv("https://raw.githubusercontent.com/UBC-DSCI/introduction-to-datascience/master/state_property_vote.csv")
 us_data
 ```
@@ -144,7 +143,7 @@ In all the examples above, we gave you previews of the data file before we read 
 
 ## Reading data from an Microsoft Excel file
 
-One of the most widely used spreadsheet software is Microsoft Excel, thus it is very likely that one day you will need to load data into R from an Excel spreadsheet. To be able to do this, a key thing to know is that even though a `.csv` file loaded in Excel looks almost identical to a `.xlsx` (file extension for a typical Excel file) file in Excel, these are two very different file types in reality and because of that you need to use different tools to load these types of files into R. `.csv` files are plain text files, meaning that the characters you see when you open the file in a plain text editor are the same that you would see in Microsoft excel. This is not the case for `.xlsx` files. Below we show what a `.xlsx` file would look like in a plain text editor: 
+One of the most widely used spreadsheet software is Microsoft Excel, thus it is very likely that one day you will need to load data into R from an Excel spreadsheet. To be able to do this, a key thing to know is that even though a `.csv` file loaded in Excel looks almost identical to a `.xlsx` (file extension for a typical Excel file) file in Excel, these are two very different file types in reality. Given this, you need to use different tools to load these types of files into R. `.csv` files are plain text files, meaning that the characters you see when you open the file in a plain text editor are the same that you would see in Microsoft excel. This is not the case for `.xlsx` files. Below we show what a `.xlsx` file would look like in a plain text editor: 
 
 ```
 ,?'O
@@ -189,7 +188,7 @@ us_data <- read_excel("data/state_property_vote.xlsx")
 us_data
 ```
 
-If the `.xlsx` file has multiple sheets, then you have to use the `sheet` argument to specify either the sheet number or name. You can also specify cell ranges usig the `range` argument in case the sheet contains multiple tables (a sad thing that happens to many Excel spreadsheets).
+If the `.xlsx` file has multiple sheets, then you have to use the `sheet` argument to specify either the sheet number or name. You can also specify cell ranges using the `range` argument. This is useful in cases where the sheet contains multiple tables (a sad thing that happens to many Excel spreadsheets).
 
 As with plain text files, you should always try to explore the data file before importing it into R. This helps you decide which arguments you need to use to successfully load the data into R. If you do not have the Excel program on your computer, there are other free programs you can use to preview the file. Examples include Google Sheets and Libre Office. 
 
@@ -237,7 +236,7 @@ republican_data <- collect(republican_db)
 republican_data
 ```
 
-Why bother to use the `collect` function you might ask? The data looks pretty similar in both outputs shown above. Well in many cases you can directly feed the database reference (what `tbl` gives you) into downstream analysis functions (e.g., `ggplot2` for data visualization and `lm` for linear regression modeling), however, this does not work in every case (e.g., `nrow` to count rows in a data frame and `tail` to preview the last 6 rows of a data frame). Additionally, some forms of subsetting will not work to extract columns or single values. Thus, once you have finished your data wrangling of the `tbl` database reference object it is advisable to then bring it into memory in R using `collect` so it works as a data frame is expected to. 
+Why bother to use the `collect` function you might ask? The data looks pretty similar in both outputs shown above. Well in many cases you can directly feed the database reference (what `tbl` gives you) into downstream analysis functions (e.g., `ggplot2` for data visualization and `lm` for linear regression modeling), however, this does not work in every case (e.g., `nrow` to count rows in a data frame and `tail` to preview the last 6 rows of a data frame). Additionally, some forms of subsetting will not work to extract columns or single values from the refernce given by the `tbl` function. Thus, once you have finished your data wrangling of the `tbl` database reference object it is advisable to then bring it into memory in R using `collect` so it works as a data frame is expected to. 
 
 ## Writing data from R to a `.csv` file
 

@@ -316,7 +316,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h1><span class="header-section-number">Chapter 2</span> Reading in data locally and from the web</h1>
 <div id="overview" class="section level2">
 <h2><span class="header-section-number">2.1</span> Overview</h2>
-<p>Learn to read in spreadsheet-like data of various formats from your local device and from the web. Reading data into R is the gateway to any data analysis. If you can’t get it in, you can’t analyze it. Additionally, there are many ways to read data into R and if you spend more time upfront matching the data reading method to the type of data you have, you will have to spend less time re-formatting, cleaning and wrangling your data (this is the second step to all data analyses). It’s like making sure your shoes are tied well before going for a run so that you don’t trip on the laces!</p>
+<p>Learn to read in spreadsheet-like data of various formats into R from your local device and from the web. Reading data into R is the gateway to any data analysis. If you can’t get it in, you can’t analyze it. Additionally, there are many ways to read data into R and if you spend more time upfront matching the data reading method to the type of data you have, you will have to spend less time re-formatting, cleaning and wrangling your data (this is the second step to all data analyses). It’s like making sure your shoes are tied well before going for a run so that you don’t trip on the laces!</p>
 </div>
 <div id="chapter-learning-objectives-1" class="section level2">
 <h2><span class="header-section-number">2.2</span> Chapter learning objectives</h2>
@@ -348,7 +348,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li>use <code>readxl</code> library’s <code>read_excel</code> function and arguments to load a sheet from an excel file into R</li>
 <li>connect to a database using the <code>DBI</code> library’s <code>dbConnect</code> function</li>
 <li>list the tables in a database using the <code>RSQLite</code> library’s <code>dbListTables</code> function</li>
-<li><p>create a table object using the <code>tbl</code> function and query the database using functions from the <code>dbplyr</code> library</p></li>
+<li>create a reference to a database table that is queriable using the <code>tbl</code> from the <code>dbplyr</code> library</li>
+<li><p>retrieve data from a database query and bring it into R using the <code>collect</code> function from the <code>dbplyr</code> library</p></li>
 <li><em>optional</em>: scrape data from the web
 <ul>
 <li>read/scrape data from an internet URL using the rvest <code>html_nodes</code> and <code>html_text</code> functions</li>
@@ -360,7 +361,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h2><span class="header-section-number">2.3</span> Absolute and relative file paths</h2>
 <p>When you load virtually any data set into R you need to tell R where that files lives. The file could live on your computer, or somewhere on the internet. In this section we will discuss the case where the file lives on your computer.</p>
 <p>The place the file lives on your computer is called the “path”. You can think of the path as directions to the file. There are two kinds of paths, relative paths and absolute paths. A relative path is where the file is in respect to where you currently are on the computer (e.g., where the Jupyter notebook file you are working in is). Whereas an absolute path is where the file is in respect to the base or root folder of the computer’s filesystem.</p>
-<p>If our computer’s filesystem looked like the picture below, and we were working in the Jupyter notebook titled “worksheetk_02.ipynb” and we wanted to read in the <code>.csv</code> file named <code>happiness_report.csv</code> into our Jupyter notebook using R, we could do this using either a relative or an absolute path. We show what both would be below.</p>
+<p>If our computer’s filesystem looked like the picture below, and we were working in the Jupyter notebook titled <code>worksheetk_02.ipynb</code> and we wanted to read in the <code>.csv</code> file named <code>happiness_report.csv</code> into our Jupyter notebook using R, we could do this using either a relative or an absolute path. We show what both would be below.</p>
 <p><img src="img/file-system-for-export-to-intro-datascience.svg" width="840"></p>
 <div id="reading-happiness_report.csv-using-a-relative-path" class="section level5">
 <h5><span class="header-section-number">2.3.0.0.1</span> Reading <code>happiness_report.csv</code> using a relative path:</h5>
@@ -378,9 +379,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 <div id="reading-tabular-data-from-a-plain-text-file-into-r" class="section level2">
 <h2><span class="header-section-number">2.4</span> Reading tabular data from a plain text file into R</h2>
-<p>Now we will learn more about reading tabular data from a plain text file into R, as well as how to write tabular data to a file. Last chapter we learned about using the <code>tidyverse</code> <code>read_csv</code> when the file we read it matches that functions expected defaults (column names are present, <code>,</code> is the delimiter/separator and there are no row names in the dataset ). We will now learn how to read files where that is not the case.</p>
-<p>Before we jump into the cases where the <code>tidyverse</code> <code>read_csv</code> functions expected defaults are not the case, let’s revisit how we use this with one that does and thus the only argument we need to give to the function is the path to the file, here “data/state_property_vote.csv”.</p>
-<p>Here is how the file would look in plain text editor:</p>
+<p>Now we will learn more about reading tabular data from a plain text file into R, as well as how to write tabular data to a file. Last chapter we learned about using the <code>tidyverse</code> <code>read_csv</code> function when reading files that match that functions expected defaults (column names are present and commas, <code>,</code>, are used as the delimiter/separator between columns). In this section, we will learn how to read files do not satisfy the default expectations of <code>read_csv</code>.</p>
+<p>Before we jump into the cases where the <code>tidyverse</code> <code>read_csv</code> functions expected defaults are not the case, let’s revisit how we use this with one that does and thus the only argument we need to give to the function is the path to the file, here <code>data/state_property_vote.csv</code>. We put <code>data/</code> before the name of the file when we are loading the data set because this data set is located in a sub-folder, named <code>data</code>, relative to where we are running our R code.</p>
+<p>Here is what the file would look in plain text editor:</p>
 <pre><code>state,med_income,med_prop_val,population,mean_commute_minutes,party
 AK,64222,197300,733375,10.46830207,Republican
 AL,36924,94800,4830620,25.30990746,Republican
@@ -391,7 +392,7 @@ CO,48098,198900,5278906,19.50792188,Democrat
 CT,69228,246450,3593222,24.349675,Democrat
 DC,70848,475800,647484,28.2534,Democrat
 DE,54976,228500,926454,24.45553333,Democrat</code></pre>
-<p>Using <code>read_csv</code> to load in R:</p>
+<p>And here is a review of how we can use <code>read_csv</code> to load in R:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">library</span>(tidyverse)</a>
 <a class="sourceLine" id="cb4-2" data-line-number="2">us_data &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/state_property_vote.csv&quot;</span>)</a>
 <a class="sourceLine" id="cb4-3" data-line-number="3">us_data</a></code></pre></div>
@@ -455,7 +456,7 @@ DE,54976,228500,926454,24.45553333,Democrat</code></pre>
 ##  9 CO                                                                      
 ## 10 CT                                                                      
 ## # … with 45 more rows</code></pre>
-<p>To successfully read data like this into R, the <code>skip</code> argument can be useful to R how many lines to skip before reading in the data. In the example above, we would set this value to 3:</p>
+<p>To successfully read data like this into R, the <code>skip</code> argument can be useful to tell R how many lines to skip before it should start reading in the data. In the example above, we would set this value to 3:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" data-line-number="1">us_data &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/state_property_vote_meta-data.csv&quot;</span>, <span class="dt">skip =</span> <span class="dv">3</span>)</a></code></pre></div>
 <pre><code>## Parsed with column specification:
 ## cols(
@@ -496,9 +497,8 @@ CT  69228   246450  3593222 24.349675   Democrat
 DC  70848   475800  647484  28.2534 Democrat
 DE  54976   228500  926454  24.45553333 Democrat
 FL  43355   125600  19645772    24.78055522 Republican</code></pre>
-<p>To get this into R using the <code>read_delim()</code> function, we specify the first argument as the path to the file (as done with read_csv), and then provide values to the delim argument (here a tab) and the col_names argument (here false). Both <code>read_csv()</code> and <code>read_delim()</code> have a <code>col_names</code> argument and the default is True.</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="kw">library</span>(tidyverse)</a>
-<a class="sourceLine" id="cb17-2" data-line-number="2">us_data &lt;-<span class="st"> </span><span class="kw">read_delim</span>(<span class="st">&quot;data/state_property_vote.tsv&quot;</span>,  <span class="dt">delim =</span> <span class="st">&quot;</span><span class="ch">\t</span><span class="st">&quot;</span>, <span class="dt">col_names =</span> <span class="ot">FALSE</span>)</a></code></pre></div>
+<p>To get this into R using the <code>read_delim()</code> function, we specify the first argument as the path to the file (as done with <code>read_csv</code>), and then provide values to the <code>delim</code> argument (here a tab, which we represent by <code>&quot;\t&quot;</code>) and the <code>col_names</code> argument (here we specify that there are no column names be assigning it the value of <code>FALSE</code>). Both <code>read_csv()</code> and <code>read_delim()</code> have a <code>col_names</code> argument and the default is <code>TRUE</code>.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1">us_data &lt;-<span class="st"> </span><span class="kw">read_delim</span>(<span class="st">&quot;data/state_property_vote.tsv&quot;</span>,  <span class="dt">delim =</span> <span class="st">&quot;</span><span class="ch">\t</span><span class="st">&quot;</span>, <span class="dt">col_names =</span> <span class="ot">FALSE</span>)</a></code></pre></div>
 <pre><code>## Parsed with column specification:
 ## cols(
 ##   X1 = col_character(),
@@ -527,9 +527,8 @@ FL  43355   125600  19645772    24.78055522 Republican</code></pre>
 </div>
 <div id="reading-tabular-data-directly-from-a-url" class="section level3">
 <h3><span class="header-section-number">2.4.3</span> Reading tabular data directly from a URL</h3>
-<p>We can also use <code>read_csv()</code> or <code>read_delim()</code> (and related functions) to read in tabular data directly from a url that contains tabular data. In this case, we provide the url as a string to <code>read_csv()</code> as the path to the file instead of a path to a local file on our computer. All other arguments that we use are the same as when using these functions with a local file on our computer.</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb21-1" data-line-number="1"><span class="kw">library</span>(tidyverse)</a>
-<a class="sourceLine" id="cb21-2" data-line-number="2">us_data &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;https://raw.githubusercontent.com/UBC-DSCI/introduction-to-datascience/master/state_property_vote.csv&quot;</span>)</a></code></pre></div>
+<p>We can also use <code>read_csv()</code> or <code>read_delim()</code> (and related functions) to read in tabular data directly from a url that contains tabular data. In this case, we provide the url to <code>read_csv()</code> as the path to the file instead of a path to a local file on our computer. Similar to when we specify a path on our local computer, here we need to surround the url by quotes. All other arguments that we use are the same as when using these functions with a local file on our computer.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb21-1" data-line-number="1">us_data &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;https://raw.githubusercontent.com/UBC-DSCI/introduction-to-datascience/master/state_property_vote.csv&quot;</span>)</a></code></pre></div>
 <pre><code>## Parsed with column specification:
 ## cols(
 ##   state = col_character(),
@@ -564,7 +563,7 @@ FL  43355   125600  19645772    24.78055522 Republican</code></pre>
 </div>
 <div id="reading-data-from-an-microsoft-excel-file" class="section level2">
 <h2><span class="header-section-number">2.5</span> Reading data from an Microsoft Excel file</h2>
-<p>One of the most widely used spreadsheet software is Microsoft Excel, thus it is very likely that one day you will need to load data into R from an Excel spreadsheet. To be able to do this, a key thing to know is that even though a <code>.csv</code> file loaded in Excel looks almost identical to a <code>.xlsx</code> (file extension for a typical Excel file) file in Excel, these are two very different file types in reality and because of that you need to use different tools to load these types of files into R. <code>.csv</code> files are plain text files, meaning that the characters you see when you open the file in a plain text editor are the same that you would see in Microsoft excel. This is not the case for <code>.xlsx</code> files. Below we show what a <code>.xlsx</code> file would look like in a plain text editor:</p>
+<p>One of the most widely used spreadsheet software is Microsoft Excel, thus it is very likely that one day you will need to load data into R from an Excel spreadsheet. To be able to do this, a key thing to know is that even though a <code>.csv</code> file loaded in Excel looks almost identical to a <code>.xlsx</code> (file extension for a typical Excel file) file in Excel, these are two very different file types in reality. Given this, you need to use different tools to load these types of files into R. <code>.csv</code> files are plain text files, meaning that the characters you see when you open the file in a plain text editor are the same that you would see in Microsoft excel. This is not the case for <code>.xlsx</code> files. Below we show what a <code>.xlsx</code> file would look like in a plain text editor:</p>
 <pre><code>,?&#39;O
     _rels/.rels???J1??&gt;E?{7?
 &lt;?V????w8?&#39;J???&#39;QrJ???Tf?d??d?o?wZ&#39;?ф??@&gt;?4&#39;?|??hlIo??Fǟ
@@ -614,7 +613,7 @@ t                                                       8f??3wn
 ##  9 DE         54976       228500     926454                 24.5 Democrat  
 ## 10 FL         43355       125600   19645772                 24.8 Republican
 ## # … with 42 more rows</code></pre>
-<p>If the <code>.xlsx</code> file has multiple sheets, then you have to use the <code>sheet</code> argument to specify either the sheet number or name. You can also specify cell ranges usig the <code>range</code> argument in case the sheet contains multiple tables (a sad thing that happens to many Excel spreadsheets).</p>
+<p>If the <code>.xlsx</code> file has multiple sheets, then you have to use the <code>sheet</code> argument to specify either the sheet number or name. You can also specify cell ranges using the <code>range</code> argument. This is useful in cases where the sheet contains multiple tables (a sad thing that happens to many Excel spreadsheets).</p>
 <p>As with plain text files, you should always try to explore the data file before importing it into R. This helps you decide which arguments you need to use to successfully load the data into R. If you do not have the Excel program on your computer, there are other free programs you can use to preview the file. Examples include Google Sheets and Libre Office.</p>
 </div>
 <div id="reading-data-from-a-database" class="section level2">
@@ -691,7 +690,7 @@ t                                                       8f??3wn
 ##  9 IN        47194        111800    6568645                 23.5 Republican
 ## 10 KS        46875         85200    2892987                 16.7 Republican
 ## # … with 21 more rows</code></pre>
-<p>Why bother to use the <code>collect</code> function you might ask? The data looks pretty similar in both outputs shown above. Well in many cases you can directly feed the database reference (what <code>tbl</code> gives you) into downstream analysis functions (e.g., <code>ggplot2</code> for data visualization and <code>lm</code> for linear regression modeling), however, this does not work in every case (e.g., <code>nrow</code> to count rows in a data frame and <code>tail</code> to preview the last 6 rows of a data frame). Additionally, some forms of subsetting will not work to extract columns or single values. Thus, once you have finished your data wrangling of the <code>tbl</code> database reference object it is advisable to then bring it into memory in R using <code>collect</code> so it works as a data frame is expected to.</p>
+<p>Why bother to use the <code>collect</code> function you might ask? The data looks pretty similar in both outputs shown above. Well in many cases you can directly feed the database reference (what <code>tbl</code> gives you) into downstream analysis functions (e.g., <code>ggplot2</code> for data visualization and <code>lm</code> for linear regression modeling), however, this does not work in every case (e.g., <code>nrow</code> to count rows in a data frame and <code>tail</code> to preview the last 6 rows of a data frame). Additionally, some forms of subsetting will not work to extract columns or single values from the refernce given by the <code>tbl</code> function. Thus, once you have finished your data wrangling of the <code>tbl</code> database reference object it is advisable to then bring it into memory in R using <code>collect</code> so it works as a data frame is expected to.</p>
 </div>
 </div>
 <div id="writing-data-from-r-to-a-.csv-file" class="section level2">
