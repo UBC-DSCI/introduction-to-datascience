@@ -238,6 +238,112 @@ republican_data
 
 Why bother to use the `collect` function you might ask? The data looks pretty similar in both outputs shown above. Well in many cases you can directly feed the database reference (what `tbl` gives you) into downstream analysis functions (e.g., `ggplot2` for data visualization and `lm` for linear regression modeling), however, this does not work in every case (e.g., `nrow` to count rows in a data frame and `tail` to preview the last 6 rows of a data frame). Additionally, some forms of subsetting will not work to extract columns or single values from the refernce given by the `tbl` function. Thus, once you have finished your data wrangling of the `tbl` database reference object it is advisable to then bring it into memory in R using `collect` so it works as a data frame is expected to. 
 
+### Reading data from a PostgreSQL database 
+
+PostgeSQL (also called Postgres) is a very popular free and open-source option for relational database software. Unlike SQLite, PostgeSQL uses a client–server database engine. This is because it was designed to be used and accessed on a network, and this means that you have to provide more information to R when connecting to this kind of database software. The additional information that you need to include when you call the `dbconnect` function when connecting to a PostgeSQL database is listed below:
+
+- `dbname` - the name of the database (a single PostgreSQL instance can host more than one database)
+- `host` - the url pointing to where the database is located
+- `port` - the communication endpoint between R and the PostgeSQL database (this is typically always 5432 for PostgreSQL)
+- `user` - the username for accessing the database
+- `password` - the password for accessing the database
+
+
+Additionally, we use the `RPostgres::Postgres` instead of `RSQLite::SQLite()` because we are now connecting to a PostgreSQL database.
+
+Below we demonstrate how to connect to a version of the `can_mov_db` database, which contains information about Canadian movies (*note - this is a fictitional database*).
+
+```
+library(RPostgres)
+can_mov_db_con <- dbConnect(RPostgres::Postgres(), dbname = "can_mov_db",
+                        host = "r7k3-mds1.stat.ubc.ca", port = 5432,
+                        user = "user0001", password = '################')
+```
+
+After opening the connection, we can again use `dbListTables` to find out what tables are in the `can_mov_db` database:
+
+```
+dbListTables(can_mov_db_con)
+```
+
+```
+ [1] "themes"            "medium"           "titles"     "title_aliases"       "forms"            
+ [6] "episodes"          "names"      "names_occupations" "occupation"       "ratings" 
+```
+
+We see that there are 10 tables in this database. Let's first look at the `"ratings"` table and then find out what the lowest rating that exists in the `can_mov_db` database:
+
+```
+ratings_db <- tbl(can_mov_db_con, "ratings")
+ratings_db
+```
+
+```
+# Source:   table<ratings> [?? x 3]
+# Database: postgres [user0001@r7k3-mds1.stat.ubc.ca:5432/can_mov_db]
+   title              average_rating num_votes
+   <chr>                    <dbl>     <int>
+ 1 The Grand Seduction       6.6       150
+ 2 Rhymes for Young Ghouls   6.3      1685
+ 3 Mommy                     7.5      1060
+ 4 Incendies                 6.1      1101
+ 5 Bon Cop, Bad Cop          7.0       894
+ 6 Goon                      5.5      1111
+ 7 Monsieur Lazhar           5.6       610
+ 8 What if                   5.3      1401
+ 9 The Barbarian Invations   5.8        99
+10 Away from Her             6.9      2311
+# … with more rows
+```
+
+To find the lowest rating that exists in the data base, we first need to subset the `average_rating` column using `select`:
+
+```
+avg_rating_db <- select(ratings_db, average_rating)
+avg_rating_db
+```
+
+```
+# Source:   lazy query [?? x 1]
+# Database: postgres [user0001@r7k3-mds1.stat.ubc.ca:5432/can_mov_db]
+   average_rating
+            <dbl>
+ 1            6.6
+ 2            6.3
+ 3            7.5
+ 4            6.1
+ 5            7.0
+ 6            5.5
+ 7            5.6
+ 8            5.3
+ 9            5.8
+10            6.9
+# … with more rows
+```
+
+Next we use `min` to find the minimum rating in that column:
+
+```
+min(avg_rating_db)
+```
+
+```
+Error in min(avg_rating_db) : invalid 'type' (list) of argument
+```
+
+Instead of the minimum, we get an error! This is an example of when we need to use the `collect` function to bring the data into R so we can do further computation on it:
+
+```
+avg_rating_data <- collect(avg_rating_db)
+min(avg_rating_data)
+```
+
+```
+[1] 1
+```
+
+We see the lowest rating given to a movie is 1, indicating that it must have been a really bad movie...
+
 ## Writing data from R to a `.csv` file
 
 At the middle and end of a data analysis, we often want to write the data frame that we have changed (either through filtering, subsetting, mutating or summarizing) to a file so that we can share it with others, or use it for another step in our analysis. The most straightforward way to do this is to use the `tidyverse`'s `write_csv` function. The default arguments for this file are to include column names and use a comma (`,`) as the delimiter. Below we demonstrate creating a new version of the US state-level property, income, population and voting data from 2015 and 2016 that does not contain the territory of Puerto Rico, and then writing this to a `.csv` file:

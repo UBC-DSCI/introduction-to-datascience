@@ -163,6 +163,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="2.5" data-path="reading.html"><a href="reading.html#reading-data-from-an-microsoft-excel-file"><i class="fa fa-check"></i><b>2.5</b> Reading data from an Microsoft Excel file</a></li>
 <li class="chapter" data-level="2.6" data-path="reading.html"><a href="reading.html#reading-data-from-a-database"><i class="fa fa-check"></i><b>2.6</b> Reading data from a database</a><ul>
 <li class="chapter" data-level="2.6.1" data-path="reading.html"><a href="reading.html#reading-data-from-a-sqlite-database"><i class="fa fa-check"></i><b>2.6.1</b> Reading data from a SQLite database</a></li>
+<li class="chapter" data-level="2.6.2" data-path="reading.html"><a href="reading.html#reading-data-from-a-postgresql-database"><i class="fa fa-check"></i><b>2.6.2</b> Reading data from a PostgreSQL database</a></li>
 </ul></li>
 <li class="chapter" data-level="2.7" data-path="reading.html"><a href="reading.html#writing-data-from-r-to-a-.csv-file"><i class="fa fa-check"></i><b>2.7</b> Writing data from R to a <code>.csv</code> file</a></li>
 <li class="chapter" data-level="2.8" data-path="reading.html"><a href="reading.html#scraping-data-off-the-web-using-r"><i class="fa fa-check"></i><b>2.8</b> Scraping data off the web using R</a><ul>
@@ -692,12 +693,77 @@ t                                                       8f??3wn
 ## # … with 21 more rows</code></pre>
 <p>Why bother to use the <code>collect</code> function you might ask? The data looks pretty similar in both outputs shown above. Well in many cases you can directly feed the database reference (what <code>tbl</code> gives you) into downstream analysis functions (e.g., <code>ggplot2</code> for data visualization and <code>lm</code> for linear regression modeling), however, this does not work in every case (e.g., <code>nrow</code> to count rows in a data frame and <code>tail</code> to preview the last 6 rows of a data frame). Additionally, some forms of subsetting will not work to extract columns or single values from the refernce given by the <code>tbl</code> function. Thus, once you have finished your data wrangling of the <code>tbl</code> database reference object it is advisable to then bring it into memory in R using <code>collect</code> so it works as a data frame is expected to.</p>
 </div>
+<div id="reading-data-from-a-postgresql-database" class="section level3">
+<h3><span class="header-section-number">2.6.2</span> Reading data from a PostgreSQL database</h3>
+<p>PostgeSQL (also called Postgres) is a very popular free and open-source option for relational database software. Unlike SQLite, PostgeSQL uses a client–server database engine. This is because it was designed to be used and accessed on a network, and this means that you have to provide more information to R when connecting to this kind of database software. The additional information that you need to include when you call the <code>dbconnect</code> function when connecting to a PostgeSQL database is listed below:</p>
+<ul>
+<li><code>dbname</code> - the name of the database (a single PostgreSQL instance can host more than one database)</li>
+<li><code>host</code> - the url pointing to where the database is located</li>
+<li><code>port</code> - the communication endpoint between R and the PostgeSQL database (this is typically always 5432 for PostgreSQL)</li>
+<li><code>user</code> - the username for accessing the database</li>
+<li><code>password</code> - the password for accessing the database</li>
+</ul>
+<p>Additionally, we use the <code>RPostgres::Postgres</code> instead of <code>RSQLite::SQLite()</code> because we are now connecting to a PostgreSQL database.</p>
+<p>Below we demonstrate how to connect to a version of the <code>can_mov_db</code> database, which contains information about Canadian movies (<em>note - this is a fictitional database</em>).</p>
+<pre><code>library(RPostgres)
+can_mov_db_con &lt;- dbConnect(RPostgres::Postgres(), dbname = &quot;can_mov_db&quot;,
+                        host = &quot;r7k3-mds1.stat.ubc.ca&quot;, port = 5432,
+                        user = &quot;user0001&quot;, password = &#39;################&#39;)</code></pre>
+<p>After opening the connection, we can again use <code>dbListTables</code> to find out what tables are in the <code>can_mov_db</code> database:</p>
+<pre><code>dbListTables(can_mov_db_con)</code></pre>
+<pre><code> [1] &quot;themes&quot;            &quot;medium&quot;           &quot;titles&quot;     &quot;title_aliases&quot;       &quot;forms&quot;            
+ [6] &quot;episodes&quot;          &quot;names&quot;      &quot;names_occupations&quot; &quot;occupation&quot;       &quot;ratings&quot; </code></pre>
+<p>We see that there are 10 tables in this database. Let’s first look at the <code>&quot;ratings&quot;</code> table and then find out what the lowest rating that exists in the <code>can_mov_db</code> database:</p>
+<pre><code>ratings_db &lt;- tbl(can_mov_db_con, &quot;ratings&quot;)
+ratings_db</code></pre>
+<pre><code># Source:   table&lt;ratings&gt; [?? x 3]
+# Database: postgres [user0001@r7k3-mds1.stat.ubc.ca:5432/can_mov_db]
+   title              average_rating num_votes
+   &lt;chr&gt;                    &lt;dbl&gt;     &lt;int&gt;
+ 1 The Grand Seduction       6.6       150
+ 2 Rhymes for Young Ghouls   6.3      1685
+ 3 Mommy                     7.5      1060
+ 4 Incendies                 6.1      1101
+ 5 Bon Cop, Bad Cop          7.0       894
+ 6 Goon                      5.5      1111
+ 7 Monsieur Lazhar           5.6       610
+ 8 What if                   5.3      1401
+ 9 The Barbarian Invations   5.8        99
+10 Away from Her             6.9      2311
+# … with more rows</code></pre>
+<p>To find the lowest rating that exists in the data base, we first need to subset the <code>average_rating</code> column using <code>select</code>:</p>
+<pre><code>avg_rating_db &lt;- select(ratings_db, average_rating)
+avg_rating_db</code></pre>
+<pre><code># Source:   lazy query [?? x 1]
+# Database: postgres [user0001@r7k3-mds1.stat.ubc.ca:5432/can_mov_db]
+   average_rating
+            &lt;dbl&gt;
+ 1            6.6
+ 2            6.3
+ 3            7.5
+ 4            6.1
+ 5            7.0
+ 6            5.5
+ 7            5.6
+ 8            5.3
+ 9            5.8
+10            6.9
+# … with more rows</code></pre>
+<p>Next we use <code>min</code> to find the minimum rating in that column:</p>
+<pre><code>min(avg_rating_db)</code></pre>
+<pre><code>Error in min(avg_rating_db) : invalid &#39;type&#39; (list) of argument</code></pre>
+<p>Instead of the minimum, we get an error! This is an example of when we need to use the <code>collect</code> function to bring the data into R so we can do further computation on it:</p>
+<pre><code>avg_rating_data &lt;- collect(avg_rating_db)
+min(avg_rating_data)</code></pre>
+<pre><code>[1] 1</code></pre>
+<p>We see the lowest rating given to a movie is 1, indicating that it must have been a really bad movie…</p>
+</div>
 </div>
 <div id="writing-data-from-r-to-a-.csv-file" class="section level2">
 <h2><span class="header-section-number">2.7</span> Writing data from R to a <code>.csv</code> file</h2>
 <p>At the middle and end of a data analysis, we often want to write the data frame that we have changed (either through filtering, subsetting, mutating or summarizing) to a file so that we can share it with others, or use it for another step in our analysis. The most straightforward way to do this is to use the <code>tidyverse</code>’s <code>write_csv</code> function. The default arguments for this file are to include column names and use a comma (<code>,</code>) as the delimiter. Below we demonstrate creating a new version of the US state-level property, income, population and voting data from 2015 and 2016 that does not contain the territory of Puerto Rico, and then writing this to a <code>.csv</code> file:</p>
-<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb40-1" data-line-number="1">state_data &lt;-<span class="st"> </span><span class="kw">filter</span>(us_data, state <span class="op">!=</span><span class="st"> &quot;PR&quot;</span>)</a>
-<a class="sourceLine" id="cb40-2" data-line-number="2"><span class="kw">write_csv</span>(state_data, <span class="st">&quot;data/us_states_only.csv&quot;</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb51-1" data-line-number="1">state_data &lt;-<span class="st"> </span><span class="kw">filter</span>(us_data, state <span class="op">!=</span><span class="st"> &quot;PR&quot;</span>)</a>
+<a class="sourceLine" id="cb51-2" data-line-number="2"><span class="kw">write_csv</span>(state_data, <span class="st">&quot;data/us_states_only.csv&quot;</span>)</a></code></pre></div>
 </div>
 <div id="scraping-data-off-the-web-using-r" class="section level2">
 <h2><span class="header-section-number">2.8</span> Scraping data off the web using R</h2>
@@ -776,7 +842,7 @@ t                                                       8f??3wn
 <div id="using-rvest" class="section level3">
 <h3><span class="header-section-number">2.8.3</span> Using <code>rvest</code></h3>
 <p>Now that we have our CSS selectors we can use <code>rvest</code> R package to scrape our desired data from the website. First we start by loading the <code>rvest</code> package:</p>
-<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb44-1" data-line-number="1"><span class="kw">library</span>(rvest)</a></code></pre></div>
+<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb55-1" data-line-number="1"><span class="kw">library</span>(rvest)</a></code></pre></div>
 <pre><code>## Loading required package: xml2</code></pre>
 <pre><code>## 
 ## Attaching package: &#39;rvest&#39;</code></pre>
@@ -791,10 +857,10 @@ t                                                       8f??3wn
 <p>If you get an error about R not being able to find the package (e.g., <code>Error in library(rvest) : there is no package called ‘rvest’</code>) this is likely because it was not installed. To install the <code>rvest</code> package, run the following command once inside R (and then delete that line of code): <code>install.packages(&quot;rvest&quot;)</code>.</p>
 </blockquote>
 <p>Next, we tell R what page we want to scrape by providing the webpage’s URL in quotations to the function <code>read_html</code>:</p>
-<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb49-1" data-line-number="1">page &lt;-<span class="st"> </span><span class="kw">read_html</span>(<span class="st">&quot;https://en.wikipedia.org/wiki/Canada&quot;</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb60-1" data-line-number="1">page &lt;-<span class="st"> </span><span class="kw">read_html</span>(<span class="st">&quot;https://en.wikipedia.org/wiki/Canada&quot;</span>)</a></code></pre></div>
 <p>Then we send the page object to the <code>html_nodes</code> function. We also provide that function with the CSS selectors we obtained from the selectorgadget tool. These should be surrounded by quotations. The <code>html_nodes</code> function select nodes from the HTML document using CSS selectors. nodes are the HTML tag pairs as well as the content between the tags. For our CSS selector <code>td:nth-child(5)</code> and example node that would be selected would be: <code>&lt;td style=&quot;text-align:left;background:#f0f0f0;&quot;&gt;&lt;a href=&quot;/wiki/London,_Ontario&quot; title=&quot;London, Ontario&quot;&gt;London&lt;/a&gt;&lt;/td&gt;</code></p>
-<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb50-1" data-line-number="1">population_nodes &lt;-<span class="st"> </span><span class="kw">html_nodes</span>(page, <span class="st">&quot;td:nth-child(5) , td:nth-child(7) , .infobox:nth-child(122) td:nth-child(1) , .infobox td:nth-child(3)&quot;</span>)</a>
-<a class="sourceLine" id="cb50-2" data-line-number="2"><span class="kw">head</span>(population_nodes)</a></code></pre></div>
+<div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb61-1" data-line-number="1">population_nodes &lt;-<span class="st"> </span><span class="kw">html_nodes</span>(page, <span class="st">&quot;td:nth-child(5) , td:nth-child(7) , .infobox:nth-child(122) td:nth-child(1) , .infobox td:nth-child(3)&quot;</span>)</a>
+<a class="sourceLine" id="cb61-2" data-line-number="2"><span class="kw">head</span>(population_nodes)</a></code></pre></div>
 <pre><code>## {xml_nodeset (6)}
 ## [1] &lt;td style=&quot;text-align:right;&quot;&gt;5,928,040&lt;/td&gt;
 ## [2] &lt;td style=&quot;text-align:left;background:#f0f0f0;&quot;&gt;&lt;a href=&quot;/wiki/Londo ...
@@ -803,8 +869,8 @@ t                                                       8f??3wn
 ## [5] &lt;td style=&quot;text-align:left;background:#f0f0f0;&quot;&gt;\n&lt;a href=&quot;/wiki/St. ...
 ## [6] &lt;td style=&quot;text-align:right;&quot;&gt;406,074\n&lt;/td&gt;</code></pre>
 <p>Next we extract the meaningful data from the HTML nodes using the <code>html_text</code> function. For our example, this functions only required argument is the an html_nodes object, which we named <code>rent_nodes</code>. In the case of this example node: <code>&lt;td style=&quot;text-align:left;background:#f0f0f0;&quot;&gt;&lt;a href=&quot;/wiki/London,_Ontario&quot; title=&quot;London, Ontario&quot;&gt;London&lt;/a&gt;&lt;/td&gt;</code>, the <code>html_text</code> function would return <code>London</code>.</p>
-<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb52-1" data-line-number="1">population_text &lt;-<span class="st"> </span><span class="kw">html_text</span>(population_nodes)</a>
-<a class="sourceLine" id="cb52-2" data-line-number="2"><span class="kw">head</span>(population_text)</a></code></pre></div>
+<div class="sourceCode" id="cb63"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb63-1" data-line-number="1">population_text &lt;-<span class="st"> </span><span class="kw">html_text</span>(population_nodes)</a>
+<a class="sourceLine" id="cb63-2" data-line-number="2"><span class="kw">head</span>(population_text)</a></code></pre></div>
 <pre><code>## [1] &quot;5,928,040&quot;              &quot;London&quot;                
 ## [3] &quot;494,069\n&quot;              &quot;4,098,927&quot;             
 ## [5] &quot;St. Catharines–Niagara&quot; &quot;406,074\n&quot;</code></pre>
