@@ -29,15 +29,121 @@ for a deeper introduction into the syntax and grammar of plotting with `ggplot2`
 * List the rules of thumb for effective visualizations 
 
 ## Choosing the visualization
-#### *Tell a story, make a claim, and justify it* {-#my-section}
+#### *Ask a question, and answer it* {-#my-section}
 
-- Do not use pie charts (its harder for us to compare the sizes of the slices of a pie, than it is to compare sizes of bars).
-- Do not use 3D (we don't see in 3D, not even as we're walking around in space)
-- Don't ever use tables *humans are
-way better at processing and understanding images than text and math*.
+The purpose of a visualization is to answer a question about a dataset of interest. So naturally, the first thing to do when creating 
+a visualization is to formulate the question about the data that you are trying to answer. 
+A good visualization will answer your question in a clear way without distraction; a *great* visualization will suggest even what the question
+was itself without additional explanation. Imagine your visualization as part of a poster presentation for your project; even if you aren't standing
+at the poster explaining things, an effective visualization will be able to convey your message to the audience.
+
+As with all coding tasks, it is totally fine (and quite common) to make mistakes and iterate a few times before you find 
+the right visualization for your data. There are [many different kinds of plotting graphic](https://serialmentor.com/dataviz/directory-of-visualizations.html) available to use. For the kinds we will introduce in this course, the general rules of thumb are:
+
+- **line plots** visualize trends with respect to an independent quantity (e.g. time)
+- **histograms** visualize the distribution of data on one axis
+- **scatter plots** visualize the relationship between two quantitative variables, and can also be used to visualize the distribution of data on two axes
+- **bar plots** visualize comparisons of amounts
+
+The rest of the section will cover examples of how to choose a visualization given a dataset and a question that you want to answer, and then how to create
+the visualization in R using `ggplot2`.
+
+### The Mauna Loa CO2 dataset 
+ This dataset contains the atmospheric concentration of carbon dioxide (CO2, in parts per million) at the Mauna Loa research station in Hawaii from the years 1959-1997:
+```{r 03-data-co2}
+# mauna loa carbon dioxide data 
+# (with some light wrangling to make it a dataframe with informative column names)
+co2_df <- data.frame(concentration = as.matrix(co2), date = time(co2))
+head(co2_df)
+```
+**Question:** Does the concentration of atmospheric CO2 change over time, and are there any interesting patterns to note?
+
+Since we are investigating a relationship between two variables (CO2 concentration and time), it may be a good idea to use a scatter plot. 
+Scatter plots show the data as individual points with `x` (horizonal axis) and `y` (vertical axis) coordinates. Here, we will set the `x` coordinate to time,
+and the `y` coordinate to concentration. 
+
+In `ggplot2`, we create the plot with the function `ggplot`. The first argument is the dataframe we are working with (here `co2_df`), 
+and the second (here `aes(x = date, y = concentration)`) tells the plot what to put on the `x` axis and what to put on the `y` axis.
+Finally, we tell the plotting code to display the information as a scatter using the `geom_point` function. There are many other possible 
+arguments to pass to the `ggplot2` functions, but for the purposes of quickly testing things out to see what they look like, we can just go with the default settings:
+
+```{r 03-data-co2-scatter}
+co2_scatter <- ggplot(co2_df, aes(x = date, y = concentration)) + geom_point() 
+```
+```{r 03-data-co2-scatter-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(co2_scatter)
+```
+
+Certainly the visualization shows a clear (and quite depressing) upward trend in the atmospheric concentration of CO2 over time.
+This certainly answers the first part of our question; but that appears to be the only conclusion one can make from this type of visualization. 
+However, since time is an ordered quantity, we can try using a line plot instead using the `geom_line` function:
+
+```{r 03-data-co2-line}
+co2_line <- ggplot(co2_df, aes(x = date, y = concentration)) + geom_line() 
+```
+```{r 03-data-co2-line-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(co2_line)
+```
+
+Aha! There *is* another interesting phenomenon in the data: in addition to increasing over time, the concentration seems to oscillate as well. 
+Given the visualization as it is now, it is still hard to tell how fast and how large in amplitude the oscillation is, but nevertheless, the line seems to
+be a better choice for answering the question than the scatter plot was. The comparison between these two visualizations illustrates a common issue with 
+scatter plots: often the points are shown too close together or even on top of one another, muddling information that would otherwise be clear (*overplotting*).
+
+### The Old Faithful eruption / wait time dataset
+This dataset contains measurements of the waiting time between eruptions and the subsequent eruption duration (in minutes):
+```{r 03-data-faithful}
+# old faithful eruption time / wait time data
+head(faithful)
+```
+
+**Question:** Is there a relationship between the waiting time before an eruption to the duration of the eruption? More precisely, would it be possible to use the current time since
+the last eruption to predict the duration of the next eruption? 
+
+Here again we are investigating the relationship between two quantitative variables (waiting time and eruption time). A scatter plot sounds like a good place to start:
+
+```{r 03-data-faithful-scatter}
+faithful_scatter <- ggplot(faithful, aes(x = waiting, y = eruptions)) + geom_point() 
+```
+```{r 03-data-faithful-scatter-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(faithful_scatter)
+```
 
 
-## Designing the visualization
+
+
+
+### The island landmass dataset
+This dataset contains a list of Earth's land masses as well as their area (in thousands of square miles):
+```{r 03-data-islands}
+# islands data 
+# (with some light wrangling to make it a dataframe with informative column names)
+islands_df <- enframe(islands)
+colnames(islands_df) <- c('landmass', 'size')
+head(islands_df)
+```
+### The Michelson speed of light dataset
+This  dataset contains measurements of the speed of light (in kilometers per second with 299,000 subtracted):
+```{r 03-data-morley}
+# michelson morley experimental data
+head(morley)
+```
+
+### The tooth growth dataset
+This dataset contains measurements of the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs given different dose levels of vitamin C (in milligrams per day) in different forms (ascorbic acid or orange juice):
+```{r 03-data-tooth}
+# effect of vitamin C on guinea pig tooth growth
+head(ToothGrowth)
+```
+All types of visualization have their (mis)uses, but there are three kinds that are usually hard to understand or are easily replaced with an oft-better alternative.
+In particular you should avoid **pie charts**; it is usually better to use bars, as it is easier to compare bar heights than pie slice sizes.
+You should also not use **3-D visualizations**, as they are typically hard to understand when converted to a static 2-D image format. Finally,
+do not use tables to make numerical comparisons; humans are much better at quickly processing visual information than text and math. Bar plots are 
+again typically a better alternative.
+
+ask a question try to use different plots to answer the question choose the 
+
+## Refining the visualization
 #### *Maximize the signal-to-noise ratio* {-#my-section}
 
 Just being able to make vizualizations in R with `ggplot2` (or any other tool for that matter) doesn't mean that your vizualization is effective at communicating 
@@ -65,7 +171,9 @@ to others what you are trying to communicate. There is a large body of research 
 
 
 ## Explaining the visualization
-#### *Tell the story* {-#my-section}
+#### *Tell a story* {-#my-section}
+
+remember the types of data question, only explain what you can
 
 ## Saving the visualization
 #### *Choose the right output format for your needs* {-#my-section}
@@ -88,13 +196,22 @@ Generally speaking, images come in two flavours: *bitmap* (or *raster*) formats 
 
 **Vector / Scalable Graphics** images are represented as a collection of mathematical objects (lines, surfaces, shapes, curves). When the computer displays the image, it redraws all of the elements using their mathematical formulas.
 
-- *Common file types:* [PDF](https://en.wikipedia.org/wiki/PDF) (`.pdf`) and [SVG](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics) (`.svg`), both for general purpose use
+- *Common file types:* [SVG](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics) (`.svg`) and [EPS](https://en.wikipedia.org/wiki/Encapsulated_PostScript) (`.eps`), both for general purpose use (although SVG is much more common these days) 
 - *Free Editing software:* [Inkscape](https://inkscape.org/), [Boxy SVG](https://boxy-svg.com/)
 
 Raster and vector images have opposing advantages and disadvantages. A raster image of a fixed width / height takes the same amount of space and time to load regardless of 
 what the image shows (caveat: the compression algorithms may shrink the image more or run faster for certain images). A vector image takes space and time to load 
-corresponding to how complex the image is, since the computer has to draw all the elements each time it is displayed. On the other hand, you can zoom into / scale up 
+corresponding to how complex the image is, since the computer has to draw all the elements each time it is displayed. For example, if you have a scatter plot with 1 million
+points stored as an SVG file, it may take your computer some time to open the image. On the other hand, you can zoom into / scale up 
 vector graphics as much as you like without the image looking bad, while raster images eventually start to look "pixellated." 
+
+> **PDF files:** 
+> The portable document format [PDF](https://en.wikipedia.org/wiki/PDF) (`.pdf`) is commonly used to
+> store *both* raster and vector graphics formats. If you try to open a PDF and it's taking a long time
+> to load, it may be because there is a complicated vector graphics image that your computer is rendering. 
+
+
+
 
 Let's investigate how different image file formats behave with a scatter plot of the
 [Old Faithful dataset](https://www.stat.cmu.edu/~larry/all-of-statistics/=data/faithful.dat), which happens to be available in base R under the name `faithful`:
