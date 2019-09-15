@@ -54,30 +54,31 @@ do not use tables to make numerical comparisons; humans are much better at quick
 again typically a better alternative.
 
 ## Refining the visualization
-#### *Maximize the signal-to-noise ratio* {-#my-section}
+#### *Convey the message, minimize noise* {-#my-section}
 
-Just being able to make vizualizations in R with `ggplot2` (or any other tool for that matter) doesn't mean that your vizualization is effective at communicating 
-to others what you are trying to communicate. There is a large body of research behind what makes effective visualizations,  
+Just being able to make a visualization in R with `ggplot2` (or any other tool for that matter) doesn't mean that it is effective at communicating 
+your message to others. Once you have selected a broad type of visualization to use, you will have to refine it to suit your particular need.
+Some rules of thumb for doing this are listed below. They generally fall into two classes: you want to make refinements that make your
+visualization *convey your message / answer the question more clearly*, as well as those that *simplify the visualization / reduce visual noise*.
 
-**Maximize signal**
+**Convey the message**
 
-- make sure your information conveys your point
-- Use legends and labels so that your visualization is understandable without reading the surrounding text
-- Ensure the text, symbols on your visualization is big enough to be easily read
-- Don't adjust the axes to zoom in on small differences (if the difference is small, show that its small!)
-- use good colour palette
+- Make sure the visualization answers the question you have asked in the simplest and most plain way possible.
+- Use legends and labels so that your visualization is understandable without reading the surrounding text.
+- Ensure the text, symbols, lines, etc. on your visualization are big enough to be easily read.
+- Make sure the data are clearly visible; don’t hide the shape/distribution of the data behind other objects (e.g. a bar).
+- Make sure to use colourschemes that are understandable by those with colourblindness (a surprisingly large fraction of the 
+  overall population). For example, [colorbrewer.org](https://colorbrewer.org)
+  has a tool to pick such colourschemes, and you can check your visualizations after
+  you have created them by uploading to online tools such as the [colour blindness simulator](https://www.color-blindness.com/coblis-color-blindness-simulator/).
+- Redundancy can be helpful; sometimes conveying the same message in multiple ways reinforces it for the audience.
 
 **Minimize noise**
 
-- Use colors sparingly (too many different colors can distract and even create false patterns)
-- Be wary of overplotting (if your plot has too many dots or lines and it starts to look like a mess, then you need to do something different)
-- Only make the plot area (where the dots, lines, bars are) as big as needed (simple plots can, and should be quite small)
-- Show the data (don't hide the shape/distribution of the data behind a bar)
-
-[colour blindness simulator](https://www.color-blindness.com/coblis-color-blindness-simulator/)
-
-[colorbrewer.org](https://colorbrewer.org)
-
+- Use colours sparingly. Too many different colours can be distracting, create false patterns, and detract from the message. 
+- Be wary of overplotting. If your plot has too many dots or lines and it starts to look like a mess, then you need to do something different.
+- Only make the plot area (where the dots, lines, bars are) as big as needed. Simple plots can be made small.
+- Don't adjust the axes to zoom in on small differences. If the difference is small, show that it's small!
 
 ## Examples
 
@@ -153,7 +154,7 @@ print(co2_line)
 ```
 
 ### The island landmass dataset
-This dataset contains a list of Earth's land masses as well as their area (in thousands of square miles). **Question:** Are the continents (North / South America, Africa, Europe, Asia, Australia, Antarctica) Earth's 7 largest landmasses? What are the next few largest landmasses after those?
+This dataset contains a list of Earth's land masses as well as their area (in thousands of square miles). **Question:** Are the continents (North / South America, Africa, Europe, Asia, Australia, Antarctica) Earth's 7 largest landmasses? If so, what are the next few largest landmasses after those?
 ```{r 03-data-islands}
 # islands data 
 # (with some light wrangling to make it a dataframe with informative column names)
@@ -174,76 +175,53 @@ islands_bar <- ggplot(islands_df, aes(x = landmass, y=size)) + geom_bar(stat="id
 print(islands_bar)
 ```
 
-Alright, not bad! This is definitely the right kind of visualization, as we can clearly see and compare the sizes of roughly the top 10
-landmasses. The major issues are that the sizes of the smaller landmasses are hard to distinguish, and that the names of the landmasses 
+Alright, not bad! This is definitely the right kind of visualization, as we can clearly see and compare sizes of landmasses. The major 
+issues are that the sizes of the smaller landmasses are hard to distinguish, and that the names of the landmasses 
 are obscuring each other as they have been squished into too little space. But remember that the question we asked was only about the largest
-landmasses; let's make the plot a little bit clearer by keeping only the largest 12 landmasses. We do this using the `top_n` function:
+landmasses; let's make the plot a little bit clearer by keeping only the largest 12 landmasses. We do this using the `top_n` function.
+Then to help us make sure the labels have enough space, we'll use horizontal bars instead of vertical ones. We do this using the 
+`coord_flip` function, which swaps the `x` and `y` coordinate axes:
 
 ```{r 03-data-islands-bar-2}
 islands_top12 <- top_n(islands_df, 12, size)
-islands_bar <- ggplot(islands_top12, aes(x = landmass, y=size)) + geom_bar(stat="identity")
+islands_bar <- ggplot(islands_top12, aes(x = landmass, y=size)) + geom_bar(stat="identity") + coord_flip()
+
 ```
 
 ```{r 03-data-islands-bar-2-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 print(islands_bar)
 ```
 
-to take the top 12 largest landmasses rearrange the `x` axis by `-size` (the negative sign specifies decreasing order) `arrange` and `desc` functions to arrange the
-rows in decreasing order by size, and then `head` to keep only the 12 first rows:
+This is definitely clearer now, and allows us to answer our question ("are the top 7 largest landmasses continents?") in
+the affirmative. But the question could be made clearer from the plot by organizing the bars not by alphabetical order
+but by size, and to colour them based on whether or not they are a continent. In order to do this, we 
+use `mutate` to add a column to the data regarding whether or not the landmass is a continent:
 
 ```{r 03-data-islands-bar-3}
 islands_top12 <- top_n(islands_df, 12, size)
-islands_bar <- ggplot(islands_top12, aes(x = reorder(landmass, size), y = size)) + geom_bar(stat="identity") +coord_flip()
-```
-
-```{r 03-data-islands-bar-3-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-print(islands_bar)
-```
-
-
-Since we want to color too, we use `labs`
-```{r 03-data-islands-bar-4}
-islands_top12 <- top_n(islands_df, 12, size)
 continents <- c('Africa', 'Antarctica', 'Asia', 'Australia', 'Europe', 'North America', 'South America')
 islands_ct <- mutate(islands_top12, is_continent = ifelse(landmass %in% continents, 'Continent', 'Other'))
+head(islands_ct)
+```
+
+In order to colour the bars, we add the `fill` argument to the aesthetic mapping. Then we use the `reorder` 
+function in the aesthetic mapping to organize the landmasses by their `size` variable.
+Finally, we use the `labs` and `theme` functions to add labels, change the font size, and position the legend:
+
+```{r 03-data-islands-bar-4}
 islands_bar <- ggplot(islands_ct, aes(x = reorder(landmass, size), y = size, fill = is_continent)) + 
                    geom_bar(stat="identity") +
-                   labs(x = 'Landmass', y = 'Size (1000 square km)', fill = 'Type') +
-                   ylab('Size (1000 km)') + 
+                   labs(x = 'Landmass', y = 'Size (1000 square mi)', fill = 'Type') +
                    coord_flip() +
-                   theme(text = element_text(size = 18)) 
+                   theme(text = element_text(size = 18), legend.position = c(0.75, 0.45))
 ```
 
 ```{r 03-data-islands-bar-4-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 print(islands_bar)
 ```
 
-
-One last thing: labels aren't in the right order, and the plot was squished by the legend
-
-```{r 03-data-islands-bar-5}
-islands_top12 <- top_n(islands_df, 12, size)
-continents <- c('Africa', 'Antarctica', 'Asia', 'Australia', 'Europe', 'North America', 'South America')
-islands_ct <- mutate(islands_top12, is_continent = ifelse(landmass %in% continents, 'Continent', 'Other'))
-islands_bar <- ggplot(islands_ct, aes(x = reorder(landmass, size), y = size, fill = is_continent)) + 
-                   geom_bar(stat="identity") +
-                   labs(x = 'Landmass', y = 'Size (1000 square km)', fill = 'Type') +
-                   #guides(fill = guide_legend(reverse = TRUE)) +
-                   coord_flip() +
-                   theme(text = element_text(size = 18)) +
-                   theme(legend.position = c(0.75, 0.45))
-                   
-```
-
-```{r 03-data-islands-bar-5-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-print(islands_bar)
-```
-
-
-                   
-
-
-
+This is now a very effective visualization for answering our original questions. Landmasses are organized by their size,
+and continents are coloured differently than other landmasses, making it quite clear that continents are the largest 7 landmasses.
 
 
 ### The Old Faithful eruption / waiting time dataset
@@ -264,43 +242,153 @@ faithful_scatter <- ggplot(faithful, aes(x = waiting, y = eruptions)) + geom_poi
 print(faithful_scatter)
 ```
 
-We can see that the data tend to fall into two groups: one with a short waiting and eruption times, and one with long waiting and eruption times. Note that in this case, there is no overplotting: the points are generally nicely visually separated, and the pattern they form is clear.
+We can see that the data tend to fall into two groups: one with a short waiting and eruption times, and one with long waiting and eruption 
+times. Note that in this case, there is no overplotting: the points are generally nicely visually separated, and the pattern they form is clear.
+In order to refine the visualization, we need only to add axis labels and make the font more readable:
 
+```{r 03-data-faithful-scatter-2}
+faithful_scatter <- ggplot(faithful, aes(x = waiting, y = eruptions)) + 
+                         geom_point() +
+                         labs(x = 'Waiting Time (mins)', y = 'Eruption Duration (mins)') +
+                         theme(text = element_text(size = 18))
+```
+```{r 03-data-faithful-scatter-2-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(faithful_scatter)
+```
 
 
 ### The Michelson speed of light dataset
-This dataset contains measurements of the speed of light (in kilometers per second with 299,000 subtracted) from the year 1879 
+This dataset contains measurements of the speed of light (in kilometres per second with 299,000 subtracted) from the year 1879 
 for 5 experiments, each with 20 consecutive runs. **Question:** Given what we know now about the speed of 
-light (299,792.458 kilometers per second), how accurate were the experiments?
+light (299,792.458 kilometres per second), how accurate were each of the experiments?
 ```{r 03-data-morley}
 # michelson morley experimental data
 head(morley)
 ```
 
+In this experimental data, Michelson was trying to measure just a single quantitative number (the speed of light). The dataset
+contains many measurements of this single quantity. To tell how accurate the experiments were, we need to visualize the 
+distribution of the measurements. We can do this using a *histogram*. A histogram helps us visualize how a 
+particular variable is distributed in a dataset by separating the data into bins, and then using vertical bars 
+to show how many data points fell in each bin. To create a histogram in `ggplot2` we will use the `geom_histogram` geometric
+object, setting the `x` axis to the `Speed` measurement variable; and as we did before, let's use the default arguments just to see how things look:
+
 ```{r 03-data-morley-hist}
 morley_hist <- ggplot(morley, aes(x = Speed)) + geom_histogram() 
 ```
 
-```{r 03-data-morley-hist-2}
-morley_hist2 <- ggplot(morley, aes(x=Speed, color=factor(Expt), fill=factor(Expt))) + geom_histogram(alpha=0.5, position='identity')
-
-```
-
 ```{r 03-data-morley-hist-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 print(morley_hist)
-print(morley_hist2)
 ```
 
+This is a great start. However, we cannot tell how accurate the measurements are using this visualization unless we can see what the true value is.
+In order to visualize the true speed of light, we will add a vertical line with the `geom_vline` geometric object, setting the `xintercept` argument
+to the true value:
 
+```{r 03-data-morley-hist-2}
+morley_hist <- ggplot(morley, aes(x = Speed)) + 
+                 geom_histogram() +
+                 geom_vline(xintercept = 792.458, linetype="dashed", size=1.0)
+```
 
-ask a question try to use different plots to answer the question choose the 
+```{r 03-data-morley-hist-2-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(morley_hist)
+```
 
+We also still cannot tell which experiments (denoted in the `Expt` column) led to which measurements; perhaps some experiments were more accurate than
+others. To fully answer our question, we need to separate the measurements from each other visually. We can
+try to do this using a *coloured* histogram, where counts from different experiments are stacked on top of each
+other in different colours. We create a histogram coloured by the `Expt` variable by adding
+it to the `fill` aesthetic mapping. We make sure the different colours can 
+be seen (despite them all sitting on top of each other) by setting the `alpha` argument in `geom_histogram`
+to `0.5` to make the bars slightly translucent:
+
+```{r 03-data-morley-hist-3}
+morley_hist <- ggplot(morley, aes(x = Speed, fill=factor(Expt))) + 
+                 geom_histogram(position="identity", alpha=0.5) +
+                 geom_vline(xintercept = 792.458, linetype="dashed", size=1.0)
+```
+
+```{r 03-data-morley-hist-3-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(morley_hist)
+```
+
+Unfortunately, the attempt to separate out the experiment number visually has created a bit of a mess. All of the colours
+are blending together, and although it is possible to derive *some* insight from this (e.g., experiments 1 and 3 had some 
+of the most incorrect measurements), it isn't the clearest way to convey our message and answer the question. Let's try a different strategy of 
+creating multiple separate histograms on top of one another. 
+
+In order to create a plot in `ggplot2` that has multiple subplots arranged in a grid, we use the `facet_grid` function.
+The argument to `facet_grid` specifies the variable(s) used to split the plot into subplots. It has the syntax `vertical_variable ~ horizontal_variable`,
+where `veritcal_variable` is used to split the plot vertically, `horizontal_variable` is used to split horizontally, and `.` is used if there should be no split
+along that axis. In our case
+we only want to split vertically along the `Expt` variable, so we use `Expt ~ .` as the argument to `facet_grid`.
+
+```{r 03-data-morley-hist-4}
+morley_hist <- ggplot(morley, aes(x = Speed, fill=factor(Expt))) + 
+                 geom_histogram(position="identity") +
+                 facet_grid(Expt ~ .) +
+                 geom_vline(xintercept = 792.458, linetype="dashed", size=1.0)
+```
+
+```{r 03-data-morley-hist-4-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(morley_hist)
+```
+
+The visualization now makes it quite clear how accurate the different experiments were with respect to one another. 
+There are two finishing touches to make this visualization even clearer. First and foremost, we need to add informative axis labels
+using the `labs` function, and increase the font size to make it readable using the `theme` function. Second, and perhaps more subtly, even though it 
+is easy to compare the experiments on this plot to one another, it is hard to get a sense 
+for just how accurate all the experiments were overall. For example, how accurate is the value 800 on the plot, relative to the true speed of light?
+To answer this question we'll use the `mutate` function to transform our data into a relative measure of accuracy rather than absolute measurements:
+```{r 03-data-morley-hist-5}
+morley_rel <- mutate(morley, relative_accuracy = 100*( (299000 + Speed) - 299792.458 ) / (299792.458))
+morley_hist <- ggplot(morley_rel, aes(x = relative_accuracy, fill=factor(Expt))) + 
+                 geom_histogram(position="identity") +
+                 facet_grid(Expt ~ .) +
+                 geom_vline(xintercept = 0, linetype="dashed", size=1.0) + 
+                 labs(x = 'Relative Accuracy (%)', y = '# Measurements', fill = 'Experiment ID') + 
+                 theme(text = element_text(size = 18))
+```
+
+```{r 03-data-morley-hist-5-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(morley_hist)
+```
+
+Wow, impressive! These measurements of the speed of light from 1876 had errors around *0.05%* of the true speed. This shows
+you that even though experiments 2 and 5 were perhaps the most accurate, all of the experiments did quite an 
+admirable job given the technology available at the time period.
 
 
 ## Explaining the visualization
 #### *Tell a story* {-#my-section}
 
-remember the types of data question, only explain what you can
+Typically, your visualization will not be shown completely on its own, but rather it will be part of a larger presentation.
+Further, visualizations can provide supporting information for any part of a presentation, from opening to conclusion.
+For example, you could use an exploratory visualization in the opening of the presentation to motivate your choice
+of a more detailed data analysis / model, a visualization of the results of your analysis to show what your analysis has uncovered,
+or even one at the end of a presentation to help suggest directions for future work. 
+
+Regardless of where it appears, a good way to discuss your visualization is as a story:
+
+1) Establish the setting and scope, and motivate why you did what you did. 
+2) Pose the question that your visualization answers. Justify why the question is important to answer.
+3) Answer the question using your visualization. You can focus on different aspects of it:
+  - **trends (lines):** linear vs nonlinear
+  - **distributions (scatters, histograms):**
+  - **amounts (bars):**
+4) Summarize your findings, and use them to motivate whatever you will discuss next.
+
+[Chapter 29 of the Fundamentals of Data Visualization](https://serialmentor.com/dataviz/telling-a-story.html) is an excellent resource for this.
+
+**Mauna Loa Atmospheric CO2 Measurements:** Lorem ipsum dolor sit amet.
+
+**Island Landmasses:** Lorem ipsum dolor sit amet.
+
+**Michelson Light Speed Experiments:** Lorem ipsum dolor sit amet.
+
+**Old Faithful Eruption / Waiting Times:** Lorem ipsum dolor sit amet.
+
 
 ## Saving the visualization
 #### *Choose the right output format for your needs* {-#my-section}

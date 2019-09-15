@@ -346,25 +346,24 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <div id="refining-the-visualization" class="section level2">
 <h2><span class="header-section-number">4.4</span> Refining the visualization</h2>
 <div id="my-section" class="section level4 unnumbered">
-<h4><em>Maximize the signal-to-noise ratio</em></h4>
-<p>Just being able to make vizualizations in R with <code>ggplot2</code> (or any other tool for that matter) doesn’t mean that your vizualization is effective at communicating to others what you are trying to communicate. There is a large body of research behind what makes effective visualizations,</p>
-<p><strong>Maximize signal</strong></p>
+<h4><em>Convey the message, minimize noise</em></h4>
+<p>Just being able to make a visualization in R with <code>ggplot2</code> (or any other tool for that matter) doesn’t mean that it is effective at communicating your message to others. Once you have selected a broad type of visualization to use, you will have to refine it to suit your particular need. Some rules of thumb for doing this are listed below. They generally fall into two classes: you want to make refinements that make your visualization <em>convey your message / answer the question more clearly</em>, as well as those that <em>simplify the visualization / reduce visual noise</em>.</p>
+<p><strong>Convey the message</strong></p>
 <ul>
-<li>make sure your information conveys your point</li>
-<li>Use legends and labels so that your visualization is understandable without reading the surrounding text</li>
-<li>Ensure the text, symbols on your visualization is big enough to be easily read</li>
-<li>Don’t adjust the axes to zoom in on small differences (if the difference is small, show that its small!)</li>
-<li>use good colour palette</li>
+<li>Make sure the visualization answers the question you have asked in the simplest and most plain way possible.</li>
+<li>Use legends and labels so that your visualization is understandable without reading the surrounding text.</li>
+<li>Ensure the text, symbols, lines, etc. on your visualization are big enough to be easily read.</li>
+<li>Make sure the data are clearly visible; don’t hide the shape/distribution of the data behind other objects (e.g. a bar).</li>
+<li>Make sure to use colourschemes that are understandable by those with colourblindness (a surprisingly large fraction of the overall population). For example, <a href="https://colorbrewer.org">colorbrewer.org</a> has a tool to pick such colourschemes, and you can check your visualizations after you have created them by uploading to online tools such as the <a href="https://www.color-blindness.com/coblis-color-blindness-simulator/">colour blindness simulator</a>.</li>
+<li>Redundancy can be helpful; sometimes conveying the same message in multiple ways reinforces it for the audience.</li>
 </ul>
 <p><strong>Minimize noise</strong></p>
 <ul>
-<li>Use colors sparingly (too many different colors can distract and even create false patterns)</li>
-<li>Be wary of overplotting (if your plot has too many dots or lines and it starts to look like a mess, then you need to do something different)</li>
-<li>Only make the plot area (where the dots, lines, bars are) as big as needed (simple plots can, and should be quite small)</li>
-<li>Show the data (don’t hide the shape/distribution of the data behind a bar)</li>
+<li>Use colours sparingly. Too many different colours can be distracting, create false patterns, and detract from the message.</li>
+<li>Be wary of overplotting. If your plot has too many dots or lines and it starts to look like a mess, then you need to do something different.</li>
+<li>Only make the plot area (where the dots, lines, bars are) as big as needed. Simple plots can be made small.</li>
+<li>Don’t adjust the axes to zoom in on small differences. If the difference is small, show that it’s small!</li>
 </ul>
-<p><a href="https://www.color-blindness.com/coblis-color-blindness-simulator/">colour blindness simulator</a></p>
-<p><a href="https://colorbrewer.org">colorbrewer.org</a></p>
 </div>
 </div>
 <div id="examples" class="section level2">
@@ -418,7 +417,7 @@ co2_df &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span cl
 </div>
 <div id="the-island-landmass-dataset" class="section level3">
 <h3><span class="header-section-number">4.5.2</span> The island landmass dataset</h3>
-<p>This dataset contains a list of Earth’s land masses as well as their area (in thousands of square miles). <strong>Question:</strong> Are the continents (North / South America, Africa, Europe, Asia, Australia, Antarctica) Earth’s 7 largest landmasses? What are the next few largest landmasses after those?</p>
+<p>This dataset contains a list of Earth’s land masses as well as their area (in thousands of square miles). <strong>Question:</strong> Are the continents (North / South America, Africa, Europe, Asia, Australia, Antarctica) Earth’s 7 largest landmasses? If so, what are the next few largest landmasses after those?</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># islands data </span>
 <span class="co"># (with some light wrangling to make it a dataframe with informative column names)</span>
 islands_df &lt;-<span class="st"> </span><span class="kw">enframe</span>(islands)
@@ -436,37 +435,32 @@ islands_df &lt;-<span class="st"> </span><span class="kw">enframe</span>(islands
 <p>Here, we have a list of Earth’s landmasses, and are trying to compare their sizes. The right type of visualization to answer this question is a bar plot, specified by the <code>geom_bar</code> geometric object in <code>ggplot2</code>. However, by default, <code>geom_bar</code> sets the heights of bars to the number of times a value appears in a dataframe (its <em>count</em>); here we want to plot exactly the values in the dataframe, i.e., the landmass sizes. So we have to pass the <code>stat=&quot;identity&quot;</code> argument to <code>geom_bar</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">islands_bar &lt;-<span class="st"> </span><span class="kw">ggplot</span>(islands_df, <span class="kw">aes</span>(<span class="dt">x =</span> landmass, <span class="dt">y=</span>size)) <span class="op">+</span><span class="st"> </span><span class="kw">geom_bar</span>(<span class="dt">stat=</span><span class="st">&quot;identity&quot;</span>)</code></pre></div>
 <p><img src="_main_files/figure-html/03-data-islands-bar-print-1.png" width="672" /></p>
-<p>Alright, not bad! This is definitely the right kind of visualization, as we can clearly see and compare the sizes of roughly the top 10 landmasses. The major issues are that the sizes of the smaller landmasses are hard to distinguish, and that the names of the landmasses are obscuring each other as they have been squished into too little space. But remember that the question we asked was only about the largest landmasses; let’s make the plot a little bit clearer by keeping only the largest 12 landmasses. We do this using the <code>top_n</code> function:</p>
+<p>Alright, not bad! This is definitely the right kind of visualization, as we can clearly see and compare sizes of landmasses. The major issues are that the sizes of the smaller landmasses are hard to distinguish, and that the names of the landmasses are obscuring each other as they have been squished into too little space. But remember that the question we asked was only about the largest landmasses; let’s make the plot a little bit clearer by keeping only the largest 12 landmasses. We do this using the <code>top_n</code> function. Then to help us make sure the labels have enough space, we’ll use horizontal bars instead of vertical ones. We do this using the <code>coord_flip</code> function, which swaps the <code>x</code> and <code>y</code> coordinate axes:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">islands_top12 &lt;-<span class="st"> </span><span class="kw">top_n</span>(islands_df, <span class="dv">12</span>, size)
-islands_bar &lt;-<span class="st"> </span><span class="kw">ggplot</span>(islands_top12, <span class="kw">aes</span>(<span class="dt">x =</span> landmass, <span class="dt">y=</span>size)) <span class="op">+</span><span class="st"> </span><span class="kw">geom_bar</span>(<span class="dt">stat=</span><span class="st">&quot;identity&quot;</span>)</code></pre></div>
+islands_bar &lt;-<span class="st"> </span><span class="kw">ggplot</span>(islands_top12, <span class="kw">aes</span>(<span class="dt">x =</span> landmass, <span class="dt">y=</span>size)) <span class="op">+</span><span class="st"> </span><span class="kw">geom_bar</span>(<span class="dt">stat=</span><span class="st">&quot;identity&quot;</span>) <span class="op">+</span><span class="st"> </span><span class="kw">coord_flip</span>()</code></pre></div>
 <p><img src="_main_files/figure-html/03-data-islands-bar-2-print-1.png" width="672" /></p>
-<p>to take the top 12 largest landmasses rearrange the <code>x</code> axis by <code>-size</code> (the negative sign specifies decreasing order) <code>arrange</code> and <code>desc</code> functions to arrange the rows in decreasing order by size, and then <code>head</code> to keep only the 12 first rows:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">islands_top12 &lt;-<span class="st"> </span><span class="kw">top_n</span>(islands_df, <span class="dv">12</span>, size)
-islands_bar &lt;-<span class="st"> </span><span class="kw">ggplot</span>(islands_top12, <span class="kw">aes</span>(<span class="dt">x =</span> <span class="kw">reorder</span>(landmass, size), <span class="dt">y =</span> size)) <span class="op">+</span><span class="st"> </span><span class="kw">geom_bar</span>(<span class="dt">stat=</span><span class="st">&quot;identity&quot;</span>) <span class="op">+</span><span class="kw">coord_flip</span>()</code></pre></div>
-<p><img src="_main_files/figure-html/03-data-islands-bar-3-print-1.png" width="672" /></p>
-<p>Since we want to color too, we use <code>labs</code></p>
+<p>This is definitely clearer now, and allows us to answer our question (“are the top 7 largest landmasses continents?”) in the affirmative. But the question could be made clearer from the plot by organizing the bars not by alphabetical order but by size, and to colour them based on whether or not they are a continent. In order to do this, we use <code>mutate</code> to add a column to the data regarding whether or not the landmass is a continent:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">islands_top12 &lt;-<span class="st"> </span><span class="kw">top_n</span>(islands_df, <span class="dv">12</span>, size)
 continents &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&#39;Africa&#39;</span>, <span class="st">&#39;Antarctica&#39;</span>, <span class="st">&#39;Asia&#39;</span>, <span class="st">&#39;Australia&#39;</span>, <span class="st">&#39;Europe&#39;</span>, <span class="st">&#39;North America&#39;</span>, <span class="st">&#39;South America&#39;</span>)
 islands_ct &lt;-<span class="st"> </span><span class="kw">mutate</span>(islands_top12, <span class="dt">is_continent =</span> <span class="kw">ifelse</span>(landmass <span class="op">%in%</span><span class="st"> </span>continents, <span class="st">&#39;Continent&#39;</span>, <span class="st">&#39;Other&#39;</span>))
-islands_bar &lt;-<span class="st"> </span><span class="kw">ggplot</span>(islands_ct, <span class="kw">aes</span>(<span class="dt">x =</span> <span class="kw">reorder</span>(landmass, size), <span class="dt">y =</span> size, <span class="dt">fill =</span> is_continent)) <span class="op">+</span><span class="st"> </span>
+<span class="kw">head</span>(islands_ct)</code></pre></div>
+<pre><code>## # A tibble: 6 x 3
+##   landmass    size is_continent
+##   &lt;chr&gt;      &lt;dbl&gt; &lt;chr&gt;       
+## 1 Africa     11506 Continent   
+## 2 Antarctica  5500 Continent   
+## 3 Asia       16988 Continent   
+## 4 Australia   2968 Continent   
+## 5 Baffin       184 Other       
+## 6 Borneo       280 Other</code></pre>
+<p>In order to colour the bars, we add the <code>fill</code> argument to the aesthetic mapping. Then we use the <code>reorder</code> function in the aesthetic mapping to organize the landmasses by their <code>size</code> variable. Finally, we use the <code>labs</code> and <code>theme</code> functions to add labels, change the font size, and position the legend:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">islands_bar &lt;-<span class="st"> </span><span class="kw">ggplot</span>(islands_ct, <span class="kw">aes</span>(<span class="dt">x =</span> <span class="kw">reorder</span>(landmass, size), <span class="dt">y =</span> size, <span class="dt">fill =</span> is_continent)) <span class="op">+</span><span class="st"> </span>
 <span class="st">                   </span><span class="kw">geom_bar</span>(<span class="dt">stat=</span><span class="st">&quot;identity&quot;</span>) <span class="op">+</span>
-<span class="st">                   </span><span class="kw">labs</span>(<span class="dt">x =</span> <span class="st">&#39;Landmass&#39;</span>, <span class="dt">y =</span> <span class="st">&#39;Size (1000 square km)&#39;</span>, <span class="dt">fill =</span> <span class="st">&#39;Type&#39;</span>) <span class="op">+</span>
-<span class="st">                   </span><span class="kw">ylab</span>(<span class="st">&#39;Size (1000 km)&#39;</span>) <span class="op">+</span><span class="st"> </span>
+<span class="st">                   </span><span class="kw">labs</span>(<span class="dt">x =</span> <span class="st">&#39;Landmass&#39;</span>, <span class="dt">y =</span> <span class="st">&#39;Size (1000 square mi)&#39;</span>, <span class="dt">fill =</span> <span class="st">&#39;Type&#39;</span>) <span class="op">+</span>
 <span class="st">                   </span><span class="kw">coord_flip</span>() <span class="op">+</span>
-<span class="st">                   </span><span class="kw">theme</span>(<span class="dt">text =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">18</span>)) </code></pre></div>
+<span class="st">                   </span><span class="kw">theme</span>(<span class="dt">text =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">18</span>), <span class="dt">legend.position =</span> <span class="kw">c</span>(<span class="fl">0.75</span>, <span class="fl">0.45</span>))</code></pre></div>
 <p><img src="_main_files/figure-html/03-data-islands-bar-4-print-1.png" width="672" /></p>
-<p>One last thing: labels aren’t in the right order, and the plot was squished by the legend</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">islands_top12 &lt;-<span class="st"> </span><span class="kw">top_n</span>(islands_df, <span class="dv">12</span>, size)
-continents &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&#39;Africa&#39;</span>, <span class="st">&#39;Antarctica&#39;</span>, <span class="st">&#39;Asia&#39;</span>, <span class="st">&#39;Australia&#39;</span>, <span class="st">&#39;Europe&#39;</span>, <span class="st">&#39;North America&#39;</span>, <span class="st">&#39;South America&#39;</span>)
-islands_ct &lt;-<span class="st"> </span><span class="kw">mutate</span>(islands_top12, <span class="dt">is_continent =</span> <span class="kw">ifelse</span>(landmass <span class="op">%in%</span><span class="st"> </span>continents, <span class="st">&#39;Continent&#39;</span>, <span class="st">&#39;Other&#39;</span>))
-islands_bar &lt;-<span class="st"> </span><span class="kw">ggplot</span>(islands_ct, <span class="kw">aes</span>(<span class="dt">x =</span> <span class="kw">reorder</span>(landmass, size), <span class="dt">y =</span> size, <span class="dt">fill =</span> is_continent)) <span class="op">+</span><span class="st"> </span>
-<span class="st">                   </span><span class="kw">geom_bar</span>(<span class="dt">stat=</span><span class="st">&quot;identity&quot;</span>) <span class="op">+</span>
-<span class="st">                   </span><span class="kw">labs</span>(<span class="dt">x =</span> <span class="st">&#39;Landmass&#39;</span>, <span class="dt">y =</span> <span class="st">&#39;Size (1000 square km)&#39;</span>, <span class="dt">fill =</span> <span class="st">&#39;Type&#39;</span>) <span class="op">+</span>
-<span class="st">                   </span><span class="co">#guides(fill = guide_legend(reverse = TRUE)) +</span>
-<span class="st">                   </span><span class="kw">coord_flip</span>() <span class="op">+</span>
-<span class="st">                   </span><span class="kw">theme</span>(<span class="dt">text =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">18</span>)) <span class="op">+</span>
-<span class="st">                   </span><span class="kw">theme</span>(<span class="dt">legend.position =</span> <span class="kw">c</span>(<span class="fl">0.75</span>, <span class="fl">0.45</span>))</code></pre></div>
-<p><img src="_main_files/figure-html/03-data-islands-bar-5-print-1.png" width="672" /></p>
+<p>This is now a very effective visualization for answering our original questions. Landmasses are organized by their size, and continents are coloured differently than other landmasses, making it quite clear that continents are the largest 7 landmasses.</p>
 </div>
 <div id="the-old-faithful-eruption-waiting-time-dataset" class="section level3">
 <h3><span class="header-section-number">4.5.3</span> The Old Faithful eruption / waiting time dataset</h3>
@@ -483,11 +477,16 @@ islands_bar &lt;-<span class="st"> </span><span class="kw">ggplot</span>(islands
 <p>Here again we are investigating the relationship between two quantitative variables (waiting time and eruption time). But if you look at the output of the <code>head</code> function, you’ll notice that neither of the columns are ordered. So in this case, let’s start again with a scatter plot:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">faithful_scatter &lt;-<span class="st"> </span><span class="kw">ggplot</span>(faithful, <span class="kw">aes</span>(<span class="dt">x =</span> waiting, <span class="dt">y =</span> eruptions)) <span class="op">+</span><span class="st"> </span><span class="kw">geom_point</span>()  </code></pre></div>
 <p><img src="_main_files/figure-html/03-data-faithful-scatter-print-1.png" width="672" /></p>
-<p>We can see that the data tend to fall into two groups: one with a short waiting and eruption times, and one with long waiting and eruption times. Note that in this case, there is no overplotting: the points are generally nicely visually separated, and the pattern they form is clear.</p>
+<p>We can see that the data tend to fall into two groups: one with a short waiting and eruption times, and one with long waiting and eruption times. Note that in this case, there is no overplotting: the points are generally nicely visually separated, and the pattern they form is clear. In order to refine the visualization, we need only to add axis labels and make the font more readable:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">faithful_scatter &lt;-<span class="st"> </span><span class="kw">ggplot</span>(faithful, <span class="kw">aes</span>(<span class="dt">x =</span> waiting, <span class="dt">y =</span> eruptions)) <span class="op">+</span><span class="st"> </span>
+<span class="st">                         </span><span class="kw">geom_point</span>() <span class="op">+</span>
+<span class="st">                         </span><span class="kw">labs</span>(<span class="dt">x =</span> <span class="st">&#39;Waiting Time (mins)&#39;</span>, <span class="dt">y =</span> <span class="st">&#39;Eruption Duration (mins)&#39;</span>) <span class="op">+</span>
+<span class="st">                         </span><span class="kw">theme</span>(<span class="dt">text =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">18</span>))</code></pre></div>
+<p><img src="_main_files/figure-html/03-data-faithful-scatter-2-print-1.png" width="672" /></p>
 </div>
 <div id="the-michelson-speed-of-light-dataset" class="section level3">
 <h3><span class="header-section-number">4.5.4</span> The Michelson speed of light dataset</h3>
-<p>This dataset contains measurements of the speed of light (in kilometers per second with 299,000 subtracted) from the year 1879 for 5 experiments, each with 20 consecutive runs. <strong>Question:</strong> Given what we know now about the speed of light (299,792.458 kilometers per second), how accurate were the experiments?</p>
+<p>This dataset contains measurements of the speed of light (in kilometres per second with 299,000 subtracted) from the year 1879 for 5 experiments, each with 20 consecutive runs. <strong>Question:</strong> Given what we know now about the speed of light (299,792.458 kilometres per second), how accurate were each of the experiments?</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># michelson morley experimental data</span>
 <span class="kw">head</span>(morley)</code></pre></div>
 <pre><code>##     Expt Run Speed
@@ -497,16 +496,46 @@ islands_bar &lt;-<span class="st"> </span><span class="kw">ggplot</span>(islands
 ## 004    1   4  1070
 ## 005    1   5   930
 ## 006    1   6   850</code></pre>
+<p>In this experimental data, Michelson was trying to measure just a single quantitative number (the speed of light). The dataset contains many measurements of this single quantity. To tell how accurate the experiments were, we need to visualize the distribution of the measurements. We can do this using a <em>histogram</em>. A histogram helps us visualize how a particular variable is distributed in a dataset by separating the data into bins, and then using vertical bars to show how many data points fell in each bin. To create a histogram in <code>ggplot2</code> we will use the <code>geom_histogram</code> geometric object, setting the <code>x</code> axis to the <code>Speed</code> measurement variable; and as we did before, let’s use the default arguments just to see how things look:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">morley_hist &lt;-<span class="st"> </span><span class="kw">ggplot</span>(morley, <span class="kw">aes</span>(<span class="dt">x =</span> Speed)) <span class="op">+</span><span class="st"> </span><span class="kw">geom_histogram</span>() </code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">morley_hist2 &lt;-<span class="st"> </span><span class="kw">ggplot</span>(morley, <span class="kw">aes</span>(<span class="dt">x=</span>Speed, <span class="dt">color=</span><span class="kw">factor</span>(Expt), <span class="dt">fill=</span><span class="kw">factor</span>(Expt))) <span class="op">+</span><span class="st"> </span><span class="kw">geom_histogram</span>(<span class="dt">alpha=</span><span class="fl">0.5</span>, <span class="dt">position=</span><span class="st">&#39;identity&#39;</span>)</code></pre></div>
-<p><img src="_main_files/figure-html/03-data-morley-hist-print-1.png" width="672" /><img src="_main_files/figure-html/03-data-morley-hist-print-2.png" width="672" /></p>
-<p>ask a question try to use different plots to answer the question choose the</p>
+<p><img src="_main_files/figure-html/03-data-morley-hist-print-1.png" width="672" /></p>
+<p>This is a great start. However, we cannot tell how accurate the measurements are using this visualization unless we can see what the true value is. In order to visualize the true speed of light, we will add a vertical line with the <code>geom_vline</code> geometric object, setting the <code>xintercept</code> argument to the true value:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">morley_hist &lt;-<span class="st"> </span><span class="kw">ggplot</span>(morley, <span class="kw">aes</span>(<span class="dt">x =</span> Speed)) <span class="op">+</span><span class="st"> </span>
+<span class="st">                 </span><span class="kw">geom_histogram</span>() <span class="op">+</span>
+<span class="st">                 </span><span class="kw">geom_vline</span>(<span class="dt">xintercept =</span> <span class="fl">792.458</span>, <span class="dt">linetype=</span><span class="st">&quot;dashed&quot;</span>, <span class="dt">size=</span><span class="fl">1.0</span>)</code></pre></div>
+<p><img src="_main_files/figure-html/03-data-morley-hist-2-print-1.png" width="672" /></p>
+<p>We also still cannot tell which experiments (denoted in the <code>Expt</code> column) led to which measurements; perhaps some experiments were more accurate than others. To fully answer our question, we need to separate the measurements from each other visually. We can try to do this using a <em>coloured</em> histogram, where counts from different experiments are stacked on top of each other in different colours. We create a histogram coloured by the <code>Expt</code> variable by adding it to the <code>fill</code> aesthetic mapping. We make sure the different colours can be seen (despite them all sitting on top of each other) by setting the <code>alpha</code> argument in <code>geom_histogram</code> to <code>0.5</code> to make the bars slightly translucent:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">morley_hist &lt;-<span class="st"> </span><span class="kw">ggplot</span>(morley, <span class="kw">aes</span>(<span class="dt">x =</span> Speed, <span class="dt">fill=</span><span class="kw">factor</span>(Expt))) <span class="op">+</span><span class="st"> </span>
+<span class="st">                 </span><span class="kw">geom_histogram</span>(<span class="dt">position=</span><span class="st">&quot;identity&quot;</span>, <span class="dt">alpha=</span><span class="fl">0.5</span>) <span class="op">+</span>
+<span class="st">                 </span><span class="kw">geom_vline</span>(<span class="dt">xintercept =</span> <span class="fl">792.458</span>, <span class="dt">linetype=</span><span class="st">&quot;dashed&quot;</span>, <span class="dt">size=</span><span class="fl">1.0</span>)</code></pre></div>
+<p><img src="_main_files/figure-html/03-data-morley-hist-3-print-1.png" width="672" /></p>
+<p>Unfortunately, the attempt to separate out the experiment number visually has created a bit of a mess. All of the colours are blending together, and although it is possible to derive <em>some</em> insight from this (e.g., experiments 1 and 3 had some of the most incorrect measurements), it isn’t the clearest way to convey our message and answer the question. Let’s try a different strategy of creating multiple separate histograms on top of one another.</p>
+<p>In order to create a plot in <code>ggplot2</code> that has multiple subplots arranged in a grid, we use the <code>facet_grid</code> function. The argument to <code>facet_grid</code> specifies the variable(s) used to split the plot into subplots. It has the syntax <code>vertical_variable ~ horizontal_variable</code>, where <code>veritcal_variable</code> is used to split the plot vertically, <code>horizontal_variable</code> is used to split horizontally, and <code>.</code> is used if there should be no split along that axis. In our case we only want to split vertically along the <code>Expt</code> variable, so we use <code>Expt ~ .</code> as the argument to <code>facet_grid</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">morley_hist &lt;-<span class="st"> </span><span class="kw">ggplot</span>(morley, <span class="kw">aes</span>(<span class="dt">x =</span> Speed, <span class="dt">fill=</span><span class="kw">factor</span>(Expt))) <span class="op">+</span><span class="st"> </span>
+<span class="st">                 </span><span class="kw">geom_histogram</span>(<span class="dt">position=</span><span class="st">&quot;identity&quot;</span>) <span class="op">+</span>
+<span class="st">                 </span><span class="kw">facet_grid</span>(Expt <span class="op">~</span><span class="st"> </span>.) <span class="op">+</span>
+<span class="st">                 </span><span class="kw">geom_vline</span>(<span class="dt">xintercept =</span> <span class="fl">792.458</span>, <span class="dt">linetype=</span><span class="st">&quot;dashed&quot;</span>, <span class="dt">size=</span><span class="fl">1.0</span>)</code></pre></div>
+<p><img src="_main_files/figure-html/03-data-morley-hist-4-print-1.png" width="672" /></p>
+<p>The visualization now makes it quite clear how accurate the different experiments were with respect to one another. There are two finishing touches to make this visualization even clearer. First and foremost, we need to add informative axis labels using the <code>labs</code> function, and increase the font size to make it readable using the <code>theme</code> function. Second, and perhaps more subtly, even though it is easy to compare the experiments on this plot to one another, it is hard to get a sense for just how accurate all the experiments were overall. For example, how accurate is the value 800 on the plot, relative to the true speed of light? To answer this question we’ll use the <code>mutate</code> function to transform our data into a relative measure of accuracy rather than absolute measurements:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">morley_rel &lt;-<span class="st"> </span><span class="kw">mutate</span>(morley, <span class="dt">relative_accuracy =</span> <span class="dv">100</span><span class="op">*</span>( (<span class="dv">299000</span> <span class="op">+</span><span class="st"> </span>Speed) <span class="op">-</span><span class="st"> </span><span class="fl">299792.458</span> ) <span class="op">/</span><span class="st"> </span>(<span class="fl">299792.458</span>))
+morley_hist &lt;-<span class="st"> </span><span class="kw">ggplot</span>(morley_rel, <span class="kw">aes</span>(<span class="dt">x =</span> relative_accuracy, <span class="dt">fill=</span><span class="kw">factor</span>(Expt))) <span class="op">+</span><span class="st"> </span>
+<span class="st">                 </span><span class="kw">geom_histogram</span>(<span class="dt">position=</span><span class="st">&quot;identity&quot;</span>) <span class="op">+</span>
+<span class="st">                 </span><span class="kw">facet_grid</span>(Expt <span class="op">~</span><span class="st"> </span>.) <span class="op">+</span>
+<span class="st">                 </span><span class="kw">geom_vline</span>(<span class="dt">xintercept =</span> <span class="dv">0</span>, <span class="dt">linetype=</span><span class="st">&quot;dashed&quot;</span>, <span class="dt">size=</span><span class="fl">1.0</span>) <span class="op">+</span><span class="st"> </span>
+<span class="st">                 </span><span class="kw">labs</span>(<span class="dt">x =</span> <span class="st">&#39;Relative Accuracy (%)&#39;</span>, <span class="dt">y =</span> <span class="st">&#39;# Measurements&#39;</span>, <span class="dt">fill =</span> <span class="st">&#39;Experiment ID&#39;</span>) <span class="op">+</span><span class="st"> </span>
+<span class="st">                 </span><span class="kw">theme</span>(<span class="dt">text =</span> <span class="kw">element_text</span>(<span class="dt">size =</span> <span class="dv">18</span>))</code></pre></div>
+<p><img src="_main_files/figure-html/03-data-morley-hist-5-print-1.png" width="672" /></p>
+<p>Wow, impressive! These measurements of the speed of light from 1876 had errors around <em>0.05%</em> of the true speed. This shows you that even though experiments 2 and 5 were perhaps the most accurate, all of the experiments did quite an admirable job given the technology available at the time period.</p>
 </div>
 </div>
 <div id="explaining-the-visualization" class="section level2">
 <h2><span class="header-section-number">4.6</span> Explaining the visualization</h2>
 <div id="my-section" class="section level4 unnumbered">
 <h4><em>Tell a story</em></h4>
+<p><strong>Mauna Loa Atmospheric CO2 Measurements:</strong></p>
+<p><strong>Island Landmasses:</strong></p>
+<p><strong>Michelson Light Speed Experiments:</strong></p>
+<p><strong>Old Faithful Eruption / Waiting Times:</strong></p>
 <p>remember the types of data question, only explain what you can</p>
 </div>
 </div>
