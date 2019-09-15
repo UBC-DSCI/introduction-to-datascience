@@ -3,32 +3,32 @@
 ## Overview 
 This chapter will introduce concepts and tools relating to data visualization beyond what we have seen and practiced so far.
 We will focus on guiding principles for effective data visualization and explaining visualizations independent of any particular tool or programming language.
-In the process, we will cover some specifics of creating visualizations (scatter plots, bar charts, line graphs, and histograms) for data using R.
+In the process, we will cover some specifics of creating visualizations (scatter plots, bar charts, line graphs, and histograms) for data using R. There 
+are external references that contain a wealth of additional information on the topic of data visualization:
 
-There are external references that contain a wealth of additional information on the topic of data visualization:
-
-- see the [Fundamentals of Data Visualization](https://serialmentor.com/dataviz/) by  Professor Claus Wilke for more details on general principles of effective visualizations
-- see Grolemund & Wickham's [R for Data Science](https://r4ds.had.co.nz/) chapter on [creating visualizations using `ggplot2`](https://r4ds.had.co.nz/data-visualisation.html) for a deeper introduction into the syntax and grammar of plotting with `ggplot2` specifically
-- see the [ggplot2 reference](https://ggplot2.tidyverse.org/reference/) for a list of useful `ggplot2` functions
+- Professor Claus Wilke's [Fundamentals of Data Visualization](https://serialmentor.com/dataviz/) has more details on general principles of effective visualizations
+- Grolemund & Wickham's [R for Data Science](https://r4ds.had.co.nz/) chapter on [creating visualizations using `ggplot2`](https://r4ds.had.co.nz/data-visualisation.html) has 
+  a deeper introduction into the syntax and grammar of plotting with `ggplot2` specifically
+- the [ggplot2 reference](https://ggplot2.tidyverse.org/reference/) has a useful list of useful `ggplot2` functions
 
 
 
 ## Chapter learning objectives
 
-**REVISIT THESE WHEN DONE CHAPTER**
-
+- Describe when to use the following kinds of visualizations:
+    - scatter plots
+    - line plots
+    - bar plots 
+    - histogram plots
+- Given a dataset and a question, select from the above plot types to create a visualization that best answers the question
+- Given a visualization and a question, evaluate the effectiveness of the visualization and suggest improvements to better answer the question
+- List rules of thumb for creating effective visualizations 
+- Use the `ggplot2` library in R to create the above visualizations
 - Define the three key aspects of ggplot objects:
      - aesthetic mappings
      - geometric objects
      - scales
-- Use the `ggplot2` function in R to create the following visualizations:
-    - 2-D scatter plot with/without a third variable that stratifies groups
-    - 2-D line graphs with/without a third variable that stratifies groups
-    - various bar charts (count, proportion, stacked) for multiple groups
-- Given a dataset and a description of a claim, select from the above plot types to create a visualization that justifies the claim 
-- Given a visualization and a description of a claim, evaluate its effectiveness and suggest ways to improve the visualization to better support the claim
-- List the rules of thumb for effective visualizations 
-- `ggsave` and different output formats
+- Describe the difference in raster and vector output formats, and use `ggsave` to save visualizations
 
 ## Choosing the visualization
 #### *Ask a question, and answer it* {-#my-section}
@@ -39,12 +39,17 @@ A good visualization will answer your question in a clear way without distractio
 was itself without additional explanation. Imagine your visualization as part of a poster presentation for your project; even if you aren't standing
 at the poster explaining things, an effective visualization will be able to convey your message to the audience.
 
+Recall [the different types of data analysis question](index.html#chapter-learning-objectives) from the very first chapter of this book. With the visualizations
+we will cover in this chapter, we will be able to answer *only descriptive and exploratory* questions. Be careful not to try to answer any *predictive, inferential, causal or mechanistic*
+questions, as we have not learned the tools necessary to do that properly just yet.  
+
 As with most coding tasks, it is totally fine (and quite common) to make mistakes and iterate a few times before you find 
-the right visualization for your data. There are [many different kinds of plotting graphic](https://serialmentor.com/dataviz/directory-of-visualizations.html) available to use. For the kinds we will introduce in this course, the general rules of thumb are:
+the right visualization for your data and question. There are [many different kinds of plotting graphic](https://serialmentor.com/dataviz/directory-of-visualizations.html) available 
+to use. For the kinds we will introduce in this course, the general rules of thumb are:
 
 - **line plots** visualize trends with respect to an independent quantity (e.g. time)
-- **histograms** visualize the distribution of data on one axis
-- **scatter plots** visualize the distribution of data on two axes
+- **histograms** visualize the distribution of one quantitative variable
+- **scatter plots** visualize the distribution / relationship of two quantitative variables
 - **bar plots** visualize comparisons of amounts
 
 All types of visualization have their (mis)uses, but there are three kinds that are usually hard to understand or are easily replaced with an oft-better alternative.
@@ -58,8 +63,9 @@ again typically a better alternative.
 
 Just being able to make a visualization in R with `ggplot2` (or any other tool for that matter) doesn't mean that it is effective at communicating 
 your message to others. Once you have selected a broad type of visualization to use, you will have to refine it to suit your particular need.
-Some rules of thumb for doing this are listed below. They generally fall into two classes: you want to make refinements that make your
-visualization *convey your message / answer the question more clearly*, as well as those that *simplify the visualization / reduce visual noise*.
+Some rules of thumb for doing this are listed below. They generally fall into two classes: you want to *make your
+visualization convey your message / answer the question more clearly*, and you want to *simplify the visualization / reduce visual noise*
+as much as possible.
 
 **Convey the message**
 
@@ -82,7 +88,7 @@ visualization *convey your message / answer the question more clearly*, as well 
 
 ## Examples
 
-This section will cover examples of how to choose a visualization given a dataset and a question that you want to answer, 
+This section will cover examples of how to choose and refine a visualization given a dataset and a question that you want to answer, 
 and then how to create the visualization in R using `ggplot2`.
 
 ### The Mauna Loa CO2 dataset 
@@ -152,6 +158,31 @@ co2_line <- ggplot(co2_df, aes(x = date, y = concentration)) +
 ```{r 03-data-co2-line-2-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
 print(co2_line)
 ```
+
+Finally, let's see if we can better understand the oscillation by changing the visualization a little bit. Note that it is 
+totally fine to use a small number of visualizations to answer different aspects of the question you are trying to answer. We will accomplish
+this by using *scales*, another important feature of `ggplot2` that allow us to easily transform the different variables and set limits.
+We scale the horizontal axis by using the `scale_x_continuous` function, and the vertical axis with the `scale_y_continuous` function.
+We can transform the axis by passing the `trans` argument, and set limits by passing the `limits` argument. In particular, here we 
+will use the `scale_x_continuous` function with the `limits` argument to zoom in on just five years of data (say, 1990-1995):
+
+```{r 03-data-co2-line-3}
+co2_line <- ggplot(co2_df, aes(x = date, y = concentration)) + 
+                   geom_line() +
+                   xlab('Year') +
+                   ylab('Atmospheric CO2 (ppm)') + 
+                   scale_x_continuous(limits = c(1990, 1995)) +
+                   theme(text = element_text(size = 18))
+```
+
+```{r 03-data-co2-line-3-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(co2_line)
+```
+
+Interesting! It seems that each year, the atmospheric CO2 increases until it reaches its peak somewhere around April, decreases until around late September, 
+and finally increases again until the end of the year. In Hawaii, there are two seasons: summer from May through October, and winter from November through April.
+Therefore, the oscillating pattern in CO2 matches up fairly closely with the two seasons.
+
 
 ### The island landmass dataset
 This dataset contains a list of Earth's land masses as well as their area (in thousands of square miles). **Question:** Are the continents (North / South America, Africa, Europe, Asia, Australia, Antarctica) Earth's 7 largest landmasses? If so, what are the next few largest landmasses after those?
@@ -355,7 +386,7 @@ morley_hist <- ggplot(morley_rel, aes(x = relative_accuracy, fill=factor(Expt)))
 print(morley_hist)
 ```
 
-Wow, impressive! These measurements of the speed of light from 1876 had errors around *0.05%* of the true speed. This shows
+Wow, impressive! These measurements of the speed of light from 1879 had errors around *0.05%* of the true speed. This shows
 you that even though experiments 2 and 5 were perhaps the most accurate, all of the experiments did quite an 
 admirable job given the technology available at the time period.
 
@@ -373,21 +404,37 @@ Regardless of where it appears, a good way to discuss your visualization is as a
 
 1) Establish the setting and scope, and motivate why you did what you did. 
 2) Pose the question that your visualization answers. Justify why the question is important to answer.
-3) Answer the question using your visualization. You can focus on different aspects of it:
-  - **trends (lines):** linear vs nonlinear
-  - **distributions (scatters, histograms):**
-  - **amounts (bars):**
+3) Answer the question using your visualization. Make sure you describe *all* aspects of the visualization (including describing the axes). But you 
+   can emphasize different aspects based on what is important to answering your question:
+    - **trends (lines):** Does a line describe the trend well? If so, the trend is *linear*, and if not, the trend is *nonlinear*. Is the trend increasing, decreasing, or neither?
+                        Is there a periodic oscillation (wiggle) in the trend? Is the trend noisy (does the line "jump around" a lot) or smooth?
+    - **distributions (scatters, histograms):** How spread out is the distribution? Where is it centered, roughly? Are there any obvious "clusters" or "subgroups", which would be visible as multiple bumps in the histogram?  
+    - **distributions of two variables (scatters):** is there a clear / strong relationship between the variables (points fall in a distinct pattern), a weak one (points fall in a pattern but there is some noise), or no discernible
+      relationship (the data are too noisy to make any conclusion)?
+    - **amounts (bars):** How large are the bars relative to one another? Are there patterns in different groups of bars? 
 4) Summarize your findings, and use them to motivate whatever you will discuss next.
 
-[Chapter 29 of the Fundamentals of Data Visualization](https://serialmentor.com/dataviz/telling-a-story.html) is an excellent resource for this.
+Below are two examples of how might one take these four steps in describing the example visualizations that appeared earlier in this chapter.
+Each of the steps is denoted by its numeral in parentheses, e.g. (3).
 
-**Mauna Loa Atmospheric CO2 Measurements:** Lorem ipsum dolor sit amet.
+**Mauna Loa Atmospheric CO2 Measurements:** (1) Many current forms of energy generation and conversion---from automotive engines to natural gas power plants---rely on burning
+fossil fuels and produce greenhouse gases, typically primarily carbon dioxide (CO2), as a byproduct. Too much of these gases in the Earth's atmosphere will cause it to trap
+more heat from the sun, leading to global warming. (2) In order to assess how quickly the atmospheric concentration of CO2 is increasing over time, we (3) used a dataset from
+the Mauna Loa observatory from Hawaii, consisting of CO2 measurements from 1959 to the present. We plotted the measured concentration of CO2 (on the vertical axis) over time
+(on the horizontal axis). From this plot you can see a clear, increasing, and generally linear trend over time. There is also a periodic oscillation that occurs once per year and
+aligns with Hawaii's seasons, with an amplitude that is small relative to the growth in the overall trend. This shows that atmospheric CO2 is clearly increasing over 
+time, and (4) it is perhaps worth investigating more into the causes.
 
-**Island Landmasses:** Lorem ipsum dolor sit amet.
+**Michelson Light Speed Experiments:** (1) Our modern understanding of the physics of light has advanced significantly from the 
+late 1800s when experiments of Michelson and Morley first demonstrated that it had a finite speed. We now know based on modern experiments that it 
+moves at roughly 299792.458 kilometres per second. (2) But how accurately were we first able to measure this fundamental physical constant, and did certain
+experiments produce more accurate results than others?
+(3) To better understand this we plotted data from 5 experiments by Michelson in 1879, each with 20 trials, as histograms stacked on top of one another.
+The horizontal axis shows the accuracy of the measurements relative to the true speed of light as we know it today, expressed as a percentage.
+From this visualization you can see that most results had relative errors of at most 0.05%. You can also see that experiments 1 and 3 had
+measurements that were the farthest from the true value, and experiment 5 tended to provide the most consistently accurate result. (4) It would be
+worth further investigation into the differences between these experiments to see why they produced different result distributions.
 
-**Michelson Light Speed Experiments:** Lorem ipsum dolor sit amet.
-
-**Old Faithful Eruption / Waiting Times:** Lorem ipsum dolor sit amet.
 
 
 ## Saving the visualization
