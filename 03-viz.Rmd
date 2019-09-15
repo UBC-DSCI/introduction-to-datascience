@@ -5,10 +5,11 @@ This chapter will introduce concepts and tools relating to data visualization be
 We will focus on guiding principles for effective data visualization and explaining visualizations independent of any particular tool or programming language.
 In the process, we will cover some specifics of creating visualizations (scatter plots, bar charts, line graphs, and histograms) for data using R.
 
-There are two external references that contain a wealth of additional information on the topic of data visualization:
-see the [Fundamentals of Data Visualization](https://serialmentor.com/dataviz/) by  Professor Claus Wilke for more details on general principles of effective visualizations,
-and see Grolemund & Wickham's [R for Data Science](https://r4ds.had.co.nz/) chapter on [creating visualizations using `ggplot2`](https://r4ds.had.co.nz/data-visualisation.html)
-for a deeper introduction into the syntax and grammar of plotting with `ggplot2` specifically.
+There are external references that contain a wealth of additional information on the topic of data visualization:
+
+- see the [Fundamentals of Data Visualization](https://serialmentor.com/dataviz/) by  Professor Claus Wilke for more details on general principles of effective visualizations
+- see Grolemund & Wickham's [R for Data Science](https://r4ds.had.co.nz/) chapter on [creating visualizations using `ggplot2`](https://r4ds.had.co.nz/data-visualisation.html) for a deeper introduction into the syntax and grammar of plotting with `ggplot2` specifically
+- see the [ggplot2 reference](https://ggplot2.tidyverse.org/reference/) for a list of useful `ggplot2` functions
 
 
 
@@ -16,17 +17,18 @@ for a deeper introduction into the syntax and grammar of plotting with `ggplot2`
 
 **REVISIT THESE WHEN DONE CHAPTER**
 
-* Define the three key aspects of ggplot objects:
+- Define the three key aspects of ggplot objects:
      - aesthetic mappings
      - geometric objects
      - scales
-* Use the `ggplot2` function in R to create the following visualizations:
+- Use the `ggplot2` function in R to create the following visualizations:
     - 2-D scatter plot with/without a third variable that stratifies groups
     - 2-D line graphs with/without a third variable that stratifies groups
     - various bar charts (count, proportion, stacked) for multiple groups
-* Given a dataset and a description of a claim, select from the above plot types to create a visualization that justifies the claim 
-* Given a visualization and a description of a claim, evaluate its effectiveness and suggest ways to improve the visualization to better support the claim
-* List the rules of thumb for effective visualizations 
+- Given a dataset and a description of a claim, select from the above plot types to create a visualization that justifies the claim 
+- Given a visualization and a description of a claim, evaluate its effectiveness and suggest ways to improve the visualization to better support the claim
+- List the rules of thumb for effective visualizations 
+- `ggsave` and different output formats
 
 ## Choosing the visualization
 #### *Ask a question, and answer it* {-#my-section}
@@ -37,12 +39,12 @@ A good visualization will answer your question in a clear way without distractio
 was itself without additional explanation. Imagine your visualization as part of a poster presentation for your project; even if you aren't standing
 at the poster explaining things, an effective visualization will be able to convey your message to the audience.
 
-As with all coding tasks, it is totally fine (and quite common) to make mistakes and iterate a few times before you find 
+As with most coding tasks, it is totally fine (and quite common) to make mistakes and iterate a few times before you find 
 the right visualization for your data. There are [many different kinds of plotting graphic](https://serialmentor.com/dataviz/directory-of-visualizations.html) available to use. For the kinds we will introduce in this course, the general rules of thumb are:
 
 - **line plots** visualize trends with respect to an independent quantity (e.g. time)
 - **histograms** visualize the distribution of data on one axis
-- **scatter plots** visualize the relationship between two quantitative variables, and can also be used to visualize the distribution of data on two axes
+- **scatter plots** visualize the distribution of data on two axes
 - **bar plots** visualize comparisons of amounts
 
 All types of visualization have their (mis)uses, but there are three kinds that are usually hard to understand or are easily replaced with an oft-better alternative.
@@ -50,124 +52,6 @@ In particular you should avoid **pie charts**; it is usually better to use bars,
 You should also not use **3-D visualizations**, as they are typically hard to understand when converted to a static 2-D image format. Finally,
 do not use tables to make numerical comparisons; humans are much better at quickly processing visual information than text and math. Bar plots are 
 again typically a better alternative.
-
-
-
-The rest of the section will cover examples of how to choose a visualization given a dataset and a question that you want to answer, and then how to create
-the visualization in R using `ggplot2`.
-
-### The Mauna Loa CO2 dataset 
- This dataset contains the atmospheric concentration of carbon dioxide (CO2, in parts per million) at the Mauna Loa research station in Hawaii 
-from the years 1959-1997. **Question:** Does the concentration of atmospheric CO2 change over time, and are there any interesting patterns to note?
-```{r 03-data-co2}
-# mauna loa carbon dioxide data 
-# (with some light wrangling to make it a dataframe with informative column names)
-co2_df <- data.frame(concentration = as.matrix(co2), date = time(co2))
-head(co2_df)
-```
-
-Since we are investigating a relationship between two variables (CO2 concentration and date), it may be a good idea to use a scatter plot. 
-Scatter plots show the data as individual points with `x` (horizonal axis) and `y` (vertical axis) coordinates. Here, we will use the date
-as the `x` coordinate and CO2 concentration as the `y` coordinate.
-
-When using the `ggplot2` library, we create the plot object with the `ggplot` function. The first argument is the dataframe we are working with (here `co2_df`), 
-and the second (here `aes(x = date, y = concentration)`) tells the plot what to put on the `x` axis and what to put on the `y` axis.
-Finally, we tell the plotting code to display the information as a scatter using the `geom_point` function. There are many other possible 
-arguments to pass to the `ggplot2` functions, but for the purposes of quickly testing things out to see what they look like, we can just go with the default settings:
-
-```{r 03-data-co2-scatter}
-co2_scatter <- ggplot(co2_df, aes(x = date, y = concentration)) + geom_point() 
-```
-```{r 03-data-co2-scatter-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-print(co2_scatter)
-```
-
-Certainly the visualization shows a clear (and quite depressing) upward trend in the atmospheric concentration of CO2 over time.
-This plot answers the first part of our question in the affirmative, but that appears to be the only conclusion one can make from the scatter visualization. 
-However, since time is an ordered quantity, we can try using a line plot instead using the `geom_line` function. Line plots require
-that the data are listed in order, and connect the sequence of `x` and `y` coordinates with line segments. Let's again try this with just 
-the default arguments: 
-
-```{r 03-data-co2-line}
-co2_line <- ggplot(co2_df, aes(x = date, y = concentration)) + geom_line() 
-```
-```{r 03-data-co2-line-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-print(co2_line)
-```
-
-Aha! There *is* another interesting phenomenon in the data: in addition to increasing over time, the concentration seems to oscillate as well. 
-Given the visualization as it is now, it is still hard to tell how fast the oscillation is, but nevertheless, the line seems to
-be a better choice for answering the question than the scatter plot was. The comparison between these two visualizations illustrates a common issue with 
-scatter plots: often the points are shown too close together or even on top of one another, muddling information that would otherwise be clear (*overplotting*).
-
-### The Old Faithful eruption / waiting time dataset
-This dataset contains measurements of the waiting time between eruptions and the subsequent eruption duration (in minutes). **Question:** Is there a 
-relationship between the waiting time before an eruption to the duration of the eruption? Also, would it be possible to use the current time since
-the last eruption to predict the duration of the next eruption? 
-
-```{r 03-data-faithful}
-# old faithful eruption time / wait time data
-head(faithful)
-```
-
-Here again we are investigating the relationship between two quantitative variables (waiting time and eruption time). A scatter plot sounds like a good place to start:
-
-```{r 03-data-faithful-scatter}
-faithful_scatter <- ggplot(faithful, aes(x = waiting, y = eruptions)) + geom_point()  + geom_density_2d()
-```
-```{r 03-data-faithful-scatter-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-print(faithful_scatter)
-```
-
-
-
-
-
-### The island landmass dataset
-This dataset contains a list of Earth's land masses as well as their area (in thousands of square miles):
-```{r 03-data-islands}
-# islands data 
-# (with some light wrangling to make it a dataframe with informative column names)
-islands_df <- enframe(islands)
-colnames(islands_df) <- c('landmass', 'size')
-head(islands_df)
-```
-
-```{r 03-data-islands-bar}
-islands_bar <- ggplot(islands_df, aes(x = landmass, y=size)) + geom_bar(stat='identity')
-```
-
-```{r 03-data-islands-bar-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-print(islands_bar)
-```
-
-
-
-### The Michelson speed of light dataset
-This dataset contains measurements of the speed of light (in kilometers per second with 299,000 subtracted) for 5 experiments, each with 20 runs:
-```{r 03-data-morley}
-# michelson morley experimental data
-head(morley)
-```
-**Question:** How accurate are all the experiments?
-
-```{r 03-data-morley-hist}
-morley_hist <- ggplot(morley, aes(x = Speed)) + geom_histogram() 
-```
-
-```{r 03-data-morley-hist-2}
-morley_hist2 <- ggplot(morley, aes(x=Speed, color=factor(Expt), fill=factor(Expt))) + geom_histogram(alpha=0.5, position='identity')
-
-```
-
-```{r 03-data-morley-hist-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
-print(morley_hist)
-print(morley_hist2)
-```
-
-
-
-ask a question try to use different plots to answer the question choose the 
 
 ## Refining the visualization
 #### *Maximize the signal-to-noise ratio* {-#my-section}
@@ -193,6 +77,223 @@ to others what you are trying to communicate. There is a large body of research 
 [colour blindness simulator](https://www.color-blindness.com/coblis-color-blindness-simulator/)
 
 [colorbrewer.org](https://colorbrewer.org)
+
+
+## Examples
+
+This section will cover examples of how to choose a visualization given a dataset and a question that you want to answer, 
+and then how to create the visualization in R using `ggplot2`.
+
+### The Mauna Loa CO2 dataset 
+ This dataset contains the atmospheric concentration of carbon dioxide (CO2, in parts per million) at the Mauna Loa research station in Hawaii 
+from the years 1959-1997. **Question:** Does the concentration of atmospheric CO2 change over time, and are there any interesting patterns to note?
+```{r 03-data-co2}
+# mauna loa carbon dioxide data 
+# (with some light wrangling to make it a dataframe with informative column names)
+co2_df <- data.frame(concentration = as.matrix(co2), date = time(co2))
+head(co2_df)
+```
+
+Since we are investigating a relationship between two variables (CO2 concentration and date), a scatter plot is a good place to start. Scatter plots 
+show the data as individual points with `x` (horizonal axis) and `y` (vertical axis) coordinates. Here, we will use the date as the `x` coordinate 
+and CO2 concentration as the `y` coordinate. When using the `ggplot2` library, we create the plot object with the `ggplot` function; there are 
+a few basic aspects of a plot that we need to specify:
+
+- the *data*: the name of the dataframe object that we would like to visualize 
+    - here, we specify the `co2_df` dataframe
+- the *aesthetic mapping*: tells `ggplot` how the columns in the dataframe map to properties of the visualization
+    - to create an aesthetic mapping, we use the `aes` function
+    - here, we set the plot `x` axis to the `date` variable, and the plot `y` axis to the `concentration` variable
+- the *geometric object*: specifies how the mapped data should be displayed
+    - to create a geometric object, we use a `geom_*` function (see the [ggplot reference](https://ggplot2.tidyverse.org/reference/) for a list of geometric objects)
+    - here, we use the `geom_point` function to visualize our data as a scatterplot
+
+There are many other possible arguments we could pass to the aesthetic mapping and geometric object to change how the plot looks. For 
+the purposes of quickly testing things out to see what they look like, though, we can just go with the default settings:
+
+```{r 03-data-co2-scatter}
+co2_scatter <- ggplot(co2_df, aes(x = date, y = concentration)) + geom_point() 
+```
+```{r 03-data-co2-scatter-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(co2_scatter)
+```
+
+Certainly the visualization shows a clear upward trend in the atmospheric concentration of CO2 over time.
+This plot answers the first part of our question in the affirmative, but that appears to be the only conclusion one can make from the scatter visualization. 
+However, since time is an ordered quantity, we can try using a line plot instead using the `geom_line` geometric object. Line plots require
+that the data are ordered by their `x` coordinate, and connect the sequence of `x` and `y` coordinates with line segments. Let's again try this with just 
+the default arguments: 
+
+```{r 03-data-co2-line}
+co2_line <- ggplot(co2_df, aes(x = date, y = concentration)) + geom_line() 
+```
+```{r 03-data-co2-line-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(co2_line)
+```
+
+Aha! There *is* another interesting phenomenon in the data: in addition to increasing over time, the concentration seems to oscillate as well. 
+Given the visualization as it is now, it is still hard to tell how fast the oscillation is, but nevertheless, the line seems to
+be a better choice for answering the question than the scatter plot was. The comparison between these two visualizations illustrates a common issue with 
+scatter plots: often the points are shown too close together or even on top of one another, muddling information that would otherwise be clear (*overplotting*).
+
+Now that we have settled on the rough details of the visualization, it is time to refine things. This plot is fairly straightforward, and there is not much
+visual noise to remove. But there are a few things we must do to improve clarity, such as adding informative axis labels and making the font a more readable size.
+In order to add axis labels we use the `xlab` and `ylab` functions. To change the font size we use the `theme` function with the `text` argument:
+
+```{r 03-data-co2-line-2}
+co2_line <- ggplot(co2_df, aes(x = date, y = concentration)) + 
+                   geom_line() +
+                   xlab('Year') +
+                   ylab('Atmospheric CO2 (ppm)') + 
+                   theme(text = element_text(size = 18))
+```
+
+```{r 03-data-co2-line-2-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(co2_line)
+```
+
+### The island landmass dataset
+This dataset contains a list of Earth's land masses as well as their area (in thousands of square miles). **Question:** Are the continents (North / South America, Africa, Europe, Asia, Australia, Antarctica) Earth's 7 largest landmasses? What are the next few largest landmasses after those?
+```{r 03-data-islands}
+# islands data 
+# (with some light wrangling to make it a dataframe with informative column names)
+islands_df <- enframe(islands)
+colnames(islands_df) <- c('landmass', 'size')
+head(islands_df)
+```
+Here, we have a list of Earth's landmasses, and are trying to compare their sizes. The right type of visualization to answer this
+question is a bar plot, specified by the `geom_bar` geometric object in `ggplot2`. However, by default, `geom_bar` sets the heights
+of bars to the number of times a value appears in a dataframe (its *count*); here we want to plot exactly the values in the dataframe, i.e.,
+the landmass sizes. So we have to pass the `stat="identity"` argument to `geom_bar`:
+
+```{r 03-data-islands-bar}
+islands_bar <- ggplot(islands_df, aes(x = landmass, y=size)) + geom_bar(stat="identity")
+```
+
+```{r 03-data-islands-bar-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(islands_bar)
+```
+
+Alright, not bad! This is definitely the right kind of visualization, as we can clearly see and compare the sizes of roughly the top 10
+landmasses. The major issues are that the sizes of the smaller landmasses are hard to distinguish, and that the names of the landmasses 
+are obscuring each other as they have been squished into too little space. But remember that the question we asked was only about the largest
+landmasses; let's make the plot a little bit clearer by keeping only the largest 12 landmasses. We do this using the `top_n` function:
+
+```{r 03-data-islands-bar-2}
+islands_top12 <- top_n(islands_df, 12, size)
+islands_bar <- ggplot(islands_top12, aes(x = landmass, y=size)) + geom_bar(stat="identity")
+```
+
+```{r 03-data-islands-bar-2-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(islands_bar)
+```
+
+to take the top 12 largest landmasses rearrange the `x` axis by `-size` (the negative sign specifies decreasing order) `arrange` and `desc` functions to arrange the
+rows in decreasing order by size, and then `head` to keep only the 12 first rows:
+
+```{r 03-data-islands-bar-3}
+islands_top12 <- top_n(islands_df, 12, size)
+islands_bar <- ggplot(islands_top12, aes(x = reorder(landmass, size), y = size)) + geom_bar(stat="identity") +coord_flip()
+```
+
+```{r 03-data-islands-bar-3-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(islands_bar)
+```
+
+
+Since we want to color too, we use `labs`
+```{r 03-data-islands-bar-4}
+islands_top12 <- top_n(islands_df, 12, size)
+continents <- c('Africa', 'Antarctica', 'Asia', 'Australia', 'Europe', 'North America', 'South America')
+islands_ct <- mutate(islands_top12, is_continent = ifelse(landmass %in% continents, 'Continent', 'Other'))
+islands_bar <- ggplot(islands_ct, aes(x = reorder(landmass, size), y = size, fill = is_continent)) + 
+                   geom_bar(stat="identity") +
+                   labs(x = 'Landmass', y = 'Size (1000 square km)', fill = 'Type') +
+                   ylab('Size (1000 km)') + 
+                   coord_flip() +
+                   theme(text = element_text(size = 18)) 
+```
+
+```{r 03-data-islands-bar-4-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(islands_bar)
+```
+
+
+One last thing: labels aren't in the right order, and the plot was squished by the legend
+
+```{r 03-data-islands-bar-5}
+islands_top12 <- top_n(islands_df, 12, size)
+continents <- c('Africa', 'Antarctica', 'Asia', 'Australia', 'Europe', 'North America', 'South America')
+islands_ct <- mutate(islands_top12, is_continent = ifelse(landmass %in% continents, 'Continent', 'Other'))
+islands_bar <- ggplot(islands_ct, aes(x = reorder(landmass, size), y = size, fill = is_continent)) + 
+                   geom_bar(stat="identity") +
+                   labs(x = 'Landmass', y = 'Size (1000 square km)', fill = 'Type') +
+                   #guides(fill = guide_legend(reverse = TRUE)) +
+                   coord_flip() +
+                   theme(text = element_text(size = 18)) +
+                   theme(legend.position = c(0.75, 0.45))
+                   
+```
+
+```{r 03-data-islands-bar-5-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(islands_bar)
+```
+
+
+                   
+
+
+
+
+
+### The Old Faithful eruption / waiting time dataset
+This dataset contains measurements of the waiting time between eruptions and the subsequent eruption duration (in minutes). **Question:** Is there a 
+relationship between the waiting time before an eruption to the duration of the eruption? 
+
+```{r 03-data-faithful}
+# old faithful eruption time / wait time data
+head(faithful)
+```
+
+Here again we are investigating the relationship between two quantitative variables (waiting time and eruption time). But if you look at the output of the `head` function, you'll notice that neither of the columns are ordered. So in this case, let's start again with a scatter plot:
+
+```{r 03-data-faithful-scatter}
+faithful_scatter <- ggplot(faithful, aes(x = waiting, y = eruptions)) + geom_point()  
+```
+```{r 03-data-faithful-scatter-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(faithful_scatter)
+```
+
+We can see that the data tend to fall into two groups: one with a short waiting and eruption times, and one with long waiting and eruption times. Note that in this case, there is no overplotting: the points are generally nicely visually separated, and the pattern they form is clear.
+
+
+
+### The Michelson speed of light dataset
+This dataset contains measurements of the speed of light (in kilometers per second with 299,000 subtracted) from the year 1879 
+for 5 experiments, each with 20 consecutive runs. **Question:** Given what we know now about the speed of 
+light (299,792.458 kilometers per second), how accurate were the experiments?
+```{r 03-data-morley}
+# michelson morley experimental data
+head(morley)
+```
+
+```{r 03-data-morley-hist}
+morley_hist <- ggplot(morley, aes(x = Speed)) + geom_histogram() 
+```
+
+```{r 03-data-morley-hist-2}
+morley_hist2 <- ggplot(morley, aes(x=Speed, color=factor(Expt), fill=factor(Expt))) + geom_histogram(alpha=0.5, position='identity')
+
+```
+
+```{r 03-data-morley-hist-print, echo = FALSE, results = 'hide', message = FALSE, warning = FALSE}
+print(morley_hist)
+print(morley_hist2)
+```
+
+
+
+ask a question try to use different plots to answer the question choose the 
 
 
 
