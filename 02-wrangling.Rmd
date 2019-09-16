@@ -60,11 +60,11 @@ As mentioned earlier, data frames are really a special type of list objects wher
 
 ## Tidy Data
 
-There are many ways a spreadsheet-like dataset can be organized. In this chapter we are going to focus on the tidy data format of organization, and how to make your messy data tidy. This is because a variety of tools we would like to be able to use in R are designed to work most effectively (and efficiently) with tidy data. 
+There are many ways a spreadsheet-like dataset can be organized. In this chapter we are going to focus on the tidy data format of organization, and how to make your raw (and likely messy) data tidy. This is because a variety of tools we would like to be able to use in R are designed to work most effectively (and efficiently) with tidy data. 
 
 ### What is tidy data?
 
-A tidy data is one that is satified by these three criteria:
+A tidy data is one that is satisfied by these three criteria:
 
 - each row is a single observation,
 - each variable is a single column, and
@@ -73,9 +73,17 @@ A tidy data is one that is satified by these three criteria:
 ![](https://d33wubrfki0l68.cloudfront.net/6f1ddb544fc5c69a2478e444ab8112fb0eea23f8/91adc/images/tidy-1.png)
 *image source: [R for Data Science](https://r4ds.had.co.nz/) by Garrett Grolemund & Hadley Wickham*
 
+> **Definitions to know!**
+>
+> observation -  quantities or a qualities we collect from a given entity/object 
+>
+> variable - any characteristics, number, or quantity that can be measured or counted 
+>
+> value - a single collected quantity or a quality from a given entity/object
+
 ### Why is tidy data important in R?
 
-First, many tidyverse data cleaning/wrangling tools work best with tidy data. Second, one of the most popular plotting tools in R, the `ggplot2` functions, expect data in tidy format. Third most statistical analysis functions expect data in tidy format. In contrast to Python and other programming languages, in R you do not need to manually create dummy variables to represent your categorical data for its statistical or machine learning tools. R does this for you under the hood through factorization, but your data must be tidy for this to work. Given that all of these tasks are central features to virtually any data analysis project it is well worth spending the time to get your data into a tidy format up front. Now let's explore how we can do this in R.
+First, there are many well designed `tidyverse` data cleaning/wrangling tools to help you easily get your data tidy data. Second, one of the most popular plotting tools in R, the `ggplot2` functions, expect data in tidy format. Third most statistical analysis functions expect data in tidy format. Given that all of these tasks are central features to virtually any data analysis project it is well worth spending the time to get your data into a tidy format up front. Now let's explore how we can do this in R.
 
 ### Going from wide to long (or tidy!) using `gather`
 
@@ -83,27 +91,13 @@ One common thing that often has to be done to get data into a tidy format is to 
 
 For example, the we read in data below is not in tidy format, but is in a very intuitive format for human understanding:
 
-```{r 02-tidyverse}
+```{r 02-tidyverse, warning=FALSE, message=FALSE}
 library(tidyverse)
-```
-```
-hist_vote_wide <- read_csv("historical_vote_wide.csv")
-head(hist_vote_wide)
+hist_vote_wide <- read_csv("data/historical_vote_wide.csv")
+hist_vote_wide
 ```
 
-```
-# A tibble: 6 x 3
-  election_year winner       runnerup       
-          <int> <chr>        <chr>          
-1          2016 Donald Trump Hillary Clinton
-2          2012 Barack Obama Mitt Romney    
-3          2008 Barack Obama John McCain    
-4          2004 George Bush  John Kerry     
-5          2000 George Bush  Al Gore        
-6          1996 Bill Clinton Bob Dole    
-```
-
-What is wrong with our untidy format above? From a data analysis perspective, this format is not idead because in this format the outcome of the variable "result" (winner or runner up) is stored as column names and not easily accessible for the functions we will desire to apply to our data set. Additionally, the values of the "candidate" variable is spread across two columns and will require some sort of binding or joining to get them into one single column to allow us to do our desired visualization and statistical tasks later on.
+What is wrong with our untidy format above? From a data analysis perspective, this format is not ideal because in this format the outcome of the variable "result" (winner or runner up) is stored as column names and not easily accessible for the data analysis functions we will want to apply to our data set. Additionally, the values of the "candidate" variable are spread across two columns and will require some sort of binding or joining to get them into one single column to allow us to do our desired visualization and statistical tasks later on.
 
 To accomplish this data tranformation we will use the `tidyverse` function `gather`. To use gather we need to specify:
 
@@ -117,147 +111,158 @@ To accomplish this data tranformation we will use the `tidyverse` function `gath
 
 For our example we would use gather to combine the winner and runnerup columns into a single column called candidate, and create a column called result that contains the outcome of the election for each candidate:
 
-```
-hist_vote_tidy <- hist_vote_wide %>% 
-  gather(key = result, value = candidate, winner, runnerup)
-         
-print(hist_vote_tidy)
+```{r}
+hist_vote_tidy <- gather(hist_vote_wide, 
+                         key = result, 
+                         value = candidate, 
+                         winner, runnerup)
+hist_vote_tidy
 ```
 
-```
-# A tibble: 20 x 3
-   election_year result   candidate      
-           <int> <chr>    <chr>          
- 1          2016 winner   Donald Trump   
- 2          2012 winner   Barack Obama   
- 3          2008 winner   Barack Obama   
- 4          2004 winner   George W Bush  
- 5          2000 winner   George W Bush  
- 6          1996 winner   Bill Clinton   
- 7          1992 winner   Bill Clinton   
- 8          1988 winner   George HW Bush 
- 9          1984 winner   Ronald Reagan  
-10          1980 winner   Ronald Reagan  
-11          2016 runnerup Hillary Clinton
-12          2012 runnerup Mitt Romney    
-13          2008 runnerup John McCain    
-14          2004 runnerup John Kerry     
-15          2000 runnerup Al Gore        
-16          1996 runnerup Bob Dole       
-17          1992 runnerup George HW Bush 
-18          1988 runnerup Michael Dukakis
-19          1984 runnerup Walter Mondale 
-20          1980 runnerup Jimmy Carter         
-```
+> *Note: In the code above, the call to the `gather` function is split across several lines.*
+> *This is allowed and encouraged when programming in R when your code line exceeds 80*
+> *characters. When doing this, it is important to end the line with a comma `,` so that R*
+> *knows the function should continue to the next line.*
+
+The data above is now tidy because all 3 criteria for tidy data have now been met:
+
+1. All the variables (`candidate` and `result`) are now their own columns in the data frame. 
+2. Each row is a single observation (i.e., each candidate's name and result, the observations, are in a single row for each candidate).
+3. Each value is a single cell (i.e., its row, column position in the data frame is not shared with another value).
 
 ### Using separate to deal with multiple delimiters
 
-Data is also not considered tidy when multiple values are stored in the same cell. We can see that in addition to the previous untidy problem we faced with the earlier version of this data set, the one we show below is even messier because the winner and runnerup columns contain both the candidate's name as well as the party they were a member of. To make this messy data tidy we'll have to fix both of these issues.
+As discussed above, data is also not considered tidy when multiple values are stored in the same cell. We can see that in addition to the previous untidy problem we faced with the earlier version of this data set, the one we show below is even messier because the winner and runnerup columns contain both the candidate's name as well as the party they were a member of. To make this messy data tidy we'll have to fix both of these issues.
 
-```
-hist_vote_messy <- read_csv("historical_vote_messy.csv")
-print(hist_vote_messy)
-```
-
-```
-# A tibble: 10 x 3
-   election_year winner             runnerup           
-           <int> <chr>              <chr>              
- 1          2016 Donald Trump/Rep   Hillary Clinton/Dem
- 2          2012 Barack Obama/Dem   Mitt Romney/Rep    
- 3          2008 Barack Obama/Dem   John McCain/Rep    
- 4          2004 George W Bush/Rep  John Kerry/Dem     
- 5          2000 George W Bush/Rep  Al Gore/Dem        
- 6          1996 Bill Clinton/Dem   Bob Dole/Rep       
- 7          1992 Bill Clinton/Dem   George HW Bush/Rep 
- 8          1988 George HW Bush/Rep Michael Dukakis/Dem
- 9          1984 Ronald Reagan/Rep  Walter Mondale/Dem 
-10          1980 Ronald Reagan/Rep  Jimmy Carter/Dem 
+```{r, warning=FALSE, message=FALSE}
+hist_vote_party <- read_csv("data/historical_vote_messy.csv")
+hist_vote_party
 ```
 
 First we'll use gather to create the result and candidate column as we did previously:
 
-```
-gather(hist_vote_messy, 
-                         key = result, 
-                         value = candidate, 
-                         winner, 
-                         runnerup)
-```
-
-```
-# A tibble: 20 x 3
-   election_year result   candidate          
-           <int> <chr>    <chr>              
- 1          2016 winner   Donald Trump/Rep   
- 2          2012 winner   Barack Obama/Dem   
- 3          2008 winner   Barack Obama/Dem   
- 4          2004 winner   George W Bush/Rep  
- 5          2000 winner   George W Bush/Rep  
- 6          1996 winner   Bill Clinton/Dem   
- 7          1992 winner   Bill Clinton/Dem   
- 8          1988 winner   George HW Bush/Rep 
- 9          1984 winner   Ronald Reagan/Rep  
-10          1980 winner   Ronald Reagan/Rep  
-11          2016 runnerup Hillary Clinton/Dem
-12          2012 runnerup Mitt Romney/Rep    
-13          2008 runnerup John McCain/Rep    
-14          2004 runnerup John Kerry/Dem     
-15          2000 runnerup Al Gore/Dem        
-16          1996 runnerup Bob Dole/Rep       
-17          1992 runnerup George HW Bush/Rep 
-18          1988 runnerup Michael Dukakis/Dem
-19          1984 runnerup Walter Mondale/Dem 
-20          1980 runnerup Jimmy Carter/Dem 
+```{r}
+hist_vote_party_gathered <- gather(hist_vote_party, 
+                          key = result, 
+                          value = candidate, 
+                          winner, runnerup)
+hist_vote_party_gathered
 ```
 
 And then we separate to split the candidate column into two columns, one called candidate that now contains only the candidate's name, and called party that contains a short identifier for which political party the candidate belonged to:
 
-```
-gather(hist_vote_messy, 
-                         key = result, 
-                         value = candidate, 
-                         winner, 
-                         runnerup) %>% 
-  separate(col = candidate, 
-         into = c("candidate", "party"), 
-         sep = "/") 
+```{r}
+hist_vote_party_tidy <- separate(hist_vote_party_gathered,
+                                 col = candidate, 
+                                 into = c("candidate", "party"), 
+                                 sep = "/") 
+hist_vote_party_tidy
 ```
 
-```
-# A tibble: 20 x 4
-   election_year result   candidate       party
-           <int> <chr>    <chr>           <chr>
- 1          2016 winner   Donald Trump    Rep  
- 2          2012 winner   Barack Obama    Dem  
- 3          2008 winner   Barack Obama    Dem  
- 4          2004 winner   George W Bush   Rep  
- 5          2000 winner   George W Bush   Rep  
- 6          1996 winner   Bill Clinton    Dem  
- 7          1992 winner   Bill Clinton    Dem  
- 8          1988 winner   George HW Bush  Rep  
- 9          1984 winner   Ronald Reagan   Rep  
-10          1980 winner   Ronald Reagan   Rep  
-11          2016 runnerup Hillary Clinton Dem  
-12          2012 runnerup Mitt Romney     Rep  
-13          2008 runnerup John McCain     Rep  
-14          2004 runnerup John Kerry      Dem  
-15          2000 runnerup Al Gore         Dem  
-16          1996 runnerup Bob Dole        Rep  
-17          1992 runnerup George HW Bush  Rep  
-18          1988 runnerup Michael Dukakis Dem  
-19          1984 runnerup Walter Mondale  Dem  
-20          1980 runnerup Jimmy Carter    Dem  
+Is this data now tidy? Well, if we recall the 3 criteria for tidy data:
+
+- each row is a single observation,
+- each variable is a single column, and
+- each value is a single cell.
+
+We can see that this data now satifies all 3 criteria ane we can easily do some data analysis, for example visualize the number of winning candidates for each party over this time span:
+
+```{r candidate_count, fig.height=4, fig.width=5}
+ggplot(hist_vote_party_tidy, aes(x = result, fill = party)) +
+  geom_bar(position=position_dodge()) +
+  scale_fill_manual(values=c("blue", "red")) +
+  xlab("US Presidential election result") +
+  ylab("Number of US Presidential candidates") +
+  ggtitle("US Presidential candidates (1980 - 2016)") 
+
 ```
 
-## The `dplyr` functions
+From this visualization we can see that between 1980 - 2016 (inclusive) the Republican party have had more winning US Presidential election candidates than the Democratic party has.
 
-We haven't explicitly said this yet, but the `tidyverse` is actually a meta R package that installs a collection of R packages that all follow the tidy data philosophy (more on this below). One of the tidyverse packages is `dplyr` - a data wrangling workhorse. You have already met 3 of the dplyr function (`select`, `filter` and `mutate`). To learn more about those three and meet a few more useful ones, read the post at this link: http://stat545.com/block010_dplyr-end-single-table.html#where-were-we
+## Combining functions using the pipe operator, `%>%`:
+
+Now we will learn about an efficient way to combine functions in R; the pipe operator: `%>%`. You can think of the pipe as a physical pipe - taking the output from the function on the left-handside of the pipe and passing it as the input to first argument to the function on the right-handside of the pipe. Let's look at some examples of this.
+
+### Using `%>%` to combine `filter` and `select`
+
+Remembering our the US state-level property, income, population, and voting data that we explored in chapter 1: 
+```{r, warning=FALSE, message=FALSE}
+us_data <- read_csv("data/state_property_vote.csv")
+us_data
+```
+
+If we would like to subset the data to obtain only the values for median income and median property value for the state of California ("CA"), we can use the functions `filter()` and `select()` to do this. First we use `filter()` to create a data frame object called `ca_prop_data` that only contains the values for the state of California. We can then use `select()` on this data frame to subset the values for median income and median property value for California:
+
+```{r}
+ca_prop_data <- filter(us_data, state == "CA")
+ca_inc_prop <- select(ca_prop_data, med_income, med_prop_val)
+ca_inc_prop
+```
+
+Although this is a valid approach, there is a more efficient and readable approach we could take by using the pipe, `%>%`. With the pipe, we do not need to create an intermediate object to store the output from `filter()`, instead we can use the pipe to directly send the output of `filter()` to the input of `select()`:
+
+```{r}
+ca_inc_prop <- filter(us_data, state == "CA") %>% select(med_income, med_prop_val)
+ca_inc_prop
+```
+
+But wait? Why does our `select()` function call look different in these two examples? Well, when you use the pipe, the output of the function on the left is automatically provided as the value for the first argument for the function on the right, and thus you do not specify the value for that argument in that function call. In this case that would be the data frame that we would be `select`-ing from.
+
+As you can see, both of these approaches give us the same output but the second approach is more efficient and readable.
+
+### Using `%>%` with more than two functions
+
+The `%>%` can be used with any function in R. Additionally, we can pipe together more than two functions. In this example, we will pipe together 3 functions to order the states by commute time for states whose population is less than 1 million people:
+
+```{r}
+small_state_commutes <- filter(us_data, population < 1000000) %>% 
+  select(state, mean_commute_minutes) %>% 
+  arrange(mean_commute_minutes)
+small_state_commutes
+```
+
+> Note 1: `arrange` is a function that takes the name of a data frame and column(s) to order it by and returns a data frame where the rows are ordered by that column in ascening order. Here we used only one column for sorting (`mean_commute_minutes`) but more than one can also be used. To do this, list additional columns separated by commas. The order they are listed in indicates the order that they should be sorted in.
+>
+> Note 2: You might also have noticed that we split the function calls across lines after the pipe, similar as to when we did this earlier in the chapter for long function calls. Again the is allowed and recommeded, especially when there are more than 80 characters in the piped functions. Doing this makes your code more readable. When you do this it is important to have the line breaks occur after the pipe to tell R that your code is continuing onto the next line. 
+
+## Iterating over data with `group_by` + `summarise`
+
+### Calculating summary statistics:
+
+Often times we want to calculate some summary value for the data (we often call this a summary statistic). A useful `dplyr` function for doing this is called `summarise`. Examples of summary statistics we might want to calculate are the number of observations, the average/mean value for a column, a minimum value for a column, *etc*. Below we show how to use the summarize function to calculate the minimum, maximum and mean commute time for all US states:
+
+```{r}
+us_commute_time_summary <- summarise(us_data, 
+                                  min_mean_commute = min(mean_commute_minutes),
+                                  max_mean_commute = max(mean_commute_minutes),
+                                  mean_mean_commute = mean(mean_commute_minutes))
+us_commute_time_summary
+```
+
+### Calculating group summary statistics:
+
+A common pairing with `summarise` is `group_by`. Pairing these functions together can let you summarise values for sub-groups within a data set. For example, here we can use `group_by`split up the data into groups based on which party they voted for in the US election and then calculate the minimum, maximum and mean commute time for each of the groups.
+
+The group by function takes at least two arguments. The first is the data frame that will be grouped, and the second onwards are columns to use in the grouping. Here we use only one column for grouping (`party`) but more than one can also be used. To do this, list additional columns separated by commas. 
+
+```{r}
+us_commute_time_summary_by_party <- group_by(us_data, party) %>% 
+  summarise(min_mean_commute = min(mean_commute_minutes),
+            max_mean_commute = max(mean_commute_minutes),
+            mean_mean_commute = mean(mean_commute_minutes))
+us_commute_time_summary_by_party
+```
+
+## Additional reading on the `dplyr` functions
+
+We haven't explicitly said this yet, but the `tidyverse` is actually a meta R package that installs a collection of R packages that all follow the tidy data philosophy we discussed above. One of the tidyverse packages is `dplyr` - a data wrangling workhorse. You have already met 6 of the dplyr function (`select`, `filter`, `mutate`, `arrange`, `summarise` and `group_by`). To learn more about those six and meet a few more useful ones, read the post at this link: http://stat545.com/block010_dplyr-end-single-table.html#where-were-we
 
 
 ## Using `purrr`'s `map*` functions to iterate
 
-Where should you turn when you discover the next step in your data wrangling/cleaning process requires you to apply a function to each column in a data frame? For example, if you wanted to know the maximum value of each column in a data frame, you could use `purrr`'s `map` function to apply the `max` function to each column. For example, let's do that and find that maximum value of each column of the `mtcars` data frame (a built-in data set that comes with R). First, let's peak at an become familiar with the data:
+Where should you turn when you discover the next step in your data wrangling/cleaning process requires you to apply a function to each column in a data frame? For example, if you wanted to know the maximum value of each column in a data frame? Well you could use `summarise` as discussed above, but this becomes inconvenient when you have many columns as `summarise` requires you to type out a column name and a data tranformation for each summary statistic that you want to calculate.
+
+In cases like this where you want to apply the same data transformation to all columns it is more efficient to use `purrr`'s `map` function to apply the `max` function to each column. For example, let's do that and find that maximum value of each column of the `mtcars` data frame (a built-in data set that comes with R). First, let's peak at an become familiar with the data:
 
 ```{r 02-preview-data}
 head(mtcars)
@@ -320,7 +325,7 @@ map_df(mtcars, ~ max(., na.rm  = TRUE))
 
 ### A bit more about the `map*` functions
 
-The `map` functions are generally quite useful for solving many iteration/repetition problems. It's use does not have to be limited to columns of a data frame. It can be used to apply functions to elements of a vector or list, rows of a data frame (using `pmap`), and even to lists of data frames, or nested data frames.
+The `map` functions are generally quite useful for solving many iteration/repetition problems. It's use does not have to be limited to columns of a data frame. It can be used to apply functions to elements of a vector or list, and even to lists of data frames, or nested data frames.
 
 ## Additional readings/resources
 - [Data transformation chapter](https://r4ds.had.co.nz/transform.html) from [R for Data Science](https://r4ds.had.co.nz/) by Garrett Grolemund & Hadley Wickham
