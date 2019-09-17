@@ -416,10 +416,8 @@ project, it is well worth spending the time to get your data into a tidy format 
 </div>
 <div id="going-from-wide-to-long-or-tidy-using-gather" class="section level3">
 <h3><span class="header-section-number">3.4.3</span> Going from wide to long (or tidy!) using <code>gather</code></h3>
-<p>One common thing that often has to be done to get data into a tidy format is to gather columns so that each row is a single
-observation and each column is a single variable. Oftentimes, data does not come this way; while tidy data is a better
-organization structure for data analysis, it is not as intuitive for human readability and understanding. For example, the
-data below is not in a tidy format, but rather is in a very intuitive format for human understanding:</p>
+<p>One common thing that often has to be done to get data into a tidy format is to combine columns that are really part the same variable but currently stored in separate columns. To do this we can use the function <code>gather</code>. <code>gather</code> acts to combine columns, and thus makes the data frame narrower.</p>
+<p>Data is often stored in a wider, not tidy, format because this format is often more intuitive for human readability and understanding, and humans create data sets. An example of this is shown below:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">library</span>(tidyverse)</a>
 <a class="sourceLine" id="cb1-2" data-line-number="2">hist_vote_wide &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/historical_vote_wide.csv&quot;</span>)</a>
 <a class="sourceLine" id="cb1-3" data-line-number="3">hist_vote_wide</a></code></pre></div>
@@ -577,12 +575,12 @@ political party the candidate belonged to (“party”):</p>
 <p>We can see that this data now satifies all 3 criteria, making it easier to analyze.
 For example, we could visualize the number of winning candidates for each party over this time span:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="kw">ggplot</span>(hist_vote_party_tidy, <span class="kw">aes</span>(<span class="dt">x =</span> result, <span class="dt">fill =</span> party)) <span class="op">+</span></a>
-<a class="sourceLine" id="cb11-2" data-line-number="2"><span class="st">  </span><span class="kw">geom_bar</span>(<span class="dt">position=</span><span class="kw">position_dodge</span>()) <span class="op">+</span></a>
+<a class="sourceLine" id="cb11-2" data-line-number="2"><span class="st">  </span><span class="kw">geom_bar</span>() <span class="op">+</span></a>
 <a class="sourceLine" id="cb11-3" data-line-number="3"><span class="st">  </span><span class="kw">scale_fill_manual</span>(<span class="dt">values=</span><span class="kw">c</span>(<span class="st">&quot;blue&quot;</span>, <span class="st">&quot;red&quot;</span>)) <span class="op">+</span></a>
 <a class="sourceLine" id="cb11-4" data-line-number="4"><span class="st">  </span><span class="kw">xlab</span>(<span class="st">&quot;US Presidential election result&quot;</span>) <span class="op">+</span></a>
 <a class="sourceLine" id="cb11-5" data-line-number="5"><span class="st">  </span><span class="kw">ylab</span>(<span class="st">&quot;Number of US Presidential candidates&quot;</span>) <span class="op">+</span></a>
 <a class="sourceLine" id="cb11-6" data-line-number="6"><span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;US Presidential candidates (1980 - 2016)&quot;</span>) </a></code></pre></div>
-<p><img src="_main_files/figure-html/02-candidate-count-1.png" width="480" /></p>
+<p><img src="_main_files/figure-html/02-candidate-count-1.png" width="384" /></p>
 <p>From this visualization, we can see that between 1980 - 2016 (inclusive) the Republican party has
 won more US Presidential elections than the Democratic party.</p>
 </div>
@@ -601,18 +599,19 @@ a data frame <code>data</code>:</p>
 <li>filter for rows where another column, <code>other_col</code>, is more than 5, and</li>
 <li>select only the new column <code>new_col</code> for those rows.</li>
 </ol>
-<p>One way of doing this would be to <em>compose</em> the functions:</p>
-<pre><code>output &lt;- select(filter(mutate(data, new_col = old_col*2), other_col &gt; 5), new_col)</code></pre>
-<p>This is difficult to understand for multiple reasons. Functions compose (reading from left to right) in the <em>opposite order</em> in which
-they should be applied (above, <code>mutate</code> happens first, then <code>filter</code>, then <code>select</code>). It is also just a really long line of code
-to read in one go. Another option is to just write multiple lines of code, storing temporary objects as you go:</p>
+<p>One way of doing is to just write multiple lines of code, storing temporary objects as you go:</p>
 <pre><code>output_1 &lt;- mutate(data, new_col = old_col*2)
 output_2 &lt;- filter(output_1, other_col &gt; 5)
 output &lt;- select(output_2, new_col)</code></pre>
-<p>Code like this can also be difficult to understand. The reader may be tricked into thinking the named <code>output_1</code> and <code>output_2</code>
+<p>This is difficult to understand for multiple reasons. The reader may be tricked into thinking the named <code>output_1</code> and <code>output_2</code>
 objects are important for some reason, while they are just temporary intermediate computations. Further, the reader has to look
-through and find where <code>output_1</code> and <code>output_2</code> are used in each subsequent line. The <em>pipe operator</em> <code>%&gt;%</code> solves this problem, resulting
-in cleaner and easier-to-follow code. The below accomplishes the same thing as the previous two code blocks:</p>
+through and find where <code>output_1</code> and <code>output_2</code> are used in each subsequent line.</p>
+<p>Another option for doing this would be to <em>compose</em> the functions:</p>
+<pre><code>output &lt;- select(filter(mutate(data, new_col = old_col*2), other_col &gt; 5), new_col)</code></pre>
+<p>Code like this can also be difficult to understand. Functions compose (reading from left to right) in the <em>opposite order</em> in which
+they are computed by R (above, <code>mutate</code> happens first, then <code>filter</code>, then <code>select</code>). It is also just a really long line of code
+to read in one go.</p>
+<p>The <em>pipe operator</em> <code>%&gt;%</code> solves this problem, resulting in cleaner and easier-to-follow code. The below accomplishes the same thing as the previous two code blocks:</p>
 <pre><code>output &lt;- data %&gt;% 
             mutate(new_col = old_col*2) %&gt;%
             filter(other_col &gt; 5) %&gt;%
@@ -868,10 +867,12 @@ of a data frame; <code>map_*</code> functions can be used to apply functions to 
 </div>
 <div id="additional-readingsresources-1" class="section level2">
 <h2><span class="header-section-number">3.9</span> Additional readings/resources</h2>
-<p>Grolemund &amp; Wickham’s <a href="https://r4ds.had.co.nz/">R for Data Science</a> has a number of useful sections that provide additional information:
-- <a href="https://r4ds.had.co.nz/transform.html">Data transformation</a>
-- <a href="https://r4ds.had.co.nz/tidy-data.html">Tidy data</a>
-- <a href="https://r4ds.had.co.nz/iteration.html#the-map-functions">The <code>map_*</code> functions</a></p>
+<p>Grolemund &amp; Wickham’s <a href="https://r4ds.had.co.nz/">R for Data Science</a> has a number of useful sections that provide additional information:</p>
+<ul>
+<li><a href="https://r4ds.had.co.nz/transform.html">Data transformation</a></li>
+<li><a href="https://r4ds.had.co.nz/tidy-data.html">Tidy data</a></li>
+<li><a href="https://r4ds.had.co.nz/iteration.html#the-map-functions">The <code>map_*</code> functions</a></li>
+</ul>
 
 </div>
 </div>
