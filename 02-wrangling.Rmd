@@ -100,10 +100,9 @@ project, it is well worth spending the time to get your data into a tidy format 
 
 ### Going from wide to long (or tidy!) using `gather`
 
-One common thing that often has to be done to get data into a tidy format is to gather columns so that each row is a single 
-observation and each column is a single variable. Oftentimes, data does not come this way; while tidy data is a better 
-organization structure for data analysis, it is not as intuitive for human readability and understanding. For example, the 
-data below is not in a tidy format, but rather is in a very intuitive format for human understanding:
+One common thing that often has to be done to get data into a tidy format is to combine columns that are really part the same variable but currently stored in separate columns. To do this we can use the function `gather`. `gather` acts to combine columns, and thus makes the data frame narrower.
+
+Data is often stored in a wider, not tidy, format because this format is often more intuitive for human readability and understanding, and humans create data sets. An example of this is shown below:
 
 ```{r 02-tidyverse, warning=FALSE, message=FALSE}
 library(tidyverse)
@@ -188,9 +187,9 @@ Is this data now tidy? Well, if we recall the 3 criteria for tidy data:
 We can see that this data now satifies all 3 criteria, making it easier to analyze.
 For example, we could visualize the number of winning candidates for each party over this time span:
 
-```{r 02-candidate-count, fig.height=4, fig.width=5}
+```{r 02-candidate-count, fig.height=4, fig.width=4}
 ggplot(hist_vote_party_tidy, aes(x = result, fill = party)) +
-  geom_bar(position=position_dodge()) +
+  geom_bar() +
   scale_fill_manual(values=c("blue", "red")) +
   xlab("US Presidential election result") +
   ylab("Number of US Presidential candidates") +
@@ -215,15 +214,8 @@ a data frame `data`:
 2) filter for rows where another column, `other_col`, is more than 5, and
 3) select only the new column `new_col` for those rows.
 
-One way of doing this would be to *compose* the functions:
 
-```
-output <- select(filter(mutate(data, new_col = old_col*2), other_col > 5), new_col)
-```
-
-This is difficult to understand for multiple reasons. Functions compose (reading from left to right) in the *opposite order* in which
-they should be applied (above, `mutate` happens first, then `filter`, then `select`). It is also just a really long line of code
-to read in one go. Another option is to just write multiple lines of code, storing temporary objects as you go:
+One way of doing is to just write multiple lines of code, storing temporary objects as you go:
 
 ```
 output_1 <- mutate(data, new_col = old_col*2)
@@ -231,10 +223,21 @@ output_2 <- filter(output_1, other_col > 5)
 output <- select(output_2, new_col)
 ```
 
-Code like this can also be difficult to understand. The reader may be tricked into thinking the named `output_1` and `output_2`
+This is difficult to understand for multiple reasons. The reader may be tricked into thinking the named `output_1` and `output_2`
 objects are important for some reason, while they are just temporary intermediate computations. Further, the reader has to look
-through and find where `output_1` and `output_2` are used in each subsequent line. The *pipe operator* `%>%` solves this problem, resulting
-in cleaner and easier-to-follow code. The below accomplishes the same thing as the previous two code blocks:
+through and find where `output_1` and `output_2` are used in each subsequent line.
+
+Another option for doing this would be to *compose* the functions:
+
+```
+output <- select(filter(mutate(data, new_col = old_col*2), other_col > 5), new_col)
+```
+
+Code like this can also be difficult to understand. Functions compose (reading from left to right) in the *opposite order* in which
+they are computed by R (above, `mutate` happens first, then `filter`, then `select`). It is also just a really long line of code
+to read in one go. 
+
+The *pipe operator* `%>%` solves this problem, resulting in cleaner and easier-to-follow code. The below accomplishes the same thing as the previous two code blocks:
 
 ```
 output <- data %>% 
@@ -433,6 +436,7 @@ of a data frame; `map_*` functions can be used to apply functions to elements of
 
 ## Additional readings/resources
 Grolemund & Wickham's [R for Data Science](https://r4ds.had.co.nz/) has a number of useful sections that provide additional information:
+
 - [Data transformation](https://r4ds.had.co.nz/transform.html)
 - [Tidy data](https://r4ds.had.co.nz/tidy-data.html)
 - [The `map_*` functions](https://r4ds.had.co.nz/iteration.html#the-map-functions)
