@@ -16,7 +16,7 @@ choose the parameters of the classifier in order to maximize its accuracy.
 - Explain the k-nearest neighbour classification algorithm
 - Perform k-nearest neighbour classification in R using `caret::train(method = "knn", ...)`
 
-## Classification
+## The classification problem
 In many situations, we want to make predictions based on the current situation as well as past experiences. For instance, a doctor may want to diagnose 
 a patient as either diseased or healthy based on their symptoms and the doctor's past experience with patients; an email provider might want to tag a given email as "spam" or "non-spam"
 depending on past email text data; or an online store may want to predict whether an order is fraudulent or not. 
@@ -33,14 +33,15 @@ assigning an object to one of several classes (e.g., private, public, or not for
 algorithm for the binary classification problem. Other examples you may encounter in future courses include decision trees, support vector machines (SVMs), logistic regression, and neural
 networks.
 
-## Wisconsin Breast Cancer Example:
+## Exploring a labelled data set
+
 Let's start by looking at some Breast Cancer [data](http://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29), which was obtained from the University of Wisconsin Hospitals, Madison from Dr. William H. Wolberg. Each row in the data set represents an observation which includes the tumour diagnosis (benign/non-cancerous or malignant/cancerous) and several other measurements about the tumour cells (e.g., cell nuclei texture, perimeter, etc.). Diagnosis of the tumour was determined by Physicians. The question here is whether we can use some, or all, of the measurements available to us about the tumour cells to do a good job of predicting whether a future tumour, that we don't have a diagnosis from a Physician for, is benign or malignant. 
 
 Answering this question is important because traditional, non-data driven methods for tumour diagnosis are quite subjective and dependent upon how skilled and experienced the diagnosing Physician is. Furthermore, benign tumours are not normally dangerous, the cells stay in the same place and the tumour stops growing before it gets very large, whereas in malignant tumours, the cells invade the surrounding tissue and spread into nearby organs where they can cause serious damage ([Learn more here](https://www.worldwidecancerresearch.org/who-we-are/cancer-basics/)). Thus it is important to quickly and accurately diagnose the tumour type to guide patient treatment protocols.
  
 <!--http://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.names-->
 
-### Data Exploration
+**Data Exploration**
 
 As usual, we start by loading the necessary libraries for our analysis. We have learned about the `tidyverse` before. Today we'll also be loading a new library, `forcats` that allows us to easily manipulate factors in R. Factors are a special categorical type of variable in R that are very helpful when doing statistical inference and machine learning with categorical variables.
 
@@ -57,7 +58,8 @@ head(cancer)
 ```
 
 
-#### Variable descriptions
+**Variable descriptions**
+
 Breast tumours can be diagnosed by performing a biopsy, a process where tissue is removed from the body to discover the presence of a disease. Traditionally these procedures were quite invasive, but now fine needle asipiration is a type of biopsy that uses a thin needle to examine a small amount of tissue from the tumour. With this method, 10 different variables are typically measured of cell nuclei from a digital image of a fine needle aspirate (FNA) of a breast mass. 
 
 
@@ -128,7 +130,9 @@ perim_concav
 
 In this visualization, we can see that the observations that are labelled as benign, typically fall in the the lower, left-hand side of the plot area. Whereas, the observations that are labelled as malignant typically fall in upper right-hand side of the plot. Suppose we have a new observation that is not in the current data set that we plotted and we do not have a Physician's diagnosis for the tumour class. But what is we knew this new observation had a perimeter value of 1 and concavity value of 1. Could we use this information to classify that observation as benign or malignant? What about a new observation with perimeter value of -1 and concavity value of -0.5? What about 0 and 1? It seems like we can do this, at least visually. Now we will explore how we can use the K-Nearest Neighbour classification method to do this using R.
 
-### K-Nearest Neighbour Classifier
+## Classification with K-nearest neighbours
+
+### Two explanatory variables / features / predictors
 
 ```{r 05-knn-0, echo = F}
 ## Find the distance between new point and all others in dataset
@@ -227,7 +231,7 @@ perim_concav + geom_point(aes(x=new_point[1], y=new_point[2]),
 
 Here we chose the $k=3$ nearest observations, but there is nothing special about $k=3$. We could have used $k=4, 5$ or more, though we may want to choose an odd number to avoid ties. We will discuss more about choosing $k$ in the next section. 
 
-#### Distance Between Points When There are two explanatory variables/predictors
+**Distance Between Points When There are two explanatory variables/predictors**
 
 How do we decide which points are "nearest" to our new observation? We can compute the distance between any pair of points using the following formula: 
 
@@ -288,8 +292,8 @@ It can be difficult sometimes to read code as math, so here we mathematically sh
 -----------------  -----------------     ----------------- ----------------- 
 
 
+**Summary:**
 
-##### Summary: 
 In order to classify a new observation using a k-nearest neighbor classifier, we have to do the follow steps:
 
 * **Step 1**: Compute the distance between the new observation and each observation in our training set.
@@ -297,7 +301,48 @@ In order to classify a new observation using a k-nearest neighbor classifier, we
 * **Step 3**: Choose the top $k$ rows of the sorted table.
 * **Step 4**: Classify the new observation based on majority vote.
 
-### K-Nearest Neighbours in R 
+
+### More than two explanatory variables / features / predictors
+So far we have seen how to build a classifier based on only explanatory variables/predictors, but we can use the k-nearest neighbours classifier in higher dimensional space. Let's make a scatterplot with 3 variables instead of 2: 
+
+```{r 05-more, echo = F}
+library(plotly)
+cancer %>% 
+plot_ly(x = ~ Perimeter, 
+          y = ~ Concavity, 
+          z= ~ Symmetry, 
+          color = ~Class, 
+          opacity = 0.4,
+          size = 150,
+          colors = c(cbPalette[2], cbPalette[1])) %>% 
+    add_markers()  %>%
+  layout(scene = list(xaxis = list(title = 'Perimeter'),
+                     yaxis = list(title = 'Concavity'),
+                    zaxis = list(title = 'Symmetry')))
+```
+
+*Normally we recommend against 3D plots, but here for learning purposes we want to illustrate what happens when we go to higher dimensions.*
+
+Each explanatory variable/predictor can give us new information to help create our classifier. The distance formula for 3-dimensions is
+$$Distance = \sqrt{(x_a -x_b)^2 + (y_a - y_b)^2 + (z_a - z_b)^2}$$
+We can generalize for n-dimensions by
+
+* summing up the squares of the differences between each individual coordinate
+* taking the square root of the sum
+
+
+## Scaling the data
+
+TODO
+
+## K-nearest neighbours in R
+
+**Training**
+
+**Making Predictions**
+
+- [The `caret` Package](https://topepo.github.io/caret/index.html)
+
 We will use the k-nearest neighbour (k-nn) algorithm in R by making use of the `caret` (Classification And REgression Training) package. `caret`  contains a set of tools to help the process of making predictive models. Why do we now switch the using `caret` to perform k-nn as opposed to just writing the code to do it ourselves as we did above? Well, first, our code would have to get a bit more complicated to predict the classes for multiple new observations. Second, our code would also have to get a bit more complicated as we add more variables to our model. Thus for those two reasons, it makes sense to use the `caret` package to keep our code simple, readable and accurate (the less we type, the less mistakes we are likely to make).
 
 We start off by loading the `caret` library:
@@ -337,35 +382,4 @@ predict(object = model_knn, new_obs)
 
 Our model classifies this new observation as malignant. How do we know how well our model did? In later sections, we will discuss ways to evaluate our model.
 
-### More than two explanatory variables/predictors
-So far we have seen how to build a classifier based on only explanatory variables/predictors, but we can use the k-nearest neighbours classifier in higher dimensional space. Let's make a scatterplot with 3 variables instead of 2: 
 
-```{r 05-more, echo = F}
-library(plotly)
-cancer %>% 
-plot_ly(x = ~ Perimeter, 
-          y = ~ Concavity, 
-          z= ~ Symmetry, 
-          color = ~Class, 
-          opacity = 0.4,
-          size = 150,
-          colors = c(cbPalette[2], cbPalette[1])) %>% 
-    add_markers()  %>%
-  layout(scene = list(xaxis = list(title = 'Perimeter'),
-                     yaxis = list(title = 'Concavity'),
-                    zaxis = list(title = 'Symmetry')))
-```
-
-*Normally we recommend against 3D plots, but here for learning purposes we want to illustrate what happens when we go to higher dimensions.*
-
-Each explanatory variable/predictor can give us new information to help create our classifier. The distance formula for 3-dimensions is
-$$Distance = \sqrt{(x_a -x_b)^2 + (y_a - y_b)^2 + (z_a - z_b)^2}$$
-We can generalize for n-dimensions by
-
-* summing up the squares of the differences between each individual coordinate
-* taking the square root of the sum
-
-
-
-## Additional readings/resources
-- [The `caret` Package](https://topepo.github.io/caret/index.html)
