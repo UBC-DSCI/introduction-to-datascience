@@ -1,22 +1,37 @@
-# Classification {#classification}
+# Classification I: Training & Predicting {#classification}
 
 ## Overview 
-This chapter serves as an introduction to classification using K-nearest neighbours (k-nn) in the case where we have two quantitative variables that we want to use to predict the class of a third, categorical variable.
+Up until this point, we have focused solely on descriptive and exploratory questions about data. This chapter and the next together serve as our 
+first foray into answering *predictive* questions about data. In particular, we will focus on the problem of *classification*, i.e.,
+using one or more quantitative variables to predict the value of a third, categorical variable. This chapter will cover the basics of classification,
+how to preprocess data to make it suitable for use in a classifier,
+and how to use our observed data to make predictions. The next will focus on how to evaluate the predictive accuracy of our classifier, as well as how to 
+choose the parameters of the classifier in order to maximize its accuracy.
 
-## Learning objectives 
-* Recognize situations where a simple classifier would be appropriate for making predictions.
-* Explain the k-nearest neighbour classification algorithm.
-* Interpret the output of a classifier.
-* Compute, by hand, the straight-line (Euclidean) distance between points on a graph when there are two explanatory variables/predictors.
-* Describe what a training data set is and how it is used in classification.
-* In a dataset with two explanatory variables/predictors, perform k-nearest neighbour classification in R using `caret::train(method = "knn", ...)` to predict the class of a single new observation.
+## Chapter learning objectives 
+- Recognize situations where a classifier would be appropriate for making predictions
+- Interpret the output of a classifier
+- Describe what a training data set is and how it is used in classification
+- Compute, by hand, the straight-line (Euclidean) distance between points on a graph when there are two explanatory variables/predictors
+- Explain the k-nearest neighbour classification algorithm
+- Perform k-nearest neighbour classification in R using `caret::train(method = "knn", ...)`
 
 ## Classification
-In many situations, we want to learn how to make predictions based on our experience from past examples. For instance, a doctor wants to diagnose a patient as either diseased or healthy based on some observed characteristics, an email provider would like to assign a given email as "spam" or "non-spam", or an online store wants to predict if an order is fraudulent (or not). These are all examples of classification tasks.
+In many situations, we want to make predictions based on the current situation as well as past experiences. For instance, a doctor may want to diagnose 
+a patient as either diseased or healthy based on their symptoms and the doctor's past experience with patients; an email provider might want to tag a given email as "spam" or "non-spam"
+depending on past email text data; or an online store may want to predict whether an order is fraudulent or not. 
 
-**Classification** is the problem of predicting a qualitative or categorical class/label for an observation (set of data collected from an object, such as a person or an email). It involves assigning an observation to a class (e.g. disease or healthy) on the basis of how similar they are to other observations that have already been classified. These already classified observations that we use as a basis to predict classes for new, unclassfied observations is called a **training set**. We call them a "training set" because we use these observations to train, or teach, our classifier so that we can use it to make predictions on new data that we have not seen previously.
+These tasks are all examples of **classification**, i.e., predicting a categorical class (sometimes called a *label*) for an observation given its other
+quantitative variables (sometimes called *features*). Generally, a classifier assigns an observation (e.g. a new patient) to a class (e.g. diseased or healthy) on 
+the basis of how similar it is to other observations for which we know the class (e.g. previous patients with known diseases and symptoms). These observations 
+with known classes that we use as a basis for prediction are called a **training set**. We call them a "training set" because we use these observations to train, or 
+teach, our classifier so that we can use it to make predictions on new data that we have not seen previously.
 
-There are many possible classifier methods that we could use to predict a qualitative or categorical class/label for an observation. These classification methods can perform binary classification, where only two classes are involved (e.g. disease or healthy patient), as well as multiclass classification, which involves assigning an object to one of several classes (e.g., private, public, or not for-profit organization). Here we will focus on a simple, and widely used method of classification called **K-nearest neighbors**, but other examples include decision trees, support vector machines and logistic regression.
+There are many possible classification algorithms that we could use to predict a categorical class/label for an observation. In addition, there are many
+variations on the basic classification problem, e.g.,  binary classification where only two classes are involved (e.g. disease or healthy patient), or multiclass classification, which involves 
+assigning an object to one of several classes (e.g., private, public, or not for-profit organization). Here we will focus on the simple, widely used **K-nearest neighbours**
+algorithm for the binary classification problem. Other examples you may encounter in future courses include decision trees, support vector machines (SVMs), logistic regression, and neural
+networks.
 
 ## Wisconsin Breast Cancer Example:
 Let's start by looking at some Breast Cancer [data](http://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29), which was obtained from the University of Wisconsin Hospitals, Madison from Dr. William H. Wolberg. Each row in the data set represents an observation which includes the tumour diagnosis (benign/non-cancerous or malignant/cancerous) and several other measurements about the tumour cells (e.g., cell nuclei texture, perimeter, etc.). Diagnosis of the tumour was determined by Physicians. The question here is whether we can use some, or all, of the measurements available to us about the tumour cells to do a good job of predicting whether a future tumour, that we don't have a diagnosis from a Physician for, is benign or malignant. 
