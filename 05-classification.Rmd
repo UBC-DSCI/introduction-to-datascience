@@ -122,7 +122,7 @@ cancer %>%
 
 **Exploring the data**
 
-Before we start doing any modelling, let's explore our dataset. Below we use the `group_by` + `summarize` code pattern we used before to see that we have 357 (63\%) benign and 212 (37\%) malignant tumour observations.
+Before we start doing any modelling, let's explore our data set. Below we use the `group_by` + `summarize` code pattern we used before to see that we have 357 (63\%) benign and 212 (37\%) malignant tumour observations.
 
 ```{r 05-tally}
 num_obs <- nrow(cancer)
@@ -156,7 +156,7 @@ In order to actually do this computationally in practice, we will need a classif
 ## Classification with K-nearest neighbours
 
 ```{r 05-knn-0, echo = F}
-## Find the distance between new point and all others in dataset
+## Find the distance between new point and all others in data set
 euclidDist <- function(point1, point2) {
     #Returns the Euclidean distance between point1 and point2.
     #Each argument is an array containing the coordinates of a point."""
@@ -373,18 +373,110 @@ plot_ly(x = ~ Perimeter,
                     zaxis = list(title = 'Symmetry')))
 ```
 
-*Normally we recommend against 3D plots, but here for learning purposes we want to illustrate what happens when we go to higher dimensions.*
+*Click and drag the plot above to rotate it, and scroll to zoom. Note that in general we recommend against using 3D visualizations; here 
+we show the data in 3D only to illustrate what "higher dimensions" look like for learning purposes.*
 
 
 ## Shifting and scaling the data
 
-[TODO]
+When using K-nearest neighbour classification, the *scale* of each variable (i.e., its size and range of values) matters. Since 
+the classifier predicts classes by identifying observations that are nearest to it, any variables that have a large scale will have a 
+much larger effect than variables with a small scale. But just because a variable has a large scale *doesn't mean* that it is more important
+for making accurate predictions. For example, suppose you have a data set with two attributes, salary 
+(in dollars) and years of education, and you want to predict the corresponding type of job. When we compute the neighbour distances, a difference 
+of \$1000 is huge compared to a difference of 10 years of education. But for our conceptual understanding and answering of the problem, it's 
+the opposite; 10 years of education is huge compared to a difference of \$1000 in yearly salary!
+
+In many other predictive models, the *center* of each variable (e.g., its mean) matters as well. For example, if we had a data set
+with a temperature variable measured in degrees Kelvin, and the same data set with temperature measured in degrees Celcius, the two variables
+would differ by a constant shift of 273 (even though they contain exactly the same information). Likewise in our hypothetical job classification 
+example, we would likely see that the center of the salary variable is in the tens of thousands, while the center of the years of education 
+variable is in the single digits. Although this doesn't affect the K-nearest neighbour classification algorithm, this large shift can 
+change the outcome of using many other predictive models. 
+
+**Standardization:** when all variables in a data set have a mean (center) of 0 and a standard deviation (scale) of 1, we say that the data have been *standardized*.
+
+To illustrate the effect that standardization can have on the K-nearest neighbour algorithm, we 
+will read in the original, unscaled Wisconsin breast cancer data set; we have been using a standardized version of the data set up until now. In order
+to do this we will download the raw data from the UCI Machine learning repository, and then compute the unscaled columns equivalent to those we have been working with 
+in the scaled version of the data set ("worst" measures). 
+
+```{r 06-scaling-1}
+unscaled_cancer <- read_csv("https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data", 
+                            col_names = FALSE) %>% 
+  select(X1, X2, X11:X20)
+colnames(unscaled_cancer) <- colnames(cancer)
+head(unscaled_cancer)
+```
+
+Looking at the unscaled / unshifted data above, you can see that the difference between the values for smoothness measurements are much larger than those for area,
+and the mean appears to be much larger too. 
+Will this affect predictions? In order to find out, we will create a scatter plot of these two predictors (coloured by diagnosis) for both
+the unstandardized data we just downloaded, and the standardized version of that same data. In order to standardize the `unscaled_cancer` data,
+we will use the `scale` function in R, passing `TRUE` to the `center` argument:
+
+```{r 06-scaling-3}
+scaled_cancer <- unscaled_cancer %>% 
+  select(-c(ID,Class)) %>% 
+  scale(center = TRUE) 
+scaled_cancer <- data.frame(ID = unscaled_cancer$ID, Class = unscaled_cancer$Class, scaled_cancer)
+head(scaled_cancer)
+```
+
+Now let's generate the two scatter plots, one for `unscaled_cancer` and one for `scaled_cancer`, and show them side-by-side:
+
+<center>
+```{r 06-scaling-2, warning = FALSE, echo =  FALSE,  fig.height = 4, fig.width = 10}
+unscaled_cancer <- unscaled_cancer %>% 
+  select(ID, Class, Area, Smoothness)
+new_obs <- tibble(ID = 99999, Class = "unknown", Area = 3.7, Smoothness = 5.3)
+unscaled_cancer <- bind_rows(unscaled_cancer, new_obs)
+
+unscaled <- ggplot(unscaled_cancer, aes(x = Area, y = Smoothness, color = Class)) +
+    geom_point(alpha = 0.6) +
+    labs(color = "Diagnosis") + 
+    scale_color_manual(labels = c("Benign", "Malignant"), values = c("#56B4E9", "#E69F00", "red")) +
+    labs(color = "Diagnosis") + 
+    ggtitle("Standardized Data") +
+    #geom_point(aes(x = 40.73, y = 0.1506), color = cbPalette[6], size = 2.5) + 
+    coord_equal(ratio = 1) +
+    xlim(c(-2, 6)) + # zooming into only data that falls between 0 and 86 on the x-axis
+    ylim(c(-2, 6))
+
+scaled_cancer <- unscaled_cancer %>% 
+  select(-c(ID,Class)) %>% 
+  scale(center = TRUE) 
+scaled_cancer <- data.frame(ID = unscaled_cancer$ID, Class = unscaled_cancer$Class, scaled_cancer)
+
+scaled <- ggplot(scaled_cancer, aes(x = Area, y = Smoothness, color = Class)) +
+    geom_point(alpha = 0.6) +
+    labs(color = "Diagnosis") + 
+    scale_color_manual(labels = c("Benign", "Malignant"), values = c("#56B4E9", "#E69F00", "red")) +
+    labs(color = "Diagnosis") + 
+    ggtitle("Standardized Data") +
+    coord_equal(ratio = 1) +
+    #geom_point(aes(x = 0.008637332, y = -1.114815397), color = cbPalette[6], size = 2.5) #+
+    #xlim(c(-2, 3.9)) # zooming into only data that falls between 0 and ~ 3.9 on the x-axis
+    xlim(c(-2, 6)) + # zooming into only data that falls between 0 and 86 on the x-axis
+    ylim(c(-2, 6))
+    
+gridExtra::grid.arrange(unscaled, scaled, ncol = 2)
+```
+</center>
+
+In the plot with the original data above, its very clear that K-nearest neighbours would classify the 
+red dot (new observation) as malignant. However, once we standardize the data, the diagnosis class labelling 
+becomes less clear, and appears it would depend upon the choice of $K$. Thus, 
+standardizing the data can change things in an important way when we are using predictive algorithms. 
+As a rule of thumb, standardizing your data should be a part of the preprocessing you do before any predictive
+modelling / analysis.
 
 ## K-nearest neighbours in R
 
 Coding the K-nearest neighbour algorithm in R ourselves would get complicated if we might have to predict the label/class for multiple new observations, or when there 
-are multiple classes and more than two variables. Thankfully, in R, the K-nearest neighbour algorithm is implemented in the [`caret` package](https://topepo.github.io/caret/index.html) (**c**lassification 
-**a**nd **re**gression **t**raining). The `caret` library contains a set of tools to help make and use predictive models, such as classifiers. 
+are multiple classes and more than two variables. Thankfully, in R, the K-nearest neighbour algorithm is implemented in 
+the [`caret` package](https://topepo.github.io/caret/index.html) (**c**lassification **a**nd **re**gression **t**raining). The `caret` library 
+contains a set of tools to help make and use predictive models, such as classifiers. 
 Using this package will help keep our code simple, readable and accurate; the less we have to code ourselves, the less mistakes we are likely to make.
 
 We start off by loading the `caret` library:
