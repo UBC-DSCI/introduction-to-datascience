@@ -1,20 +1,24 @@
 # Classification II: Tuning & Testing {#classification_continued}
 
 ## Overview 
-Metrics for classification accuracy; cross-validation to choose the number of neighbours; scaling of variables and other practical considerations.
+This chapter continues the introduction to predictive modelling through classification. While the previous chapter
+covered training and data preprocessing, this chapter focuses on how to evaluate prediction accuracy and how to 
+choose model parameters to improve it. 
 
 ## Chapter learning objectives 
 By the end of the chapter, students will be able to:
 
-* Describe what a validation data set is and how it is used in classification.
-* Using R, evaluate classification accuracy using a validation data set and appropriate metrics.
-* Using R, execute cross-validation in R to choose the number of neighbours.
-* Identify when it is necessary to scale variables before classification and do this using R
-* In a dataset with > 2 attributes, perform k-nearest neighbour classification in R using `caret::train(method = "knn", ...)` to predict the class of a test dataset.
-* Describe advantages and disadvantages of the k-nearest neighbour classification algorithm.
-
+* Describe what training, validation, and test data sets are and how they are used in classification
+* Evaluate classification accuracy in R using a validation data set and appropriate metrics
+* Execute cross-validation in R to choose the number of neighbours in a K-nearest neighbour classifier
+* Perform K-nearest neighbour classification in R using `caret::train(method = "knn", ...)` to predict the class of a test dataset
+* Describe advantages and disadvantages of the K-nearest neighbour classification algorithm
 
 ## Assessing how good your classifier is
+
+
+for classification accuracy; cross-validation to choose the number of neighbours; scaling of variables and other practical considerations.
+
 Sometimes our classifier might make the wrong prediction. A classifier does not need to be right 100\% of the time to be useful, though we don't want the classifier to make too many wrong predictions. How do we measure how "good" our classifier is? 
 
 One way to assess our classifier's performance can be done by splitting our data into a **training** set and a **validation** set. When we split the data, we make the assumption that there is no order to our originally collected data set. However, if we think that there might be some order to the original data set, then we can randomly shuffle the data before splitting it into a training and validation set.  
@@ -31,7 +35,7 @@ We try to illustrate this below:
 
 ### Assessing your classifier in R
 
-We can use the `caret` package in R to not only perform k-nn classification, but also to assess how well our classification worked. Let's start by loading the necessary libraries, data (we'll continue exploring the breast cancer data set from last chapter) and making a quick scatter plot of tumour cell concavity versus smoothness, labelling the points be diagnosis class.
+We can use the `caret` package in R to not only perform K-nearest neighbour classification, but also to assess how well our classification worked. Let's start by loading the necessary libraries, data (we'll continue exploring the breast cancer data set from last chapter) and making a quick scatter plot of tumour cell concavity versus smoothness, labelling the points be diagnosis class.
 
 ```{r 06-precode, message = FALSE, fig.height = 4, fig.width = 5}
 # load libraries
@@ -90,11 +94,11 @@ glimpse(validation_set)
 
 We can see from `glimpse` in the code above that the training set contains 427 observations, while the validation set contains 142 observations. This corresponds to the training set having 75% of the observations from the original data set and the validation set having the other 25% of the observations. We specified this when we  provided the argument `p = 0.75` to `createDataPartition`. 
 
-#### Creating the k-nn classifier
+#### Creating the K-nearest neighbour classifier
 
-Now that we have split our original data set into a training and validation set, we can create our k-nn classifier using the training set. We explained how to do this last chapter, so here we just do it! For the time being we will just choose a single $k$ of 3, and use the predictors concavity and smoothness.
+Now that we have split our original data set into a training and validation set, we can create our K-nearest neighbour classifier using the training set. We explained how to do this last chapter, so here we just do it! For the time being we will just choose a single $k$ of 3, and use the predictors concavity and smoothness.
 
-```{r 06-create-k-nn-classifier}
+```{r 06-create-K-nearest neighbour-classifier}
 X_train <- training_set %>% 
   select(Concavity, Smoothness) %>% 
   data.frame()
@@ -108,11 +112,11 @@ model_knn <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
 model_knn
 ```
 
-*We set the seed above calling the train function because if there were a tie, the winning class is randomly chosen. In k-nn classification where $k$ = 3 and there are only 2 classes this will never happen, however, if our $k$ was divisible by 2, or if we had more than two possible class labels we could find ourselves in a situtation where we do have a tie.*
+*We set the seed above calling the train function because if there were a tie, the winning class is randomly chosen. In K-nearest neighbour classification where $k$ = 3 and there are only 2 classes this will never happen, however, if our $k$ was divisible by 2, or if we had more than two possible class labels we could find ourselves in a situtation where we do have a tie.*
 
 #### Predict class labels for the validation set
 
-Now that we have a k-nn classifier object, we can use it to predict the class labels for our validation set:
+Now that we have a K-nearest neighbour classifier object, we can use it to predict the class labels for our validation set:
 
 ```{r 06-predict-validation}
 X_validation <- validation_set %>% 
@@ -146,7 +150,7 @@ A lot of information is output from `confusionMatrix`, but what we are intereste
 model_quality$overall[1]
 ```
 
-From a value of accuracy of 0.7957746, we can say that our k-nn classifier predicted the correct class label ~ 80% of the time. 
+From a value of accuracy of 0.7957746, we can say that our K-nearest neighbour classifier predicted the correct class label ~ 80% of the time. 
 
 ## Cross-validation for assessing classifier quality
 
@@ -240,7 +244,7 @@ knn_model_cv_5fold
 
 *This time we set the seed when we call `train` not only because of the potential for ties, but also because we are doing cross-validation. Cross-validation uses a random process to select which observations are included in which folds.*
 
-We can choose any number of folds, typically the more the better. However we are limited by computational power. The more folds we choose, the more computation it takes, and hence the more time it takes to run the analysis. So for each time you do cross-validation you need to consider the size of the data, and the speed of the algorithm (here k-nn) and the speed of your computer. In practice this is a trial and error process. Here we show what happens when we do 10 folds:
+We can choose any number of folds, typically the more the better. However we are limited by computational power. The more folds we choose, the more computation it takes, and hence the more time it takes to run the analysis. So for each time you do cross-validation you need to consider the size of the data, and the speed of the algorithm (here K-nearest neighbour) and the speed of your computer. In practice this is a trial and error process. Here we show what happens when we do 10 folds:
 
 ```{r 06-10-fold}
 train_control <- trainControl(method="cv", number = 10)
@@ -250,7 +254,7 @@ knn_model_cv_10fold <- train(x = X_cancer, y = Y_cancer, method = "knn", tuneGri
 knn_model_cv_10fold
 ```
 
-## Choosing the number of neighbours for k-nn classification
+## Choosing the number of neighbours for K-nearest neighbour classification
 
 From 5- and 10-fold cross-validate we estimate that the prediction accuracy of our classifier to be ~ 83%. This could be not too bad of an accuracy, however what accuracy you aim for always depends on the downstream application of your analysis. Here, we are trying to predict a very important outcome, tumour cell diagnosis class. And the class label we assign to a real patient may have life or death consequences. Hence, we'd like to do better for this application than 83%. To do this we can use cross-validation in an even bigger way, we can choose a range of possible $k$'s and perform cross-validation to calculate the accuracy for each $k$, and then choose the smallest $k$ which gives us the best cross-validation accuracy. To do this, we will create a vector of values for $k$ instead of providing just 1.
 
@@ -373,92 +377,16 @@ source: https://towardsdatascience.com/train-test-split-and-cross-validation-in-
 
 Why do we have this super special test set? This is so we do not violate the golden rule of statistical/machine learning: YOU CANNOT USE THE TEST DATA TO BUILD THE MODEL!!! If you do, this is analagous to a student cheating on a midterm.
 
-## Scaling your data
+## Strengths and limitations of K-nearest neighbour classification
 
-For a knn classifier, the scale of the variables matter. Since the knn classifier predicts classes by identifying observations that are nearest to it, any variables that are on a large scale will have a much larger effect than variables on a small scale. (Even though they might not actually be more important!) For example, suppose your dataset has two attributes: salary (in dollars) and years of education. For the knn classifier, a difference of \$1000 is huge compared to a difference of 10 years of education. For our conceptual understanding and answering of the problem, its the opposite! 10 years of education is huge compared to a difference of \$1000 in yearly salary!
-
-So to prevent an overpowering influence of salary on the distance function we need to standardize our predictors/explanatory variables so that our variables will be on a comparable scale. We can do this with the `scale()` function in R. 
-
-To illustrate the difference between scaled and non-scaled data, and the effect it can have on k-nn, we will read in the original, un-scaled Wisconsin breast cancer data set (we have been using a scaled version of the data set in the textbook and worksheets up until now).
-
-Here we get the data from the UCI Machine learning repository, and then get the equivalent columns that we have been working with in the scaled version of the data set ("worst" measures). We also give the data column names (the data set comes with none).
-
-```{r 06-scaling-1}
-unscaled_cancer <- read_csv("https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data", 
-                            col_names = FALSE) %>% 
-  select(X1, X2, X11:X20)
-colnames(unscaled_cancer) <- colnames(cancer)
-head(unscaled_cancer)
-```
-
-Looking at the unscaled data above, you can see that the difference between the values for smoothness measurements are much larger than those for area. Let's make a scatter plot for these two predictors below (colouring by diagnosis) and then overlay that with a new observation we would like to classify as either benign or malignant with a red dot. We'll do this for the unscaled and scaled data sets, and put them side-by-side:
-
-```{r 06-scaling-2, warning = FALSE, echo =  FALSE,  fig.height = 4, fig.width = 10}
-unscaled_cancer <- unscaled_cancer %>% 
-  select(ID, Class, Area, Smoothness)
-new_obs <- tibble(ID = 99999, Class = "unknown", Area = 3.7, Smoothness = 5.3)
-unscaled_cancer <- bind_rows(unscaled_cancer, new_obs)
-
-unscaled <- ggplot(unscaled_cancer, aes(x = Area, y = Smoothness, color = Class)) +
-    geom_point(alpha = 0.6) +
-    labs(color = "Diagnosis") + 
-    scale_color_manual(labels = c("Benign", "Malignant"), values = c("#56B4E9", "#E69F00", "red")) +
-    labs(color = "Diagnosis") + 
-    ggtitle("unscaled data") +
-    #geom_point(aes(x = 40.73, y = 0.1506), color = cbPalette[6], size = 2.5) + 
-    coord_equal(ratio = 1) +
-    xlim(c(0, 6)) + # zooming into only data that falls between 0 and 86 on the x-axis
-    ylim(c(0, 6))
-
-scaled_cancer <- unscaled_cancer %>% 
-  select(-c(ID,Class)) %>% 
-  scale(center = FALSE) 
-scaled_cancer <- data.frame(ID = unscaled_cancer$ID, Class = unscaled_cancer$Class, scaled_cancer)
-
-scaled <- ggplot(scaled_cancer, aes(x = Area, y = Smoothness, color = Class)) +
-    geom_point(alpha = 0.6) +
-    labs(color = "Diagnosis") + 
-    scale_color_manual(labels = c("Benign", "Malignant"), values = c("#56B4E9", "#E69F00", "red")) +
-    labs(color = "Diagnosis") + 
-    ggtitle("scaled data") +
-    coord_equal(ratio = 1) +
-    #geom_point(aes(x = 0.008637332, y = -1.114815397), color = cbPalette[6], size = 2.5) #+
-    #xlim(c(-2, 3.9)) # zooming into only data that falls between 0 and ~ 3.9 on the x-axis
-    xlim(c(0, 6)) + # zooming into only data that falls between 0 and 86 on the x-axis
-    ylim(c(0, 6))
-    
-gridExtra::grid.arrange(unscaled, scaled, ncol = 2)
-```
-
-In the plot with the unscaled data above, its very clear that k-nn would classify the red dot (new observation) as malignant. However, once we scale the data, the diagnosis class labelling becomes less clear and appears it would depend upon the choice of $k$. Hopefully this graphic drives home the message that scaling the data changes things in an important way when we are using algorithms like k-nn that use distance between points as a part of their decision making process.
-
-How do we scale data in R? The code below demonstrates how we can use the scale function in R to take the `unscaled_cancer` data and scale it:
-
-```{r 06-scaling-3}
-scaled_cancer <- unscaled_cancer %>% 
-  select(-c(ID,Class)) %>% 
-  scale(center = FALSE) 
-scaled_cancer <- data.frame(ID = unscaled_cancer$ID, Class = unscaled_cancer$Class, scaled_cancer)
-head(scaled_cancer)
-```
-
-Scaling your data should be a part of the pre-processing you do before you start doing an analysis where distance between points plays a role. And as we learned in the last two chapters, k-nn classification is one of these.
-
-> What about centering the data? I've heard that is also a data pre-processing step? Yes, it can be helpful but it depends on the algorithm. For k-nn classification centering doesn't help, nor does it hurt. So you can do it if you would like but you do not have to.
-
-## Strengths and limitations of k-nn classification
-
-### Strengths of k-nn classification
+### Strengths of K-nearest neighbour classification
 
 1. Simple and easy to understand
 2. No assumptions about what the data must look like 
 3. Works easily for binary (two-class) and multi-class (> 2 classes) classification problems
 
-### Limitations of k-nn classification
+### Limitations of K-nearest neighbour classification
 
-1. As data gets bigger and bigger, k-nn gets slower and slower, quite quickly
+1. As data gets bigger and bigger, K-nearest neighbour gets slower and slower, quite quickly
 2. Does not perform well with a large number of predictors
 3. Does not perform well when classes are imbalanced (when many more observations are in one of the classes compared to the others)
-
-## Additional readings/resources
-- [The `caret` Package](https://topepo.github.io/caret/index.html)
