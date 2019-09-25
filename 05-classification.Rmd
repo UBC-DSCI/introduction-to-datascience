@@ -1,4 +1,4 @@
-# Classification I: Training & Predicting {#classification}
+# Classification I: Training & predicting {#classification}
 
 ## Overview 
 Up until this point, we have focused solely on descriptive and exploratory questions about data. This chapter and the next together serve as our 
@@ -334,15 +334,6 @@ It can be difficult sometimes to read code as math, so here we mathematically sh
 -----------------     ----------------- ----------------- 
 
 
-**Summary**
-
-In order to classify a new observation using a K-nearest neighbour classifier, we have to:
-
-1. Compute the distance between the new observation and each observation in the training set
-2. Sort the data table in ascending order according to the distances
-3. Choose the top $K$ rows of the sorted table
-4. Classify the new observation based on a majority vote of the neighbour classes
-
 **More than two explanatory variables**
 
 Although the above description is directed toward two explanatory variables / predictors, exactly the same K-nearest neighbour algorithm applies 
@@ -376,6 +367,73 @@ plot_ly(x = ~ Perimeter,
 
 *Click and drag the plot above to rotate it, and scroll to zoom. Note that in general we recommend against using 3D visualizations; here 
 we show the data in 3D only to illustrate what "higher dimensions" look like for learning purposes.*
+
+**Summary**
+
+In order to classify a new observation using a K-nearest neighbour classifier, we have to:
+
+1. Compute the distance between the new observation and each observation in the training set
+2. Sort the data table in ascending order according to the distances
+3. Choose the top $K$ rows of the sorted table
+4. Classify the new observation based on a majority vote of the neighbour classes
+
+
+## K-nearest neighbours in R
+
+Coding the K-nearest neighbour algorithm in R ourselves would get complicated if we might have to predict the label/class for multiple new observations, or when there 
+are multiple classes and more than two variables. Thankfully, in R, the K-nearest neighbour algorithm is implemented in 
+the [`caret` package](https://topepo.github.io/caret/index.html) (**c**lassification **a**nd **re**gression **t**raining). The `caret` library 
+contains a set of tools to help make and use predictive models, such as classifiers. 
+Using this package will help keep our code simple, readable and accurate; the less we have to code ourselves, the less mistakes we are likely to make.
+
+We start off by loading the `caret` library:
+
+```{r 05-caret}
+library(caret)
+```
+
+Let's again suppose we have a new observation with perimeter -1 and concavity 4.2, but its diagnosis is unknown (as in our example above). Suppose we again want to use the 
+perimeter and concavity explanatory variables/predictors to predict the diagnosis class of this observation. Let's pick out our 2 desired variables and store it as a 
+new dataset named `cancer_train`:
+
+```{r 05-caret-2}
+cancer_train <- cancer %>%
+  select("Perimeter", "Concavity")
+head(cancer_train)
+```
+
+Next, we store the diagnosis class labels (column `Class`) as a vector:
+```{r 05-caret-3}
+cancer_labels <- cancer %>% 
+  select(Class) %>% 
+  unlist()
+head(cancer_labels)
+```
+
+We will use the function `train()`, where the argument `x` is a data frame object containing the explanatory variables/predictors, and `y` is a numeric or factor vector containing 
+the outcomes/labels/classes. The arguments `x` and `y` should come from the original data frame and be in the same order. The argument `tuneGrid` should be a data frame with 
+possible "tuning values". For now, just know that this is where we will specify $K=5$ (the number of nearest neighbours to vote on the predicted class). We will discuss how to 
+choose $K$ in the next chapter. We will use "knn" as our `method`. 
+
+
+```{r 05-train}
+k <- data.frame(k = 5)
+model_knn <- train(x = data.frame(cancer_train), y = cancer_labels, method='knn', tuneGrid = k)
+```
+> **Note:** the `caret` package expects `data.frames` and not `tibbles` (a special kind of data frames). This is a 
+> bit annoying, and will likely change in the future, but for now we have to change `tibbles` to `data.frames` when using `caret`.
+
+Now we can create a `data.frame` with our new observation and predict the label of the new observation using the `predict` function:
+
+```{r 05-predict}
+new_obs <- data.frame(Perimeter = -1, Concavity = 4.2)
+predict(object = model_knn, new_obs)
+```
+
+Our model classifies this new observation as malignant. In the next chapter, we will discuss evaluating how accurate our predictions are, and selecting the value of $K$
+to maximize that accuracy.
+
+
 
 
 ## Data preprocessing 
@@ -503,6 +561,12 @@ rare_plot <- rare_cancer %>%
 rare_plot
 ```
 
+> Note: You will see in the code above that we use the `set.seed` function. This is because we are using `sample_n` to artificially pick
+> only 3 of the malignant tumour observations, which uses random sampling to choose which rows will be in the training set. In order to
+> make the code reproducible, we use `set.seed` to specify where the random number generator starts for this 
+> process, which then guarantees the same result, i.e., the same choice of 3 observations, each time the code is run. In general, when your
+> code involves random numbers, if you want *the same result* each time, you should use `set.seed`; if you want a *different result* each time,
+> you should not.
 
 Suppose we now decided to use $K = 7$ in K-nearest neighbour classification. With only 3 observations of malignant
 tumours, the classifier will *always predict that the tumour is benign, no matter what its concavity and perimeter are!* This is because in a majority
@@ -615,61 +679,5 @@ rare_plot
 </center>
 
 
-
-
-## K-nearest neighbours in R
-
-Coding the K-nearest neighbour algorithm in R ourselves would get complicated if we might have to predict the label/class for multiple new observations, or when there 
-are multiple classes and more than two variables. Thankfully, in R, the K-nearest neighbour algorithm is implemented in 
-the [`caret` package](https://topepo.github.io/caret/index.html) (**c**lassification **a**nd **re**gression **t**raining). The `caret` library 
-contains a set of tools to help make and use predictive models, such as classifiers. 
-Using this package will help keep our code simple, readable and accurate; the less we have to code ourselves, the less mistakes we are likely to make.
-
-We start off by loading the `caret` library:
-
-```{r 05-caret}
-library(caret)
-```
-
-Let's again suppose we have a new observation with perimeter -1 and concavity 4.2, but its diagnosis is unknown (as in our example above). Suppose we again want to use the 
-perimeter and concavity explanatory variables/predictors to predict the diagnosis class of this observation. Let's pick out our 2 desired variables and store it as a 
-new dataset named `cancer_train`:
-
-```{r 05-caret-2}
-cancer_train <- cancer %>%
-  select("Perimeter", "Concavity")
-head(cancer_train)
-```
-
-Next, we store the diagnosis class labels (column `Class`) as a vector:
-```{r 05-caret-3}
-cancer_labels <- cancer %>% 
-  select(Class) %>% 
-  unlist()
-head(cancer_labels)
-```
-
-We will use the function `train()`, where the argument `x` is a data frame object containing the explanatory variables/predictors, and `y` is a numeric or factor vector containing 
-the outcomes/labels/classes. The arguments `x` and `y` should come from the original data frame and be in the same order. The argument `tuneGrid` should be a data frame with 
-possible "tuning values". For now, just know that this is where we will specify $K=5$ (the number of nearest neighbours to vote on the predicted class). We will discuss how to 
-choose $K$ in the next chapter. We will use "knn" as our `method`. 
-
-
-```{r 05-train}
-k <- data.frame(k = 5)
-model_knn <- train(x = data.frame(cancer_train), y = cancer_labels, method='knn', tuneGrid = k)
-```
-> **Note:** the `caret` package expects `data.frames` and not `tibbles` (a special kind of data frames). This is a 
-> bit annoying, and will likely change in the future, but for now we have to change `tibbles` to `data.frames` when using `caret`.
-
-Now we can create a `data.frame` with our new observation and predict the label of the new observation using the `predict` function:
-
-```{r 05-predict}
-new_obs <- data.frame(Perimeter = -1, Concavity = 4.2)
-predict(object = model_knn, new_obs)
-```
-
-Our model classifies this new observation as malignant. In the next chapter, we will discuss evaluating how accurate our predictions are, and selecting the value of $K$
-to maximize that accuracy.
 
 

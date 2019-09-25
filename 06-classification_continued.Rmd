@@ -1,4 +1,4 @@
-# Classification II: Tuning & Testing {#classification_continued}
+# Classification II: Evaluation & tuning {#classification_continued}
 
 ## Overview 
 This chapter continues the introduction to predictive modelling through classification. While the previous chapter
@@ -14,7 +14,7 @@ By the end of the chapter, students will be able to:
 - Execute cross-validation in R to choose the number of neighbours in a K-nearest neighbour classifier
 - Describe advantages and disadvantages of the K-nearest neighbour classification algorithm
 
-## Evaluating classification accuracy
+## Evaluating accuracy
 
 Sometimes our classifier might make the wrong prediction. A classifier does not need to be right 100\% of 
 the time to be useful, though we don't want the classifier to make too many wrong predictions. How do we measure 
@@ -24,30 +24,32 @@ will be asked to decide whether the tumour is benign or malignant. The key word 
 if it provides accurate predictions on data *not seen during training*. But then how can we evaluate our classifier
 without having to visit the hospital to collect more tumour images? 
 
-The trick is to split up the data set into a **training set** and **validation set**, and only show the classifier 
+The trick is to split up the data set into a **training set** and **test set**, and only show the classifier 
 the **training set** when building the classifier. Then to evaluate the accuracy of the classifier, we can use
-it to predict the labels (which we know) in the **validation set**. If our predictions match the true 
-labels for the observations in the **validation set** very well, then we have some confidence that our 
+it to predict the labels (which we know) in the **test set**. If our predictions match the true 
+labels for the observations in the **test set** very well, then we have some confidence that our 
 classifier might also do a good job of predicting the class labels for new observations that we do not have the 
 class labels for.
 
-> **Note:** when we split the data, we make the assumption that there is no order to our originally 
-> collected data set. However, if we think that there might be some order to the original data set, then we can randomly 
-> shuffle the data before splitting it.  
+> Note: if there were a golden rule of machine learning, it might be this: *you cannot use the test data to build the model!* 
+> If you do, the model gets to "see" the test data in advance, making it look more accurate than it really is. Imagine
+> how bad it would be to overestimate your classifier's accuracy when predicting whether a patient's tumour is malignant or benign!
 
 <center><img src="img/training_validation.jpeg" width="600" /></center>
+(TODO CHANGE VALIDATION TO TEST IN IMG)
 
-How exactly can we assess how well our predictions match the true labels for the observations in the **validation set**? One way 
-we can do this is to calculate the **prediction accuracy**. This is essentially the proportion of time the classifier was 
-correct. To calculate this we divide the number of correct predictions by the number of predictions made. Other measures for 
-how well our classifier did include *precision* and *recall* (which will not be discussed here, but are discussed in 
-other more advanced courses on this topic). This process is illustrated below:
+How exactly can we assess how well our predictions match the true labels for the observations in the test set? One way 
+we can do this is to calculate the **prediction accuracy**. This is the fraction of examples for which the classifier made
+the correct prediction. To calculate this we divide the number of correct predictions by the number of predictions made. Other 
+measures for how well our classifier performed include *precision* and *recall*; these will not be discussed here, but 
+you will encounter them in other more advanced courses on this topic. This process is illustrated below:
 
 <center><img src="img/ML-paradigm.png" width="800" /></center>
 
-### Assessing your classifier in R
 
-We can use the `caret` package in R to not only perform K-nearest neighbour classification, but also to assess how well our classification worked. Let's start by loading the necessary libraries, data (we'll continue exploring the breast cancer data set from last chapter) and making a quick scatter plot of tumour cell concavity versus smoothness, labelling the points be diagnosis class.
+In R, we can use the `caret` package not only to perform K-nearest neighbour classification, but also to assess how well our 
+classification worked. Let's start by loading the necessary libraries, reading in the breast cancer data from the previous
+chapter, and making a quick scatter plot visualization of tumour cell concavity versus smoothness coloured by diagnosis.
 
 ```{r 06-precode, message = FALSE, fig.height = 4, fig.width = 5}
 # load libraries
@@ -71,13 +73,17 @@ perim_concav <- cancer %>%
 perim_concav
 ```
 
-#### Splitting into training and validation sets
+**1. Create the train / test split**
 
-Next, lets split our data into a training and a validation set using `caret`'s `createDataPartition` function. When using this function to split a data set into a training and validation set it takes 3 arguments:
+Once we have decided on a predictive question to answer and done some preliminary exploration, the 
+very next thing to do is to split the data
+into the training and test sets. Typically, the training set is between 50 - 100% of the data, while the test
+set is the remaining 0 - 50%. Here, we will use 75% of the data for training, and 25% for testing. 
+To do this we will use the `createDataPartition` function from the `caret` package, specifying values for 3 arguments: 
 
-1. `y` (the class labels, must be a vector), 
-2. `p` (the proportion of the data you would like in the training data set), and 
-3. `list = FALSE` (says we want the data back as a matrix instead of a list).
+1. `y`: the class labels. These must be a vector.
+2. `p`: the proportion (between 0 and 1) of the data you would like in the training data set.
+3. `list = FALSE`: this states that we want the training and test sets in the form of a matrix, not a list.
 
 The `createDataPartition` function returns the row numbers for the training set. 
 
@@ -90,25 +96,30 @@ set_rows <- cancer %>%
 head(set_rows)
 ```
 
-*You will also see in the code above that we use the `set.seed` function. This is because `createDataPartition` uses random sampling to choose which rows will be in the training set, and if we use `set.seed` to specify where the random number generator starts for this process then we can make our analysis reproducible (always get the same random set of observations in the training set). We should always set a seed before any function that uses a random process. We'll point out where as we work through this code.*
+> Note: You will see in the code above that we use the `set.seed` function again, as discussed in the previous chapter. In this case it is because
+> `createDataPartition` uses random sampling to choose which rows will be in the training set. Since we want our code to be reproducible
+> and generate the same train/test split each time it is run, we use `set.seed`. 
 
-Now that we have the row numbers for the training set, we can use the `slice` function to get the rows from the original data set (here `cancer`) to create the training set and the validation sets.
+Now that we have the row numbers for the training set, we can use the `slice` function to get the rows from the original data set (here `cancer`) to create the training and test data sets.
 
-```{r 06-create-training-and-validation-sets}
+```{r 06-create-training-and-test-sets}
 training_set <- cancer %>% slice(set_rows)
-validation_set <- cancer %>% slice(-set_rows)
+test_set <- cancer %>% slice(-set_rows)
 glimpse(training_set)
 ```
 
-```{r 06-validation-set}
-glimpse(validation_set)
+```{r 06-test-set}
+glimpse(test_set)
 ```
 
-We can see from `glimpse` in the code above that the training set contains 427 observations, while the validation set contains 142 observations. This corresponds to the training set having 75% of the observations from the original data set and the validation set having the other 25% of the observations. We specified this when we  provided the argument `p = 0.75` to `createDataPartition`. 
+We can see from `glimpse` in the code above that the training set contains 427 observations, while the test set contains 142 observations. This 
+corresponds to a train / test split of 75% / 25%, as desired.
 
-#### Creating the K-nearest neighbour classifier
+**2. Train the classifier**
 
-Now that we have split our original data set into a training and validation set, we can create our K-nearest neighbour classifier using the training set. We explained how to do this last chapter, so here we just do it! For the time being we will just choose a single $k$ of 3, and use the predictors concavity and smoothness.
+Now that we have split our original data set into training and test sets, we can create our K-nearest neighbour classifier with only the training set
+using the technique we learned in the previous chapter. For now, we will just choose the number $K$ of neighbours to be 3, and use concavity and
+smoothness as the predictors.
 
 ```{r 06-create-K-nearest neighbour-classifier}
 X_train <- training_set %>% 
@@ -124,47 +135,71 @@ model_knn <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
 model_knn
 ```
 
-*We set the seed above calling the train function because if there were a tie, the winning class is randomly chosen. In K-nearest neighbour classification where $k$ = 3 and there are only 2 classes this will never happen, however, if our $k$ was divisible by 2, or if we had more than two possible class labels we could find ourselves in a situtation where we do have a tie.*
+> Note: Here again you see the `set.seed` function. In the K-nearest neighbour implementation in `caret`, when
+> there is a tie for the majority neighbour class, the winner is randomly selected. Although there is no chance
+> of a tie when $K$ is odd (here $K=3$), it is possible that the code may be changed in the future to have an even value of $K$. 
+> Thus, to prevent potential issues with reproducibility, we have set the seed. Note that in your own code,
+> you only have to set the seed once at the beginning of your analysis. 
 
-#### Predict class labels for the validation set
+**3. Predict the labels in the test set**
 
-Now that we have a K-nearest neighbour classifier object, we can use it to predict the class labels for our validation set:
+Now that we have a K-nearest neighbour classifier object, we can use it to predict the class labels for our test set:
 
-```{r 06-predict-validation}
-X_validation <- validation_set %>% 
+```{r 06-predict-test}
+X_test <- test_set %>% 
   select(Concavity, Smoothness) %>% 
   data.frame()
-Y_validation_predicted <- predict(object = model_knn, X_validation)
-head(Y_validation_predicted)
+Y_test_predicted <- predict(object = model_knn, X_test)
+head(Y_test_predicted)
 ```
 
+**4. Compute the accuracy**
 
+Finally we can assess our classifier's accuracy. To do this we need to create a vector containing the class labels for the test 
+set. Next we use the function `confusionMatrix` to get the statistics about the quality of our model, this includes the 
+statistic we are interested: accuracy.  `confusionMatrix` takes two arguments:
 
-#### Assessing our classifier's accuracy
-
-Finally we can assess our classifier's accuracy. To do this we need to create a vector containing the class labels for the validation set. Next we use the function `confusionMatrix` to get the statistics about the quality of our model, this includes the statistic we are interested: accuracy.  `confusionMatrix` takes two arguments:
-
-1. `data` (the predicted class labels for the validation set), and 
-2. `reference` (the original/measured class labels for the validation set).
+1. `data` (the predicted class labels for the test set), and 
+2. `reference` (the original/measured class labels for the test set).
 
 ```{r 06-accuracy}
-Y_validation <- validation_set %>% 
+Y_test <- test_set %>% 
   select(Class) %>% 
   unlist()
 
-model_quality <- confusionMatrix(data = Y_validation_predicted, reference = Y_validation)
+model_quality <- confusionMatrix(data = Y_test_predicted, reference = Y_test)
 model_quality
 ```
 
-A lot of information is output from `confusionMatrix`, but what we are interested in at this point is accuracy (found on the 6th line of printed output). That single value can be obtained from the `confusionMatrix` object using base/built-in R subsetting:
+A lot of information is output from `confusionMatrix`, but what we are interested in at this point is accuracy (found 
+on the 6th line of printed output). That single value can be obtained from the `confusionMatrix` object using base/built-in R subsetting:
 
 ```{r 06-model-quality}
 model_quality$overall[1]
 ```
 
-From a value of accuracy of 0.7957746, we can say that our K-nearest neighbour classifier predicted the correct class label ~ 80% of the time. 
+From a value of accuracy of 0.7957746, we can say that our K-nearest neighbour classifier predicted the correct class 
+label on roughly 80% of the examples. 
 
-## Cross-validation for assessing classifier quality
+## Tuning the classifier
+
+How can we pick K? split up the training set!
+
+> Note: Remember: don't touch the test set!
+
+### Cross validation
+
+<center>
+<figure class="image">
+<img src="img/testing.png" width="600"/>
+<figcaption> 
+The standard data set split pattern in machine learning. Source: https://towardsdatascience.com/train-test-split-and-cross-validation-in-python-80b61beca4b6
+</figcaption>
+</figure>
+</center>
+
+
+### Choosing the number of neighbours
 
 Is that the best estimate of accuracy that we can get? What would happen if we again shuffled the observations in our training and validation sets, would we get the same accuracy? Let's do and experiment and see. By changing the `set.seed` value, we can get a different shuffle of the data when we create our training and validation data sets. 
 
@@ -389,9 +424,23 @@ source: https://towardsdatascience.com/train-test-split-and-cross-validation-in-
 
 Why do we have this super special test set? This is so we do not violate the golden rule of statistical/machine learning: YOU CANNOT USE THE TEST DATA TO BUILD THE MODEL!!! If you do, this is analagous to a student cheating on a midterm.
 
-## Summary of K-nearest neighbour classification
+## Splitting data
 
-KNN is a way of doing X
+### Shuffling
+
+> **Note:** when we split the data, we make the assumption that there is no order to our originally 
+> collected data set. However, if we think that there might be some order to the original data set, then we can randomly 
+> shuffle the data before splitting it.  
+
+### Stratification
+
+[TODO]
+
+## Summary
+
+- KNN is a way of doing X
+
+- write down the overall workflow here
 
 **Strengths:**
 
