@@ -36,7 +36,7 @@ class labels for.
 > how bad it would be to overestimate your classifier's accuracy when predicting whether a patient's tumour is malignant or benign!
 
 <center><img src="img/training_validation.jpeg" width="600" /></center>
-(TODO CHANGE VALIDATION TO TEST IN IMG)
+**(TODO CHANGE VALIDATION TO TEST IN IMG)**
 
 How exactly can we assess how well our predictions match the true labels for the observations in the test set? One way 
 we can do this is to calculate the **prediction accuracy**. This is the fraction of examples for which the classifier made
@@ -45,7 +45,7 @@ measures for how well our classifier performed include *precision* and *recall*;
 you will encounter them in other more advanced courses on this topic. This process is illustrated below:
 
 <center><img src="img/ML-paradigm.png" width="800" /></center>
-(TODO CHANGE VALIDATION TO TEST IN IMG)
+**(TODO CHANGE VALIDATION TO TEST IN IMG)**
 
 
 In R, we can use the `caret` package not only to perform K-nearest neighbour classification, but also to assess how well our 
@@ -91,7 +91,7 @@ To do this we will use the `createDataPartition` function from the `caret` packa
 The `createDataPartition` function returns the row numbers for the training set. 
 
 ```{r 06-get-indices-for-training-set}
-set.seed(1234) # makes the random selection of rows reproducible
+set.seed(1) # makes the random selection of rows reproducible
 set_rows <- cancer %>% 
   select(Class) %>% 
   unlist() %>% # converts Class from a tibble to a vector
@@ -133,7 +133,7 @@ Y_train <- training_set %>%
   unlist()
 k = data.frame(k = 3)
 
-set.seed(1234)
+set.seed(1)
 model_knn <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
 model_knn
 ```
@@ -181,8 +181,8 @@ on the 6th line of printed output). That single value can be obtained from the `
 model_quality$overall[1]
 ```
 
-From a value of accuracy of 0.7957746, we can say that our K-nearest neighbour classifier predicted the correct class 
-label on roughly 80% of the examples. 
+From a value of accuracy of around 0.824, we can say that our K-nearest neighbour classifier predicted the correct class 
+label on roughly 82% of the examples. 
 
 ## Tuning the classifier
 
@@ -201,7 +201,7 @@ and pick the one that yields the highest accuracy.
 
 There is an important detail to mention about the process of tuning: we can, if we want to, split our overall training data up 
 in multiple different ways, train and evaluate a classifier for each split, and then choose the parameter based on *all* of the 
-different results. If we just split our overall training data *once*, our best parameter choice will depend entirely on whatever 
+different results. If we just split our overall training data *once*, our best parameter choice will depend strongly on whatever 
 data was lucky enough to end up in the validation set. Perhaps using multiple different train / validation splits, we'll 
 get a better estimate of accuracy, which will lead to a better choice of the number of neighbours $K$ for the overall
 set of training data. 
@@ -210,181 +210,126 @@ set of training data.
 > because at the end of the day, we will produce a single classifier using our overall training data. If we do multiple train / test splits, we will
 > end up with multiple classifiers, each with their own accuracy evaluated on different test data!
 
-###
-Specifically, we will split our **training data set** into $C$ evenly-sized chunks (usually in practice researchers have chosen $C$ to be 5 or 10),
-
-Is that the best estimate of accuracy that we can get? What would happen if we again shuffled the observations in our training and validation sets, would we get the same accuracy? Let's do and experiment and see. By changing the `set.seed` value, we can get a different shuffle of the data when we create our training and validation data sets. 
-
-Using `set.seed(4321)`
-###
-
-
-Let's investigate this idea in R! In particular, we will generate three different train / validation splits of our overall training data,
-train three different K-nearest neighbour models, and evaluate them using different seed values in the `set.seed` function. First we'll
-rename our overall training data.
+Let's investigate this idea in R! In particular, we will use different seed values in the `set.seed` function to generate 
+five different train / validation splits of our overall training data, train five different K-nearest neighbour models, and 
+evaluate their accuracy. First we'll rename our overall training data.
 
 ```{r 06-rename-train}
 X_train_total <- X_train
 Y_train_total <- Y_train
 ```
 
-The first seed value we'll use is 1:
-
-```{r 06-set-seed-1}
-set.seed(1) # makes the random selection of rows reproducible
-# create the 75 / 25 train/validation split
-set_rows <- Y_train_total %>% 
-  createDataPartition(p = 0.75, list = FALSE)
-
-#split the X and Y data into train/validation
-X_train <- X_train_total %>% slice(set_rows)
-Y_train <- Y_train_total[set_rows]
-X_validation <- X_train_total %>% slice(-set_rows)
-Y_validation <- Y_train_total[-set_rows]
-
-#train the KNN model with K=3, and predict the validation labels
-k = data.frame(k = 3)
-model_knn <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
-Y_validation_predicted <- predict(object = model_knn, X_validation)
-
-#compute the accuracy
-model_quality <- confusionMatrix(data = Y_validation_predicted, reference = Y_validation)
-model_quality$overall[1]
-```
-
-The second we'll use is 2:
-
-```{r 06-set-seed-2}
-set.seed(2) # makes the random selection of rows reproducible
-# create the 75 / 25 train/validation split
-set_rows <- Y_train_total %>% 
-  createDataPartition(p = 0.75, list = FALSE)
-
-#split the X and Y data into train/validation
-X_train <- X_train_total %>% slice(set_rows)
-Y_train <- Y_train_total[set_rows]
-X_validation <- X_train_total %>% slice(-set_rows)
-Y_validation <- Y_train_total[-set_rows]
-
-#train the KNN model with K=3, and predict the validation labels
-k = data.frame(k = 3)
-model_knn <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
-Y_validation_predicted <- predict(object = model_knn, X_validation)
-
-#compute the accuracy
-model_quality <- confusionMatrix(data = Y_validation_predicted, reference = Y_validation)
-model_quality$overall[1]
-```
-
-And finally, for the third we'll use 3:
+Then we'll try 5 different random train / validation splits of the data and record the accuracy:
 
 ```{r 06-set-seed-3}
-set.seed(3) # makes the random selection of rows reproducible
-# create the 75 / 25 train/validation split
-set_rows <- Y_train_total %>% 
-  createDataPartition(p = 0.75, list = FALSE)
-
-#split the X and Y data into train/validation
-X_train <- X_train_total %>% slice(set_rows)
-Y_train <- Y_train_total[set_rows]
-X_validation <- X_train_total %>% slice(-set_rows)
-Y_validation <- Y_train_total[-set_rows]
-
-#train the KNN model with K=3, and predict the validation labels
-k = data.frame(k = 3)
-model_knn <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
-Y_validation_predicted <- predict(object = model_knn, X_validation)
-
-#compute the accuracy
-model_quality <- confusionMatrix(data = Y_validation_predicted, reference = Y_validation)
-model_quality$overall[1]
+accuracies <- c()
+for (i in 1:5){
+    set.seed(i) # makes the random selection of rows reproducible
+    # create the 75 / 25 train/validation split
+    set_rows <- Y_train_total %>% 
+      createDataPartition(p = 0.75, list = FALSE)
+    
+    #split the X and Y data into train/validation
+    X_train <- X_train_total %>% slice(set_rows)
+    Y_train <- Y_train_total[set_rows]
+    X_validation <- X_train_total %>% slice(-set_rows)
+    Y_validation <- Y_train_total[-set_rows]
+    
+    #train the KNN model with K=3, and predict the validation labels
+    k = data.frame(k = 3)
+    model_knn <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
+    Y_validation_predicted <- predict(object = model_knn, X_validation)
+    
+    #compute the accuracy
+    model_quality <- confusionMatrix(data = Y_validation_predicted, reference = Y_validation)
+    accuracies <- append(accuracies, model_quality$overall[1])
+}
+accuracies
 ```
 
-With three different shuffles of the data, we get three different values for accuracy: 0.80, 0.92, and 0.81! Which 
-one is correct? Sadly, there is no easy answer to that question. The best we can do is to do this many times and take 
-the average of the accuracies. Typically this is done is a more structured way so that each observation in the data 
-set is used in a validation set only a single time. The name for this strategy is called cross-validation and we illustrate it below:
+With five different shuffles of the data, we get five different values for accuracy: 0.83, 0.88, 0.84, 0.82, and 0.89! 
+None of these is necessarily "more correct" than any other; they're just five estimates of the true, underlying accuracy of our
+classifier built using our overall training data. We can combine the estimates by taking their average (here 0.851) to
+try to get a single assessment of our classifier's accuracy; this has the effect of reducing the influence of any one (un)lucky
+validation set on the estimate.
+
+In practice, we don't use random splits, but rather use a more structured splitting procedure so that each observation in the data 
+set is used in a validation set only a single time. The name for this strategy is called **cross-validation**.
+In **cross-validation**, we split our **overall training data** into $C$ evenly-sized chunks,
+and then iteratively use $1$ chunk as the **validation set** and combine the remaining $C-1$ chunks as the **training set**:
 
 <img src="img/cv.png" width="800" />
 
-In the picture above, 5 different folds/partitions of the data set are shown, and consequently we call this 5-fold cross-validation. To do 5-fold cross-validation in R with `caret`, we use another function called `trainControl`. This function passes additional information to the `train` function we use to create our classifier. The arguments we pass `trainControl` are:
+In the picture above, $C=5$ different chunks of the data set are used, resulting in 5 different choices for the **validation set**; we 
+call this *5-fold* cross-validation. To do 5-fold 
+cross-validation in R with `caret`, we use another function called `trainControl`. This function passes additional information to 
+the `train` function we use to create our classifier. The arguments we pass `trainControl` are:
 
-1. `method` (method used for assessing classifier quality, here we specify `"cv"` for cross-validation)
-2. `number` (how many folds/partitions of the data set we want to use for cross validation)
+1. `method="cv"`: specifies to use cross-validation for assessing quality
+2. `number`: how many chunks to split the data into for cross validation
 
 ```{r 06-train-control}
 train_control <- trainControl(method="cv", number = 5)
 ```
 
-Then when we create our classifier we add an additional argument to `train`, called `trControl` where we give it the name of the object we created with the `trainControl` function. Additionally, we do not need to specify a training and a validation set because we are telling `train` that we are doing cross validation (it will take care creating the folds, calculating the accuracy for each fold and averaging the accuracies for us).
+Then, when we create our classifier, we add an additional argument to `train` called `trControl`, which we set to the `train_control` object
+we just created. One benefit of using `caret` for this is that we do not need to manually do any of the work of cross-validation ourselves;
+the `train` function will handle creating the chunks, doing multiple rounds of training and evaluation, and averaging the results for us. 
 
 ```{r 06-5-fold}
-X_cancer <- cancer %>% 
-  select(Concavity, Smoothness) %>% 
-  data.frame()
-Y_cancer <- cancer %>% 
-  select(Class) %>% 
-  unlist()
-k = data.frame(k = 3)
-
 set.seed(1234)
-knn_model_cv_5fold <- train(x = X_cancer, y = Y_cancer, method = "knn", tuneGrid = k, trControl = train_control)
+k = data.frame(k = 3)
+knn_model_cv_5fold <- train(x = X_train_total, y = Y_train_total, method = "knn", tuneGrid = k, trControl = train_control)
 knn_model_cv_5fold
 ```
 
-*This time we set the seed when we call `train` not only because of the potential for ties, but also because we are doing cross-validation. Cross-validation uses a random process to select which observations are included in which folds.*
+> **Note:** we set the seed when we call `train` not only because of the potential for ties, but also because we are doing 
+> cross-validation. Cross-validation uses a random process to select how to partition the training data.
 
-We can choose any number of folds, typically the more the better. However we are limited by computational power. The more folds we choose, the more computation it takes, and hence the more time it takes to run the analysis. So for each time you do cross-validation you need to consider the size of the data, and the speed of the algorithm (here K-nearest neighbour) and the speed of your computer. In practice this is a trial and error process. Here we show what happens when we do 10 folds:
+We can choose any number of folds, and typically the more we use the better our accuracy estimate will be. However, we are limited by 
+computational power: the more folds we choose, the  more computation it takes, and hence the more time it takes to run the analysis. So 
+when you do cross-validation, you need to consider the size of the data, and the speed of the algorithm (e.g., K-nearest neighbour) and 
+the speed of your computer. In practice, this is a trial and error process, but typically $C$ is chosen to be either 5 or 10. Here we 
+show what happens when we split the data into 10 chunks and do 10-fold cross-validation:
 
 ```{r 06-10-fold}
 train_control <- trainControl(method="cv", number = 10)
 
 set.seed(1234)
-knn_model_cv_10fold <- train(x = X_cancer, y = Y_cancer, method = "knn", tuneGrid = k, trControl = train_control)
+knn_model_cv_10fold <- train(x = X_train_total, y = Y_train_total, method = "knn", tuneGrid = k, trControl = train_control)
 knn_model_cv_10fold
 ```
 
+### Parameter value selection
 
-
-
-
-
-
-### Cross-validation
-
-<center>
-<figure class="image">
-<img src="img/testing.png" width="600"/>
-<figcaption> 
-A typical 10-fold cross-validation data set split. <br>Source: https://towardsdatascience.com/train-test-split-and-cross-validation-in-python-80b61beca4b6
-</figcaption>
-</figure>
-</center>
-
-
-### Choosing the number of neighbours
-
-### Choosing the number of neighbours for K-nearest neighbour classification
-
-From 5- and 10-fold cross-validate we estimate that the prediction accuracy of our classifier to be ~ 83%. This could be not too bad of an accuracy, however what accuracy you aim for always depends on the downstream application of your analysis. Here, we are trying to predict a very important outcome, tumour cell diagnosis class. And the class label we assign to a real patient may have life or death consequences. Hence, we'd like to do better for this application than 83%. To do this we can use cross-validation in an even bigger way, we can choose a range of possible $k$'s and perform cross-validation to calculate the accuracy for each $k$, and then choose the smallest $k$ which gives us the best cross-validation accuracy. To do this, we will create a vector of values for $k$ instead of providing just 1.
+Using 5- and 10-fold cross-validation, we have estimated that the prediction accuracy of our classifier is somewhere 
+around 85%. Whether 85% is good or not depends entirely on the downstream application of the data analysis. In the 
+present situation, we are trying to predict a tumour diagnosis, with expensive, damaging chemo/radiation therapy
+or patient death as potential consequences of misprediction. Hence, we'd like to do better than 85% for this application. 
+In order to improve our classifier, we have one choice of parameter: the number of neighbours, $K$. Since cross-validation
+helps us evaluate the accuracy of our classifier, we can use cross-validation to calculate an accuracy for each value of $K$ in
+a reasonable range, and then pick the value of $K$ that gives us the best accuracy. In R, we can accomplish this *tuning* by 
+passing a vector of values for $K$ to the `tuneGrid` argument of `train`.
 
 ```{r 06-range-cross-val}
 train_control <- trainControl(method="cv", number = 10)
 k = data.frame(k = c(1, 3, 5, 7, 9, 11, 13, 15, 17))
 
 set.seed(1234)
-knn_model_cv_10fold <- train(x = X_cancer, y = Y_cancer, method = "knn", tuneGrid = k, trControl = train_control)
+knn_model_cv_10fold <- train(x = X_train_total, y = Y_train_total, method = "knn", tuneGrid = k, trControl = train_control)
 knn_model_cv_10fold
 ```
 
-Then to help us choose $k$ it is very useful to visualize the accuracies as we increase $k$. This will help us choose the smallest $k$ with the biggest accuracy. We can access the results from the cross-validation by accessing the`results` attribute of the `train` object (our classifier).
+Although `caret` provides a selection of $K=11$ for us by maximizing the accuracy estimate, it is helpful regardless to visualize
+the accuracy as we increase $K$. We can access the results from the cross-validation via the`results` attribute of 
+the `train` object (our classifier).
 
 ```{r 06-accuracies}
 accuracies <- knn_model_cv_10fold$results
 accuracies 
 ```
 
-Now we can plot accuracy versus k:
+Now we can plot accuracy versus $K$:
 
 ```{r 06-find-k, fig.height = 4, fig.width = 5}
 accuracy_vs_k <- ggplot(accuracies, aes(x = k, y = Accuracy)) +
@@ -393,16 +338,26 @@ accuracy_vs_k <- ggplot(accuracies, aes(x = k, y = Accuracy)) +
 accuracy_vs_k
 ```
 
+Based off of the visualization above, we might agree with `caret`'s choice of $K=11$. But as you can see, there is no exact or perfect 
+answer here; any choice between $K=8$ and $K = 15$ would be reasonably justified. Remember: the values you see on this plot are *estimates*
+of the true accuracy of our classifier. Although the $K=11$ value is higher than the others on this plot, that doesn't mean the classifier is
+actually more accurate with this parameter value! Generally, when selecting $K$ (and other parameters for other predictive models), we are looking 
+for a value where:
 
-Based off of the visualization above we typically would choose $k$ to be ~ 11, given that at this value of $k$ our accuracy is a high as it can be with much larger values of $k$. As you can see there is no exact or perfect answer here, what we are looking for is a value for $k$ where we get a roughly optimal increase of accuracy but at the same time we want to keep $k$ small.
+- we get roughly optimal accuracy, so that our model will likely be accurate
+- changing the value to a nearby one (e.g. from $K=11$ to 10 or 12) doesn't decrease accuracy too much, so that our choice is reliable in the presence of uncertainty
+- the cost of training the model is not prohibitive (e.g., in our situation, if $K$ is too large, predicting becomes expensive!)
 
-Why do we want to keep $k$ small? Well this is because if we keep increasing $k$ our accuracy actually starts to decrease! Take a look as the plot below as we vary $k$ from 1 to almost the number of observations in the data set:
+### Under/overfitting
+
+To build a bit more intuition, what happens if we keep increasing the number of neighbours $K$? In fact, the accuracy 
+actually starts to decrease! Take a look as the plot below as we vary $K$ from 1 to almost the number of observations in the data set:
 
 ```{r 06-lots-of-ks, fig.height = 4, fig.width = 5}
 train_control <- trainControl(method="cv", number = 10)
 k_lots = data.frame(k = seq(from = 1, to = 499, by = 10))
 set.seed(1234)
-knn_model_cv_10fold_lots <- train(x = X_cancer, y = Y_cancer, method = "knn", tuneGrid = k_lots, trControl = train_control)
+knn_model_cv_10fold_lots <- train(x = X_train_total, y = Y_train_total, method = "knn", tuneGrid = k_lots, trControl = train_control)
 accuracies_lots <- knn_model_cv_10fold_lots$results
 accuracy_vs_k_lots <- ggplot(accuracies_lots, aes(x = k, y = Accuracy)) +
   geom_point() +
@@ -410,19 +365,73 @@ accuracy_vs_k_lots <- ggplot(accuracies_lots, aes(x = k, y = Accuracy)) +
 accuracy_vs_k_lots
 ```
 
+**Underfitting:** What is actually happening to our classifier that causes this? As we increase the number of neighbours, more and more of the
+training observations (and those that are farther and farther away from the point) get a "say" in what the class of a new observation 
+is. This causes a sort of "averaging effect" to take place, making the boundary between where our classifier would predict a tumour
+to be malignant versus benign to smooth out and become *simpler.* If you take this to the extreme, setting $K$ to the total training data set size,
+then the classifier will always predict the same label regardless of what the new observation looks like. In general, if the
+model *isn't influenced enough* by the training data, it is said to **underfit** the data.
 
-## Other ways to increase accuracy
+**Overfitting:** In contrast, when we decrease the number of neighbours, each individual data point has a stronger and stronger vote regarding 
+nearby points. Since the data themselves are noisy, this causes a more "jagged" boundary corresponding to a *less simple* model. 
+If you take this case to the extreme, setting $K = 1$, then the classifier is essentially just matching each new observation
+to its closest neighbour in the training data set. This is just as problematic as the large $K$ case, because the classifier
+becomes unreliable on new data: if we had a different training set, the predictions would be completely different.
+In general, if the model *is influenced too much* by the training data, it is said to **overfit** the data.
 
-By using cross-validation to choose $k$ we were able to slightly increase our accuracy, but can we still do better? Perhaps. We can start to explore this by taking a look at what is called the training accuracy. Training accuracy is our accuracy if we asked our classifier to make predictions on the training data and then we assessed how well the predictions matched up to the true labels we have for our training data. If they don't match up really well (training accuracy is low), our classification model might be too simple and adding more information (e.g., additional predictors/explanatory variables) could potentially help. The situation where the training accuracy is low is often called underfitting, or high bias.
+You can see this effect in the plots below as we vary the number of neighbours $K$ in (1, 7, 50, 100):
 
-The training error can be obtained from using the classifier object returned from `train` (when you don't perform cross-validation) to predict on the training data. Then passing the predictions on the training data and the true observed labels into `confusionMatrix`.
+<center>
+```{r 06-decision-grid-K, echo=FALSE, fig.height = 4, fig.width = 5}
+library(repr)
+library(gridExtra)
+options(repr.plot.width=20, repr.plot.height=20)
+ks <- c(1, 7, 50, 100)
+plots <- list()
+
+for (i in 1:length(ks)){
+	#train the knn classifier
+	k <- data.frame(k = ks[[i]])
+	model_knn <- train(x = X_train_total, y = Y_train_total, method='knn', tuneGrid = k, trControl = train_control)
+	
+	#create a prediction pt grid
+	con_grid <- seq(min(training_set$Concavity), max(training_set$Concavity), length.out = 100)
+	smo_grid <- seq(min(training_set$Smoothness), max(training_set$Smoothness), length.out = 100)
+	csgrid <- expand.grid(Concavity=con_grid, Smoothness=smo_grid)
+	knnPredGrid <- predict(model_knn, newdata=csgrid)
+	prediction_table <- bind_cols(csgrid, data.frame(Class=knnPredGrid))
+	
+	
+	#create the basic plt
+	plots[[i]] <- ggplot() + 
+	    geom_point(data = prediction_table, mapping=aes(x = Concavity, y = Smoothness, color = Class), alpha=0.02, size=5.)+
+	    geom_point(data = training_set, mapping=aes(x = Concavity, y = Smoothness, color = Class), alpha=0.75) +
+	    labs(color = "Diagnosis") + 
+            ggtitle(paste('K = ', k)) +
+	    scale_color_manual(labels = c("Benign", "Malignant"), values = cbPalette)
+}
+grid.arrange(grobs = plots)
+```
+</center>
+**(TODO fix this plot; they are way too small...)**
+
+
+<!--By using cross-validation to choose $k$ we were able to slightly increase our accuracy, but can we still do better? Perhaps. We can start 
+to explore this by taking a look at what is called the training accuracy. Training accuracy is our accuracy if we asked our classifier 
+to make predictions on the training data and then we assessed how well the predictions matched up to the true labels we have for our 
+training data. If they don't match up really well (training accuracy is low), our classification model might be too simple and adding more 
+information (e.g., additional predictors/explanatory variables) could potentially help. The situation where the training accuracy is low 
+is often called underfitting, or high bias.
+
+The training error can be obtained from using the classifier object returned from `train` (when you don't perform cross-validation) to predict 
+on the training data. Then passing the predictions on the training data and the true observed labels into `confusionMatrix`.
 
 ```{r 06-other-increase-acc}
 k = data.frame(k = 11)
 set.seed(1234)
-knn_model <- train(x = X_cancer, y = Y_cancer, method = "knn", tuneGrid = k)
-training_pred <- predict(knn_model, X_cancer)
-results <- confusionMatrix(training_pred, Y_cancer)
+knn_model <- train(x = X_train_total, y = Y_train_total, method = "knn", tuneGrid = k)
+training_pred <- predict(knn_model, X_train_total)
+results <- confusionMatrix(training_pred, Y_train_total)
 results
 ```
 
@@ -470,40 +479,40 @@ accuracy_vs_k_all
 ```
 
 From the plot above, it seems as though now with more information in our model, we should choose a $k$ of 7. Additionally, with this extra information our validation accuracy has also increased with $k = 7$.
-
-## Test data set
-
-In addition to a training and validation sets, in practice we really split our data set into 3 different sets:
-
-1. training 
-2. validation
-3. testing
-
-What is the testing set and what purpose does this third set serve? Typically create the testing set at the very beginning of our analysis, leave it a the locked box so that it plays no role while we a fiddling with things (usually through cross validation) like choosing $k$, or the number of predictors/explanatory variables to put in the classifier. After we have settled on all the settings (e.g., $k$ and number of predictors) for our classifier and we have no plans to EVER change them again we re-train the classifier on the entire training set (i.e., don't do cross validation) with those settings and then predict on testing set observations. We then take those predictions and compare them to the true labels of the test set and come up with a test accuracy measure. This typically looks something like this:
-
-<img src="img/testing.png" width="400"/>
-
-source: https://towardsdatascience.com/train-test-split-and-cross-validation-in-python-80b61beca4b6
-
-Why do we have this super special test set? This is so we do not violate the golden rule of statistical/machine learning: YOU CANNOT USE THE TEST DATA TO BUILD THE MODEL!!! If you do, this is analagous to a student cheating on a midterm.
-
+-->
 ## Splitting data
 
-### Shuffling
+**Shuffling:** When we split the data into train, test, and validation sets, we make the assumption that there is no order to our originally 
+collected data set. However, if we think that there might be some order to the original data set, then we can randomly 
+shuffle the data before splitting it. The `caret` package's `createDataPartition` function does this for us. 
 
-> **Note:** when we split the data, we make the assumption that there is no order to our originally 
-> collected data set. However, if we think that there might be some order to the original data set, then we can randomly 
-> shuffle the data before splitting it.  
-
-### Stratification
-
-[TODO]
+**Stratification:** If the data are imbalanced, we also need to be extra careful about splitting the data to ensure that enough of
+each class ends up in each of the train, validation, and test partitions. Luckily, the `createDataPartition` does this for us as well.
 
 ## Summary
 
-- KNN is a way of doing X
+Classification algorithms use one or more quantitative variables to predict the value of a third, categorical variable. The
+K-nearest neighbour algorithm in particular does this by first finding the K points in the training data nearest to the new observation,
+and then returning the majority class vote from those training observations. We can evaluate a classifier by splitting the data
+randomly into a training and test data set, using the training set to build the classifier, and using the test set to estimate its
+accuracy. To tune the classifier (e.g., select the K in K-nearest neighbours), we compute and only using the classification
 
+<center>
+<figure class="image">
+<img src="img/testing.png" width="600"/>
+<figcaption> 
+A typical 10-fold cross-validation data set split. <br>Source: https://towardsdatascience.com/train-test-split-and-cross-validation-in-python-80b61beca4b6
+</figcaption>
+</figure>
+</center>
+
+The overall workflow for performing K-nearest neighbour
+classification in `caret` is as follows:
+
+1. Use the `createDataPartition` function to split the data into a training and test set. Put the test set aside for now.
+2. Use
 - write down the overall workflow here
+
 
 **Strengths:**
 
