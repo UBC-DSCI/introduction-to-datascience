@@ -1,7 +1,9 @@
-# Introduction to regression through K-nearest neighbours {#regression1}
+# Regression I: K-nearest neighbours {#regression1}
 
 ## Overview 
-Introduction to regression using K-nearest neighbours (k-nn). We will focus on prediction in cases where there is a response variable of interest and a single explanatory variable.
+This chapter will provide an introduction to regression through k-nearest neighbours (k-nn) in a predictive context, focusing primarily on
+the case where there is a single predictor and single response variable of interest. The chapter concludes with an 
+example of k-nearest neighbours regression with multiple predictors.
 
 ## Chapter learning objectives 
 By the end of the chapter, students will be able to:
@@ -12,15 +14,28 @@ By the end of the chapter, students will be able to:
 * In a dataset with two variables, perform k-nearest neighbour regression in R using `caret::train()` to predict the values for a test dataset.
 * Using R, execute cross-validation in R to choose the number of neighbours.
 * Using R, evaluate k-nn regression prediction accuracy using  a test data set and an appropriate metric (*e.g.*, root means square prediction error).
+* In a dataset with > 2 variables, perform k-nn regression in R using `caret`'s `train` with `method = "k-nn"` to predict the values for a test dataset.
+* In the context of k-nn regression, compare and contrast goodness of fit and prediction properties (namely RMSE vs RMSPE).
 * Describe advantages and disadvantages of the k-nearest neighbour regression approach.
 
 ## Regression 
-We can use regression as a method to answer a very similar question to classification (can we use past information to predict future observations?), but in the case of regression the goal is to predict numerical values instead of class labels. An example regression prediction question would be: can we use hours spent on exercise each week to predict marathon race time? And another example regression prediction question is: can we use house size (livable square feet) to predict house sale price? We will use regression to explore this question in the rest of this chapter, using a real estate data set from Sacremento, California that is available in the `caret` package. *Note: in addition to prediction, regression can also be used to model the relationship between two or more variables, but here we will focus only on prediction.*
-
+Regression, like classification, is a predictive problem setting where
+we want to use past information to predict future observations.
+But in the case of regression, the goal is to predict numerical values instead
+of class labels. For example, we could try to use the number of hours a person spends on exercise each week
+to predict whether they would qualify for the annual Boston marathon (*classification*)
+or to predict their race time itself (*regression*).
+As another example, we could try to use the size of a house to predict whether it sold for more than \$500,000 (*classification*)
+or to predict its sale price itself (*regression*). We will use k-nearest neighbours to explore
+this question in the rest of this chapter, using a real estate data set from
+Sacremento, California that is available in the `caret` package. 
 
 ## Sacremento real estate example
 
-Let's start by loading the libraries we need and previewing the data set. The data set comes with the `caret` package, so as soon as we load the `caret` library and type `data(Sacramento)` we are able to access it as a data frame named `Sacramento`.
+Let's start by loading the libraries we need and doing some preliminary exploratory analysis. The
+`caret` package includes the real estate data set, so as soon as we load the `caret`
+library and type `data(Sacramento)` we are able to access it as a data frame
+named `Sacramento`.
 
 ```{r 07-load, message = FALSE}
 library(tidyverse)
@@ -32,7 +47,13 @@ data(Sacramento)
 head(Sacramento)
 ```
 
-We are interested in the columns `sqft` (which is the house size in livable square feet) and `price`, which is the house size in US dollars (USD). Let's now visualize the data as a scatter plot where we place the predictor/explanatory variable, house size, on the x-axis and the target/response variable, price, on the y-axis (this is what we would like to predict):
+The purpose of this exercise is to understand whether we can we use
+house size to predict house sale price in the Sacremento,
+CA area. The columns in this data that we are interested in are `sqft`
+(house size, in livable square feet) and `price` (house price, in US dollars (USD). 
+The first step is to visualize the data as a scatter plot
+where we place the predictor/explanatory variable (house size) on the x-axis,
+and we place the target/response variable that we want to predict (price) on the y-axis:
 
 ```{r 07-edaRegr, message = FALSE, fig.height = 4, fig.width = 5}
 eda <- ggplot(Sacramento, aes(x = sqft, y = price)) +
@@ -43,26 +64,38 @@ eda <- ggplot(Sacramento, aes(x = sqft, y = price)) +
 eda
 ```
 
-
-From looking at the visualization above, we see that as house size (square footage) increases, so does house price. Thus, we can reason that house size might be a useful predictor of house price and perhaps we can use the size of the house to predict the price a house will be sold at (for a home that has not yet sold and thus consequently we do not know the house price). 
+Based on the visualization above, we can see that in Sacramento, CA, as
+the size of a house increases, so does its sale price. Thus, we can reason
+that we may be able to use the size of a not-yet-sold house (for which we don't know the sale price)
+to predict its final sale price.
 
 ## K-nearest neighbours regression
 
-Let's take a small sample of the data above and walk through how K-nearest neighbours (knn) regression works before we dive in to creating our model and assessing how well it predicts house price. This subsample is taken only to be able to illustrate the mechanics of k-nn regression with a few data points, later in this chapter we will use all the data.
+Much like in the case of classification, we can use a K-nearest neighbours-based approach
+in regression to make predictions. Let's take a small sample of the data above and walk through how K-nearest
+neighbours (knn) works in a regression context before we dive in to creating our model and
+assessing how well it predicts house price. This subsample is taken to allow us
+to illustrate the mechanics of k-nn regression with a few data points; later in
+this chapter we will use all the data.
 
-To take a small random sample of size 30 , we'll use the function `sample_n`. This function takes two arguments:
+To take a small random sample of size 30, we'll use the function `sample_n`.
+This function takes two arguments:
 
 1. `tbl` (a data frame-like object to sample from)
 2. `size` (the number of observations/rows to be randomly selected/sampled)
 
 ```{r 07-sacramento}
-set.seed(2019)
+set.seed(1234)
 small_sacramento <- sample_n(Sacramento, size = 30)
 ```
 
-Next let's say we come across a new house we are interested in purchasing, and it is 2000 square feet! Its advertised list price is $350,000 should we give them what they are asking? Or is that overpriced and we should offer less? Perhaps we cannot directly answer that, but we can get close by using the data we have to predict the sale price given the sale prices we have already observed.
-
-Given the data in the plot below, we have no observations of a house that has sold that is 2000 square feet, so how can we predict the price? 
+Next let's say we come across a  2,000 square-foot house in Sacramento we are interested in purchasing,
+with an advertised list price of \$350,000. Should we offer
+to pay the asking price for this house, or is it overpriced and we should
+offer less? Absent any other information, we can get a sense for a good answer to this question by
+using the data we have to predict the sale price given the sale prices we have
+already observed. But in the plot below, we have no observations of a 
+house of size *exactly* 2000 square feet. How can we predict the price? 
 
 ```{r 07-small-eda-regr, fig.height = 4, fig.width = 5}
 small_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
@@ -74,58 +107,75 @@ small_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
 small_plot
 ```
 
-What we can do is use the neighbouring points to suggest/predict what the price should be. For the example above, below we find and label the 5 nearest neighbours to our observation of a house that is 2000 square feet:
+We will employ the same intuition from the classification chapter, and use the 
+neighbouring points to the new point of interest to suggest/predict what its price
+should be. For the example above, we find and label the 5 nearest
+neighbours to our observation of a house that is 2000 square feet:
 
 ```{r 07-find-k3}
-small_sacramento %>% 
+nearest_neighbours <- small_sacramento %>% 
   mutate(diff = abs(2000 - sqft)) %>% 
   arrange(diff) %>% 
   head(5)
+nearest_neighbours
 ```
 
-
-```{r 07-knn3-example, fig.height = 4, fig.width = 5}
-small_plot +
-  geom_segment(aes(x = 2000, y = 300500, xend = 1910, yend = 300500), col = "orange") + 
-  geom_segment(aes(x = 2000, y = 290000, xend = 1720, yend = 290000), col = "orange") + 
-  geom_segment(aes(x = 2000, y = 168750, xend = 1669, yend = 168750), col = "orange") +
-  geom_segment(aes(x = 2000, y = 276500, xend = 1650, yend = 276500), col = "orange") + 
-  geom_segment(aes(x = 2000, y = 315537, xend = 2367, yend = 315537), col = "orange") 
-
+```{r 07-knn3-example, fig.height = 4, fig.width = 5, echo = FALSE}
+nn_plot <- small_plot +
+  geom_segment(aes(x = 2000, y = nearest_neighbours$price[[1]], 
+                   xend = nearest_neighbours$sqft[[1]], 
+                   yend = nearest_neighbours$price[[1]]), col = "orange") + 
+  geom_segment(aes(x = 2000, y = nearest_neighbours$price[[2]], 
+                   xend = nearest_neighbours$sqft[[2]], 
+                   yend = nearest_neighbours$price[[2]]), col = "orange") + 
+  geom_segment(aes(x = 2000, y = nearest_neighbours$price[[3]], 
+                   xend = nearest_neighbours$sqft[[3]], 
+                   yend = nearest_neighbours$price[[3]]), col = "orange") + 
+  geom_segment(aes(x = 2000, y = nearest_neighbours$price[[4]], 
+                   xend = nearest_neighbours$sqft[[4]], 
+                   yend = nearest_neighbours$price[[4]]), col = "orange") + 
+  geom_segment(aes(x = 2000, y = nearest_neighbours$price[[5]], 
+                   xend = nearest_neighbours$sqft[[5]], 
+                   yend = nearest_neighbours$price[[5]]), col = "orange") 
+nn_plot
 ```
 
-Now that we have the 5 nearest neighbours to our new observation that we would like to predict the price for, we can use their values to predict a selling price for the home we are interested in buying that is 2000 square feet. Specifically, we can take the mean (or average) of these 5 values as our predicted value.
+Now that we have the 5 nearest neighbours (in terms of house size) to our new 2,000 square-foot house of interest,
+ we can use their values to predict a selling price for the new home.
+Specifically, we can take the mean (or average) of these 5 values as our
+predicted value.
 
 ```{r 07-predicted-knn}
-prediction <- small_sacramento %>% 
-  mutate(diff = abs(2000 - sqft)) %>% 
-  arrange(diff) %>% 
-  head(5) %>% 
+prediction <- nearest_neighbours %>% 
   summarise(predicted = mean(price))
 prediction
 ```
 
 ```{r 07-predictedViz-knn, echo = FALSE, fig.height = 4, fig.width = 5}
-small_plot +
-  geom_segment(aes(x = 2000, y = 300500, xend = 1910, yend = 300500), col = "orange") + 
-  geom_segment(aes(x = 2000, y = 290000, xend = 1720, yend = 290000), col = "orange") + 
-  geom_segment(aes(x = 2000, y = 168750, xend = 1669, yend = 168750), col = "orange") +
-  geom_segment(aes(x = 2000, y = 276500, xend = 1650, yend = 276500), col = "orange") + 
-  geom_segment(aes(x = 2000, y = 315537, xend = 2367, yend = 315537), col = "orange")  +
+nn_plot +
   geom_point(aes(x = 2000, y = prediction[[1]]), color = "red", size = 2.5) 
 ```
 
-Our predicted price is \$270,257.40 (shown as a red point above), which is much less than \$350,000, and so perhaps we might want to offer less than the list price that the house is advertised at. Simple right? Not quite. We have all the same unanswered questions here with k-nn regression that we had with k-nn classification. Which $k$ do we choose? And, is our model any good at making predictions? We'll shortly address how to answer these questions in the context of k-nn regression.
+Our predicted price is \$`r format(round(prediction[[1]]), scientific = FALSE)`
+(shown as a red point above), which is much less than \$350,000; perhaps
+we might want to offer less than the list price at which the house is advertised.
+But this is only the very beginning of the story. We still have all the same unanswered questions here
+with k-nn regression that we had with k-nn classification: which $k$ do we
+choose, and is our model any good at making predictions? In the next few sections,
+we will address these questions in the context of k-nn regression.
 
-## Assessing a knn regression model
+## Assessing a nearest neighbours regression model
 
-As usual, we should start by putting some test data away in a lock box that we can come back to after we choose our final model, so let's take care of that business now. For the remainder of the chapter we'll work with the full data set.
+As usual, we must start by putting some test data away in a lock box that we
+will come back to only after we choose our final model. Let's take care of that
+business now. Note that for the remainder of the chapter we'll be working with the
+entire Sacramento data set, as opposed to the smaller sample of 30 points above.
 
 ```{r 07-test-train-split}
-set.seed(2019) # makes the random selection of rows reproducible
+set.seed(1234)
 training_rows <- Sacramento %>% 
   select(price) %>% 
-  unlist() %>% # converts Class from a tibble to a vector
+  unlist() %>% 
   createDataPartition(p = 0.6, list = FALSE)
 
 X_train <- Sacramento %>% 
@@ -149,21 +199,31 @@ Y_test <- Sacramento %>%
   unlist()
 ```
 
-Next, we'll use cross-validation to choose $k$. In k-nn classification, we used accuracy to see how well our predictions matched the true labels. Here in the context of k-nn regression we will use root mean square error ($RMSE$) instead. If the predictions are very close to the true values, then $RMSE$ will be small. If, on the other-hand, the predictions are very different to the true values, then $RMSE$ will be quite large. Thus, when we are doing cross validation to choose $k$, we want to choose the $k$ that gives us the smallest $RMSE$.
+Next, we'll use cross-validation to choose $k$. In k-nn classification, we used
+accuracy to see how well our predictions matched the true labels. Here in the
+context of k-nn regression we will use root mean square prediction error
+(RMSPE) instead. If the predictions are very close to the true values, then
+RMSPE will be small. If, on the other-hand, the predictions are very
+different to the true values, then RMSPE will be quite large. Thus, when we
+use cross validation, we will choose the $k$ that gives
+us the smallest RMSPE.
 
-The mathematical formula for calculating $RMSE$ is shown below: 
+The mathematical formula for calculating RMSPE is shown below: 
 
-$$RMSE = \sqrt{\frac{1}{n}\sum\limits_{i=1}^{n}(y_i - \hat{y_i})^2}$$
+$$RMSPE = \sqrt{\frac{1}{n}\sum\limits_{i=1}^{n}(y_i - \hat{y}_i)^2}$$
 
 Where:
 
 - $n$ is the number of observations
-- $y_i$ is the observed value for the $ith$ observation
-- $\hat{y_i}$ is the forcasted/predicted value for the $ith$ observation
+- $y_i$ is the observed value for the $i^\text{th}$ observation
+- $\hat{y}_i$ is the forcasted/predicted value for the $i^\text{th}$ observation
 
-A key feature the formula for RMSE is the distance between the observed target/response variable value, $y$, and the prediction target/response variable value, $\hat{y_i}$, for each observation (from 1 to $i$).
+A key feature of the formula for RMPSE is the distance between the observed
+target/response variable value, $y$, and the prediction target/response
+variable value, $\hat{y}_i$, for each observation (from 1 to $i$).
 
-Now that we know how we can assess how well our model predicts a numerical value, let's use R to perform cross-validation and to choose the optimal $k$.
+Now that we know how we can assess how well our model predicts a numerical
+value, let's use R to perform cross-validation and to choose the optimal $k$.
 
 ```{r 07-choose-k-knn, fig.height = 4, fig.width = 5}
 train_control <- trainControl(method = "cv", number = 10)
@@ -180,14 +240,34 @@ knn_reg_cv_10 <- train(x = X_train,
 ggplot(knn_reg_cv_10$results, aes(x = k, y = RMSE)) +
   geom_point() +
   geom_line()
-knn_reg_cv_10$method
 ```
 
-Here we see that the smallest $RMSE$ is from the model where $k$ = 51. Thus the best $k$ for this model is 51. 
+
+Here we see that the smallest RMSPE is from the model where $k$ = `r knn_reg_cv_10$bestTune$k`. Thus 
+the best $k$ for this model is `r knn_reg_cv_10$bestTune$k`. 
+
+### RMSPE versus RMSE
+
+The error output we have been getting from `caret` to assess the prediction quality of
+our k-nn regression models is labelled "RMSE", standing for root mean squared
+error. Why is this so, and why not just RMSPE? In statistics, we try to be very precise with our
+language to indicate whether we are calculating the prediction error on the
+training data (*in-sample* prediction) versus on the testing data 
+(*out-of-sample* prediction). When predicting and evaluating prediction quality on the training data, we 
+ say RMSE. By contrast, when predicting and evaluating prediction quality
+on the testing or validation data, we say RMSPE. `caret`
+doesn't really know what you are doing (using training or testing data for
+prediction) and so it just uses the term RMSE regardless. The equation for
+calculating RMSE and RMSPE is exactly the same; all that changes is where the $y$'s
+come from.
 
 ## How do different k's affect k-nn regression predictions
 
-Below we plot the predicted values for house price from our k-nn regression models for 6 different values for $k$ where the only predictor is home size. For each model, we predict a price for every possible home size across the range of home sizes we observed in the data set (here 500 to 4250 square feet) and we plot the predicted prices as a blue line:
+Below we plot the predicted values for house price from our k-nn regression
+models. We do so for 6 different values for $k$, where the only predictor is home size.
+For each model, we predict a price for every possible home size across the
+range of home sizes we observed in the data set (here 500 to 4250 square feet)
+and we plot the predicted prices as a blue line:
 
 ```{r 07-howK, echo = FALSE, fig.height = 12, fig.width = 10}
 get_predictions <- function(num_neighbours, X, Y){
@@ -208,31 +288,76 @@ get_predictions <- function(num_neighbours, X, Y){
 }
 
 k1 <- get_predictions(1, X_train, Y_train)
-k10 <- get_predictions(10, X_train, Y_train)
-k25 <- get_predictions(25, X_train, Y_train)
-k51 <- get_predictions(51, X_train, Y_train)
+k3 <- get_predictions(3, X_train, Y_train)
+k15 <- get_predictions(15, X_train, Y_train)
+k41 <- get_predictions(41, X_train, Y_train)
 k250 <- get_predictions(250, X_train, Y_train)
 k450 <- get_predictions(450, X_train, Y_train)
 
-grid.arrange(k1, k10, k25, k51, k250, k450, ncol = 2)
+grid.arrange(k1, k3, k15, k41, k250, k450, ncol = 2)
 ```
 
-From the plots above, we see that when $k$ = 1, the blue line runs perfectly through almost all of our training observations. This happens because our predicted values for a given region, depend on just a single observation. A model like this has high variance and low bias. It has high variance because the flexible blue line follows the training observations very closely, and if we were to change any one of the training observation data points we would change the flexible blue line quite a lot. This means that the blue line matches the data we happen to have in this training data set, however, if we were to collect another training data set from the Sacramento real estate market it likely wouldn't match those observations as well. However, it has low bias because the model/predicted values matches the actual observed values in this training data set very well. Another term that we use to collectively describe this phenomenon is overfitting.
+Based on the plots above, we see that when $k$ = 1, the blue line runs perfectly
+through almost all of our training observations. This happens because our
+predicted values for a given region depend on just a single observation. A
+model like this has high variance and low bias (intuitively, it provides unreliable
+predictions). It has high variance because
+the flexible blue line follows the training observations very closely, and if
+we were to change any one of the training observation data points we would
+change the flexible blue line quite a lot. This means that the blue line
+matches the data we happen to have in this training data set, however, if we
+were to collect another training data set from the Sacramento real estate
+market it likely wouldn't match those observations as well.  
+Another term that we use to collectively describe this phenomenon is *overfitting*.
 
-What about the plot where $k$ is quite large, say $k$ = 450, for example? When $k$ = 450 for this data set, the blue line is extremely smooth, and almost flat. This happens because our predicted values for a given x value (here home size), depend on many many neighbouring observations, 450 to be exact! A model like this has low variance and high bias. It has low variance because the smooth, inflexible blue line does not follow the training observations very closely, and if we were to change any one of the training observation data points it really wouldn't affect the shape of the smooth blue line at all. This means that although the blue line matches does not match the data we happen to have in this particular training data set perfectly, if we were to collect another training data set from the Sacramento real estate market it likely would match those observations equally as well as it matches those in this training data set. This model also has high bias because the model/predicted values does not match the actual observed values very well. Another term that we use to collectively describe this kind of model is underfitting. 
+What about the plot where $k$ is quite large, say $k$ = 450, for example? When
+$k$ = 450 for this data set, the blue line is extremely smooth, and almost
+flat. This happens because our predicted values for a given x value (here home
+size), depend on many many neighbouring observations, 450 to be exact! A model
+like this has low variance and high bias (intuitively, it provides very reliable,
+but generally very inaccurate predictions). It has low variance because the
+smooth, inflexible blue line does not follow the training observations very
+closely, and if we were to change any one of the training observation data
+points it really wouldn't affect the shape of the smooth blue line at all. This
+means that although the blue line matches does not match the data we happen to
+have in this particular training data set perfectly, if we were to collect
+another training data set from the Sacramento real estate market it likely
+would match those observations equally as well as it matches those in this
+training data set.  Another term that
+we use to collectively describe this kind of model is *underfitting*. 
 
-Ideally, what we want is neither of the two examples discussed above. Instead, we would like a model with low variance (so that it will transer/generalize well to other data sets, meaning that it isn't too dependent on the observations that happen to be in the training set we had) **and** low bias (one where the model/predicted values matches the actual observed values very well). If we explore the other values for $k$, in particular $k$ = 51 (the optimal $k$ as suggested by cross-validation), we can see it has a lower bias than our model with a very high $k$ (e.g., 450), and thus the model/predicted values better match the actual observed values than the high $k$ model. Additionally, it has lower variance than our model with a very low $k$ (e.g., 1) and thus it should better transer/generalize to other data sets compared to the low $k$ model.
+Ideally, what we want is neither of the two situations discussed above. Instead,
+we would like a model with low variance (so that it will transfer/generalize
+well to other data sets, and isn't too dependent on the
+observations that happen to be in the training set) **and** low bias
+(where the model does not completely ignore our training data). If we explore 
+the other values for $k$, in particular $k$ = `r knn_reg_cv_10$bestTune$k` 
+(the optimal $k$ as suggested by cross-validation),
+we can see it has a lower bias than our model with a very high $k$ (e.g., 450),
+and thus the model/predicted values better match the actual observed values
+than the high $k$ model. Additionally, it has lower variance than our model
+with a very low $k$ (e.g., 1) and thus it should better transer/generalize to
+other data sets compared to the low $k$ model. All of this is similar to how
+the choice of $k$ affects k-nn classification (discussed in the previous
+chapter). 
 
-Finally, how the choice of $k$ affects k-nn regression also carries over to how the choice of $k$ affects k-nn classification. It is simply easier to show this through pictures for a k-nn regression problem which is why we waited until now to discuss this.
+## Assessing how well the model predicts on unseen data with the test set
 
-## Assessing model goodness with the test set
+To assess how well our model might do at predicting on unseen data, we will
+assess its RMSPE on the test data. Before we do that, we want
+to re-train our k-nn regression model on the entire training data set (not
+performing cross validation this time).
 
-Next we re-train our k-nn model on the entire training data set (do not perform cross validation) and then predict on the test data set to assess how well our model does. 
+In the case of k-nn regression we use the function `defaultSummary` instead of
+`confusionMatrix` (which we used with knn classification). This is because our
+predictions are not class labels, but values, and as such the type of model
+prediction performance score is calculated differently. `defaultSummary`
+expects a data frame where one column is the observed target/response variable
+values from the test data, and a second column of the predicted values for the
+test data.
 
-In the case of k-nn regression we use the function `defaultSummary` instead of `confusionMatrix` (which we used with knn classification). This is because our predictions are not class labels, but values, and as such the type of model goodness score is calculated differently. `defaultSummary` expects a data frame where one column is the observed target/response variable values from the test data, and a second column of the predicted values for the test data.
-
-```{r 07-retrain}
-k = data.frame(k = 51)
+```{r 07-predict}
+k = data.frame(k = knn_reg_cv_10$bestTune$k)
 
 set.seed(1234)
 knn_reg_final <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
@@ -243,9 +368,25 @@ test_results <- defaultSummary(modelvalues)
 test_results
 ```
 
-Our final model's test error as assessed by $RMSE$ is 91620.4. But what does this $RMSE$ score mean? When we calculated test set prediction accuracy when we performed k-nn classification the highest possible value was 1, and if we got an value close to that it was easy to assess how well our model did on at least one new data set that had never been used to choose our model (so we didn't violate the golden rule of statistical/machine learning). So what about $RMSE$, what is it out of? Unfortunately there is no scale for $RMSE$ (instead it is measured in the units of the target/response variable), and so it is a bit hard to interpret. For now, let's consider this approach to thinking about $RMSE$ from our testing data set: as long as its not WAY worse than the cross-validation $RMSPE$ of our best model then we can say that we're not doing too much worse on the test data than we did on the training data, and so it appears to be generalizing OK to a new data set it has never seen before. In future courses on statistical/machine learning we will learn more about how to interpret $RMSE$ from our testing data set and other ways to assess our model.
+Our final model's test error as assessed by RMSPE is `r format(test_results[[1]], scientific = FALSE)`. But 
+what does this RMSPE score mean? When we calculated test set prediction accuracy in k-nn
+classification, the highest possible value was 1 and the lowest possible value was 0. 
+If we got a value close to 1, our model was "good;" if the value was close to 0, 
+the model was "not good." What about RMSPE? Unfortunately there is no default scale 
+for RMSPE. Instead,  it is measured in
+the units of the target/response variable, and so it is a bit hard to
+interpret. For now, let's consider this approach to thinking about RMSPE from
+our testing data set: as long as its not WAY worse than the cross-validation
+RMSPE of our best model then we can say that we're not doing too much worse on
+the test data than we did on the training data, and so it appears to be
+generalizing well to a new data set it has never seen before. In future courses
+on statistical/machine learning, you will learn more about how to interpret RMSPE
+from testing data and other ways to assess models.
 
-And what does our final model look like when we predict across all possible house sizes we might encounter in the Sacramento area? We plotted it above where we explored how $k$ affects k-nn regression, but we show it again now, along with the code for how we generated it:
+Finally, what does our model look like when we predict across all possible
+house sizes we might encounter in the Sacramento area? We plotted it above
+where we explored how $k$ affects k-nn regression, but we show it again now,
+along with the code that generated it:
 
 ```{r 07-predict-all, fig.height = 4, fig.width = 5}
 set.seed(1234)
@@ -259,23 +400,193 @@ plot_final <- ggplot(train_data, aes(x = sqft, y = price)) +
     ylab("Price (USD)") +
     scale_y_continuous(labels = dollar_format())  +
     geom_line(data = predictions_all, aes(x = sqft, y = price), color = "blue") +
-    ggtitle("k = 51")
+    ggtitle("k = 41")
 plot_final
 ```
-
 
 ## Strengths and limitations of k-nn regression
 
 As with k-nn classification (or any prediction algorithm for that manner), k-nn regression has both strengths and weaknesses. Some are listed here:
 
-### Strengths of k-nn regression
+**Strengths of k-nn regression**
 
 1. Simple and easy to understand
 2. No assumptions about what the data must look like 
 3. Works well with non-linear relationships (i.e., if the relationship is not a straight line)
 
-### Limitations of k-nn regression
+**Limitations of k-nn regression**
 
 1. As data gets bigger and bigger, k-nn gets slower and slower, quite quickly
 2. Does not perform well with a large number of predictors unless the size of the training set is exponentially larger 
 3. Does not predict well beyond the range of values input in your training data
+
+## Multivariate k-nn regression
+
+As in k-nn classification, in k-nn regression we can have multiple predictors.
+When we have multiple predictors in k-nn regression, we have the same concern
+regarding the scale of the predictors. This is because once again, 
+ predictions are made by identifying the $k$
+observations that are nearest to the new point we want to predict, and any
+variables that are on a large scale will have a much larger effect than
+variables on a small scale. Thus, once we start performing multivariate k-nn
+regression we need to use the `scale` function in R on our predictors to ensure
+this doesn't happen.
+
+We will now demonstrate a multi-variate k-nn regression analysis again using
+the `caret` package on the Sacramento real estate data. This time we will use
+house size (measured in square feet) as well as number of bathrooms as our
+predictors, and continue to use house sale price as our outcome/target variable
+that we are trying to predict.
+
+It is always a good practice to do exploratory data analysis, such as
+visualizing the data, before we start modeling the data. Thus the first thing
+we will do is use ggpairs (from the `GGally` package) to plot all the variables
+we are interested in using in our analyses:
+
+```{r 09-ggpairs, fig.height = 5, fig.width = 6}
+library(GGally)
+plot_pairs <- Sacramento %>% 
+  select(price, sqft, baths) %>% 
+  ggpairs()
+plot_pairs
+```
+
+From this we can see that generally, as both house size and number of bathrooms increase, so does price. Does adding the number of baths to our model improve our ability to predict house price? To answer that question, we will have to come up with the test error for a k-nn regression model using house size and number of baths, and then we can compare it to the test error for the model we previously came up with that only used house size to see if it is smaller (decreased test error indicates increased prediction quality). Let's do that now!
+
+Looking at the data above, we can see that `sqft` and `beds` (number of bedrooms) are on vastly different scales. Thus we need to apply the `scale` function to these columns before we start our analysis:
+
+```{r 09-scaling}
+scaled_Sacramento <- Sacramento %>% 
+  select(price, sqft, baths) %>% 
+  mutate(sqft = scale(sqft, center = FALSE),
+         baths = scale(baths, center = FALSE))
+head(scaled_Sacramento)
+```
+
+Now we can split our data into a trained and test set as we did before:
+
+```{r 09-mult-test-train-split}
+set.seed(2019) # makes the random selection of rows reproducible
+training_rows <- scaled_Sacramento %>% 
+  select(price) %>% 
+  unlist() %>% # converts Class from a tibble to a vector
+  createDataPartition(p = 0.6, list = FALSE)
+
+X_train <- scaled_Sacramento %>% 
+  select(sqft, baths) %>% 
+  slice(training_rows) %>% 
+  data.frame()
+
+Y_train <- scaled_Sacramento %>% 
+  select(price) %>% 
+  slice(training_rows) %>% 
+  unlist()
+
+X_test <- scaled_Sacramento %>% 
+  select(sqft, baths) %>% 
+  slice(-training_rows) %>% 
+  data.frame()
+
+Y_test <- scaled_Sacramento %>% 
+  select(price) %>% 
+  slice(-training_rows) %>% 
+  unlist()
+```
+
+Next, we'll use 10-fold cross-validation to choose $k$:
+```{r 09-mult-choose-k, fig.height = 4, fig.width = 5}
+train_control <- trainControl(method = "cv", number = 10)
+# makes a column of k's, from 1 to 500 in increments of 5
+k_lots = data.frame(k = seq(from = 1, to = 500, by = 5)) 
+
+set.seed(1234)
+knn_reg_cv_10 <- train(x = X_train, 
+                       y = Y_train, 
+                       method = "knn", 
+                       tuneGrid = k_lots, 
+                       trControl = train_control) 
+
+ggplot(knn_reg_cv_10$results, aes(x = k, y = RMSE)) +
+  geom_point() +
+  geom_line()
+```
+Here we see that the smallest RMSPE is from the model where $k$ = `r knn_reg_cv_10$bestTune$k`. Thus the best $k$ for this model, with two predictors, is `r knn_reg_cv_10$bestTune$k`. 
+
+Now that we have chosen $k$, we need to re-train the model on the entire training data set with $k$ = `r knn_reg_cv_10$bestTune$k`, and after that we can use that model to predict on the test data to get our test error. At that point we will also visualize the model predictions overlaid on top of the data. This time the predictions will be a plane in 3-D space, instead of a line in 2-D space, as we have 2 predictors instead of 3. 
+
+```{r 09-re-train}
+k = data.frame(k = 36)
+
+set.seed(1234)
+knn_mult_reg_final <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
+
+test_pred <- predict(knn_mult_reg_final, X_test)
+modelvalues <- data.frame(obs = Y_test, pred = test_pred)
+knn_mult_test_results <- defaultSummary(modelvalues)
+knn_mult_test_results[[1]]
+```
+
+This time when we performed k-nn regression on the same data set, but also included number of bathrooms as a predictor we obtained a RMSPE test error of `r format(knn_mult_test_results[[1]], scientific = FALSE)`. This compares to a RMSPE test error of `r format(test_results[[1]], scientific = FALSE)` when we used only house size as the single predictor. Thus in this case, we did not improve the model by adding this additional predictor.
+
+What do the predictions from this model look like overlaid on the data?
+
+```{r 09-knn-mult-viz, echo = FALSE, message = FALSE, warning = FALSE}
+library(plotly)
+
+train_data <- bind_cols(X_train, tibble(price = Y_train))
+
+# Define 3D scatterplot points --------------------------------------------
+# Get coordinates of points for 3D scatterplot
+x_values <- train_data$sqft %>% 
+  round(3)
+y_values <- train_data$baths %>% 
+  round(3)
+z_values <- train_data$price %>% 
+  round(3)
+
+# Define regression plane -------------------------------------------------
+# Construct x and y grid elements
+sqft <- seq(from = min(x_values), to = max(x_values), length = 50)
+baths <- seq(from = min(y_values), to = max(y_values), length = 50)
+
+# Construct z grid by computing
+# 1) fitted beta coefficients
+# 2) fitted values of outer product of x_grid and y_grid
+# 3) extracting z_grid (matrix needs to be of specific dimensions)
+# beta_hat <- house_prices %>% 
+#   lm(log10_price ~ log10_size + yr_built, data = .) %>% 
+#   coef()
+fitted_values <- crossing(sqft, baths) %>% 
+  mutate(price = predict(knn_mult_reg_final, .))
+
+z_grid <- fitted_values %>% 
+   pull(price) %>%
+   matrix(nrow = length(sqft))
+
+x_grid <- sqft
+y_grid <- baths
+
+train_data %>% 
+plot_ly() %>% 
+  add_markers(x = ~ as.numeric(sqft), 
+        z = ~ as.integer(price), 
+        y = ~ as.numeric(baths),
+        marker = list(size = 5, opacity = 0.4, color = "red")) %>% 
+  layout(scene = list(xaxis = list(title = 'Scaled house size (square feet)'), 
+                     zaxis = list(title = 'Price (USD)'),
+                     yaxis = list(title = 'Scaled number of bathrooms'))) %>% 
+  add_surface(x = ~ x_grid, 
+              y = ~ y_grid, 
+              z = ~ z_grid,
+              colorbar=list(title='Price (USD)'))
+```
+
+We can see that the predictions in this case, where we have 2 predictors, form
+a plane instead of a line. Because the newly added predictor, number of
+bathrooms, is correlated with price (USD) (meaning as price changes, so does
+number of bathrooms) we get additional and useful information for making our
+predictions. For example, in this model we would predict that the cost of a
+house with a scaled house size of ~ 0.52 and a scaled number bathrooms of ~
+1.13 would cost less than the same sized house with a higher scaled number
+bathrooms (e.g., ~ 2.11). Without having the additional predictor of number of
+bathrooms, we would predict the same price for these two houses. 

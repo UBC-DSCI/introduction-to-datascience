@@ -1,4 +1,4 @@
-# Regression, continued {#regression2}
+# Regression II: Linear regression {#regression2}
 
 ## Overview 
 Introduction to linear regression models. We will also begin to compare k-nn to linear models in the context of regression.
@@ -6,13 +6,9 @@ Introduction to linear regression models. We will also begin to compare k-nn to 
 ## Chapter learning objectives 
 By the end of the chapter, students will be able to:
 
-* In the context of k-nn regression, compare and contrast goodness of fit and prediction properties (namely RMSE vs RMSPE).
 * In a dataset with 2 variables, perform simple ordinary least squares regression in R using `caret`'s `train` with `method = "lm"` to predict the values for a test dataset.
 * Compare and contrast predictions obtained from k-nearest neighbour regression to those obtained using simple ordinary least squares regression from the same dataset.
 * In R, overlay the ordinary least squares regression lines from `geom_smooth` on a single plot. 
-
-## $RMSE$ versus $RMPSE$
-The error output we have been getting from `caret` to assess how well our k-nn regression models predict is labelled as `RMSE` for root mean squared error. The equation for calculating $RMSE$ is shown in [the previous chapter](regression1.html#assessing-a-knn-regression-model). So far, we have called this error $RMSE$ in this textbook as well, however, in certain contexts the correct term becomes $RMPSE$, which stands for root mean squared prediction error. The same formula is used to calculate $RMPSE$ and $RMSE$, however these separate terms exist to specify what the error is being calculated on. $RMPSE$ is specifically referring to the error when predicting on future data (e.g., the validation set(s), or the testing set), not the training set. Whereas, $RMSE$ is specifically referring to the error when predicting on the training data set and is an attempt to get at model goodness of fit on the data used to fit the model. From this point on in the course, we will be using the terms $RMPSE$ and $RMSE$ in their appropriate contexts.
 
 ## Linear regression
 k-nn is not the only type of regression, there are many, and one common and quite useful type of regression is called linear regression. Linear regression is similar to k-nn regression in that the target/response variable is expected to be quantitative, however, one way it varies quite differently is how the training data is used to predict a value for a new observation. Instead of looking at the $k$-nearest neighbours and averaging over their values for a prediction, in linear regression all the training data points are used to create a straight line of "best fit", and then the line is used to "look-up" the predicted value.
@@ -200,7 +196,155 @@ There can however also be a disadvantage to using a linear regression model in s
 How do these two models compare on this data set? On the visualizations above we also printed the $RMPSE$ as calculated from predicting on the test data set that was not used to train/fit the models. The $RMPSE$ for the linear regression model is less than the $RMPSE$ for the k-nn regression model, and thus if were were comparing these in practice we would choose to use the linear regression model to make our predictions because of this (in addition to the fact the the linear regression model is more interpretable). 
 
 
+## Multivariate linear regression
+
+As in k-nn classification and k-nn regression, in linear regression we can have multiple predictors. To do this, we follow a very similar approach to what we did using `caret` for k-nn regression, however, we do not need to use cross-validation to choose $k$. We also do not need to scale the data for linear regression as it does not use a distance between points calculation in its algorithm. We demonstrate how to do this below using the Sacramento real estate data with both house size (measured in square feet) as well as number of bathrooms as our predictors, and continue to use house sale price as our outcome/target variable that we are trying to predict.
+
+We will start by splitting our data into a trained and test set as we did before:
+
+```{r 09-lm-mult-test-train-split}
+set.seed(2019) # makes the random selection of rows reproducible
+training_rows <- Sacramento %>% 
+  select(price) %>% 
+  unlist() %>% # converts Class from a tibble to a vector
+  createDataPartition(p = 0.6, list = FALSE)
+
+lm_X_train <- Sacramento %>% 
+  select(sqft, baths) %>% 
+  slice(training_rows) %>% 
+  data.frame()
+
+lm_Y_train <- Sacramento %>% 
+  select(price) %>% 
+  slice(training_rows) %>% 
+  unlist()
+
+lm_X_test <- Sacramento %>% 
+  select(sqft, baths) %>% 
+  slice(-training_rows) %>% 
+  data.frame()
+
+lm_Y_test <- Sacramento %>% 
+  select(price) %>% 
+  slice(-training_rows) %>% 
+  unlist()
+```
+
+Now we can fit the model on the training set using the `method = "lm"` argument in the train function:
+```{r 09-fitlm}
+lm_mult_reg_final <- train(x = lm_X_train, y = lm_Y_train, method = "lm")
+```
+
+What does our model predictions look like in the case of linear regression when we have two predictors? We illustrate this below:
+
+```{r 09-3DlinReg, echo = FALSE, message = FALSE, warning = FALSE}
+library(plotly)
+lm_train_data <- bind_cols(lm_X_train, tibble(price = lm_Y_train))
+
+# Define 3D scatterplot points --------------------------------------------
+# Get coordinates of points for 3D scatterplot
+lm_x_values <- lm_train_data$sqft %>% 
+  round(3)
+lm_y_values <- lm_train_data$baths %>% 
+  round(3)
+lm_z_values <- lm_train_data$price %>% 
+  round(3)
+
+# Define regression plane -------------------------------------------------
+# Construct x and y grid elements
+sqft <- seq(from = min(lm_x_values), to = max(lm_x_values), length = 50)
+baths <- seq(from = min(lm_y_values), to = max(lm_y_values), length = 50)
+
+# Construct z grid by computing
+# 1) fitted beta coefficients
+# 2) fitted values of outer product of x_grid and y_grid
+# 3) extracting z_grid (matrix needs to be of specific dimensions)
+# beta_hat <- house_prices %>% 
+#   lm(log10_price ~ log10_size + yr_built, data = .) %>% 
+#   coef()
+lm_fitted_values <- crossing(sqft, baths) %>% 
+  mutate(price = predict(lm_mult_reg_final, .))
+
+lm_z_grid <- lm_fitted_values %>% 
+   pull(price) %>%
+   matrix(nrow = length(sqft))
+
+lm_x_grid <- sqft
+lm_y_grid <- baths
+
+lm_train_data %>% 
+plot_ly() %>% 
+  add_markers(x = ~ as.numeric(sqft), 
+        z = ~ as.integer(price), 
+        y = ~ as.numeric(baths),
+        marker = list(size = 5, opacity = 0.4, color = "red")) %>% 
+  layout(scene = list(xaxis = list(title = 'House size (square feet)'), 
+                     zaxis = list(title = 'Price (USD)'),
+                     yaxis = list(title = 'Number of bathrooms'))) %>% 
+  add_surface(x = ~ lm_x_grid, 
+              y = ~ lm_y_grid, 
+              z = ~ lm_z_grid,
+              colorbar=list(title='Price (USD)'))
+```
+We see that the predictions from linear regression with two predictors form a plane as well, but this plane differs from the one we get from k-nn regression in its flexibility. The plane from k-nn regression above was more flexible and more closely followed the shape of the training data. The plane from linear regression however is constrained to being linear (i.e., a flat plane). As discussed this can be advantageous in one aspect, which is that for each predictor, we can get a slope from linear regression, and thus describe the plane mathematically. We can extract those slope values from our model object as shown below:
+
+```{r 09-get-slopes}
+lm_mult_reg_final$finalModel$coefficients
+```
+And then use those slopes, to write a mathematical equation to describe the prediction plane:
+
+Remembering that the equation for a plane is: 
+
+$$Y = \beta_0 + \beta_1X_1 + \beta_2X_2$$
+Where:
+
+- $\beta_0$ is the y-intercept of the line (the value where the line cuts the y-axis)
+- $\beta_1$ is the slope for the first predictor
+- $X_1$ is the first predictor
+- $\beta_2$ is the slope for the second predictor
+- $X_2$ is the second predictor
+
+We can then write:
+
+$$house\: price = \beta_0 + \beta_1  \:house\: size + \beta_2  \:number\: of \: bathrooms$$
+
+And finally, fill in the values for $\beta_0$, $\beta_1$ and $\beta_2$ from the model output above:
+
+$$house\: price = 25284.3344 + 140.2523*house\: size -7115.9565 *  \:number\: of \: bathrooms$$
+
+OK great, so this model is more interpretable than the multivariate k-nn regression model (i.e., we can write a mathematical equation that explains how each predictor is affecting the predictions), but as always, we should look at the test error and ask whether linear regression is doing a better job of predicting compared to k-nn regression in this multivariate regression case? To do that we can use this linear regression model to predict on the test data to get our test error.
+
+```{r 09-get-RMSPE}
+test_pred_lm <- predict(lm_mult_reg_final, lm_X_test)
+lm_modelvalues <- data.frame(obs = lm_Y_test, pred = test_pred_lm)
+lm_mult_test_results <- defaultSummary(lm_modelvalues)
+lm_mult_test_results[[1]]
+```
+
+We get that the $RMSPE$ for the multivariate linear regression model of 86778.87. This prediction error is less than the prediction error for the multivariate k-nn regression model, indicating that we should likely choose linear regression for predictions of house price on this data set. But wait, we should also ask if this more complex model is doing a better job of predicting compared to our simple linear regression model with only a single predictor (house size). Revisiting last chapter, we see that our $RMSPE$ for our simple linear regression model with only a single predictor was 86688.47 which is less than that for our more complex model. Thus, again for interpretability sake as well as performance, we should in the end choose the simple linear regression model for this data set. 
+
+Should we always end up choosing a simple linear regression as our model? No! And you never know what model will be the best until you go through this process. Exploratory data analysis can give you some hints, but until you look at the test error to compare the models you don't really know.
+
+## The other side of regression
+
+So far in this textbook we have used regression only in the context of prediction, however, regression is also a powerful method to understand and/or describe the relationship between a quantitative outcome/response variable and one or more explanatory variables. Extending the case we have been working with in this chapter (where we are interested in house price as the outcome/response variable), we could also, or instead, be interested in describing the individual effects of house size and the number of bathrooms on house price, quantifying how big each of these effects are, and assessing how accurately we can estimate each of these effects.
+
+Using linear regression to answer such questions sits under the umbrella of statistical inference. Here we will only introduce this topic at a very high-level, but it is an important field that is widely used in Statistics and Data Science and is taught in many Statistical courses. 
+
+In statistical inference we acknowledge that we can only measure some of all the possible observations that exist in the world for the thing we are interested in quantifying. And so what we do, is use the measurements that we do have to infer/make a guess about what the true quantity would be if we could measure every possible thing. One example of statistical inference would be to try to estimate/come up with a best guess to the proportion of undergraduates who have an iphone. 
+
+<img src="img/sampling.001.jpeg" width="600">
+
+We cannot possibly ask all existing undergraduates if they have an iphone, so what can we do? Well, what statistical inference suggests that instead of asking all undergraduates (which we cannot do), we instead ask a random (and representative) sample of undergraduates if they have an iphone. 
+
+<img src="img/sampling.002.jpeg" width="600">
+
+From this sample of data we calculate the proportion of undergraduates that have an iphone. We can then use this proportion as an estimate/best guess of the proportion of all undergradautes that have an iphone. We know the proportion we calculated is not exactly right, but we think it should be close and it's the best we can do (since we cannot possibly ask all undergraduates and get the exact truth). Since we know that it's not exaclty right, we also try to use the data we have collected to come up with a plausible range where we think the true proportion of all undergradautes that have an iphone lies. 
+
+Now here in this chapter in the context of linear regression, we are not talking about estimating a proportion, instead we are instead usually interested in estimating the slope/coefficient of the relationship between the outcome/response variable and one or more predictor variables. Again, in this case, whatever we are measuring is usually just a sample of all the things we could measure. Here in this chapter it is a sample of observations measuring the sale and house characteristics of 932 (out of > 180,000) homes in Sacramento. Fitting our linear model, we did come up with an estimate for the slope for the relationship between house sale price and home size as 175.9. We know this number is not the true slope for the relationship between these two variables, however this is the best guess/estimate we can come up with given the data that we have. The next step of regression in this statistical inference perspective would be to use the data we have come up with a plausible range for where we think the value for the true slope would lie. We will not go into the details of how to do this in this course, but this will be covered in following Statistics courses. However, if you are very interested we will say that boostrapping to generate confidence intervals would be one approach that would let you do this and we point you to the additional readings for this chapter to learn more if you are interested. 
+
 ## Additional readings/resources
 - Pages 59-71 of [Introduction to Statistical Learning](http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf) with Applications in R by Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani
 - Pages 104 - 109 of [An Introduction to Statistical Learning with Applications in R](https://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf) by Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani
 - [The `caret` Package](https://topepo.github.io/caret/index.html)
+- Chapters 6 - 11 of [Modern Dive](https://moderndive.com/) Statistical Inference via Data Science by Chester Ismay and Albert Y. Kim
