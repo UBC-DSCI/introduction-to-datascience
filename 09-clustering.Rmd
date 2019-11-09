@@ -191,7 +191,6 @@ base <- ggplot(clus1) +
   labs(x = "Customer satisfaction", y = "Loyalty") +
   xlim(c(0, 4)) +
   ylim(c(6, 9)) +
-  geom_point(aes(y = mean(loyalty), x = mean(csat), colour="red", size=2.5)) +
   theme(legend.position = "none")
 
 mn <- clus1 %>% summarize(csat = mean(csat), loyalty=mean(loyalty))
@@ -199,6 +198,7 @@ for (i in 1:5) {
   base <- base + geom_segment(x = unlist(mn[1, "csat"]), y = unlist(mn[1, "loyalty"]),
                            xend = unlist(clus1[i, "csat"]), yend = unlist(clus1[i, "loyalty"]))
 }
+base <- base + geom_point(aes(y = mean(loyalty), x = mean(csat), colour="red", size=2.5)) 
 base
 ```
 
@@ -208,7 +208,7 @@ cluster where points are very close to the center might still have a large $S^2$
 
 ### The clustering algorithm
 
-The K-means algorithm is quite simple. We begin by picking K, and uniformly randomly assigning data to K clusters. 
+The K-means algorithm is quite simple. We begin by picking K, and uniformly randomly assigning data to the K clusters. 
 Then K-means consists of two major steps that attempt to minimize the
 sum of WSSDs over all the clusters, i.e. the *total WSSD*:
 
@@ -216,34 +216,152 @@ sum of WSSDs over all the clusters, i.e. the *total WSSD*:
 2. **Label update:** Reassign each data point to the cluster with the nearest center.
 
 These two steps are repeated until the cluster assignments no longer change.
-For example, in the customer data example from earlier, our initialization might look like:
+For example, in the customer data example from earlier, our initialization might look like this:
+<center>
+```{r 10-toy-kmeans-init, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Random initialization of labels."}
+library(gridExtra)
+set.seed(2)
+marketing_data["label"] = factor(sample(1:3, nrow(marketing_data), replace=T))
 
-Next, we compute the center of each cluster:
+plt_lbl <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
+    geom_point() +
+    xlab("Customer satisfaction") +
+    ylab("Loyalty") +
+    xlim(c(0, 10)) +
+    ylim(c(0, 10)) + 
+    theme(legend.position = "none")
+print(plt_lbl)
+```
+</center>
 
-Then we reassign each observation to its closest center:
+And the first three iterations of K-means would look like (each row corresponds to an iteration,
+where the left column depicts the center update, 
+and the right column depicts the reassignment of data to clusters): 
+<center>
+```{r 10-toy-kmeans-iter, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 8}
+for (i in 1:3){
+    #compute centers
+    centers <- marketing_data %>% group_by(label) %>% summarize_all(funs(mean))
+    nclus = nrow(centers)
+    #replot with centers
+    plt_ctr <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
+        geom_point() +
+        xlab("Customer satisfaction") +
+        ylab("Loyalty") +
+        xlim(c(0, 10)) +
+        ylim(c(0, 10)) + 
+        theme(legend.position = "none") +
+        geom_point(data = centers, aes(y = loyalty, x = csat, colour = label, size=2.5)) 
+    
+    #reassign labels
+    dists <- rbind(centers, marketing_data) %>% 
+           select("csat", "loyalty") %>%
+           dist() %>%
+           as.matrix()
+    dists <- as_tibble(dists[-(1:nclus),1:nclus])
+    marketing_data <- marketing_data %>% mutate(label = apply(dists, 1, function(x) names(x)[which.min(x)]))
+    
+    plt_lbl <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
+        geom_point() +
+        xlab("Customer satisfaction") +
+        ylab("Loyalty") +
+        xlim(c(0, 10)) +
+        ylim(c(0, 10)) + 
+        theme(legend.position = "none") +
+        geom_point(data = centers, aes(y = loyalty, x = csat, colour = label, size=2.5)) 
+    
+    grid.arrange(plt_ctr, plt_lbl, nrow = 1)
+}
+```
+</center>
 
+Note that at this point we can terminate the algorithm, since none of the assignments changed
+in the third iteration; both the centers and labels will remain the same from this point onward.
 
-
-
-
-Watch the video linked to below for an explanation of the K-means clustering algorithm:
-- https://www.coursera.org/lecture/machine-learning-data-analysis/what-is-a-k-means-cluster-analysis-p94tY
-
-*note - when the advertisement pops up to register for this course, you can
-just click to ignore it (i.e., no need to sign up to watch the entire video)*
-
-> will this run forever? no. each step reduces the total within cluster sos. since
-> sos is a positive number, and it always decreases, and there are only a finite number
-> of different clusterings, it must stop decreasing at some point.
-> the algorithm stops.
-
-### Choosing K
+> Is K-means *guaranteed* to stop at some point, or could it iterate forever? As it turns out,
+> the answer is thankfully that K-means is guaranteed to stop after *some* number of iterations. For the interested reader, the
+> logic for this has three steps: (1) both the label update and the center update decrease total WSSD in each iteration,
+> (2) the total WSSD is always greater than or equal to 0, and (3) there are only a finite number of possible
+> ways to assign the data to clusters. So at some point, the total WSSD must stop decreasing, which means none of the assignments
+> are changing and the algorithm terminates.
 
 ### Random restarts
 
-K-means, unlike knn and linear regression, can get "stuck" in a bad solution.
+K-means, unlike the classification and regression models we studied in previous chapters, can get "stuck" in a bad solution.
+For example, if we were unlucky and initialized K-means with the following labels:
+<center>
+```{r 10-toy-kmeans-bad-init, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Random initialization of labels."}
+set.seed(7)
+marketing_data["label"] = factor(sample(1:3, nrow(marketing_data), replace=T))
 
-> kmeans++??
+plt_lbl <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
+    geom_point() +
+    xlab("Customer satisfaction") +
+    ylab("Loyalty") +
+    xlim(c(0, 10)) +
+    ylim(c(0, 10)) + 
+    theme(legend.position = "none")
+print(plt_lbl)
+```
+</center>
+
+Then the iterations of K-means would look like:
+<center>
+```{r 10-toy-kmeans-bad-iter, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 8}
+for (i in 1:5){
+    #compute centers
+    centers <- marketing_data %>% group_by(label) %>% summarize_all(funs(mean))
+    nclus = nrow(centers)
+    #replot with centers
+    plt_ctr <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
+        geom_point() +
+        xlab("Customer satisfaction") +
+        ylab("Loyalty") +
+        xlim(c(0, 10)) +
+        ylim(c(0, 10)) + 
+        theme(legend.position = "none") +
+        geom_point(data = centers, aes(y = loyalty, x = csat, colour = label, size=2.5)) 
+    
+    #reassign labels
+    dists <- rbind(centers, marketing_data) %>% 
+           select("csat", "loyalty") %>%
+           dist() %>%
+           as.matrix()
+    dists <- as_tibble(dists[-(1:nclus),1:nclus])
+    marketing_data <- marketing_data %>% mutate(label = apply(dists, 1, function(x) names(x)[which.min(x)]))
+    
+    plt_lbl <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
+        geom_point() +
+        xlab("Customer satisfaction") +
+        ylab("Loyalty") +
+        xlim(c(0, 10)) +
+        ylim(c(0, 10)) + 
+        theme(legend.position = "none") +
+        geom_point(data = centers, aes(y = loyalty, x = csat, colour = label, size=2.5)) 
+    
+    grid.arrange(plt_ctr, plt_lbl, nrow = 1)
+}
+```
+</center>
+
+This looks like a relatively bad clustering of the data, but K-means cannot improve it.
+To solve this problem when clustering data using K-means, we should randomly reinitialize the labels a few times, run K-means for each initialization,
+and pick the clustering that has the lowest final total WSSD.
+
+### Choosing K
+
+horizontal plots
+
+```{r}
+kclusts <- tibble(k = 1:9) %>%
+  mutate(
+    kclust = map(k, ~kmeans(marketing_data[-"labels"], .x)),
+    tidied = map(kclust, tidy),
+    glanced = map(kclust, glance),
+    augmented = map(kclust, augment, points)
+  )
+kclusts
+```
 
 ## K-means in R
 
@@ -358,6 +476,14 @@ have as much impact reducing the total within-cluster sum of squares. Here we
 would choose K = 3. 
 
 ## Additional readings:
+
+
+
+Watch the video linked to below for an explanation of the K-means clustering algorithm:
+- https://www.coursera.org/lecture/machine-learning-data-analysis/what-is-a-k-means-cluster-analysis-p94tY
+
+*note - when the advertisement pops up to register for this course, you can
+just click to ignore it (i.e., no need to sign up to watch the entire video)*
 
 
 - Pages 385-390 and 404-405 of [Introduction to Statistical Learning with Applications in R](http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf) by Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani and the companion video linked to below:
