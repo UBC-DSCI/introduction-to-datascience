@@ -89,6 +89,8 @@ data <- tibble(loyalty = c(7, 7.5, 8, 7, 3, 1, 8, 4, 2, 7, 6, 7, 6, 5, 9, 7, 9, 
                            "3"))
 marketing_data <- data[,1:2]
 ```
+```{r 10-clustering}
+head(marketing_data)
 
 ```{r 10-toy-example-plot, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Modified from http://www.segmentationstudyguide.com/using-cluster-analysis-for-market-segmentation/"}
 base <- ggplot(data, aes(y = loyalty, x = csat)) +
@@ -224,7 +226,7 @@ set.seed(2)
 marketing_data["label"] = factor(sample(1:3, nrow(marketing_data), replace=T))
 
 plt_lbl <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
-    geom_point() +
+    geom_point(size=2) +
     xlab("Customer satisfaction") +
     ylab("Loyalty") +
     xlim(c(0, 10)) +
@@ -245,13 +247,13 @@ for (i in 1:3){
     nclus = nrow(centers)
     #replot with centers
     plt_ctr <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
-        geom_point() +
+        geom_point(size=2) +
         xlab("Customer satisfaction") +
         ylab("Loyalty") +
         xlim(c(0, 10)) +
         ylim(c(0, 10)) + 
         theme(legend.position = "none") +
-        geom_point(data = centers, aes(y = loyalty, x = csat, colour = label, size=2.5)) 
+        geom_point(data = centers, aes(y = loyalty, x = csat, colour = label), size=10, shape="x") 
     
     #reassign labels
     dists <- rbind(centers, marketing_data) %>% 
@@ -262,13 +264,13 @@ for (i in 1:3){
     marketing_data <- marketing_data %>% mutate(label = apply(dists, 1, function(x) names(x)[which.min(x)]))
     
     plt_lbl <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
-        geom_point() +
+        geom_point(size = 2) +
         xlab("Customer satisfaction") +
         ylab("Loyalty") +
         xlim(c(0, 10)) +
         ylim(c(0, 10)) + 
         theme(legend.position = "none") +
-        geom_point(data = centers, aes(y = loyalty, x = csat, colour = label, size=2.5)) 
+        geom_point(data = centers, aes(y = loyalty, x = csat, colour = label), size=10, shape="x") 
     
     grid.arrange(plt_ctr, plt_lbl, nrow = 1)
 }
@@ -295,7 +297,7 @@ set.seed(7)
 marketing_data["label"] = factor(sample(1:3, nrow(marketing_data), replace=T))
 
 plt_lbl <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
-    geom_point() +
+    geom_point(size = 2) +
     xlab("Customer satisfaction") +
     ylab("Loyalty") +
     xlim(c(0, 10)) +
@@ -314,13 +316,13 @@ for (i in 1:5){
     nclus = nrow(centers)
     #replot with centers
     plt_ctr <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
-        geom_point() +
+        geom_point(size = 2) +
         xlab("Customer satisfaction") +
         ylab("Loyalty") +
         xlim(c(0, 10)) +
         ylim(c(0, 10)) + 
         theme(legend.position = "none") +
-        geom_point(data = centers, aes(y = loyalty, x = csat, colour = label, size=2.5)) 
+        geom_point(data = centers, aes(y = loyalty, x = csat, colour = label), size=10, shape = "x") 
     
     #reassign labels
     dists <- rbind(centers, marketing_data) %>% 
@@ -331,13 +333,13 @@ for (i in 1:5){
     marketing_data <- marketing_data %>% mutate(label = apply(dists, 1, function(x) names(x)[which.min(x)]))
     
     plt_lbl <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
-        geom_point() +
+        geom_point(size = 2) +
         xlab("Customer satisfaction") +
         ylab("Loyalty") +
         xlim(c(0, 10)) +
         ylim(c(0, 10)) + 
         theme(legend.position = "none") +
-        geom_point(data = centers, aes(y = loyalty, x = csat, colour = label, size=2.5)) 
+        geom_point(data = centers, aes(y = loyalty, x = csat, colour = label), size=10, shape = "x") 
     
     grid.arrange(plt_ctr, plt_lbl, nrow = 1)
 }
@@ -345,33 +347,69 @@ for (i in 1:5){
 </center>
 
 This looks like a relatively bad clustering of the data, but K-means cannot improve it.
-To solve this problem when clustering data using K-means, we should randomly reinitialize the labels a few times, run K-means for each initialization,
+To solve this problem when clustering data using K-means, we should randomly re-initialize the labels a few times, run K-means for each initialization,
 and pick the clustering that has the lowest final total WSSD.
 
 ### Choosing K
 
-horizontal plots
+In order to cluster data using K-means, we also have to pick the number of clusters, K.
+But unlike in classification, we have no data labels and cannot perform
+cross-validation with some measure of model prediction error.
+Further, if K is chosen too small, then multiple clusters get grouped together;
+if K is too large, then clusters get subdivided. In both cases, we will potentially miss
+interesting structure in the data. For example, take a look below at the K-means
+clustering of our customer satisfaction and loyalty data for a number of clusters
+ranging from 1 to 9.
 
-```{r}
+```{r 10-toy-kmeans-vary-k, echo = FALSE, warning = FALSE, fig.height = 10, fig.width = 12, fig.cap = "Clustering of the customer data for # clusters ranging from 1 to 9."}
+library(broom)
+set.seed(3)
 kclusts <- tibble(k = 1:9) %>%
   mutate(
-    kclust = map(k, ~kmeans(marketing_data[-"labels"], .x)),
+    kclust = map(k, ~kmeans(marketing_data[-3], .x)),
     tidied = map(kclust, tidy),
     glanced = map(kclust, glance),
-    augmented = map(kclust, augment, points)
+    augmented = map(kclust, augment, marketing_data[-3])
   )
-kclusts
+
+clusters <- kclusts %>%
+  unnest(tidied)
+
+assignments <- kclusts %>% 
+  unnest(augmented)
+
+clusterings <- kclusts %>%
+  unnest(glanced, .drop = TRUE)
+
+p1 <- ggplot(assignments, aes(csat, loyalty)) +
+  geom_point(aes(color = .cluster, size = 3)) + 
+  facet_wrap(~ k) +
+  labs(x = 'Customer satisfaction', y = 'Loyalty', colour = 'Cluster') +
+  theme(text = element_text(size=20), legend.position = "none") +
+  geom_point(data = clusters %>% mutate(csat = x2, loyalty = x1), aes(colour = cluster), size = 15, shape = "x")
+
+p1
 ```
+If we set K less than 3, then the clustering merges separate groups of data; this causes a large causing a large
+total WSSD, since the cluster center (denoted by an "x") is not close to any of the data in the cluster. On 
+the other hand, if we set K greater than 3, the clustering subdivides subgroups of data; this does indeed still 
+decrease the total WSSD, but by only a *diminishing amount*. If we plot the total WSSD versus the number of 
+clusters, we see that the decrease in total WSSD levels off (or forms an "elbow shape") when we reach roughly 
+the right number of clusters.
+<center>
+```{r 10-toy-kmeans-elbow, echo = FALSE, warning = FALSE, fig.height = 6, fig.width = 10, fig.cap = "Total WSSD for # clusters ranging from 1 to 9."}
+p2 <- ggplot(clusterings, aes(x = k, y = tot.withinss)) +
+        geom_point(size = 2) +
+        geom_line() +
+        annotate("text", x = 3.5, y = 50, label="Elbow", size=10, colour = "blue") +
+        labs(x = "# Clusters", y = "Total WSSD") +
+        theme(text = element_text(size=20)) + 
+        scale_x_continuous(breaks = 1:9)
+p2
+```
+</center>
 
 ## K-means in R
-
-(combine clustering and choosing K in a single section)
-
-Let's take a look at the data we plotted above:
-
-```{r 10-clustering}
-head(marketing_data)
-```
 
 To peform Kmeans clustering in R, we use the `kmeans` function. It takes at
 least two arguments, the data frame containing the data you wish to cluster,
@@ -395,7 +433,6 @@ frame, and returns a data frame with the data and the cluster assignments for
 each point:
 
 ```{r 10-plot-clusters-1}
-library(broom)
 
 clustered_data <- augment(marketing_clust, marketing_data)
 head(clustered_data)
@@ -405,25 +442,15 @@ Now that we have this data frame, we can easily plot the data (i.e., cluster ass
 
 ```{r 10-plot-clusters-2, fig.height = 4, fig.width = 4.35}
 
-cluster_plot <- ggplot(clustered_data, aes(x = csat, y = loyalty, colour = .cluster)) +
-  geom_point()
+cluster_plot <- ggplot(clustered_data, aes(x = csat, y = loyalty, colour = .cluster), size=2) +
+  geom_point() +
+  labs(x = 'Customer satisfaction', y = 'Loyalty', colour = 'Cluster')
 cluster_plot
 ```
 
-## Choosing K for K-means clustering
-
-As mentioned above, we need to choose a K to perform K-means clustering. How
-should we choose K? We have no data labels, and so cannot perform
-cross-validation with some measure of model prediction error, so what can we
-do? What we can do in this situation is to look at the total within-cluster sum
-of squares for different K's and choose the K that gives the biggest decrease
-in the total within-cluster sum of squares. Why total within-cluster sum of
-squares? This statistic lets us know how close/tight-knit (or compact)
-observations are within clusters. A larger number means that clusters are not
-close/tight-knit, but are instead more spread out. A smaller number here means
-that clusters are indeed close/tight-knit together. 
-
-We can get at the total within-cluster sum of squares (`tot.withinss`) from our
+As mentioned above, we need to choose a K to perform K-means clustering by finding
+where the "elbow" occurs in the plot of total WSSD versus number of clusters. 
+We can get at the total WSSD (`tot.withinss`) from our
 clustering using `broom`'s `glance` function (it gives model-level statistics).
 For example:
 
@@ -431,12 +458,11 @@ For example:
 glance(marketing_clust)
 ```
 
-Let's calculate the total within-cluster sum of squares for our data for a
-variety of K's (say 1 - 9) and then plot them against K. To do this we will
-create a data frame with a column named `k`, for each of the K's we want to try
-our clustering with. Then we use `map` to apply the `kmeans` function to each
-K. We also use `map` to then apply `glance` to each of the clustering models we
-performed (one for each K). In the end we end up with a complex data frame with
+To calculate the total WSSD for a variety of Ks, we will
+create a data frame with a column named `k` with rows containing the numbers of clusters
+we want to run K-means with (here, 1 to 9). Then we use `map` to apply the `kmeans` function to each
+K. We also use `map` to then apply `glance` to each of the clusterings.
+This results in a complex data frame with
 3 columns, one for K, one for the models, and one for the model statistics
 (output of `glance`, which is a data frame):
 
@@ -447,10 +473,9 @@ marketing_clust_ks <- tibble(k = 1:9) %>%
 head(marketing_clust_ks)
 ```
 
-What we need to do next, is get the value for the total within-cluster sum of
-squares (`tot.withinss`) from the `glanced` column. Given that each item in
+We now extract the total WSSD from the `glanced` column. Given that each item in
 this column is a data frame, we will need to use the `unnest` function to
-unpack the data frames in the `glanced` column. 
+unpack the data frames. 
 
 ```{r 10-get-total-within-sumsqs}
 clustering_statistics <- marketing_clust_ks %>%
@@ -459,33 +484,37 @@ clustering_statistics <- marketing_clust_ks %>%
 head(clustering_statistics)
 ```
 
-Now that we have `tot.withinss` and `k` as columns in a data frame, we can make a plot to choose K:
+Now that we have `tot.withinss` and `k` as columns in a data frame, we can make a line plot 
+and search for the "elbow" to find which value of K to use. 
+
 
 ```{r 10-plot-choose-k, fig.height = 4, fig.width = 4.35}
 elbow_plot <- ggplot(clustering_statistics, aes(x = k, y = tot.withinss)) +
   geom_point() +
   geom_line() +
   xlab("K") +
-  ylab("Total within-cluster sum of squares")
+  ylab("Total within-cluster sum of squares")+
+  scale_x_continuous(breaks = 1:9)
 elbow_plot
 ```
 
-We call the plot above an "elbow plot" and we look for the "elbow" in total
-within-cluster sum of squares, the point where afterwards increasing K doesn't
-have as much impact reducing the total within-cluster sum of squares. Here we
-would choose K = 3. 
+> Why is there a "bump" in the total WSSD plot here? Shouldn't total WSSD always
+> decrease as we add more clusters? Technically yes, but remember:  K-means can 
+> get "stuck" in a bad solution. Unfortunately for K = 6 we had an unlucky initialization,
+> and we found a bad clustering! To fix this, simply try a different seed before clustering.
 
 ## Additional readings:
 
-
-
-Watch the video linked to below for an explanation of the K-means clustering algorithm:
+<!--Watch the video linked to below for an explanation of the K-means clustering algorithm:
 - https://www.coursera.org/lecture/machine-learning-data-analysis/what-is-a-k-means-cluster-analysis-p94tY
 
 *note - when the advertisement pops up to register for this course, you can
 just click to ignore it (i.e., no need to sign up to watch the entire video)*
 
+-->
 
-- Pages 385-390 and 404-405 of [Introduction to Statistical Learning with Applications in R](http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf) by Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani and the companion video linked to below:
+For more about clustering and K-means, refer to pages 385-390 and 404-405 
+of [Introduction to Statistical Learning with Applications in R](http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf) by Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani, as well
+as the companion video linked to below:
 
 <iframe width="840" height="473" src="https://www.youtube.com/embed/aIybuNt9ps4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
