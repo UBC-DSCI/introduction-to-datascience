@@ -28,7 +28,8 @@ genetic information into groups that correspond to ancestral subpopulations, or
 a dataset of online customers into groups that correspond to purchasing
 behaviours.  Once the data are separated we can, for example, use the subgroups
 to generate new questions about the data and follow up with a predictive
-modelling exercise.
+modelling exercise. In this course, clustering will be used only for exploratory
+analysis, i.e., uncovering patterns in the data that we have.
 
 Note that clustering is a fundamentally different kind of task than
 classification or regression. Most notably, both classification and regression
@@ -156,9 +157,9 @@ improves it by making adjustments to the assignment of data
 to clusters until it cannot improve any further. But how do we measure
 the "quality" of a clustering, and what does it mean to improve it? 
 In K-means clustering, we measure the quality of a cluster by its
-*within-cluster sum-of-squared-distances* (WSSD). Computing this involves two steps:
-We first compute the mean of each variable we are using to cluster the data
-over data points that are in the cluster (i.e., the *center* of the cluster). For example, suppose we have a 
+*within-cluster sum-of-squared-distances* (WSSD). Computing this involves two steps.
+First, we find the cluster centers by computing the mean of each variable 
+over data points in the cluster. For example, suppose we have a 
 cluster containing 3 observations, and we are using two variables, $x$ and $y$, to cluster the data.
 Then we would compute the $x$ and $y$ variables, $\mu_x$ and $\mu_y$, of the cluster center via
 
@@ -179,8 +180,8 @@ base <- ggplot(clus1) +
 base
 ```
 
-The second step is to add up the squared distance between each point in the cluster and the cluster center.
-We use the usual distance formula that we learned about in the classification chapter.
+The second step in computing the WSSD is to add up the squared distance between each point in the cluster and the cluster center.
+We use the straight-line / Euclidean distance formula that we learned about in the classification chapter.
 In the 3-observation cluster example above, we would compute the WSSD $S^2$ via
 
 $$S^2 = \left((x_1 - \mu_x)^2 + (y_1 - \mu_y)^2\right) + \left((x_2 - \mu_x)^2 + (y_2 - \mu_y)^2\right) +\left((x_3 - \mu_x)^2 + (y_3 - \mu_y)^2\right).$$
@@ -240,6 +241,7 @@ And the first three iterations of K-means would look like (each row corresponds 
 where the left column depicts the center update, 
 and the right column depicts the reassignment of data to clusters): 
 <center>
+**Center Update**  &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp;**Label Update**
 ```{r 10-toy-kmeans-iter, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 8}
 for (i in 1:3){
     #compute centers
@@ -253,7 +255,7 @@ for (i in 1:3){
         xlim(c(0, 10)) +
         ylim(c(0, 10)) + 
         theme(legend.position = "none") +
-        geom_point(data = centers, aes(y = loyalty, x = csat, colour = label), size=10, shape="x") 
+        geom_point(data = centers, aes(y = loyalty, x = csat, fill = label), size=5, shape = 21, stroke = 2, colour = "black") 
     
     #reassign labels
     dists <- rbind(centers, marketing_data) %>% 
@@ -270,7 +272,7 @@ for (i in 1:3){
         xlim(c(0, 10)) +
         ylim(c(0, 10)) + 
         theme(legend.position = "none") +
-        geom_point(data = centers, aes(y = loyalty, x = csat, colour = label), size=10, shape="x") 
+        geom_point(data = centers, aes(y = loyalty, x = csat, fill = label), size=5, shape = 21, stroke = 2, colour = "black") 
     
     #to generate the animated version, get rid of grid.arrange and use the below two lines
     #set the figure width to 4.35 too
@@ -313,6 +315,7 @@ print(plt_lbl)
 
 Then the iterations of K-means would look like:
 <center>
+**Center Update**  &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp;**Label Update**
 ```{r 10-toy-kmeans-bad-iter, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 8}
 for (i in 1:5){
     #compute centers
@@ -326,7 +329,7 @@ for (i in 1:5){
         xlim(c(0, 10)) +
         ylim(c(0, 10)) + 
         theme(legend.position = "none") +
-        geom_point(data = centers, aes(y = loyalty, x = csat, colour = label), size=10, shape = "x") 
+        geom_point(data = centers, aes(y = loyalty, x = csat, fill = label), size=5, shape = 21, stroke = 2, colour = "black") 
     
     #reassign labels
     dists <- rbind(centers, marketing_data) %>% 
@@ -343,7 +346,7 @@ for (i in 1:5){
         xlim(c(0, 10)) +
         ylim(c(0, 10)) + 
         theme(legend.position = "none") +
-        geom_point(data = centers, aes(y = loyalty, x = csat, colour = label), size=10, shape = "x") 
+        geom_point(data = centers, aes(y = loyalty, x = csat, fill = label), size=5, shape = 21, stroke = 2, colour = "black") 
     
     #print(plt_ctr)
     #print(plt_lbl)
@@ -387,15 +390,23 @@ assignments <- kclusts %>%
 clusterings <- kclusts %>%
   unnest(glanced, .drop = TRUE)
 
+assignments$k <- factor(assignments$k)
+levels(assignments$k) <- c("1 Cluster", "2 Clusters", "3 Clusters", "4 Clusters", "5 Clusters", "6 Clusters", "7 Clusters", "8 Clusters", "9 Clusters") 
+
+clusters$k <- factor(clusters$k)
+levels(clusters$k) <- c("1 Cluster", "2 Clusters", "3 Clusters", "4 Clusters", "5 Clusters", "6 Clusters", "7 Clusters", "8 Clusters", "9 Clusters") 
+
+
 p1 <- ggplot(assignments, aes(csat, loyalty)) +
   geom_point(aes(color = .cluster, size = 3)) + 
   facet_wrap(~ k) +
   labs(x = 'Customer satisfaction', y = 'Loyalty', colour = 'Cluster') +
   theme(text = element_text(size=20), legend.position = "none") +
-  geom_point(data = clusters %>% mutate(csat = x2, loyalty = x1), aes(colour = cluster), size = 15, shape = "x")
+  geom_point(data = clusters %>% mutate(csat = x2, loyalty = x1), aes(fill = cluster), colour = "black", size = 5, shape = 21, stroke = 2)
 
 p1
 ```
+
 If we set K less than 3, then the clustering merges separate groups of data; this causes a large causing a large
 total WSSD, since the cluster center (denoted by an "x") is not close to any of the data in the cluster. On 
 the other hand, if we set K greater than 3, the clustering subdivides subgroups of data; this does indeed still 
@@ -417,11 +428,11 @@ p2
 
 ## K-means in R
 
-To peform Kmeans clustering in R, we use the `kmeans` function. It takes at
+To peform K-means clustering in R, we use the `kmeans` function. It takes at
 least two arguments, the data frame containing the data you wish to cluster,
-and K, the number of clusters (here we choose K = 3). Given that the K-means
-algorithm uses a random start to begin the algorithm, to make this
-reproducible, we need to set the seed. 
+and K, the number of clusters (here we choose K = 3). Note that since the K-means
+algorithm uses a random initialization of assignments, we need to set the random
+seed to make the clustering reproducible.
 
 ```{r 10-kmeans}
 set.seed(1234)
@@ -504,10 +515,30 @@ elbow_plot <- ggplot(clustering_statistics, aes(x = k, y = tot.withinss)) +
 elbow_plot
 ```
 
-> Why is there a "bump" in the total WSSD plot here? Shouldn't total WSSD always
-> decrease as we add more clusters? Technically yes, but remember:  K-means can 
-> get "stuck" in a bad solution. Unfortunately for K = 6 we had an unlucky initialization,
-> and we found a bad clustering! To fix this, simply try a different seed before clustering.
+It looks like 3 clusters is the right choice for this data.
+But why is there a "bump" in the total WSSD plot here? Shouldn't total WSSD always
+decrease as we add more clusters? Technically yes, but remember:  K-means can 
+get "stuck" in a bad solution. Unfortunately, for K = 6 we had an unlucky initialization
+and found a bad clustering! We can help prevent finding a bad clustering by trying a 
+few different random initializations via the `nstart` argument (here we use 10 restarts). 
+```{r 10-choose-k-nstart, fig.height = 4, fig.width = 4.35}
+marketing_clust_ks <- tibble(k = 1:9) %>%
+  mutate(marketing_clusts = map(k, ~kmeans(marketing_data, nstart = 10, .x)),
+         glanced = map(marketing_clusts, glance)) 
+
+clustering_statistics <- marketing_clust_ks %>%
+  unnest(glanced)
+
+elbow_plot <- ggplot(clustering_statistics, aes(x = k, y = tot.withinss)) +
+  geom_point() +
+  geom_line() +
+  xlab("K") +
+  ylab("Total within-cluster sum of squares")+
+  scale_x_continuous(breaks = 1:9)
+elbow_plot
+```
+
+
 
 ## Additional readings:
 
