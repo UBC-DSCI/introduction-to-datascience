@@ -1,3 +1,7 @@
+```{r 05-setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
 # Classification I: Training & predicting {#classification}
 
 ## Overview 
@@ -56,7 +60,7 @@ Our first step is to load, wrangle, and explore the data using visualizations in
 We start by loading the necessary libraries for our analysis. Below you'll see (in addition to the usual `tidyverse`) a new library, `forcats`, that 
 enables us to easily manipulate factors in R. Factors are a special categorical type of variable in R that are very helpful when doing data analysis with categorical variables.
 
-```{r 05-load-libraries, message = FALSE}
+```{r 05-load-libraries}
 library(tidyverse)
 library(forcats)
 ```
@@ -64,7 +68,7 @@ library(forcats)
 In this case, the file containing the breast cancer data set is a simple `.csv` file with headers. We'll use the `read_csv` function with no additional arguments,
 and then the `head` function to inspect its contents:
 
-```{r 05-read-data, message = FALSE}
+```{r 05-read-data}
 cancer <- read_csv("data/clean-wdbc.data.csv")
 head(cancer)
 ```
@@ -155,7 +159,7 @@ In order to actually do this computationally in practice, we will need a classif
 
 ## Classification with K-nearest neighbours
 
-```{r 05-knn-0, echo = F}
+```{r 05-knn-0, echo = FALSE}
 ## Find the distance between new point and all others in data set
 euclidDist <- function(point1, point2) {
     #Returns the Euclidean distance between point1 and point2.
@@ -255,7 +259,7 @@ perim_concav + geom_point(aes(x=new_point[1], y=new_point[2]),
 
 
 
-```{r 05-knn-6, echo = F}
+```{r 05-knn-6, echo = FALSE}
 #neighbours %>% 
 #  select(ID, attrs, Class) %>% 
 #  slice(1:3)
@@ -269,7 +273,7 @@ to avoid ties). We will discuss more about choosing $K$ in the next chapter.
 How do we decide which points are the $K$ "nearest" to our new observation? We can compute the distance between any pair of points using the following formula: 
 
 $$\mathrm{Distance} = \sqrt{(x_a -x_b)^2 + (y_a - y_b)^2}$$
-```{r 05-multiknn-0, echo =F}
+```{r 05-multiknn-0, echo = FALSE}
 new_point <- c(-1,4.2)
 ```
 
@@ -279,7 +283,7 @@ Suppose we want to classify a new observation with perimeter of `r new_point[1]`
 new point and each of the observations in the training set to find the $K=5$ observations in the training data that are nearest to our new point. 
 
 <center>
-```{r 05-multiknn-1, echo = F, fig.height = 4, fig.width = 5}
+```{r 05-multiknn-1, echo = FALSE, fig.height = 4, fig.width = 5}
 perim_concav <- cancer %>%    
   ggplot(aes(x=Perimeter, y=Concavity, color = Class)) + 
     geom_point() +
@@ -348,7 +352,7 @@ In other words, the distance formula becomes
 $$Distance = \sqrt{(u_{1} -v_{1})^2 + (u_{2} - v_{2})^2 + \dots + (u_{m} - v_{m})^2}$$
 
 
-```{r 05-more, echo = F}
+```{r 05-more, echo = FALSE}
 library(plotly)
 cancer %>% 
 plot_ly(x = ~ Perimeter, 
@@ -387,7 +391,7 @@ Using this package will help keep our code simple, readable and accurate; the le
 
 We start off by loading the `caret` library:
 
-```{r 05-caret, message=FALSE}
+```{r 05-caret}
 library(caret)
 ```
 
@@ -468,7 +472,7 @@ will read in the original, unscaled Wisconsin breast cancer data set; we have be
 to do this we will download the raw data from the UCI Machine learning repository, and then compute the unscaled columns equivalent to those we have been working with 
 in the scaled version of the data set ("worst" measures). 
 
-```{r download unscaled data and clean up, warning = FALSE, echo =  FALSE, message = FALSE}
+```{r download unscaled data and clean up, warning = FALSE, echo =  FALSE}
 unscaled_cancer <- read_csv("https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data", 
                             col_names = FALSE) %>% 
   select(X1, X2, X11:X20)
@@ -497,7 +501,7 @@ head(scaled_cancer)
 Now let's generate the two scatter plots, one for `unscaled_cancer` and one for `scaled_cancer`, and show them side-by-side:
 
 <center>
-```{r 06-scaling-2, warning = FALSE, echo =  FALSE,  fig.height = 4, fig.width = 10}
+```{r 06-scaling-2, echo =  FALSE,  fig.height = 4, fig.width = 10}
 unscaled_cancer$ID <- as.numeric(row.names(unscaled_cancer))
 scaled_cancer$ID <- as.numeric(row.names(unscaled_cancer))
 
@@ -588,7 +592,7 @@ and the benign vote will always win. For example, look what happens for a new tu
 that were tagged as malignant:
 
 <center>
-```{r 05-upsample, echo=FALSE, fig.height = 4, fig.width = 5, warning=FALSE}
+```{r 05-upsample, echo=FALSE, fig.height = 4, fig.width = 5}
 new_point <- c(3, 2)
 attrs <- c("Perimeter", "Concavity")
 my_distances <- table_with_distances(rare_cancer[,attrs], new_point)
@@ -616,7 +620,7 @@ And if we set the background colour of each area of the plot to the decision the
 classifier would make, we can see that the decision is always "benign," corresponding to the blue colour:
 
 <center>
-```{r 05-upsample-2, echo=FALSE, fig.height = 4, fig.width = 5}
+```{r 05-upsample-2, echo = FALSE, fig.height = 4, fig.width = 5}
 
 #train a knn classifier
 features <- rare_cancer %>% select(Perimeter, Concavity)
@@ -664,7 +668,7 @@ of each area of our scatter plot to the decision the K-nearest neighbour
 classifier would make, we can see that the decision is more reasonable; when the points are close
 to those labelled malignant, the classifier predicts a malignant tumour, and vice versa when they are closer to the benign tumour observations:
 <center>
-```{r 05-upsample-plot, echo=FALSE, fig.height = 4, fig.width = 5}
+```{r 05-upsample-plot, echo = FALSE, fig.height = 4, fig.width = 5}
 
 #train a knn classifier
 features <- rare_cancer %>% select(Perimeter, Concavity)
