@@ -1,3 +1,7 @@
+```{r 06-setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE)
+```
+
 # Classification II: Evaluation & tuning {#classification_continued}
 
 ## Overview 
@@ -49,13 +53,13 @@ In R, we can use the `caret` package not only to perform K-nearest neighbour cla
 classification worked. Let's start by loading the necessary libraries, reading in the breast cancer data from the previous
 chapter, and making a quick scatter plot visualization of tumour cell concavity versus smoothness coloured by diagnosis.
 
-```{r 06-precode, message = FALSE, fig.height = 4, fig.width = 5}
+```{r 06-precode, fig.height = 4, fig.width = 5}
 # load libraries
 library(tidyverse)
 library(caret)
 
 #load data
-cancer <- read_csv("data/clean-wdbc.data.csv") %>% 
+cancer <- read_csv("data/unscaled-wdbc.data.csv") %>% 
   mutate(Class = as.factor(Class)) # because we will be doing statistical analysis on a categorical variable
 
 # colour palette
@@ -115,7 +119,17 @@ glimpse(test_set)
 We can see from `glimpse` in the code above that the training set contains 427 observations, while the test set contains 142 observations. This 
 corresponds to a train / test split of 75% / 25%, as desired.
 
-**2. Train the classifier**
+**2. Pre-process the data**
+
+As we mentioned last chapter, k-nn is sensitive to the scale of the predictors, thus we should perform a data transformation to scale and centre them. An additional consideration we need to take when doing this is that we should create the scaling transformer using only the training data. This ensures that our test data does not influence any aspect of our model training. Once we have created the scaling transformer, we can then apply it separately to both the training and test data sets.
+
+```{r 06-pre-process}
+scale_transformer <- preProcess(training_set, method = c("center", "scale")) 
+training_set <- predict(scale_transformer, training_set)
+test_set <- predict(scale_transformer, test_set)
+```
+
+**3. Train the classifier**
 
 Now that we have split our original data set into training and test sets, we can create our K-nearest neighbour classifier with only the training set
 using the technique we learned in the previous chapter. For now, we will just choose the number $K$ of neighbours to be 3, and use concavity and
@@ -141,7 +155,7 @@ model_knn
 > Thus, to prevent potential issues with reproducibility, we have set the seed. Note that in your own code,
 > you only have to set the seed once at the beginning of your analysis. 
 
-**3. Predict the labels in the test set**
+**4. Predict the labels in the test set**
 
 Now that we have a K-nearest neighbour classifier object, we can use it to predict the class labels for our test set:
 
@@ -153,7 +167,7 @@ Y_test_predicted <- predict(object = model_knn, X_test)
 head(Y_test_predicted)
 ```
 
-**4. Compute the accuracy**
+**5. Compute the accuracy**
 
 Finally we can assess our classifier's accuracy. To do this we need to create a vector containing the class labels for the test 
 set. Next we use the function `confusionMatrix` to get the statistics about the quality of our model, this includes the 
@@ -379,7 +393,7 @@ In general, if the model *is influenced too much* by the training data, it is sa
 You can see this effect in the plots below as we vary the number of neighbours $K$ in (1, 7, 20, 200):
 
 <center>
-```{r 06-decision-grid-K, echo=FALSE, fig.height = 7, fig.width = 10}
+```{r 06-decision-grid-K, echo = FALSE, fig.height = 7, fig.width = 10}
 library(repr)
 library(gridExtra)
 ks <- c(1, 7, 20, 200)
@@ -410,71 +424,6 @@ grid.arrange(grobs = plots)
 ```
 </center>
 
-
-<!--By using cross-validation to choose $k$ we were able to slightly increase our accuracy, but can we still do better? Perhaps. We can start 
-to explore this by taking a look at what is called the training accuracy. Training accuracy is our accuracy if we asked our classifier 
-to make predictions on the training data and then we assessed how well the predictions matched up to the true labels we have for our 
-training data. If they don't match up really well (training accuracy is low), our classification model might be too simple and adding more 
-information (e.g., additional predictors/explanatory variables) could potentially help. The situation where the training accuracy is low 
-is often called underfitting, or high bias.
-
-The training error can be obtained from using the classifier object returned from `train` (when you don't perform cross-validation) to predict 
-on the training data. Then passing the predictions on the training data and the true observed labels into `confusionMatrix`.
-
-```{r 06-other-increase-acc}
-k = data.frame(k = 11)
-set.seed(1234)
-knn_model <- train(x = X_train_total, y = Y_train_total, method = "knn", tuneGrid = k)
-training_pred <- predict(knn_model, X_train_total)
-results <- confusionMatrix(training_pred, Y_train_total)
-results
-```
-
-From the complex output, we can see the training accuracy, here 0.8752. Again we can use base/built-in subsetting syntax to directly get the value:
-
-```{r 06-other-increase-acc-2}
-results$overall[1]
-```
-
-Here we see that our training accuracy is high, 0.8752197, but there is still room for improvement! (If it were 1.0 there wouldn't be and we would have a different problem). So let's see if adding additional information (predictors/explanatory variables) might help our model training and consequently (and more importantly) validation accuracy.
-
-*Note - when adding more information to the model, $k$ = 11 may no longer be the "best" $k$. So we will want to also choose $k$ again.*
-
-```{r 06-other-increase-acc-3}
-# set-up training data
-X_cancer_all <- cancer %>% 
-  select(-Class, -ID) %>% 
-  data.frame()
-Y_cancer_all <- cancer %>% 
-  select(Class) %>% 
-  unlist()
-
-# set-up classifier specifications
-train_control <- trainControl(method="cv", number = 10)
-k = data.frame(k = seq(from = 1, to = 29, by = 2))
-
-# create classifier
-set.seed(1234)
-knn_model_all <- train(x = X_cancer_all, y = Y_cancer_all, method = "knn", tuneGrid = k, trControl = train_control)
-
-# assess training accuracy
-training_pred_all <- predict(knn_model_all, X_cancer_all)
-results_all <- confusionMatrix(training_pred_all, Y_cancer_all)
-results_all$overall[1]
-```
-
-We can see that by including more information (making our classifier more complex by adding additional predictors/explanatory variables) we increased the training accuracy. What about the cross-validation accuracy? And what $k$ should we choose?
-
-```{r 06-more-info, fig.height = 4, fig.width = 5}
-accuracies_all <- knn_model_all
-accuracy_vs_k_all <- ggplot(accuracies_all, aes(x = k, y = Accuracy)) +
-  geom_point() +
-  geom_line()
-accuracy_vs_k_all
-```
-
-From the plot above, it seems as though now with more information in our model, we should choose a $k$ of 7. Additionally, with this extra information our validation accuracy has also increased with $k = 7$.
--->
 ## Splitting data
 
 **Shuffling:** When we split the data into train, test, and validation sets, we make the assumption that there is no order to our originally 
