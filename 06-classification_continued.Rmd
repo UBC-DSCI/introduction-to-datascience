@@ -108,7 +108,20 @@ Now that we have the row numbers for the training set, we can use the `slice` fu
 
 ```{r 06-create-training-and-test-sets}
 training_set <- cancer %>% slice(set_rows)
+X_train <- training_set %>% 
+  select(Concavity, Smoothness) %>% 
+  data.frame()
+Y_train <- training_set %>% 
+  select(Class) %>% 
+  unlist()
+
 test_set <- cancer %>% slice(-set_rows)
+X_test <- test_set %>% 
+  select(Concavity, Smoothness) %>% 
+  data.frame()
+Y_test <- test_set %>%
+  select(Class) %>%
+  unlist()
 glimpse(training_set)
 ```
 
@@ -124,9 +137,9 @@ corresponds to a train / test split of 75% / 25%, as desired.
 As we mentioned last chapter, k-nn is sensitive to the scale of the predictors, thus we should perform a data transformation to scale and centre them. An additional consideration we need to take when doing this is that we should create the scaling transformer using only the training data. This ensures that our test data does not influence any aspect of our model training. Once we have created the scaling transformer, we can then apply it separately to both the training and test data sets.
 
 ```{r 06-pre-process}
-scale_transformer <- preProcess(training_set, method = c("center", "scale")) 
-training_set <- predict(scale_transformer, training_set)
-test_set <- predict(scale_transformer, test_set)
+scale_transformer <- preProcess(X_train, method = c("center", "scale")) 
+X_train <- predict(scale_transformer, X_train)
+X_test <- predict(scale_transformer, X_test)
 ```
 
 **3. Train the classifier**
@@ -136,14 +149,7 @@ using the technique we learned in the previous chapter. For now, we will just ch
 smoothness as the predictors.
 
 ```{r 06-create-K-nearest neighbour-classifier}
-X_train <- training_set %>% 
-  select(Concavity, Smoothness) %>% 
-  data.frame()
-Y_train <- training_set %>% 
-  select(Class) %>% 
-  unlist()
 k = data.frame(k = 3)
-
 set.seed(1)
 model_knn <- train(x = X_train, y = Y_train, method = "knn", tuneGrid = k)
 model_knn
@@ -160,9 +166,6 @@ model_knn
 Now that we have a K-nearest neighbour classifier object, we can use it to predict the class labels for our test set:
 
 ```{r 06-predict-test}
-X_test <- test_set %>% 
-  select(Concavity, Smoothness) %>% 
-  data.frame()
 Y_test_predicted <- predict(object = model_knn, X_test)
 head(Y_test_predicted)
 ```
@@ -177,10 +180,6 @@ statistic we are interested: accuracy.  `confusionMatrix` takes two arguments:
 2. `reference` (the original/measured class labels for the test set).
 
 ```{r 06-accuracy}
-Y_test <- test_set %>% 
-  select(Class) %>% 
-  unlist()
-
 model_quality <- confusionMatrix(data = Y_test_predicted, reference = Y_test)
 model_quality
 ```
@@ -192,8 +191,8 @@ on the 6th line of printed output). That single value can be obtained from the `
 model_quality$overall[1]
 ```
 
-From a value of accuracy of around 0.824, we can say that our K-nearest neighbour classifier predicted the correct class 
-label on roughly 82% of the examples. 
+From a value of accuracy of around 0.802, we can say that our K-nearest neighbour classifier predicted the correct class 
+label on roughly 80% of the examples. 
 
 ## Tuning the classifier
 
@@ -258,9 +257,9 @@ for (i in 1:5){
 accuracies
 ```
 
-With five different shuffles of the data, we get five different values for accuracy: 0.83, 0.88, 0.84, 0.82, and 0.89! 
+With five different shuffles of the data, we get five different values for accuracy!
 None of these is necessarily "more correct" than any other; they're just five estimates of the true, underlying accuracy of our
-classifier built using our overall training data. We can combine the estimates by taking their average (here 0.851) to
+classifier built using our overall training data. We can combine the estimates by taking their average to
 try to get a single assessment of our classifier's accuracy; this has the effect of reducing the influence of any one (un)lucky
 validation set on the estimate.
 
@@ -314,9 +313,9 @@ knn_model_cv_10fold
 ### Parameter value selection
 
 Using 5- and 10-fold cross-validation, we have estimated that the prediction accuracy of our classifier is somewhere 
-around 85%. Whether 85% is good or not depends entirely on the downstream application of the data analysis. In the 
+around 81%. Whether 81% is good or not depends entirely on the downstream application of the data analysis. In the 
 present situation, we are trying to predict a tumour diagnosis, with expensive, damaging chemo/radiation therapy
-or patient death as potential consequences of misprediction. Hence, we'd like to do better than 85% for this application. 
+or patient death as potential consequences of misprediction. Hence, we'd like to do better than 81% for this application. 
 In order to improve our classifier, we have one choice of parameter: the number of neighbours, $K$. Since cross-validation
 helps us evaluate the accuracy of our classifier, we can use cross-validation to calculate an accuracy for each value of $K$ in
 a reasonable range, and then pick the value of $K$ that gives us the best accuracy. In R, we can accomplish this *tuning* by 
@@ -324,39 +323,32 @@ passing a vector of values for $K$ to the `tuneGrid` argument of `train`.
 
 ```{r 06-range-cross-val}
 train_control <- trainControl(method="cv", number = 10)
-k = data.frame(k = c(1, 3, 5, 7, 9, 11, 13, 15, 17))
+k = data.frame(k = seq(from = 1, to = 40, by = 1))
 
 set.seed(1234)
 knn_model_cv_10fold <- train(x = X_train_total, y = Y_train_total, method = "knn", tuneGrid = k, trControl = train_control)
 knn_model_cv_10fold
 ```
 
-Although `caret` provides a selection of $K=11$ for us by maximizing the accuracy estimate, it is helpful regardless to visualize
+Although `caret` provides a selection of $K=26$ for us by maximizing the accuracy estimate, it is helpful regardless to visualize
 the accuracy as we increase $K$. We can access the results from the cross-validation via the`results` attribute of 
-the `train` object (our classifier).
-
-```{r 06-accuracies}
-accuracies <- knn_model_cv_10fold$results
-accuracies 
-```
-
-Now we can plot accuracy versus $K$:
+the `train` object (our classifier). We use this to plot accuracy versus $K$:
 
 ```{r 06-find-k, fig.height = 4, fig.width = 5}
-accuracy_vs_k <- ggplot(accuracies, aes(x = k, y = Accuracy)) +
+accuracy_vs_k <- ggplot(knn_model_cv_10fold$results, aes(x = k, y = Accuracy)) +
   geom_point() +
   geom_line()
 accuracy_vs_k
 ```
 
-Based off of the visualization above, we might agree with `caret`'s choice of $K=11$. But as you can see, there is no exact or perfect 
-answer here; any choice between $K=8$ and $K = 15$ would be reasonably justified. Remember: the values you see on this plot are *estimates*
-of the true accuracy of our classifier. Although the $K=11$ value is higher than the others on this plot, that doesn't mean the classifier is
+Based off of the visualization above, we might agree with `caret`'s choice of $K=26$. But as you can see, there is no exact or perfect 
+answer here; any choice between $K=20$ and $K = 30$ would be reasonably justified. Remember: the values you see on this plot are *estimates*
+of the true accuracy of our classifier. Although the $K=26$ value is higher than the others on this plot, that doesn't mean the classifier is
 actually more accurate with this parameter value! Generally, when selecting $K$ (and other parameters for other predictive models), we are looking 
 for a value where:
 
 - we get roughly optimal accuracy, so that our model will likely be accurate
-- changing the value to a nearby one (e.g. from $K=11$ to 10 or 12) doesn't decrease accuracy too much, so that our choice is reliable in the presence of uncertainty
+- changing the value to a nearby one (e.g. from $K=26$ to 25 or 27) doesn't decrease accuracy too much, so that our choice is reliable in the presence of uncertainty
 - the cost of training the model is not prohibitive (e.g., in our situation, if $K$ is too large, predicting becomes expensive!)
 
 ### Under/overfitting
@@ -366,7 +358,7 @@ actually starts to decrease! Take a look as the plot below as we vary $K$ from 1
 
 ```{r 06-lots-of-ks, fig.height = 4, fig.width = 5}
 train_control <- trainControl(method="cv", number = 10)
-k_lots = data.frame(k = seq(from = 1, to = 385, by = 10))
+k_lots = data.frame(k = seq(from = 1, to = 300, by = 5))
 set.seed(1234)
 knn_model_cv_10fold_lots <- train(x = X_train_total, y = Y_train_total, method = "knn", tuneGrid = k_lots, trControl = train_control)
 accuracies_lots <- knn_model_cv_10fold_lots$results
@@ -390,14 +382,16 @@ to its closest neighbour in the training data set. This is just as problematic a
 becomes unreliable on new data: if we had a different training set, the predictions would be completely different.
 In general, if the model *is influenced too much* by the training data, it is said to **overfit** the data.
 
-You can see this effect in the plots below as we vary the number of neighbours $K$ in (1, 7, 20, 200):
+You can see this effect in the plots below as we vary the number of neighbours $K$ in (1, 26, 200, 300):
 
 <center>
 ```{r 06-decision-grid-K, echo = FALSE, fig.height = 7, fig.width = 10}
 library(repr)
 library(gridExtra)
-ks <- c(1, 7, 20, 200)
+ks <- c(1, 26, 200, 300)
 plots <- list()
+scaled_train_total <- X_train_total %>%
+                         mutate(Class = Y_train_total)
 
 for (i in 1:length(ks)){
 	#train the knn classifier
@@ -405,8 +399,8 @@ for (i in 1:length(ks)){
 	model_knn <- train(x = X_train_total, y = Y_train_total, method='knn', tuneGrid = k, trControl = train_control)
 	
 	#create a prediction pt grid
-	con_grid <- seq(min(training_set$Concavity), max(training_set$Concavity), length.out = 100)
-	smo_grid <- seq(min(training_set$Smoothness), max(training_set$Smoothness), length.out = 100)
+	con_grid <- seq(min(scaled_train_total$Concavity), max(scaled_train_total$Concavity), length.out = 100)
+	smo_grid <- seq(min(scaled_train_total$Smoothness), max(scaled_train_total$Smoothness), length.out = 100)
 	csgrid <- expand.grid(Concavity=con_grid, Smoothness=smo_grid)
 	knnPredGrid <- predict(model_knn, newdata=csgrid)
 	prediction_table <- bind_cols(csgrid, data.frame(Class=knnPredGrid))
@@ -415,7 +409,7 @@ for (i in 1:length(ks)){
 	#create the basic plt
 	plots[[i]] <- ggplot() + 
 	    geom_point(data = prediction_table, mapping=aes(x = Concavity, y = Smoothness, color = Class), alpha=0.05, size=3.)+
-	    geom_point(data = training_set, mapping=aes(x = Concavity, y = Smoothness, color = Class), alpha=0.75) +
+	    geom_point(data = scaled_train_total, mapping=aes(x = Concavity, y = Smoothness, color = Class), alpha=0.75) +
 	    labs(color = "Diagnosis") + 
             ggtitle(paste('K = ', k)) +
 	    scale_color_manual(labels = c("Benign", "Malignant"), values = cbPalette)

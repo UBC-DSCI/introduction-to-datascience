@@ -1,3 +1,7 @@
+```{r 07-setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
 # Regression I: K-nearest neighbours {#regression1}
 
 ## Overview 
@@ -429,7 +433,7 @@ regarding the scale of the predictors. This is because once again,
 observations that are nearest to the new point we want to predict, and any
 variables that are on a large scale will have a much larger effect than
 variables on a small scale. Thus, once we start performing multivariate k-nn
-regression we need to use the `scale` function in R on our predictors to ensure
+regression we need to use the `preProcess` function in R on our predictors to ensure
 this doesn't happen.
 
 We will now demonstrate a multi-variate k-nn regression analysis again using
@@ -453,44 +457,45 @@ plot_pairs
 
 From this we can see that generally, as both house size and number of bathrooms increase, so does price. Does adding the number of baths to our model improve our ability to predict house price? To answer that question, we will have to come up with the test error for a k-nn regression model using house size and number of baths, and then we can compare it to the test error for the model we previously came up with that only used house size to see if it is smaller (decreased test error indicates increased prediction quality). Let's do that now!
 
-Looking at the data above, we can see that `sqft` and `beds` (number of bedrooms) are on vastly different scales. Thus we need to apply the `scale` function to these columns before we start our analysis:
-
-```{r 09-scaling}
-scaled_Sacramento <- Sacramento %>% 
-  select(price, sqft, baths) %>% 
-  mutate(sqft = scale(sqft, center = FALSE),
-         baths = scale(baths, center = FALSE))
-head(scaled_Sacramento)
-```
-
-Now we can split our data into a trained and test set as we did before:
+We begin by splitting our data into train and test:
 
 ```{r 09-mult-test-train-split}
 set.seed(2019) # makes the random selection of rows reproducible
-training_rows <- scaled_Sacramento %>% 
+training_rows <- Sacramento %>% 
   select(price) %>% 
   unlist() %>% # converts Class from a tibble to a vector
   createDataPartition(p = 0.6, list = FALSE)
 
-X_train <- scaled_Sacramento %>% 
+X_train <- Sacramento %>% 
   select(sqft, baths) %>% 
   slice(training_rows) %>% 
   data.frame()
 
-Y_train <- scaled_Sacramento %>% 
+Y_train <- Sacramento %>% 
   select(price) %>% 
   slice(training_rows) %>% 
   unlist()
 
-X_test <- scaled_Sacramento %>% 
+X_test <- Sacramento %>% 
   select(sqft, baths) %>% 
   slice(-training_rows) %>% 
   data.frame()
 
-Y_test <- scaled_Sacramento %>% 
+Y_test <- Sacramento %>% 
   select(price) %>% 
   slice(-training_rows) %>% 
   unlist()
+```
+
+Further, looking at the data above, we can see that `sqft` and `beds` (number of bedrooms) are on vastly different scales. Thus we need to
+compute a scaling using the `preProcess` function on the training inputs, and
+apply the scaling to both the train and test inputs:
+
+```{r 09-mult-test-scaling}
+scale_transformer <- preProcess(X_train, method = c("scale"))
+X_train <- predict(scale_transformer, X_train)
+X_test <- predict(scale_transformer, X_test)
+head(X_train)
 ```
 
 Next, we'll use 10-fold cross-validation to choose $k$:
