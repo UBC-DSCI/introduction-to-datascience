@@ -12,7 +12,7 @@ sudo apt-get pandoc, pandoc-citeproc, libssl-dev, libxml2-dev, libfontconfig1-de
 Then before rendering the book, you need to install a collection of R packages:
 
 `
-install.packages(c("e1071", "rvest", "tidyverse", "caret", "bookdown", "plotly", "gridExtra", "GGally", "svglite"))
+install.packages(c("e1071", "rvest", "tidyverse", "caret", "bookdown", "plotly", "gridExtra", "GGally", "svglite", "RSQLite"))
 `
 
 Finally, you can render the book with the following R code:
