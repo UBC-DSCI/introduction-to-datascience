@@ -11,7 +11,9 @@ This is the source for the Introduction to Data Science textbook.
     ```
     docker run --rm -it -p 8787:8787 -v $PWD:/home/rstudio -e PASSWORD=password ubcdsci/intro-to-ds
     ```
-    - Open a web browser and type [http://localhost:8787/](http://localhost:8787/)
+    - open a web browser and type [http://localhost:8787/](http://localhost:8787/)
+    - for the username enter `rstudio` 
+    - for the password enter `password` (or whatever you may have changed it to in the `docker run` command above)
     
 3. Finally, you can render the book by running the following R code in the R console:
     ```
