@@ -59,7 +59,7 @@ library(tidyverse)
 library(caret)
 
 #load data
-cancer <- read_csv("data/unscaled-wdbc.data.csv") %>% 
+cancer <- read_csv("data/unscaled_wdbc.csv") %>% 
   mutate(Class = as.factor(Class)) # because we will be doing statistical analysis on a categorical variable
 
 # colour palette
@@ -192,8 +192,7 @@ on the 6th line of printed output). That single value can be obtained from the `
 model_quality$overall[1]
 ```
 
-From a value of accuracy of around 0.824, we can say that our K-nearest neighbour classifier predicted the correct class 
-label on roughly 82% of the examples. 
+From a value of accuracy of around 0.88, we can say that our K-nearest neighbour classifier predicted the correct class label on roughly 88% of the examples. 
 
 ## Tuning the classifier
 
@@ -258,9 +257,8 @@ for (i in 1:5){
 accuracies
 ```
 
-With five different shuffles of the data, we get five different values for accuracy: 0.83, 0.88, 0.84, 0.82, and 0.89! 
-None of these is necessarily "more correct" than any other; they're just five estimates of the true, underlying accuracy of our
-classifier built using our overall training data. We can combine the estimates by taking their average (here 0.851) to
+With five different shuffles of the data, we get five different values for accuracy. None of these is necessarily "more correct" than any other; they're just five estimates of the true, underlying accuracy of our
+classifier built using our overall training data. We can combine the estimates by taking their average (here `r mean(accuracies)`) to
 try to get a single assessment of our classifier's accuracy; this has the effect of reducing the influence of any one (un)lucky
 validation set on the estimate.
 
@@ -314,9 +312,9 @@ knn_model_cv_10fold
 ### Parameter value selection
 
 Using 5- and 10-fold cross-validation, we have estimated that the prediction accuracy of our classifier is somewhere 
-around 85%. Whether 85% is good or not depends entirely on the downstream application of the data analysis. In the 
+around 88%. Whether 88% is good or not depends entirely on the downstream application of the data analysis. In the 
 present situation, we are trying to predict a tumour diagnosis, with expensive, damaging chemo/radiation therapy
-or patient death as potential consequences of misprediction. Hence, we'd like to do better than 85% for this application. 
+or patient death as potential consequences of misprediction. Hence, we'd like to do better than 88% for this application. 
 In order to improve our classifier, we have one choice of parameter: the number of neighbours, $K$. Since cross-validation
 helps us evaluate the accuracy of our classifier, we can use cross-validation to calculate an accuracy for each value of $K$ in
 a reasonable range, and then pick the value of $K$ that gives us the best accuracy. In R, we can accomplish this *tuning* by 
@@ -331,7 +329,7 @@ knn_model_cv_10fold <- train(x = X_train_total, y = Y_train_total, method = "knn
 knn_model_cv_10fold
 ```
 
-Although `caret` provides a selection of $K=11$ for us by maximizing the accuracy estimate, it is helpful regardless to visualize
+Although `caret` provides a selection of $K=13$ for us by maximizing the accuracy estimate, it is helpful regardless to visualize
 the accuracy as we increase $K$. We can access the results from the cross-validation via the`results` attribute of 
 the `train` object (our classifier).
 
@@ -349,14 +347,14 @@ accuracy_vs_k <- ggplot(accuracies, aes(x = k, y = Accuracy)) +
 accuracy_vs_k
 ```
 
-Based off of the visualization above, we might agree with `caret`'s choice of $K=11$. But as you can see, there is no exact or perfect 
-answer here; any choice between $K=8$ and $K = 15$ would be reasonably justified. Remember: the values you see on this plot are *estimates*
-of the true accuracy of our classifier. Although the $K=11$ value is higher than the others on this plot, that doesn't mean the classifier is
+Based off of the visualization above, we might agree with `caret`'s choice of $K=13$. But as you can see, there is no exact or perfect 
+answer here; any choice between $K=9$ and $K = 17$ would be reasonably justified. Remember: the values you see on this plot are *estimates*
+of the true accuracy of our classifier. Although the $K=13$ value is higher than the others on this plot, that doesn't mean the classifier is
 actually more accurate with this parameter value! Generally, when selecting $K$ (and other parameters for other predictive models), we are looking 
 for a value where:
 
 - we get roughly optimal accuracy, so that our model will likely be accurate
-- changing the value to a nearby one (e.g. from $K=11$ to 10 or 12) doesn't decrease accuracy too much, so that our choice is reliable in the presence of uncertainty
+- changing the value to a nearby one (e.g. from $K=13$ to 12 or 14) doesn't decrease accuracy too much, so that our choice is reliable in the presence of uncertainty
 - the cost of training the model is not prohibitive (e.g., in our situation, if $K$ is too large, predicting becomes expensive!)
 
 ### Under/overfitting
