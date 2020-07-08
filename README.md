@@ -5,15 +5,15 @@ This is the source for the Introduction to Data Science textbook.
 
 1. Install Docker (instructions here: [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/))
 
-2. Run RStudio inside the `intro-to-ds` docker container:
+2. Run RStudio inside the `ubcdsci/intro-to-ds` docker container:
     - in terminal, navigate to the root of this project repo
     - type the following in terminal:
     ```
-    docker run --rm -it -p 8787:8787 -v $PWD:/home/rstudio -e PASSWORD=password intro-to-ds
+    docker run --rm -it -p 8787:8787 -v $PWD:/home/rstudio -e PASSWORD=password ubcdsci/intro-to-ds
     ```
     - Open a web browser and type [http://localhost:8787/](http://localhost:8787/)
     
-3. Finally, you can render the book with the following R code:
+3. Finally, you can render the book by running the following R code in the R console:
     ```
     bookdown::render_book('index.Rmd', 'bookdown::gitbook')
     ```
