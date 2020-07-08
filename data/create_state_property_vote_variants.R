@@ -33,11 +33,11 @@ main <- function(){
   
   # excel file
   write.xlsx(data, file = paste0(path_no_prefix, ".xlsx"))
-}
 
   # write to sqlite
   con <- dbConnect(RSQLite::SQLite(), paste0(path_no_prefix, ".db"))
   dbWriteTable(con, "state", data, overwrite = TRUE)
   dbDisconnect(con)
+}
 
 main()
