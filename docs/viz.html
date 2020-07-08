@@ -49,13 +49,6 @@
 
 
 
-<script src="libs/htmlwidgets-1.3/htmlwidgets.js"></script>
-<script src="libs/plotly-binding-4.9.0/plotly.js"></script>
-<script src="libs/typedarray-0.1/typedarray.min.js"></script>
-<link href="libs/crosstalk-1.0.0/css/crosstalk.css" rel="stylesheet" />
-<script src="libs/crosstalk-1.0.0/js/crosstalk.min.js"></script>
-<link href="libs/plotly-htmlwidgets-css-1.46.1/plotly-htmlwidgets.css" rel="stylesheet" />
-<script src="libs/plotly-main-1.46.1/plotly-latest.min.js"></script>
 
 
 <style type="text/css">
@@ -387,18 +380,19 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <h3><span class="header-section-number">4.5.1</span> The Mauna Loa CO2 data set</h3>
 <p>This data set contains the atmospheric concentration of carbon dioxide (CO2, in parts per million) at the Mauna Loa research station in Hawaii from the years 1959-1997. <strong>Question:</strong> Does the concentration of atmospheric CO2 change over time, and are there any interesting patterns to note?</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># mauna loa carbon dioxide data </span>
-co2_df &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/maunaloa.csv&quot;</span>)
+co2_df &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/mauna_loa.csv&quot;</span>) <span class="op">%&gt;%</span>
+<span class="st">        </span><span class="kw">filter</span>(ppm <span class="op">&gt;</span><span class="st"> </span><span class="dv">0</span>, date_decimal <span class="op">&lt;</span><span class="st"> </span><span class="dv">2000</span>)
 <span class="kw">head</span>(co2_df)</code></pre></div>
-<pre><code>## # A tibble: 6 x 2
-##   concentration  date
-##           &lt;dbl&gt; &lt;dbl&gt;
-## 1          315. 1959 
-## 2          316. 1959.
-## 3          316. 1959.
-## 4          318. 1959.
-## 5          318. 1959.
-## 6          318  1959.</code></pre>
-<p>Since we are investigating a relationship between two variables (CO2 concentration and date), a scatter plot is a good place to start. Scatter plots show the data as individual points with <code>x</code> (horizonal axis) and <code>y</code> (vertical axis) coordinates. Here, we will use the date as the <code>x</code> coordinate and CO2 concentration as the <code>y</code> coordinate. When using the <code>ggplot2</code> library, we create the plot object with the <code>ggplot</code> function; there are a few basic aspects of a plot that we need to specify:</p>
+<pre><code>## # A tibble: 6 x 4
+##    year month date_decimal   ppm
+##   &lt;dbl&gt; &lt;dbl&gt;        &lt;dbl&gt; &lt;dbl&gt;
+## 1  1958     3        1958.  316.
+## 2  1958     4        1958.  317.
+## 3  1958     5        1958.  318.
+## 4  1958     7        1959.  316.
+## 5  1958     8        1959.  315.
+## 6  1958     9        1959.  313.</code></pre>
+<p>Since we are investigating a relationship between two variables (CO2 concentration and date), a scatter plot is a good place to start. Scatter plots show the data as individual points with <code>x</code> (horizonal axis) and <code>y</code> (vertical axis) coordinates. Here, we will use the decimal date as the <code>x</code> coordinate and CO2 concentration as the <code>y</code> coordinate. When using the <code>ggplot2</code> library, we create the plot object with the <code>ggplot</code> function; there are a few basic aspects of a plot that we need to specify:</p>
 <ul>
 <li>the <em>data</em>: the name of the dataframe object that we would like to visualize
 <ul>
@@ -407,7 +401,7 @@ co2_df &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span clas
 <li>the <em>aesthetic mapping</em>: tells <code>ggplot</code> how the columns in the dataframe map to properties of the visualization
 <ul>
 <li>to create an aesthetic mapping, we use the <code>aes</code> function</li>
-<li>here, we set the plot <code>x</code> axis to the <code>date</code> variable, and the plot <code>y</code> axis to the <code>concentration</code> variable</li>
+<li>here, we set the plot <code>x</code> axis to the <code>date_decimal</code> variable, and the plot <code>y</code> axis to the <code>ppm</code> variable</li>
 </ul></li>
 <li>the <em>geometric object</em>: specifies how the mapped data should be displayed
 <ul>
@@ -416,18 +410,18 @@ co2_df &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span clas
 </ul></li>
 </ul>
 <p>There are many other possible arguments we could pass to the aesthetic mapping and geometric object to change how the plot looks. For the purposes of quickly testing things out to see what they look like, though, we can just go with the default settings:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">co2_scatter &lt;-<span class="st"> </span><span class="kw">ggplot</span>(co2_df, <span class="kw">aes</span>(<span class="dt">x =</span> date, <span class="dt">y =</span> concentration)) <span class="op">+</span><span class="st"> </span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">co2_scatter &lt;-<span class="st"> </span><span class="kw">ggplot</span>(co2_df, <span class="kw">aes</span>(<span class="dt">x =</span> date_decimal, <span class="dt">y =</span> ppm)) <span class="op">+</span><span class="st"> </span>
 <span class="st">        </span><span class="kw">geom_point</span>() 
 co2_scatter</code></pre></div>
 <p><img src="_main_files/figure-html/03-data-co2-scatter-1.png" width="672" /></p>
 <p>Certainly the visualization shows a clear upward trend in the atmospheric concentration of CO2 over time. This plot answers the first part of our question in the affirmative, but that appears to be the only conclusion one can make from the scatter visualization. However, since time is an ordered quantity, we can try using a line plot instead using the <code>geom_line</code> function. Line plots require that the data are ordered by their <code>x</code> coordinate, and connect the sequence of <code>x</code> and <code>y</code> coordinates with line segments. Let’s again try this with just the default arguments:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">co2_line &lt;-<span class="st"> </span><span class="kw">ggplot</span>(co2_df, <span class="kw">aes</span>(<span class="dt">x =</span> date, <span class="dt">y =</span> concentration)) <span class="op">+</span><span class="st"> </span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">co2_line &lt;-<span class="st"> </span><span class="kw">ggplot</span>(co2_df, <span class="kw">aes</span>(<span class="dt">x =</span> date_decimal, <span class="dt">y =</span> ppm)) <span class="op">+</span><span class="st"> </span>
 <span class="st">        </span><span class="kw">geom_line</span>() 
 co2_line</code></pre></div>
 <p><img src="_main_files/figure-html/03-data-co2-line-1.png" width="672" /></p>
 <p>Aha! There <em>is</em> another interesting phenomenon in the data: in addition to increasing over time, the concentration seems to oscillate as well. Given the visualization as it is now, it is still hard to tell how fast the oscillation is, but nevertheless, the line seems to be a better choice for answering the question than the scatter plot was. The comparison between these two visualizations illustrates a common issue with scatter plots: often the points are shown too close together or even on top of one another, muddling information that would otherwise be clear (<em>overplotting</em>).</p>
 <p>Now that we have settled on the rough details of the visualization, it is time to refine things. This plot is fairly straightforward, and there is not much visual noise to remove. But there are a few things we must do to improve clarity, such as adding informative axis labels and making the font a more readable size. In order to add axis labels we use the <code>xlab</code> and <code>ylab</code> functions. To change the font size we use the <code>theme</code> function with the <code>text</code> argument:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">co2_line &lt;-<span class="st"> </span><span class="kw">ggplot</span>(co2_df, <span class="kw">aes</span>(<span class="dt">x =</span> date, <span class="dt">y =</span> concentration)) <span class="op">+</span><span class="st"> </span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">co2_line &lt;-<span class="st"> </span><span class="kw">ggplot</span>(co2_df, <span class="kw">aes</span>(<span class="dt">x =</span> date_decimal, <span class="dt">y =</span> ppm)) <span class="op">+</span><span class="st"> </span>
 <span class="st">                   </span><span class="kw">geom_line</span>() <span class="op">+</span>
 <span class="st">                   </span><span class="kw">xlab</span>(<span class="st">&#39;Year&#39;</span>) <span class="op">+</span>
 <span class="st">                   </span><span class="kw">ylab</span>(<span class="st">&#39;Atmospheric CO2 (ppm)&#39;</span>) <span class="op">+</span><span class="st"> </span>
@@ -435,7 +429,7 @@ co2_line</code></pre></div>
 co2_line</code></pre></div>
 <p><img src="_main_files/figure-html/03-data-co2-line-2-1.png" width="672" /></p>
 <p>Finally, let’s see if we can better understand the oscillation by changing the visualization a little bit. Note that it is totally fine to use a small number of visualizations to answer different aspects of the question you are trying to answer. We will accomplish this by using <em>scales</em>, another important feature of <code>ggplot2</code> that allow us to easily transform the different variables and set limits. We scale the horizontal axis by using the <code>scale_x_continuous</code> function, and the vertical axis with the <code>scale_y_continuous</code> function. We can transform the axis by passing the <code>trans</code> argument, and set limits by passing the <code>limits</code> argument. In particular, here we will use the <code>scale_x_continuous</code> function with the <code>limits</code> argument to zoom in on just five years of data (say, 1990-1995):</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">co2_line &lt;-<span class="st"> </span><span class="kw">ggplot</span>(co2_df, <span class="kw">aes</span>(<span class="dt">x =</span> date, <span class="dt">y =</span> concentration)) <span class="op">+</span><span class="st"> </span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">co2_line &lt;-<span class="st"> </span><span class="kw">ggplot</span>(co2_df, <span class="kw">aes</span>(<span class="dt">x =</span> date_decimal, <span class="dt">y =</span> ppm)) <span class="op">+</span><span class="st"> </span>
 <span class="st">                   </span><span class="kw">geom_line</span>() <span class="op">+</span>
 <span class="st">                   </span><span class="kw">xlab</span>(<span class="st">&#39;Year&#39;</span>) <span class="op">+</span>
 <span class="st">                   </span><span class="kw">ylab</span>(<span class="st">&#39;Atmospheric CO2 (ppm)&#39;</span>) <span class="op">+</span><span class="st"> </span>
@@ -500,14 +494,17 @@ islands_bar</code></pre></div>
 <h3><span class="header-section-number">4.5.3</span> The Old Faithful eruption / waiting time data set</h3>
 <p>This data set contains measurements of the waiting time between eruptions and the subsequent eruption duration (in minutes). <strong>Question:</strong> Is there a relationship between the waiting time before an eruption to the duration of the eruption?</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># old faithful eruption time / wait time data</span>
+faithful &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&#39;data/faithful.csv&#39;</span>)
 <span class="kw">head</span>(faithful)</code></pre></div>
-<pre><code>##   eruptions waiting
-## 1     3.600      79
-## 2     1.800      54
-## 3     3.333      74
-## 4     2.283      62
-## 5     4.533      85
-## 6     2.883      55</code></pre>
+<pre><code>## # A tibble: 6 x 2
+##   eruptions waiting
+##       &lt;dbl&gt;   &lt;dbl&gt;
+## 1      3.6       79
+## 2      1.8       54
+## 3      3.33      74
+## 4      2.28      62
+## 5      4.53      85
+## 6      2.88      55</code></pre>
 <p>Here again we are investigating the relationship between two quantitative variables (waiting time and eruption time). But if you look at the output of the <code>head</code> function, you’ll notice that neither of the columns are ordered. So in this case, let’s start again with a scatter plot:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">faithful_scatter &lt;-<span class="st"> </span><span class="kw">ggplot</span>(faithful, <span class="kw">aes</span>(<span class="dt">x =</span> waiting, <span class="dt">y =</span> eruptions)) <span class="op">+</span><span class="st"> </span>
 <span class="st">            </span><span class="kw">geom_point</span>()  
@@ -712,19 +709,6 @@ gitbook.start({
 });
 </script>
 
-<!-- dynamically load mathjax for compatibility with self-contained -->
-<script>
-  (function () {
-    var script = document.createElement("script");
-    script.type = "text/javascript";
-    var src = "";
-    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
-    if (location.protocol !== "file:" && /^https?:/.test(src))
-      src = src.replace(/^https?:/, '');
-    script.src = src;
-    document.getElementsByTagName("head")[0].appendChild(script);
-  })();
-</script>
 </body>
 
 </html>
