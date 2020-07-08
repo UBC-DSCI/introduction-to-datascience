@@ -9,16 +9,24 @@ This is the source for the Introduction to Data Science textbook.
     - in terminal, navigate to the root of this project repo
     - type the following in terminal:
     ```
-    docker run --rm -it -p 8787:8787 -v $PWD:/home/rstudio -e PASSWORD=password ubcdsci/intro-to-ds
+    docker run --rm -it -p 8787:8787 -v $PWD:/home/rstudio/introduction-to-datascience -e PASSWORD=password ubcdsci/intro-to-ds
     ```
     - open a web browser and type [http://localhost:8787/](http://localhost:8787/)
     - for the username enter `rstudio` 
     - for the password enter `password` (or whatever you may have changed it to in the `docker run` command above)
     
+    > Note, if you prefer not to use RStudio, but a plain text editor instead (i.e., vim) the see [these docs](#usage-without-rstudio) below.
+
 3. Finally, you can render the book by running the following R code in the R console:
     ```
     bookdown::render_book('index.Rmd', 'bookdown::gitbook')
     ```
+
+> ### Usage without RStudio
+> You can use this docker container to edit the files without RStudio using either vim or emacs. This can be done via:
+> ```
+> docker run --rm -it -v $PWD:/introduction-to-datascience ubcdsci/intro-to-ds /bin/bash
+> ```
 
 ## Style Guide
 
