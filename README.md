@@ -28,6 +28,13 @@ This is the source for the Introduction to Data Science textbook.
 > docker run --rm -it -v $PWD:/introduction-to-datascience ubcdsci/intro-to-ds /bin/bash
 > ```
 
+### Updating the textbook data
+Data sets are collected and curated by `data/retrieve_data.ipynb`. To run that notebook in the Docker container type the following in the terminal:
+
+```
+docker run --rm -it -p 8888:8888 -v $PWD:/home/rstudio/introduction-to-datascience ubcdsci/intro-to-ds jupyter notebook --ip=0.0.0.0 --allow-root
+```
+
 ## Style Guide
 
 - For R code block labels, use the format `##-[name with only alphanumeric + hyphens]` where the `##` is the 2-digit chapter number, e.g. `03-test-name` for a label `test-name` in chapter 3
