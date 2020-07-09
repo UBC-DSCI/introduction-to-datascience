@@ -115,12 +115,12 @@ cancer <- cancer %>%
 
 Factors have what are called "levels", which you can think of as categories. We can ask for the levels from the `Class` column by using the `levels` function. This function should return 
 the name of each category in that column. Given that we only have 2 different values in our `Class` column ("B" and "M"), we only expect to get two names back. If we had 4 different values 
-in the column, we would expect to get 4 back. *Note the use of `unlist` to between `select` and `levels`. This is because `select` outputs a data frame (even though we only select a single column), and levels expects a vector.*
+in the column, we would expect to get 4 back. *Note the use of `pull` to between `select` and `levels`. This is because `select` outputs a data frame (even though we only select a single column), and levels expects a vector. `pull` converts a single column of a data frame into a vector.*
 
 ```{r 05-levels, echo = TRUE}
 cancer %>% 
   select(Class) %>% 
-  unlist() %>% # turns a data frame into a vector
+  pull() %>% # turns a data frame into a vector
   levels()
 ```
 
@@ -207,8 +207,8 @@ perim_concav + geom_point(aes(x=new_point[1], y=new_point[2]),
                size = 2.5) +
   geom_segment(aes(x = new_point[1], 
                    y = new_point[2], 
-                   xend = unlist(neighbours[1, attrs[1]]), 
-                   yend = unlist(neighbours[1, attrs[2]])), color = "black")
+                   xend = pull(neighbours[1, attrs[1]]), 
+                   yend = pull(neighbours[1, attrs[2]])), color = "black")
 ```
 </center>
 
@@ -230,8 +230,8 @@ perim_concav + geom_point(aes(x=new_point[1], y=new_point[2]),
                size = 2.5) +  
   geom_segment(aes(x = new_point[1], 
                    y = new_point[2], 
-                   xend = unlist(neighbours[1, attrs[1]]), 
-                   yend = unlist(neighbours[1, attrs[2]])), color = "black")
+                   xend = pull(neighbours[1, attrs[1]]), 
+                   yend = pull(neighbours[1, attrs[2]])), color = "black")
 ```
 </center>
 
@@ -246,14 +246,14 @@ perim_concav + geom_point(aes(x=new_point[1], y=new_point[2]),
                color=cbPalette[6], 
                size = 2.5) +
   geom_segment(aes(x = new_point[1], y = new_point[2],
-                   xend = unlist(neighbours[1, attrs[1]]),
-                   yend = unlist(neighbours[1, attrs[2]])), color = "black") +
+                   xend = pull(neighbours[1, attrs[1]]),
+                   yend = pull(neighbours[1, attrs[2]])), color = "black") +
     geom_segment(aes(x = new_point[1], y = new_point[2],
-                   xend = unlist(neighbours[2, attrs[1]]),
-                   yend = unlist(neighbours[2, attrs[2]])), color = "black")+
+                   xend = pull(neighbours[2, attrs[1]]),
+                   yend = pull(neighbours[2, attrs[2]])), color = "black")+
       geom_segment(aes(x = new_point[1], y = new_point[2],
-                   xend = unlist(neighbours[3, attrs[1]]),
-                   yend = unlist(neighbours[3, attrs[2]])), color = "black")
+                   xend = pull(neighbours[3, attrs[1]]),
+                   yend = pull(neighbours[3, attrs[2]])), color = "black")
 ```
 </center>
 
@@ -409,7 +409,7 @@ Next, we store the diagnosis class labels (column `Class`) as a vector:
 ```{r 05-caret-3}
 cancer_labels <- cancer %>% 
   select(Class) %>% 
-  unlist()
+  pull()
 head(cancer_labels)
 ```
 
@@ -620,8 +620,8 @@ for (i in 1:7) {
     rare_plot <- rare_plot + 
                  geom_segment(x = new_point[1], 
                    y = new_point[2], 
-                   xend = unlist(neighbours[i, attrs[1]]), 
-                   yend = unlist(neighbours[i, attrs[2]]), color = clr) 
+                   xend = pull(neighbours[i, attrs[1]]), 
+                   yend = pull(neighbours[i, attrs[2]]), color = clr) 
 }
 rare_plot + geom_point(aes(x=new_point[1], y=new_point[2]), 
                color=cbPalette[6], 
@@ -637,7 +637,7 @@ classifier would make, we can see that the decision is always "benign," correspo
 
 #train a knn classifier
 features <- rare_cancer %>% select(Perimeter, Concavity)
-labels <- rare_cancer %>% select(Class) %>% unlist()
+labels <- rare_cancer %>% select(Class) %>% pull()
 k <- data.frame(k = 7)
 model_knn <- train(x = data.frame(features), y = labels, method='knn', tuneGrid = k)
 
@@ -670,7 +670,7 @@ use the `group_by + summarize` pattern we've seen before to see that our classes
 
 ```{r 05-upsample-cancer}
 rare_cancer <- upSample(x = select(rare_cancer, Perimeter, Concavity),
-			y = select(rare_cancer, Class) %>% unlist()
+			y = select(rare_cancer, Class) %>% pull()
 			)
 rare_cancer %>% 
 	group_by(Class) %>%
@@ -685,7 +685,7 @@ to those labelled malignant, the classifier predicts a malignant tumour, and vic
 
 #train a knn classifier
 features <- rare_cancer %>% select(Perimeter, Concavity)
-labels <- rare_cancer %>% select(Class) %>% unlist()
+labels <- rare_cancer %>% select(Class) %>% pull()
 k <- data.frame(k = 7)
 model_knn <- train(x = data.frame(features), y = labels, method='knn', tuneGrid = k)
 

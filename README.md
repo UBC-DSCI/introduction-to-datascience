@@ -3,23 +3,30 @@ This is the source for the Introduction to Data Science textbook.
 
 ## Setup and Build
 
-First, you need to ensure the following libraries/executables are available on your system (the below is for Ubuntu OS; if you aren't on Ubuntu, just run the below `install.packages(...)` command and it will throw errors telling you what to install for your OS)
+1. Install Docker (instructions here: [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/))
 
-`
-sudo apt-get pandoc, pandoc-citeproc, libssl-dev, libxml2-dev, libfontconfig1-dev, libcairo2-dev
-`
+2. Run RStudio inside the `ubcdsci/intro-to-ds` docker container:
+    - in terminal, navigate to the root of this project repo
+    - type the following in terminal:
+    ```
+    docker run --rm -it -p 8787:8787 -v $PWD:/home/rstudio/introduction-to-datascience -e PASSWORD=password ubcdsci/intro-to-ds
+    ```
+    - open a web browser and type [http://localhost:8787/](http://localhost:8787/)
+    - for the username enter `rstudio` 
+    - for the password enter `password` (or whatever you may have changed it to in the `docker run` command above)
+    
+    > Note, if you prefer not to use RStudio, but a plain text editor instead (i.e., vim) the see [these docs](#usage-without-rstudio) below.
 
-Then before rendering the book, you need to install a collection of R packages:
+3. Finally, you can render the book by running the following R code in the R console:
+    ```
+    bookdown::render_book('index.Rmd', 'bookdown::gitbook')
+    ```
 
-`
-install.packages(c("e1071", "rvest", "tidyverse", "caret", "bookdown", "plotly", "gridExtra", "GGally", "svglite"))
-`
-
-Finally, you can render the book with the following R code:
-
-`
-bookdown::render_book('index.Rmd', 'bookdown::gitbook')
-`
+> ### Usage without RStudio
+> You can use this docker container to edit the files without RStudio using either vim or emacs. This can be done via:
+> ```
+> docker run --rm -it -v $PWD:/introduction-to-datascience ubcdsci/intro-to-ds /bin/bash
+> ```
 
 ## Style Guide
 
