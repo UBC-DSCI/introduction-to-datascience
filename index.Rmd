@@ -104,12 +104,12 @@ Often, the first thing we need to do in data analysis is to load a dataset into 
 The first kind of data we will learn how to load into R (as a data frame) is the 
 spreadsheet-like *comma-separated values* format (`.csv` for short).
 These files have names ending in `.csv`, and can be opened open and saved from common spreadsheet programs like Microsoft Excel and Google Sheets. 
-For example, a `.csv` file named `state_property_vote.csv` [is included with the code for this book](https://github.com/UBC-DSCI/introduction-to-datascience/blob/master/data/state_property_data.csv). 
+For example, a `.csv` file named `state_property_vote.csv` [is included with the code for this book](https://github.com/UBC-DSCI/introduction-to-datascience/blob/master/data/state_property_vote.csv). 
 This file--- originally from [Data USA](https://datausa.io/)---has US state-level property, income, population and voting data from 2015 and 2016. 
 If we were to open this data in a plain text editor, we would see each row on its own line, and each entry in the table separated by a comma:
 
 ```{bash, echo=FALSE, comment=NA}
-head -n 10 state_property_vote.csv
+head -n 10 data/state_property_vote.csv
 ```
 
 To load this data into R, and then to do anything else with it afterwards, we will need to use something called a *function.* 
@@ -133,7 +133,7 @@ appropriate. For example, files that use spaces or tabs to separate the columns,
 
 ```{r load_state_property_data, warning=FALSE, message=FALSE}
 library(tidyverse)
-read_csv("state_property_vote.csv")
+read_csv("data/state_property_vote.csv")
 ```
 Above you can also see something neat that Jupyter does to help us understand our code: it colours text depending on its meaning in R. For example, 
 you'll note that functions get bold green text, while letters and words surrounded by quotations like filenames get blue text.
@@ -156,7 +156,7 @@ to be surrounded by quotes.
 Let's now use the assignment symbol to give the name `us_data` to the US state-level property, income, population, and voting data frame that we get from `read_csv`.
 
 ```{r load_data_with_name, message=FALSE}
-us_data <- read_csv("state_property_vote.csv")
+us_data <- read_csv("data/state_property_vote.csv")
 ```
 
 Wait a minute! Nothing happened this time! Or at least it looks like that. But actually something did happen: the data was read in and now has the name `us_data` associated with it. 
@@ -183,11 +183,11 @@ us_data
 In this data frame there are 52 rows (corresponding to the 50 US states, the District of Columbia and the US territory, Puerto Rico)
 and 6 columns: 
 
-1. US state abbreviation
-2. Median household income
+1. US state name
+2. Population
 3. Median property value
-4. US state population
-5. Mean commute time in minutes
+4. Median household income
+5. Average commute time in minutes
 6. The party each state voted for in the 2016 US presidential election
 
 
@@ -208,7 +208,7 @@ We can also use `select` to obtain a subset of the data frame with multiple colu
 Then we list all the columns we want as arguments separated by commas. Here we create a subset of three columns: state, median property value, and mean commute time in minutes.
 
 ```{r}
-three_columns <- select(us_data, state, med_prop_val, mean_commute_minutes)
+three_columns <- select(us_data, state, med_prop_val, avg_commute)
 three_columns
 ```
 
@@ -226,29 +226,30 @@ column_range
 ### Using `filter` to extract a single row
 
 We can use the `filter` function to obtain the subset of rows with desired values from a data frame. Again, our first argument is the name of the data frame object, `us_data`. 
-The second argument is a logical statement to use when filtering the rows. Here, for example, we'll say that we are interested in rows where state equals NY (for New York). To make 
-this comparison, we use the *equivalency operator* `==` to compare the values of the `state` column with the value `"NY"`. Similar to when we loaded the data file and put quotes around the filename, 
-here we need to put quotes around `"NY"` to tell R that this is a character value and not one of the special words that make up R programming language, nor one of the names 
+The second argument is a logical statement to use when filtering the rows. Here, for example, we'll say that we are interested in rows where the state is New York. To make 
+this comparison, we use the *equivalency operator* `==` to compare the values of the `state` column with the value `"New York"`. Similar to when we loaded the data file and put quotes around the filename, 
+here we need to put quotes around `"New York"` to tell R that this is a character value and not one of the special words that make up R programming language, nor one of the names 
 we have given to data frames in the code we have already written.
 
 With these arguments, `filter` returns a data frame that has all the columns of the input data frame but only the rows we asked for in our logical filter statement. 
 
 ```{r}
-new_york <- filter(us_data, state == "NY")
+new_york <- filter(us_data, state == "New York")
 new_york
 ```
 
 ### Using `filter` to extract rows with values above a threshold
 
 
-If we are interested in finding information about the states who have a longer mean commute time than New York---whose mean commute time is 21.5 minutes---then we can create a filter 
-to obtain rows where the value of `mean_commute_minutes` is greater than 21.5.
-In this case, we see that `filter` returns a data frame with 33 rows; this indicates that there are 33 
-states with longer commute times on average than New York.
+If we are interested in finding information about the states who have a higher median household income
+ than New York---whose median household income is \$58,771---then we can create a filter 
+to obtain rows where the value of `med_income` is greater than 58771.
+In this case, we see that `filter` returns a data frame with 16 rows; this indicates that there are 16 
+states with higher median household incomes than New York.
 
 ```{r}
-long_commutes <- filter(us_data, mean_commute_minutes > 21.5)
-long_commutes
+high_incomes <- filter(us_data, med_income > 58771)
+high_incomes
 ```
 
 
@@ -285,10 +286,12 @@ To create a scatter plot of these two variables using the `ggplot` function, we 
 4. add a `+` symbol at the end of the `ggplot` call to add a layer to the plot
 5. call the `geom_point` function to tell R that we want to represent the data points as dots/points to create a scatter plot.
 
+<center>
 ```{r prop_val_vs_income, fig.width=4.75, fig.height=4, warning=FALSE}
 ggplot(us_data, aes(x = med_income, y = med_prop_val)) +
     geom_point()
 ``` 
+</center>
 
 > **In case you have used R before and are curious:** 
 > There are a small number of situations in which you can have a single R expression span multiple lines. 
@@ -304,12 +307,14 @@ For example, we can use the `xlab` and `ylab` functions to add layers where we s
 Again, since we are specifying words (e.g. `"Income (USD)"`) as arguments to `xlab` and `ylab`, we surround them with double quotes.
 There are many more layers we can add to format the plot further, and we will explore these in later chapters.
 
+<center>
 ```{r prop_val_vs_income_human_labs, fig.width=4.75, fig.height=4, warning=FALSE}
 ggplot(us_data, aes(x = med_income, y = med_prop_val)) +
     geom_point() +
     xlab("Income (USD)") +
     ylab("Median property value (USD)")    
 ```
+</center>
 
 From this visualization we see that for the 52 US regions in this data set, as median household income increases so does median property value. When we see 
 two variables do this, we call this a *positive relationship*. Because the increasing pattern is fairly clear 
@@ -330,15 +335,17 @@ scatter plot to represent who each stated voted for.
 To do this we modify our scatter plot code above. Specifically, we will add an argument to the `aes` function, specifying that the points should be coloured by the `party` column:
 
 ```{r relevel factors for colour, include=FALSE}
-us_data <- us_data %>% mutate(party = factor(party, levels = c("Republican", "Not applicable", "Democrat")))
+us_data <- us_data %>% mutate(party = factor(party, levels = c("Republican", "Not Applicable", "Democratic")))
 ```
 
+<center>
 ```{r scatter_colour_by_party, fig.width=5.75, fig.height=4, warning=FALSE}
 ggplot(us_data, aes(x = med_income, y = med_prop_val, color = party)) +
   geom_point() +
   xlab("Income (USD)") +
   ylab("Median property value (USD)")
 ```
+</center>
 
 This data visualization shows that the one data point we singled out earlier on the far left of the plot has the label of "not applicable" instead of "democrat" or "republican". 
 Let's use filter to look at the row that contains the "not applicable" value in the party column:
@@ -385,7 +392,7 @@ Below, we put everything from this chapter together in one code chunk. This demo
 ```{r nachos_to_cheesecake, fig.width=5.75, fig.height=4, warning=FALSE, message=FALSE}
 library(tidyverse)
 
-us_data <- read_csv("state_property_vote.csv")
+us_data <- read_csv("data/state_property_vote.csv")
 
 vote_data <- filter(us_data, party != "Not Applicable")
 

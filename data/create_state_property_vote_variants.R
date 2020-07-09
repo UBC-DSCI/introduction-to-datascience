@@ -4,14 +4,14 @@ library(openxlsx)
 library(RSQLite)
 
 main <- function(){
-  path <- "data/state_property_vote.csv"
+  path <- "state_property_vote.csv"
   data <- read_csv(path)
   path_no_prefix <- sub(".{4}$", "", path)
   
   # file with some meta data at the top
   meta_data <- data.frame(metadata = c("Data source: https://datausa.io/",
-                                   "Record of how data was collected: https://github.com/UBC-DSCI/introduction-to-datascience/blob/master/data/src/retrieve_data_usa.ipynb",
-                                   "Date collected: 2017-06-06"))
+                                   "Record of how data was collected: https://github.com/UBC-DSCI/introduction-to-datascience/blob/master/data/retrieve_data.ipynb",
+                                   "Date collected: 2020-07-08"))
   write.table(meta_data, 
             file = paste0(path_no_prefix, "_meta-data.csv"),
             sep = ",",
@@ -33,11 +33,11 @@ main <- function(){
   
   # excel file
   write.xlsx(data, file = paste0(path_no_prefix, ".xlsx"))
-}
 
   # write to sqlite
   con <- dbConnect(RSQLite::SQLite(), paste0(path_no_prefix, ".db"))
   dbWriteTable(con, "state", data, overwrite = TRUE)
   dbDisconnect(con)
+}
 
 main()
