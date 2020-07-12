@@ -22,9 +22,10 @@ predictions from our classifier are, as well as how to improve our classifier
 - Interpret the output of a classifier
 - Compute, by hand, the straight-line (Euclidean) distance between points on a graph when there are two explanatory variables/predictors
 - Explain the K-nearest neighbour classification algorithm
-- Standardize variables in R, and explain why standardization is useful in predictive modelling
-- Handle imbalanced data in R, and explain why imbalanced data are problematic for classifiers
-- Perform K-nearest neighbour classification in R using the `parsnip` package from `tidymodels`  
+- Perform K-nearest neighbour classification in R using `tidymodels`  
+- Standardize variables in R using `tidymodels`, and explain why standardization is useful in predictive modelling
+- Handle imbalanced data in R using `tidymodels`, and explain why imbalanced data are problematic for classifiers
+
 
 ## The classification problem
 In many situations, we want to make predictions based on the current situation
@@ -422,15 +423,18 @@ show the calculation of distance for each of the 5 closest points.
 
 **More than two explanatory variables**
 
-Although the above description is directed toward two explanatory variables / predictors, exactly the same K-nearest neighbour algorithm applies 
-when you have a higher number of explanatory variables (i.e., a higher-dimensional predictor space). 
-Each explanatory variable/predictor can give us new information to help create our classifier.
-The only difference is the formula for the distance between points. In particular, let's say we have $m$ predictor variables for two observations $u$ and $v$,
-i.e., 
+Although the above description is directed toward two explanatory variables /
+predictors, exactly the same K-nearest neighbour algorithm applies when you
+have a higher number of explanatory variables (i.e., a higher-dimensional
+predictor space).  Each explanatory variable/predictor can give us new
+information to help create our classifier.  The only difference is the formula
+for the distance between points. In particular, let's say we have $m$ predictor
+variables for two observations $u$ and $v$, i.e., 
 $u = (u_{1}, u_{2}, \dots, u_{m})$ and
 $v = (v_{1}, v_{2}, \dots, v_{m})$.
-Before, we added up the squared difference between each of our (two) variables, and then took the square root; now we will do the same, except for *all* of our $m$ variables.
-In other words, the distance formula becomes
+Before, we added up the squared difference between each of our (two) variables,
+and then took the square root; now we will do the same, except for *all* of our
+$m$ variables.  In other words, the distance formula becomes
 
 $$Distance = \sqrt{(u_{1} -v_{1})^2 + (u_{2} - v_{2})^2 + \dots + (u_{m} - v_{m})^2}$$
 
@@ -451,8 +455,10 @@ plot_ly(x = ~ Perimeter,
                     zaxis = list(title = 'Symmetry')))
 ```
 
-*Click and drag the plot above to rotate it, and scroll to zoom. Note that in general we recommend against using 3D visualizations; here 
-we show the data in 3D only to illustrate what "higher dimensions" look like for learning purposes.*
+*Click and drag the plot above to rotate it, and scroll to zoom. Note that in
+general we recommend against using 3D visualizations; here we show the data in
+3D only to illustrate what "higher dimensions" look like for learning
+purposes.*
 
 **Summary**
 
@@ -471,7 +477,7 @@ if we might have to predict the label/class for multiple new observations, or
 when there are multiple classes and more than two variables. Thankfully, in R,
 the K-nearest neighbour algorithm is implemented in the [`tidymodels`
 package collection](https://www.tidymodels.org/). The `tidymodels` collection
-providestools to help make and use models, such as classifiers.  Using this package
+provides tools to help make and use models, such as classifiers.  Using this package
 will help keep our code simple, readable and accurate; the less we have to code
 ourselves, the less mistakes we are likely to make. We start off by loading 
 `tidymodels`:
@@ -480,11 +486,11 @@ ourselves, the less mistakes we are likely to make. We start off by loading
 library(tidymodels)
 ```
 
-Let's again suppose we have a new observation with perimeter -1 and concavity
-4.2, but its diagnosis is unknown (as in our example above). Suppose we again
+Let's again suppose we have a new observation with perimeter 0 and concavity
+3.5, but its diagnosis is unknown (as in our example above). Suppose we 
 want to use the perimeter and concavity explanatory variables/predictors to
 predict the diagnosis class of this observation. Let's pick out our 2 desired
-variables and store it as a new dataset named `cancer_train`:
+predictor variables and class label and store it as a new dataset named `cancer_train`:
 
 ```{r 05-tidymodels-2}
 cancer_train <- cancer %>%
@@ -492,97 +498,97 @@ cancer_train <- cancer %>%
 head(cancer_train)
 ```
 
+Next, we create a *model specification* for K-nearest neighbours classification
+by calling the `nearest_neighbor` function, specifying that we want to use $K = 5$ neighbours
+(we will discuss how to choose $K$ in the next chapter). 
+We specify the particular computational
+engine (in this case, the `kknn` engine) for training the model with the `set_engine` function.
+Finally we specify that this is a classification problem with the `set_mode` function.
+
 ```{r 05-tidymodels-3}
-knn_spec <- nearest_neighbor() %>%
+knn_spec <- nearest_neighbor(neighbors = 5) %>%
        set_engine("kknn") %>%
        set_mode("classification")
+```
 
+In order to fit the model on the breast cancer data, we need to pass the model specification
+and the dataset to the `fit` function. We also need to specify what variables to use as predictors
+and what variable to use as the target. Below, the `Class ~ .` argument specifies 
+that `Class` is the target variable (the one we want to predict),
+and `.` (everything *except* `Class`) is to be used as the predictor.
+
+```{r 05-tidymodels-4}
 knn_fit <- knn_spec %>%
         fit(Class ~ ., data = cancer_train)
-
 knn_fit
 ```
+Finally, we make the prediction on the new observation by calling the `predict` function,
+passing the fit object we just created. As above when we ran the K-nearest neighbours
+classification algorithm manually, the `knn_fit` object classifies the new observation as 
+malignant ("M"). 
 
 ```{r 05-predict}
-new_obs <- data.frame(Perimeter = -1, Concavity = 4.2)
+new_obs <- tibble(Perimeter = 0, Concavity = 3.5)
 predict(knn_fit, new_obs)
 ```
-
-Next, we store the diagnosis class labels (column `Class`) as a vector:
-```{r 05-caret-3}
-cancer_labels <- cancer %>% 
-  select(Class) %>% 
-  pull()
-head(cancer_labels)
-```
-
-We will use the function `train()`, where:
-
-- `x` is a data frame object containing the explanatory variables/predictors,
-- `y` is a numeric or factor vector containing the outcomes/labels/classes,
-- `method` is the type of prediction algorithm we want to use, we will use "knn", and
-- `tuneGrid` is a data frame with possible "tuning values". For now, just know that this is where we will specify $K=5$ (the number of nearest neighbours to vote on the predicted class).
-
-The arguments `x` and `y` should come from the original data frame and be in the same order. We will also discuss how to choose $K$ in the next chapter. 
-
-
-
-
-
-```{r 05-train}
-k <- data.frame(k = 5)
-model_knn <- train(x = data.frame(cancer_train), y = cancer_labels, method='knn', tuneGrid = k)
-```
-> **Note:** the `caret` package expects `data.frames` and not `tibbles` (a special kind of data frames). This is a 
-> bit annoying, and will likely change in the future, but for now we have to change `tibbles` to `data.frames` when using `caret`.
-
-Now we can create a `data.frame` with our new observation and predict the label of the new observation using the `predict` function:
-
-```{r 05-predict}
-new_obs <- data.frame(Perimeter = -1, Concavity = 4.2)
-predict(object = model_knn, new_obs)
-```
-
-Our model classifies this new observation as malignant. In the next chapter, we will discuss evaluating how accurate our predictions are, and selecting the value of $K$
-to maximize that accuracy.
-
-
-
 
 ## Data preprocessing 
 
 ### Shifting and scaling
 
-When using K-nearest neighbour classification, the *scale* of each variable (i.e., its size and range of values) matters. Since 
-the classifier predicts classes by identifying observations that are nearest to it, any variables that have a large scale will have a 
-much larger effect than variables with a small scale. But just because a variable has a large scale *doesn't mean* that it is more important
-for making accurate predictions. For example, suppose you have a data set with two attributes, salary 
-(in dollars) and years of education, and you want to predict the corresponding type of job. When we compute the neighbour distances, a difference 
-of \$1000 is huge compared to a difference of 10 years of education. But for our conceptual understanding and answering of the problem, it's 
-the opposite; 10 years of education is huge compared to a difference of \$1000 in yearly salary!
+When using K-nearest neighbour classification, the *scale* of each variable
+(i.e., its size and range of values) matters. Since the classifier predicts
+classes by identifying observations that are nearest to it, any variables that
+have a large scale will have a much larger effect than variables with a small
+scale. But just because a variable has a large scale *doesn't mean* that it is
+more important for making accurate predictions. For example, suppose you have a
+data set with two attributes, salary (in dollars) and years of education, and
+you want to predict the corresponding type of job. When we compute the
+neighbour distances, a difference of \$1000 is huge compared to a difference of
+10 years of education. But for our conceptual understanding and answering of
+the problem, it's the opposite; 10 years of education is huge compared to a
+difference of \$1000 in yearly salary!
 
-In many other predictive models, the *center* of each variable (e.g., its mean) matters as well. For example, if we had a data set
-with a temperature variable measured in degrees Kelvin, and the same data set with temperature measured in degrees Celcius, the two variables
-would differ by a constant shift of 273 (even though they contain exactly the same information). Likewise in our hypothetical job classification 
-example, we would likely see that the center of the salary variable is in the tens of thousands, while the center of the years of education 
-variable is in the single digits. Although this doesn't affect the K-nearest neighbour classification algorithm, this large shift can 
-change the outcome of using many other predictive models. 
+In many other predictive models, the *center* of each variable (e.g., its mean)
+matters as well. For example, if we had a data set with a temperature variable
+measured in degrees Kelvin, and the same data set with temperature measured in
+degrees Celcius, the two variables would differ by a constant shift of 273
+(even though they contain exactly the same information). Likewise in our
+hypothetical job classification example, we would likely see that the center of
+the salary variable is in the tens of thousands, while the center of the years
+of education variable is in the single digits. Although this doesn't affect the
+K-nearest neighbour classification algorithm, this large shift can change the
+outcome of using many other predictive models. 
 
-**Standardization:** when all variables in a data set have a mean (center) of 0 and a standard deviation (scale) of 1, we say that the data have been *standardized*.
+**Standardization:** when all variables in a data set have a mean (center) of 0
+and a standard deviation (scale) of 1, we say that the data have been
+*standardized*.
 
-To illustrate the effect that standardization can have on the K-nearest neighbour algorithm, we 
-will read in the original, unscaled Wisconsin breast cancer data set; we have been using a standardized version of the data set up until now.  
+To illustrate the effect that standardization can have on the K-nearest
+neighbour algorithm, we will read in the original, unscaled Wisconsin breast
+cancer data set; we have been using a standardized version of the data set up
+until now.  
 
-```{r 06-scaling-1, message = FALSE}
+```{r 05-scaling-1, message = FALSE}
 unscaled_cancer <- read_csv("data/unscaled_wdbc.csv")
 head(unscaled_cancer)
 ```
 
-Looking at the unscaled / unshifted data above, you can see that the difference between the values for area measurements are much larger than those for smoothness, and the mean appears to be much larger too. Will this affect predictions? In order to find out, we will create a scatter plot of these two predictors (coloured by diagnosis) for both the unstandardized data we just loaded, and the standardized version of that same data. 
+Looking at the unscaled / unshifted data above, you can see that the difference
+between the values for area measurements are much larger than those for
+smoothness, and the mean appears to be much larger too. Will this affect
+predictions? In order to find out, we will create a scatter plot of these two
+predictors (coloured by diagnosis) for both the unstandardized data we just
+loaded, and the standardized version of that same data. 
 
-We will use the `preProcess` function from `caret` to create an object we can use to standardize the `unscaled_cancer` data set. When we do this, we need to specify the `method` argument to be `c("center", "scale")` so that the standardization results in the predictors having a mean (center) of 0 and a standard deviation (scale) of 1. Finally, we use the `predict` function to apply the data transformation to our data set:
+We will use the `preProcess` function from `caret` to create an object we can
+use to standardize the `unscaled_cancer` data set. When we do this, we need to
+specify the `method` argument to be `c("center", "scale")` so that the
+standardization results in the predictors having a mean (center) of 0 and a
+standard deviation (scale) of 1. Finally, we use the `predict` function to
+apply the data transformation to our data set:
 
-```{r 06-scaling-3}
+```{r 05-scaling-3}
 scale_transformer <- preProcess(unscaled_cancer, method = c("center", "scale")) 
 scaled_cancer <- predict(scale_transformer, unscaled_cancer)
 head(scaled_cancer)
@@ -591,7 +597,7 @@ head(scaled_cancer)
 Now let's generate the two scatter plots, one for `unscaled_cancer` and one for `scaled_cancer`, and show them side-by-side. Each has the same new observation annotated with its $K=3$ nearest neighbours:
 
 <center>
-```{r 06-scaling-2, echo = FALSE, fig.height = 4, fig.width = 10}
+```{r 05-scaling-2, echo = FALSE, fig.height = 4, fig.width = 10}
 
 attrs <- c("Area", "Smoothness")
 
@@ -658,26 +664,37 @@ gridExtra::grid.arrange(unscaled, scaled, ncol = 2)
 ```
 </center>
 
-In the plot for the nonstandardized original data, you can see some odd choices for the three nearest neighbours. In particular, the "neighbours" are visually well within the cloud of benign observations, and the neighbours are all nearly vertically aligned with the new observation (which is why it looks like there is only one black line on this plot).
-Here the computation of nearest neighbours is dominated by the much larger-scale area variable. On the right, the plot for standardized data shows a much more intuitively reasonable selection of nearest neighbours. Thus, 
-standardizing the data can change things in an important way when we are using predictive algorithms. 
-As a rule of thumb, standardizing your data should be a part of the preprocessing you do before any predictive
-modelling / analysis.
+In the plot for the nonstandardized original data, you can see some odd choices
+for the three nearest neighbours. In particular, the "neighbours" are visually
+well within the cloud of benign observations, and the neighbours are all nearly
+vertically aligned with the new observation (which is why it looks like there
+is only one black line on this plot).  Here the computation of nearest
+neighbours is dominated by the much larger-scale area variable. On the right,
+the plot for standardized data shows a much more intuitively reasonable
+selection of nearest neighbours. Thus, standardizing the data can change things
+in an important way when we are using predictive algorithms.  As a rule of
+thumb, standardizing your data should be a part of the preprocessing you do
+before any predictive modelling / analysis.
 
 
 ### Balancing
 
-Another potential issue in a data set for a classifier is *class imbalance*, i.e., when one label is much more common
-than another. Since classifiers like the K-nearest neighbour algorithm use the labels of nearby points to predict the
-label of a new point, if there are many more data points with one label overall, the algorithm is more likely to pick
-that label in general (even if the "pattern" of data suggests otherwise). Class imbalance is actually quite a common
-and important problem: from rare disease diagnosis to malicious email detection, there are many cases in which the "important"
-class to identify (presence of disease, malicious email) is much rarer than the "unimportant" 
+Another potential issue in a data set for a classifier is *class imbalance*,
+i.e., when one label is much more common than another. Since classifiers like
+the K-nearest neighbour algorithm use the labels of nearby points to predict
+the label of a new point, if there are many more data points with one label
+overall, the algorithm is more likely to pick that label in general (even if
+the "pattern" of data suggests otherwise). Class imbalance is actually quite a
+common and important problem: from rare disease diagnosis to malicious email
+detection, there are many cases in which the "important" class to identify
+(presence of disease, malicious email) is much rarer than the "unimportant"
 class (no disease, normal email).
 
-To better illustrate the problem, let's revisit the breast cancer data; except now we will remove many of the 
-observations of malignant tumours, simulating what the data would look like if the cancer was rare. We will
-do this by picking only 3 observations randomly from the malignant group, and keeping all of the benign observations.
+To better illustrate the problem, let's revisit the breast cancer data; except
+now we will remove many of the observations of malignant tumours, simulating
+what the data would look like if the cancer was rare. We will do this by
+picking only 3 observations randomly from the malignant group, and keeping all
+of the benign observations.
 
 ```{r 05-unbalanced, fig.height = 4, fig.width = 5}
 set.seed(1)
@@ -701,11 +718,14 @@ rare_plot
 > code involves random numbers, if you want *the same result* each time, you should use `set.seed`; if you want a *different result* each time,
 > you should not.
 
-Suppose we now decided to use $K = 7$ in K-nearest neighbour classification. With only 3 observations of malignant
-tumours, the classifier will *always predict that the tumour is benign, no matter what its concavity and perimeter are!* This is because in a majority
-vote of 7 observations, at most 3 will be malignant (we only have 3 total malignant observations), so at least 4 must be benign,
-and the benign vote will always win. For example, look what happens for a new tumour observation that is quite close to two
-that were tagged as malignant:
+Suppose we now decided to use $K = 7$ in K-nearest neighbour classification.
+With only 3 observations of malignant tumours, the classifier 
+will *always predict that the tumour is benign, no matter what its concavity and perimeter
+are!* This is because in a majority vote of 7 observations, at most 3 will be
+malignant (we only have 3 total malignant observations), so at least 4 must be
+benign, and the benign vote will always win. For example, look what happens for
+a new tumour observation that is quite close to two that were tagged as
+malignant:
 
 <center>
 ```{r 05-upsample, echo=FALSE, fig.height = 4, fig.width = 5}
