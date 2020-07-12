@@ -42,4 +42,5 @@ RUN apt-get update -qq && install2.r --error \
     cowplot \
     svglite \
     tidymodels \
-    reticulate
+    reticulate \ 
+    kknn
