@@ -534,7 +534,7 @@ predict(knn_fit, new_obs)
 
 ## Data preprocessing 
 
-### Shifting and scaling
+### Centering and scaling
 
 When using K-nearest neighbour classification, the *scale* of each variable
 (i.e., its size and range of values) matters. Since the classifier predicts
@@ -567,43 +567,66 @@ and a standard deviation (scale) of 1, we say that the data have been
 To illustrate the effect that standardization can have on the K-nearest
 neighbour algorithm, we will read in the original, unscaled Wisconsin breast
 cancer data set; we have been using a standardized version of the data set up
-until now.  
+until now. To keep things simple, we will just use the `Area`, `Smoothness`, and `Class`
+variables:
 
 ```{r 05-scaling-1, message = FALSE}
-unscaled_cancer <- read_csv("data/unscaled_wdbc.csv")
+unscaled_cancer <- read_csv("data/unscaled_wdbc.csv") %>% 
+            select(Class, Area, Smoothness)
 head(unscaled_cancer)
 ```
 
-Looking at the unscaled / unshifted data above, you can see that the difference
+Looking at the unscaled / uncentered data above, you can see that the difference
 between the values for area measurements are much larger than those for
 smoothness, and the mean appears to be much larger too. Will this affect
 predictions? In order to find out, we will create a scatter plot of these two
 predictors (coloured by diagnosis) for both the unstandardized data we just
 loaded, and the standardized version of that same data. 
 
-We will use the `preProcess` function from `caret` to create an object we can
-use to standardize the `unscaled_cancer` data set. When we do this, we need to
-specify the `method` argument to be `c("center", "scale")` so that the
-standardization results in the predictors having a mean (center) of 0 and a
-standard deviation (scale) of 1. Finally, we use the `predict` function to
-apply the data transformation to our data set:
-
+In the `tidymodels` framework, all data preprocessing happens using a `recipe`.
+Here we will initialize a recipe for the `unscaled_cancer` data above, specifying
+that the `Class` variable is the target, and all other variables are predictors:
+```{r 05-scaling-2}
+uc_recipe <- recipe(Class ~ ., data = unscaled_cancer)
+print(uc_recipe)
+```
+So far, there is not much in the recipe; just a statement about the number of targets
+and predictors. Let's add scaling (`step_scale`) and centering (`step_center`) steps for 
+all of the predictors so that they each have a mean of 0 and standard deviation of 1:
 ```{r 05-scaling-3}
-scale_transformer <- preProcess(unscaled_cancer, method = c("center", "scale")) 
-scaled_cancer <- predict(scale_transformer, unscaled_cancer)
+uc_recipe <- uc_recipe %>%
+       step_scale(all_predictors()) %>%
+       step_center(all_predictors())
+uc_recipe
+```
+You can now see that the recipe includes a scaling and centering step for all predictor variables.
+Note that when you add a step to a recipe, you must specify what columns to apply the step to.
+Here we used the `all_predictors()` function to specify that each step should be applied to 
+all predictor variables. However, there are a number of different arguments one could use here,
+as well as naming particular columns with the same syntax as the `select` function. 
+For example:
+
+- `all_nominal()` and `all_numeric()`: specify all categorical or all numeric variables
+- `all_predictors()` and `all_outcomes()`: specify all predictor or all target variables
+- `Area, Smoothness`: specify both the `Area` and `Smoothness` variable
+- `-Class`: specify everything except the `Class` variable
+
+We now use the `prep` function to create an object that represents how to apply the recipe
+to our `unscaled_cancer` dataframe, and then the `bake` function to apply the recipe.
+```{r 05-scaling-4}
+uc_prepped <- prep(uc_recipe, training = unscaled_cancer)
+scaled_cancer <- bake(uc_prepped, unscaled_cancer)
 head(scaled_cancer)
 ```
 
-Now let's generate the two scatter plots, one for `unscaled_cancer` and one for `scaled_cancer`, and show them side-by-side. Each has the same new observation annotated with its $K=3$ nearest neighbours:
+Now let's generate the two scatter plots, one for `unscaled_cancer` and one for
+`scaled_cancer`, and show them side-by-side. Each has the same new observation
+annotated with its $K=3$ nearest neighbours:
 
 <center>
-```{r 05-scaling-2, echo = FALSE, fig.height = 4, fig.width = 10}
+```{r 05-scaling-plt, echo = FALSE, fig.height = 4, fig.width = 10}
 
 attrs <- c("Area", "Smoothness")
-
-#select only the variables that we need
-unscaled_cancer <- unscaled_cancer %>% 
-  select(Class, Area, Smoothness)
 
 #create a new obs and get its NNs
 new_obs <- tibble(Area = 400, Smoothness = 0.135, Class = "unknown")
@@ -629,10 +652,6 @@ unscaled <- ggplot(unscaled_cancer, aes(x = Area, y = Smoothness, color = Class)
     geom_segment(aes(x = unlist(new_obs[1]), y = unlist(new_obs[2]),
                    xend = unlist(neighbours[3, attrs[1]]),
                    yend = unlist(neighbours[3, attrs[2]])), color = "black")
-
-#limit to variables that we need
-scaled_cancer <- scaled_cancer %>%
-  select(Class, Area, Smoothness)
 
 #create new scaled obs and get NNs
 new_obs_scaled <- tibble(Area = -0.72, Smoothness = 2.8, Class = "unknown")
