@@ -2,15 +2,19 @@
 knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 ```
 
-# Classification I: Training & predicting {#classification}
+# Classification I: training & predicting {#classification}
 
 ## Overview 
-Up until this point, we have focused solely on descriptive and exploratory questions about data. This chapter and the next together serve as our 
-first foray into answering *predictive* questions about data. In particular, we will focus on the problem of *classification*, i.e.,
-using one or more quantitative variables to predict the value of a third, categorical variable. This chapter will cover the basics of classification,
-how to preprocess data to make it suitable for use in a classifier,
-and how to use our observed data to make predictions. The next will focus on how to evaluate how accurate the predictions from our classifier are, as well as how to 
-improve our classifier (where possible) to maximize its accuracy.
+Up until this point, we have focused solely on descriptive and exploratory
+questions about data. This chapter and the next together serve as our first
+foray into answering *predictive* questions about data. In particular, we will
+focus on the problem of *classification*, i.e., using one or more quantitative
+variables to predict the value of a third, categorical variable. This chapter
+will cover the basics of classification, how to preprocess data to make it
+suitable for use in a classifier, and how to use our observed data to make
+predictions. The next will focus on how to evaluate how accurate the
+predictions from our classifier are, as well as how to improve our classifier
+(where possible) to maximize its accuracy.
 
 ## Chapter learning objectives 
 - Recognize situations where a classifier would be appropriate for making predictions
@@ -19,50 +23,80 @@ improve our classifier (where possible) to maximize its accuracy.
 - Compute, by hand, the straight-line (Euclidean) distance between points on a graph when there are two explanatory variables/predictors
 - Explain the K-nearest neighbour classification algorithm
 - Standardize variables in R, and explain why standardization is useful in predictive modelling
-- Handle imbalanced data by oversampling in R, and explain why imbalanced data are problematic for classifiers
-- Perform K-nearest neighbour classification in R using `caret::train(method = "knn", ...)`
+- Handle imbalanced data in R, and explain why imbalanced data are problematic for classifiers
+- Perform K-nearest neighbour classification in R using the `parsnip` package from `tidymodels`  
 
 ## The classification problem
-In many situations, we want to make predictions based on the current situation as well as past experiences. For instance, a doctor may want to diagnose 
-a patient as either diseased or healthy based on their symptoms and the doctor's past experience with patients; an email provider might want to tag a given email as "spam" or "non-spam"
-depending on past email text data; or an online store may want to predict whether an order is fraudulent or not. 
+In many situations, we want to make predictions based on the current situation
+as well as past experiences. For instance, a doctor may want to diagnose a
+patient as either diseased or healthy based on their symptoms and the doctor's
+past experience with patients; an email provider might want to tag a given
+email as "spam" or "not spam" depending on past email text data; or an online
+store may want to predict whether an order is fraudulent or not. 
 
-These tasks are all examples of **classification**, i.e., predicting a categorical class (sometimes called a *label*) for an observation given its other
-quantitative variables (sometimes called *features*). Generally, a classifier assigns an observation (e.g. a new patient) to a class (e.g. diseased or healthy) on 
-the basis of how similar it is to other observations for which we know the class (e.g. previous patients with known diseases and symptoms). These observations 
-with known classes that we use as a basis for prediction are called a **training set**. We call them a "training set" because we use these observations to train, or 
-teach, our classifier so that we can use it to make predictions on new data that we have not seen previously.
+These tasks are all examples of **classification**, i.e., predicting a
+categorical class (sometimes called a *label*) for an observation given its
+other quantitative variables (sometimes called *features*). Generally, a
+classifier assigns an observation (e.g. a new patient) to a class (e.g.
+diseased or healthy) on the basis of how similar it is to other observations
+for which we know the class (e.g. previous patients with known diseases and
+symptoms). These observations with known classes that we use as a basis for
+prediction are called a **training set**. We call them a "training set" because
+we use these observations to train, or teach, our classifier so that we can use
+it to make predictions on new data that we have not seen previously.
 
-There are many possible classification algorithms that we could use to predict a categorical class/label for an observation. In addition, there are many
-variations on the basic classification problem, e.g.,  binary classification where only two classes are involved (e.g. disease or healthy patient), or multiclass classification, which involves 
-assigning an object to one of several classes (e.g., private, public, or not for-profit organization). Here we will focus on the simple, widely used **K-nearest neighbours**
-algorithm for the binary classification problem. Other examples you may encounter in future courses include decision trees, support vector machines (SVMs), logistic regression, and neural
-networks.
+There are many possible classification algorithms that we could use to predict
+a categorical class/label for an observation. In addition, there are many
+variations on the basic classification problem, e.g.,  binary classification
+where only two classes are involved (e.g. disease or healthy patient), or
+multiclass classification, which involves assigning an object to one of several
+classes (e.g., private, public, or not for-profit organization). Here we will
+focus on the simple, widely used **K-nearest neighbours** algorithm for the
+binary classification problem. Other examples you may encounter in future
+courses include decision trees, support vector machines (SVMs), logistic
+regression, and neural networks.
 
 ## Exploring a labelled data set
 
-In this chapter and the next, we will study a data set of [digitized breast cancer image features](http://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29), 
-created by Dr. William H. Wolberg, W. Nick Street, and Olvi L. Mangasarian at the University of Wisconsin, Madison. Each row in the data set represents an image of a tumour sample, 
-including the diagnosis (benign or malignant) and several other measurements 
-(e.g., nucleus texture, perimeter, area, etc.). Diagnosis for each image was conducted by physicians. 
+In this chapter and the next, we will study a data set of 
+[digitized breast cancer image features](http://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29),
+created by Dr. William H. Wolberg, W. Nick Street, and Olvi L. Mangasarian at
+the University of Wisconsin, Madison. Each row in the data set represents an
+image of a tumour sample, including the diagnosis (benign or malignant) and
+several other measurements (e.g., nucleus texture, perimeter, area, etc.).
+Diagnosis for each image was conducted by physicians. 
 
-As with all data analyses, we first need to formulate a precise question that we want to answer. Here, the question is *predictive*: can 
-we use the tumour image measurements available to us to predict whether a future tumour image (with unknown diagnosis)
-shows a benign or malignant tumour? Answering this question is important because traditional, non-data-driven methods for tumour diagnosis are quite subjective and 
-dependent upon how skilled and experienced the diagnosing physician is. Furthermore, benign tumours are not normally dangerous; the cells stay in the same 
-place and the tumour stops growing before it gets very large. By contrast, in malignant tumours, the cells invade the surrounding tissue and spread into nearby organs 
-where they can cause serious damage ([learn more about cancer here](https://www.worldwidecancerresearch.org/who-we-are/cancer-basics/)). Thus, it is important to quickly 
-and accurately diagnose the tumour type to guide patient treatment.
+As with all data analyses, we first need to formulate a precise question that
+we want to answer. Here, the question is *predictive*: can we use the tumour
+image measurements available to us to predict whether a future tumour image
+(with unknown diagnosis) shows a benign or malignant tumour? Answering this
+question is important because traditional, non-data-driven methods for tumour
+diagnosis are quite subjective and dependent upon how skilled and experienced
+the diagnosing physician is. Furthermore, benign tumours are not normally
+dangerous; the cells stay in the same place and the tumour stops growing before
+it gets very large. By contrast, in malignant tumours, the cells invade the
+surrounding tissue and spread into nearby organs where they can cause serious
+damage ([learn more about cancer here](https://www.worldwidecancerresearch.org/who-we-are/cancer-basics/)).
+Thus, it is important to quickly and accurately diagnose the tumour type to
+guide patient treatment.
 
 **Loading the data**
 
-Our first step is to load, wrangle, and explore the data using visualizations in order to better understand the data we are working with.
-We start by loading the necessary libraries for our analysis. Below you'll see (in addition to the usual `tidyverse`) a new library, `forcats`, that 
-enables us to easily manipulate factors in R. Factors are a special categorical type of variable in R that are very helpful when doing data analysis with categorical variables.
+Our first step is to load, wrangle, and explore the data using visualizations
+in order to better understand the data we are working with.  We start by
+loading the necessary libraries for our analysis. Below you'll see (in addition
+to the usual `tidyverse`) two new libraries: `forcats` and `tidymodels`. 
+The `forcats` library enables us to easily
+manipulate factors in R; factors are a special categorical type of variable in
+R that are often used for class label data. The `tidymodels` library, like the `tidyverse`, is actually a collection
+of a few different libraries that enable training
+classifiers (as well as other models that we'll see in later chapters). 
+
 
 ```{r 05-load-libraries}
 library(tidyverse)
 library(forcats)
+library(tidymodels)
 ```
 
 In this case, the file containing the breast cancer data set is a simple `.csv` file with headers. We'll use the `read_csv` function with no additional arguments,
