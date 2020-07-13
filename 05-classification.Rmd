@@ -525,7 +525,8 @@ knn_fit
 Finally, we make the prediction on the new observation by calling the `predict` function,
 passing the fit object we just created. As above when we ran the K-nearest neighbours
 classification algorithm manually, the `knn_fit` object classifies the new observation as 
-malignant ("M"). 
+malignant ("M"). Note that the `predict` function outputs a data frame with a single 
+variable named `.pred_class`.
 
 ```{r 05-predict}
 new_obs <- tibble(Perimeter = 0, Concavity = 3.5)
@@ -592,11 +593,15 @@ print(uc_recipe)
 ```
 So far, there is not much in the recipe; just a statement about the number of targets
 and predictors. Let's add scaling (`step_scale`) and centering (`step_center`) steps for 
-all of the predictors so that they each have a mean of 0 and standard deviation of 1:
+all of the predictors so that they each have a mean of 0 and standard deviation of 1.
+The `prep` function finalizes the recipe by using the data (here, `unscaled_cancer`) 
+to compute anything necessary to run the recipe (in this case, the column means and standard
+deviations):
 ```{r 05-scaling-3}
 uc_recipe <- uc_recipe %>%
        step_scale(all_predictors()) %>%
-       step_center(all_predictors())
+       step_center(all_predictors()) %>%
+       prep()
 uc_recipe
 ```
 You can now see that the recipe includes a scaling and centering step for all predictor variables.
@@ -614,8 +619,7 @@ For example:
 We now use the `prep` function to create an object that represents how to apply the recipe
 to our `unscaled_cancer` dataframe, and then the `bake` function to apply the recipe.
 ```{r 05-scaling-4}
-uc_prepped <- prep(uc_recipe, training = unscaled_cancer)
-scaled_cancer <- bake(uc_prepped, unscaled_cancer)
+scaled_cancer <- bake(uc_recipe, unscaled_cancer)
 head(scaled_cancer)
 ```
 
@@ -813,13 +817,13 @@ use the `group_by + summarize` pattern we've seen before to see that our classes
 
 ```{r 05-upsample-cancer}
 ups_recipe <- recipe(Class ~ ., data = rare_cancer) %>%
-       step_upsample(Class, over_ratio = 1, skip = FALSE)
+       step_upsample(Class, over_ratio = 1, skip = FALSE) %>%
+       prep()
 ups_recipe
 ```
 
 ```{r 05-upsample-cancer-2}
-ups_prepped <- prep(ups_recipe, training = rare_cancer)
-upsampled_cancer <- bake(ups_prepped, rare_cancer)
+upsampled_cancer <- bake(ups_recipe, rare_cancer)
 
 upsampled_cancer %>% 
 	group_by(Class) %>%

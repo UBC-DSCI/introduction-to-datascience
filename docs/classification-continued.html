@@ -26,7 +26,7 @@
 <meta name="author" content="Melissa Lee" />
 
 
-<meta name="date" content="2020-07-12" />
+<meta name="date" content="2020-07-13" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -52,13 +52,6 @@
 
 
 
-<script src="libs/htmlwidgets-1.5.1/htmlwidgets.js"></script>
-<script src="libs/plotly-binding-4.9.2.1/plotly.js"></script>
-<script src="libs/typedarray-0.1/typedarray.min.js"></script>
-<link href="libs/crosstalk-1.1.0.1/css/crosstalk.css" rel="stylesheet" />
-<script src="libs/crosstalk-1.1.0.1/js/crosstalk.min.js"></script>
-<link href="libs/plotly-htmlwidgets-css-1.52.2/plotly-htmlwidgets.css" rel="stylesheet" />
-<script src="libs/plotly-main-1.52.2/plotly-latest.min.js"></script>
 
 
 <style type="text/css">
@@ -256,7 +249,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="6.5" data-path="classification.html"><a href="classification.html#classification-with-k-nearest-neighbours"><i class="fa fa-check"></i><b>6.5</b> Classification with K-nearest neighbours</a></li>
 <li class="chapter" data-level="6.6" data-path="classification.html"><a href="classification.html#k-nearest-neighbours-in-r"><i class="fa fa-check"></i><b>6.6</b> K-nearest neighbours in R</a></li>
 <li class="chapter" data-level="6.7" data-path="classification.html"><a href="classification.html#data-preprocessing"><i class="fa fa-check"></i><b>6.7</b> Data preprocessing</a><ul>
-<li class="chapter" data-level="6.7.1" data-path="classification.html"><a href="classification.html#shifting-and-scaling"><i class="fa fa-check"></i><b>6.7.1</b> Shifting and scaling</a></li>
+<li class="chapter" data-level="6.7.1" data-path="classification.html"><a href="classification.html#centering-and-scaling"><i class="fa fa-check"></i><b>6.7.1</b> Centering and scaling</a></li>
 <li class="chapter" data-level="6.7.2" data-path="classification.html"><a href="classification.html#balancing"><i class="fa fa-check"></i><b>6.7.2</b> Balancing</a></li>
 </ul></li>
 </ul></li>
@@ -350,19 +343,25 @@ and how to choose model parameters to maximize performance.</p>
 </div>
 <div id="evaluating-accuracy" class="section level2">
 <h2><span class="header-section-number">7.3</span> Evaluating accuracy</h2>
-<p>Sometimes our classifier might make the wrong prediction. A classifier does not need to be right 100% of
-the time to be useful, though we don’t want the classifier to make too many wrong predictions. How do we measure
-how “good” our classifier is? Let’s revisit the Wisconsin breast cancer example and think about how our classifier
-will be used in practice. A biopsy will be performed on a <em>new</em> patient’s tumour, the resulting image will be analyzed, and the classifier
-will be asked to decide whether the tumour is benign or malignant. The key word here is <em>new</em>: our classifier is “good”
-if it provides accurate predictions on data <em>not seen during training</em>. But then how can we evaluate our classifier
-without having to visit the hospital to collect more tumour images?</p>
-<p>The trick is to split up the data set into a <strong>training set</strong> and <strong>test set</strong>, and only show the classifier
-the <strong>training set</strong> when building the classifier. Then to evaluate the accuracy of the classifier, we can use
-it to predict the labels (which we know) in the <strong>test set</strong>. If our predictions match the true
-labels for the observations in the <strong>test set</strong> very well, then we have some confidence that our
-classifier might also do a good job of predicting the class labels for new observations that we do not have the
-class labels for.</p>
+<p>Sometimes our classifier might make the wrong prediction. A classifier does not
+need to be right 100% of the time to be useful, though we don’t want the
+classifier to make too many wrong predictions. How do we measure how “good” our
+classifier is? Let’s revisit the
+<a href="http://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29">breast cancer images example</a>
+and think about how our classifier will be used in practice. A biopsy will be
+performed on a <em>new</em> patient’s tumour, the resulting image will be analyzed,
+and the classifier will be asked to decide whether the tumour is benign or
+malignant. The key word here is <em>new</em>: our classifier is “good” if it provides
+accurate predictions on data <em>not seen during training</em>. But then how can we
+evaluate our classifier without having to visit the hospital to collect more
+tumour images?</p>
+<p>The trick is to split up the data set into a <strong>training set</strong> and <strong>test set</strong>,
+and only show the classifier the <strong>training set</strong> when building the classifier.
+Then to evaluate the accuracy of the classifier, we can use it to predict the
+labels (which we know) in the <strong>test set</strong>. If our predictions match the true
+labels for the observations in the <strong>test set</strong> very well, then we have some
+confidence that our classifier might also do a good job of predicting the class
+labels for new observations that we do not have the class labels for.</p>
 <blockquote>
 <p>Note: if there were a golden rule of machine learning, it might be this: <em>you cannot use the test data to build the model!</em>
 If you do, the model gets to “see” the test data in advance, making it look more accurate than it really is. Imagine
@@ -371,298 +370,288 @@ how bad it would be to overestimate your classifier’s accuracy when predicting
 <center>
 <img src="img/training_test.jpeg" width="600" />
 </center>
-<p>How exactly can we assess how well our predictions match the true labels for the observations in the test set? One way
-we can do this is to calculate the <strong>prediction accuracy</strong>. This is the fraction of examples for which the classifier made
-the correct prediction. To calculate this we divide the number of correct predictions by the number of predictions made. Other
-measures for how well our classifier performed include <em>precision</em> and <em>recall</em>; these will not be discussed here, but
-you will encounter them in other more advanced courses on this topic. This process is illustrated below:</p>
+<p>How exactly can we assess how well our predictions match the true labels for
+the observations in the test set? One way we can do this is to calculate the
+<strong>prediction accuracy</strong>. This is the fraction of examples for which the
+classifier made the correct prediction. To calculate this we divide the number
+of correct predictions by the number of predictions made. Other measures for
+how well our classifier performed include <em>precision</em> and <em>recall</em>; these will
+not be discussed here, but you will encounter them in other more advanced
+courses on this topic. This process is illustrated below:</p>
 <center>
 <img src="img/ML-paradigm-test.png" width="800" />
 </center>
-<p>In R, we can use the <code>caret</code> package not only to perform K-nearest neighbour classification, but also to assess how well our
-classification worked. Let’s start by loading the necessary libraries, reading in the breast cancer data from the previous
-chapter, and making a quick scatter plot visualization of tumour cell concavity versus smoothness coloured by diagnosis.</p>
-<div class="sourceCode" id="cb192"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb192-1"><a href="classification-continued.html#cb192-1"></a><span class="co"># load libraries</span></span>
-<span id="cb192-2"><a href="classification-continued.html#cb192-2"></a><span class="kw">library</span>(tidyverse)</span>
-<span id="cb192-3"><a href="classification-continued.html#cb192-3"></a><span class="kw">library</span>(caret)</span>
-<span id="cb192-4"><a href="classification-continued.html#cb192-4"></a></span>
-<span id="cb192-5"><a href="classification-continued.html#cb192-5"></a><span class="co">#load data</span></span>
-<span id="cb192-6"><a href="classification-continued.html#cb192-6"></a>cancer &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/unscaled_wdbc.csv&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb192-7"><a href="classification-continued.html#cb192-7"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Class =</span> <span class="kw">as.factor</span>(Class)) <span class="co"># because we will be doing statistical analysis on a categorical variable</span></span>
-<span id="cb192-8"><a href="classification-continued.html#cb192-8"></a></span>
-<span id="cb192-9"><a href="classification-continued.html#cb192-9"></a><span class="co"># colour palette</span></span>
-<span id="cb192-10"><a href="classification-continued.html#cb192-10"></a>cbPalette &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;#56B4E9&quot;</span>, <span class="st">&quot;#E69F00&quot;</span>,<span class="st">&quot;#009E73&quot;</span>, <span class="st">&quot;#F0E442&quot;</span>, <span class="st">&quot;#0072B2&quot;</span>, <span class="st">&quot;#D55E00&quot;</span>, <span class="st">&quot;#CC79A7&quot;</span>, <span class="st">&quot;#999999&quot;</span>) </span>
-<span id="cb192-11"><a href="classification-continued.html#cb192-11"></a></span>
-<span id="cb192-12"><a href="classification-continued.html#cb192-12"></a><span class="co"># create scatter plot of tumour cell concavity versus smoothness, </span></span>
-<span id="cb192-13"><a href="classification-continued.html#cb192-13"></a><span class="co"># labelling the points be diagnosis class</span></span>
-<span id="cb192-14"><a href="classification-continued.html#cb192-14"></a>perim_concav &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st">  </span></span>
-<span id="cb192-15"><a href="classification-continued.html#cb192-15"></a><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> Smoothness, <span class="dt">y =</span> Concavity, <span class="dt">color =</span> Class)) <span class="op">+</span><span class="st"> </span></span>
-<span id="cb192-16"><a href="classification-continued.html#cb192-16"></a><span class="st">    </span><span class="kw">geom_point</span>(<span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
-<span id="cb192-17"><a href="classification-continued.html#cb192-17"></a><span class="st">    </span><span class="kw">labs</span>(<span class="dt">color =</span> <span class="st">&quot;Diagnosis&quot;</span>) <span class="op">+</span><span class="st"> </span></span>
-<span id="cb192-18"><a href="classification-continued.html#cb192-18"></a><span class="st">    </span><span class="kw">scale_color_manual</span>(<span class="dt">labels =</span> <span class="kw">c</span>(<span class="st">&quot;Benign&quot;</span>, <span class="st">&quot;Malignant&quot;</span>), <span class="dt">values =</span> cbPalette)</span>
-<span id="cb192-19"><a href="classification-continued.html#cb192-19"></a>perim_concav</span></code></pre></div>
+<p>In R, we can use the <code>tidymodels</code> library collection not only to perform K-nearest neighbour
+classification, but also to assess how well our classification worked. Let’s
+start by loading the necessary libraries, reading in the breast cancer data
+from the previous chapter, and making a quick scatter plot visualization of
+tumour cell concavity versus smoothness coloured by diagnosis.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="classification-continued.html#cb1-1"></a><span class="co"># load libraries</span></span>
+<span id="cb1-2"><a href="classification-continued.html#cb1-2"></a><span class="kw">library</span>(tidyverse)</span>
+<span id="cb1-3"><a href="classification-continued.html#cb1-3"></a><span class="kw">library</span>(tidymodels)</span>
+<span id="cb1-4"><a href="classification-continued.html#cb1-4"></a></span>
+<span id="cb1-5"><a href="classification-continued.html#cb1-5"></a><span class="co">#load data</span></span>
+<span id="cb1-6"><a href="classification-continued.html#cb1-6"></a>cancer &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/unscaled_wdbc.csv&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span></span>
+<span id="cb1-7"><a href="classification-continued.html#cb1-7"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Class =</span> <span class="kw">as_factor</span>(Class)) <span class="op">%&gt;%</span><span class="st"> </span><span class="co"># convert the character Class variable to the factor datatype</span></span>
+<span id="cb1-8"><a href="classification-continued.html#cb1-8"></a><span class="st">  </span><span class="kw">select</span>(Class, Concavity, Smoothness)</span>
+<span id="cb1-9"><a href="classification-continued.html#cb1-9"></a></span>
+<span id="cb1-10"><a href="classification-continued.html#cb1-10"></a><span class="co"># colour palette</span></span>
+<span id="cb1-11"><a href="classification-continued.html#cb1-11"></a>cbPalette &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;#E69F00&quot;</span>, <span class="st">&quot;#56B4E9&quot;</span>, <span class="st">&quot;#009E73&quot;</span>, <span class="st">&quot;#F0E442&quot;</span>, <span class="st">&quot;#0072B2&quot;</span>, <span class="st">&quot;#D55E00&quot;</span>, <span class="st">&quot;#CC79A7&quot;</span>, <span class="st">&quot;#999999&quot;</span>) </span>
+<span id="cb1-12"><a href="classification-continued.html#cb1-12"></a></span>
+<span id="cb1-13"><a href="classification-continued.html#cb1-13"></a><span class="co"># create scatter plot of tumour cell concavity versus smoothness, </span></span>
+<span id="cb1-14"><a href="classification-continued.html#cb1-14"></a><span class="co"># labelling the points be diagnosis class</span></span>
+<span id="cb1-15"><a href="classification-continued.html#cb1-15"></a>perim_concav &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st">  </span></span>
+<span id="cb1-16"><a href="classification-continued.html#cb1-16"></a><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> Smoothness, <span class="dt">y =</span> Concavity, <span class="dt">color =</span> Class)) <span class="op">+</span><span class="st"> </span></span>
+<span id="cb1-17"><a href="classification-continued.html#cb1-17"></a><span class="st">    </span><span class="kw">geom_point</span>(<span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb1-18"><a href="classification-continued.html#cb1-18"></a><span class="st">    </span><span class="kw">labs</span>(<span class="dt">color =</span> <span class="st">&quot;Diagnosis&quot;</span>) <span class="op">+</span><span class="st"> </span></span>
+<span id="cb1-19"><a href="classification-continued.html#cb1-19"></a><span class="st">    </span><span class="kw">scale_color_manual</span>(<span class="dt">labels =</span> <span class="kw">c</span>(<span class="st">&quot;Malignant&quot;</span>, <span class="st">&quot;Benign&quot;</span>), <span class="dt">values =</span> cbPalette)</span>
+<span id="cb1-20"><a href="classification-continued.html#cb1-20"></a></span>
+<span id="cb1-21"><a href="classification-continued.html#cb1-21"></a>perim_concav</span></code></pre></div>
 <p><img src="_main_files/figure-html/06-precode-1.png" width="480" /></p>
 <p><strong>1. Create the train / test split</strong></p>
-<p>Once we have decided on a predictive question to answer and done some preliminary exploration, the
-very next thing to do is to split the data
-into the training and test sets. Typically, the training set is between 50 - 100% of the data, while the test
-set is the remaining 0 - 50%; the intuition is that you want to trade off between training an accurate model (by using
-a larger training data set) and getting an accurate evaluation of its performance (by using a larger test data set).
-Here, we will use 75% of the data for training, and 25% for testing.
-To do this we will use the <code>createDataPartition</code> function from the <code>caret</code> package, specifying values for 3 arguments:</p>
-<ol style="list-style-type: decimal">
-<li><code>y</code>: the class labels. These must be a vector.</li>
-<li><code>p</code>: the proportion (between 0 and 1) of the data you would like in the training data set.</li>
-<li><code>list = FALSE</code>: this states that we want the training and test sets in the form of a matrix, not a list.</li>
-</ol>
-<p>The <code>createDataPartition</code> function returns the row numbers for the training set.</p>
-<div class="sourceCode" id="cb193"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb193-1"><a href="classification-continued.html#cb193-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>) <span class="co"># makes the random selection of rows reproducible</span></span>
-<span id="cb193-2"><a href="classification-continued.html#cb193-2"></a>set_rows &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb193-3"><a href="classification-continued.html#cb193-3"></a><span class="st">  </span><span class="kw">select</span>(Class) <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb193-4"><a href="classification-continued.html#cb193-4"></a><span class="st">  </span><span class="kw">pull</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="co"># converts Class from a tibble to a vector</span></span>
-<span id="cb193-5"><a href="classification-continued.html#cb193-5"></a><span class="st">  </span><span class="kw">createDataPartition</span>(<span class="dt">p =</span> <span class="fl">0.75</span>, <span class="dt">list =</span> <span class="ot">FALSE</span>)</span>
-<span id="cb193-6"><a href="classification-continued.html#cb193-6"></a><span class="kw">head</span>(set_rows)</span></code></pre></div>
-<pre><code>##      Resample1
-## [1,]         1
-## [2,]         2
-## [3,]         3
-## [4,]         4
-## [5,]         5
-## [6,]         6</code></pre>
+<p>Once we have decided on a predictive question to answer and done some
+preliminary exploration, the very next thing to do is to split the data into
+the training and test sets. Typically, the training set is between 50 - 100% of
+the data, while the test set is the remaining 0 - 50%; the intuition is that
+you want to trade off between training an accurate model (by using a larger
+training data set) and getting an accurate evaluation of its performance (by
+using a larger test data set). Here, we will use 75% of the data for training,
+and 25% for testing. To do this we will use the <code>initial_split</code> function,
+specifying that <code>prop = 0.75</code> and the target variable is <code>Class</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="classification-continued.html#cb2-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb2-2"><a href="classification-continued.html#cb2-2"></a>cancer_split &lt;-<span class="st"> </span><span class="kw">initial_split</span>(cancer, <span class="dt">prop =</span> <span class="fl">0.75</span>, <span class="dt">strata =</span> Class)</span>
+<span id="cb2-3"><a href="classification-continued.html#cb2-3"></a>cancer_train &lt;-<span class="st"> </span><span class="kw">training</span>(cancer_split)</span>
+<span id="cb2-4"><a href="classification-continued.html#cb2-4"></a>cancer_test &lt;-<span class="st"> </span><span class="kw">testing</span>(cancer_split)</span></code></pre></div>
 <blockquote>
 <p>Note: You will see in the code above that we use the <code>set.seed</code> function again, as discussed in the previous chapter. In this case it is because
-<code>createDataPartition</code> uses random sampling to choose which rows will be in the training set. Since we want our code to be reproducible
+<code>initial_split</code> uses random sampling to choose which rows will be in the training set. Since we want our code to be reproducible
 and generate the same train/test split each time it is run, we use <code>set.seed</code>.</p>
 </blockquote>
-<p>Now that we have the row numbers for the training set, we can use the <code>slice</code> function to get the rows from the original data set (here <code>cancer</code>) to create the training and test data sets.</p>
-<div class="sourceCode" id="cb195"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb195-1"><a href="classification-continued.html#cb195-1"></a>training_set &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">slice</span>(set_rows)</span>
-<span id="cb195-2"><a href="classification-continued.html#cb195-2"></a>test_set &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">slice</span>(<span class="op">-</span>set_rows)</span>
-<span id="cb195-3"><a href="classification-continued.html#cb195-3"></a><span class="kw">glimpse</span>(training_set)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="classification-continued.html#cb3-1"></a><span class="kw">glimpse</span>(cancer_train)</span></code></pre></div>
 <pre><code>## Rows: 427
-## Columns: 12
-## $ ID                &lt;dbl&gt; 842302, 842517, 84300903, 84348301, 84358402, 84378…
-## $ Class             &lt;fct&gt; M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, B, B, …
-## $ Radius            &lt;dbl&gt; 17.990, 20.570, 19.690, 11.420, 20.290, 12.450, 18.…
-## $ Texture           &lt;dbl&gt; 10.38, 17.77, 21.25, 20.38, 14.34, 15.70, 19.98, 20…
-## $ Perimeter         &lt;dbl&gt; 122.80, 132.90, 130.00, 77.58, 135.10, 82.57, 119.6…
-## $ Area              &lt;dbl&gt; 1001.0, 1326.0, 1203.0, 386.1, 1297.0, 477.1, 1040.…
-## $ Smoothness        &lt;dbl&gt; 0.11840, 0.08474, 0.10960, 0.14250, 0.10030, 0.1278…
-## $ Compactness       &lt;dbl&gt; 0.27760, 0.07864, 0.15990, 0.28390, 0.13280, 0.1700…
-## $ Concavity         &lt;dbl&gt; 0.30010, 0.08690, 0.19740, 0.24140, 0.19800, 0.1578…
-## $ Concave_Points    &lt;dbl&gt; 0.14710, 0.07017, 0.12790, 0.10520, 0.10430, 0.0808…
-## $ Symmetry          &lt;dbl&gt; 0.2419, 0.1812, 0.2069, 0.2597, 0.1809, 0.2087, 0.1…
-## $ Fractal_Dimension &lt;dbl&gt; 0.07871, 0.05667, 0.05999, 0.09744, 0.05883, 0.0761…</code></pre>
-<div class="sourceCode" id="cb197"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb197-1"><a href="classification-continued.html#cb197-1"></a><span class="kw">glimpse</span>(test_set)</span></code></pre></div>
+## Columns: 3
+## $ Class      &lt;fct&gt; M, M, M, M, M, M, M, M, M, M, M, M, M, M, M, B, B, M, M, M…
+## $ Concavity  &lt;dbl&gt; 0.30010, 0.08690, 0.19740, 0.24140, 0.19800, 0.15780, 0.11…
+## $ Smoothness &lt;dbl&gt; 0.11840, 0.08474, 0.10960, 0.14250, 0.10030, 0.12780, 0.09…</code></pre>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="classification-continued.html#cb5-1"></a><span class="kw">glimpse</span>(cancer_test)</span></code></pre></div>
 <pre><code>## Rows: 142
-## Columns: 12
-## $ ID                &lt;dbl&gt; 84501001, 846381, 84799002, 849014, 852763, 853401,…
-## $ Class             &lt;fct&gt; M, M, M, M, M, M, M, B, M, M, M, B, B, B, B, B, B, …
-## $ Radius            &lt;dbl&gt; 12.460, 15.850, 14.540, 19.810, 14.580, 18.630, 16.…
-## $ Texture           &lt;dbl&gt; 24.04, 23.95, 27.54, 22.15, 21.53, 25.11, 21.59, 18…
-## $ Perimeter         &lt;dbl&gt; 83.97, 103.70, 96.73, 130.00, 97.41, 124.80, 110.10…
-## $ Area              &lt;dbl&gt; 475.9, 782.7, 658.8, 1260.0, 644.8, 1088.0, 869.5, …
-## $ Smoothness        &lt;dbl&gt; 0.11860, 0.08401, 0.11390, 0.09831, 0.10540, 0.1064…
-## $ Compactness       &lt;dbl&gt; 0.23960, 0.10020, 0.15950, 0.10270, 0.18680, 0.1887…
-## $ Concavity         &lt;dbl&gt; 0.22730, 0.09938, 0.16390, 0.14790, 0.14250, 0.2319…
-## $ Concave_Points    &lt;dbl&gt; 0.085430, 0.053640, 0.073640, 0.094980, 0.087830, 0…
-## $ Symmetry          &lt;dbl&gt; 0.2030, 0.1847, 0.2303, 0.1582, 0.2252, 0.2183, 0.1…
-## $ Fractal_Dimension &lt;dbl&gt; 0.08243, 0.05338, 0.07077, 0.05395, 0.06924, 0.0619…</code></pre>
-<p>We can see from <code>glimpse</code> in the code above that the training set contains 427 observations, while the test set contains 142 observations. This
-corresponds to a train / test split of 75% / 25%, as desired.</p>
+## Columns: 3
+## $ Class      &lt;fct&gt; M, M, M, M, B, M, M, M, M, M, M, B, B, M, M, M, B, M, M, B…
+## $ Concavity  &lt;dbl&gt; 0.18590, 0.16390, 0.07395, 0.14790, 0.06664, 0.20770, 0.23…
+## $ Smoothness &lt;dbl&gt; 0.12730, 0.11390, 0.09867, 0.09831, 0.09779, 0.10730, 0.10…</code></pre>
+<p>We can see from <code>glimpse</code> in the code above that the training set contains 427
+observations, while the test set contains 142 observations. This corresponds to
+a train / test split of 75% / 25%, as desired.</p>
 <p><strong>2. Pre-process the data</strong></p>
-<p>As we mentioned last chapter, k-nn is sensitive to the scale of the predictors, thus we should perform a data transformation to scale and centre them. An additional consideration we need to take when doing this is that we should create the scaling transformer using only the training data. This ensures that our test data does not influence any aspect of our model training. Once we have created the scaling transformer, we can then apply it separately to both the training and test data sets.</p>
-<div class="sourceCode" id="cb199"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb199-1"><a href="classification-continued.html#cb199-1"></a>scale_transformer &lt;-<span class="st"> </span><span class="kw">preProcess</span>(training_set, <span class="dt">method =</span> <span class="kw">c</span>(<span class="st">&quot;center&quot;</span>, <span class="st">&quot;scale&quot;</span>)) </span>
-<span id="cb199-2"><a href="classification-continued.html#cb199-2"></a>training_set &lt;-<span class="st"> </span><span class="kw">predict</span>(scale_transformer, training_set)</span>
-<span id="cb199-3"><a href="classification-continued.html#cb199-3"></a>test_set &lt;-<span class="st"> </span><span class="kw">predict</span>(scale_transformer, test_set)</span></code></pre></div>
+<p>As we mentioned last chapter, k-nn is sensitive to the scale of the predictors,
+and so we should perform some preprocessing to standardize them. An
+additional consideration we need to take when doing this is that we should
+create the scaling transformer using <strong>only the training data</strong>. This ensures that
+our test data does not influence any aspect of our model training. Once we have
+created the scaling transformer, we can then apply it separately to both the
+training and test data sets.</p>
+<p>Fortunately, the <code>recipe</code> framework from <code>tidymodels</code> makes it simple to handle
+this properly. Below we construct and prepare the recipe using only the training
+data (due to <code>data = cancer_train</code> in the first line), and
+then apply it to both the training and testing data.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="classification-continued.html#cb7-1"></a>cancer_recipe &lt;-<span class="st"> </span><span class="kw">recipe</span>(Class <span class="op">~</span><span class="st"> </span>.,  <span class="dt">data =</span> cancer_train) <span class="op">%&gt;%</span></span>
+<span id="cb7-2"><a href="classification-continued.html#cb7-2"></a><span class="st">       </span><span class="kw">step_scale</span>(<span class="kw">all_numeric</span>()) <span class="op">%&gt;%</span></span>
+<span id="cb7-3"><a href="classification-continued.html#cb7-3"></a><span class="st">       </span><span class="kw">step_center</span>(<span class="kw">all_numeric</span>()) <span class="op">%&gt;%</span></span>
+<span id="cb7-4"><a href="classification-continued.html#cb7-4"></a><span class="st">       </span><span class="kw">prep</span>()</span>
+<span id="cb7-5"><a href="classification-continued.html#cb7-5"></a>cancer_train_baked &lt;-<span class="st"> </span><span class="kw">bake</span>(cancer_recipe, cancer_train)</span>
+<span id="cb7-6"><a href="classification-continued.html#cb7-6"></a>cancer_test_baked &lt;-<span class="st"> </span><span class="kw">bake</span>(cancer_recipe, cancer_test)</span></code></pre></div>
 <p><strong>3. Train the classifier</strong></p>
-<p>Now that we have split our original data set into training and test sets, we can create our K-nearest neighbour classifier with only the training set
-using the technique we learned in the previous chapter. For now, we will just choose the number <span class="math inline">\(K\)</span> of neighbours to be 3, and use concavity and
-smoothness as the predictors.</p>
-<div class="sourceCode" id="cb200"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb200-1"><a href="classification-continued.html#cb200-1"></a>X_train &lt;-<span class="st"> </span>training_set <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb200-2"><a href="classification-continued.html#cb200-2"></a><span class="st">  </span><span class="kw">select</span>(Concavity, Smoothness) <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb200-3"><a href="classification-continued.html#cb200-3"></a><span class="st">  </span><span class="kw">data.frame</span>()</span>
-<span id="cb200-4"><a href="classification-continued.html#cb200-4"></a>Y_train &lt;-<span class="st"> </span>training_set <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb200-5"><a href="classification-continued.html#cb200-5"></a><span class="st">  </span><span class="kw">select</span>(Class) <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb200-6"><a href="classification-continued.html#cb200-6"></a><span class="st">  </span><span class="kw">pull</span>()</span>
-<span id="cb200-7"><a href="classification-continued.html#cb200-7"></a>k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="dv">3</span>)</span>
-<span id="cb200-8"><a href="classification-continued.html#cb200-8"></a></span>
-<span id="cb200-9"><a href="classification-continued.html#cb200-9"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
-<span id="cb200-10"><a href="classification-continued.html#cb200-10"></a>model_knn &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_train, <span class="dt">y =</span> Y_train, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k)</span>
-<span id="cb200-11"><a href="classification-continued.html#cb200-11"></a>model_knn</span></code></pre></div>
-<pre><code>## k-Nearest Neighbors 
+<p>Now that we have split our original data set into training and test sets, we
+can create our K-nearest neighbour classifier with only the training set using
+the technique we learned in the previous chapter. For now, we will just choose
+the number <span class="math inline">\(K\)</span> of neighbours to be 3, and use concavity and smoothness as the
+predictors.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="classification-continued.html#cb8-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb8-2"><a href="classification-continued.html#cb8-2"></a>knn_spec &lt;-<span class="st"> </span><span class="kw">nearest_neighbor</span>(<span class="dt">weight_func =</span> <span class="st">&quot;rectangular&quot;</span>, <span class="dt">neighbors =</span> <span class="dv">3</span>) <span class="op">%&gt;%</span></span>
+<span id="cb8-3"><a href="classification-continued.html#cb8-3"></a><span class="st">       </span><span class="kw">set_engine</span>(<span class="st">&quot;kknn&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb8-4"><a href="classification-continued.html#cb8-4"></a><span class="st">       </span><span class="kw">set_mode</span>(<span class="st">&quot;classification&quot;</span>)</span>
+<span id="cb8-5"><a href="classification-continued.html#cb8-5"></a></span>
+<span id="cb8-6"><a href="classification-continued.html#cb8-6"></a>knn_fit &lt;-<span class="st"> </span>knn_spec <span class="op">%&gt;%</span></span>
+<span id="cb8-7"><a href="classification-continued.html#cb8-7"></a><span class="st">        </span><span class="kw">fit</span>(Class <span class="op">~</span><span class="st"> </span>., <span class="dt">data =</span> cancer_train_baked)</span>
+<span id="cb8-8"><a href="classification-continued.html#cb8-8"></a></span>
+<span id="cb8-9"><a href="classification-continued.html#cb8-9"></a>knn_fit</span></code></pre></div>
+<pre><code>## parsnip model object
 ## 
-## 427 samples
-##   2 predictor
-##   2 classes: &#39;B&#39;, &#39;M&#39; 
+## Fit time:  10ms 
 ## 
-## No pre-processing
-## Resampling: Bootstrapped (25 reps) 
-## Summary of sample sizes: 427, 427, 427, 427, 427, 427, ... 
-## Resampling results:
+## Call:
+## kknn::train.kknn(formula = formula, data = data, ks = ~3, kernel = ~&quot;rectangular&quot;)
 ## 
-##   Accuracy   Kappa    
-##   0.8541182  0.6899642
-## 
-## Tuning parameter &#39;k&#39; was held constant at a value of 3</code></pre>
+## Type of response variable: nominal
+## Minimal misclassification: 0.1264637
+## Best kernel: rectangular
+## Best k: 3</code></pre>
 <blockquote>
-<p>Note: Here again you see the <code>set.seed</code> function. In the K-nearest neighbour implementation in <code>caret</code>, when
+<p>Note: Here again you see the <code>set.seed</code> function. In the K-nearest neighbour algorithm,
 there is a tie for the majority neighbour class, the winner is randomly selected. Although there is no chance
 of a tie when <span class="math inline">\(K\)</span> is odd (here <span class="math inline">\(K=3\)</span>), it is possible that the code may be changed in the future to have an even value of <span class="math inline">\(K\)</span>.
 Thus, to prevent potential issues with reproducibility, we have set the seed. Note that in your own code,
 you only have to set the seed once at the beginning of your analysis.</p>
 </blockquote>
 <p><strong>4. Predict the labels in the test set</strong></p>
-<p>Now that we have a K-nearest neighbour classifier object, we can use it to predict the class labels for our test set:</p>
-<div class="sourceCode" id="cb202"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb202-1"><a href="classification-continued.html#cb202-1"></a>X_test &lt;-<span class="st"> </span>test_set <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb202-2"><a href="classification-continued.html#cb202-2"></a><span class="st">  </span><span class="kw">select</span>(Concavity, Smoothness) <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb202-3"><a href="classification-continued.html#cb202-3"></a><span class="st">  </span><span class="kw">data.frame</span>()</span>
-<span id="cb202-4"><a href="classification-continued.html#cb202-4"></a>Y_test_predicted &lt;-<span class="st"> </span><span class="kw">predict</span>(<span class="dt">object =</span> model_knn, X_test)</span>
-<span id="cb202-5"><a href="classification-continued.html#cb202-5"></a><span class="kw">head</span>(Y_test_predicted)</span></code></pre></div>
-<pre><code>## [1] M B M M M M
-## Levels: B M</code></pre>
+<p>Now that we have a K-nearest neighbour classifier object, we can use it to predict the class labels for our test set.
+We use the <code>bind_cols</code> to add the column of predictions to the original test data, creating the <code>cancer_test_predictions</code> data frame.
+The <code>Class</code> variable contains the true diagnoses, while the <code>.pred_class</code> contains the predicted diagnoses from the model.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="classification-continued.html#cb10-1"></a>cancer_test_predictions &lt;-<span class="st"> </span><span class="kw">predict</span>(knn_fit, cancer_test_baked) <span class="op">%&gt;%</span></span>
+<span id="cb10-2"><a href="classification-continued.html#cb10-2"></a><span class="st">                            </span><span class="kw">bind_cols</span>(cancer_test_baked)</span>
+<span id="cb10-3"><a href="classification-continued.html#cb10-3"></a><span class="kw">head</span>(cancer_test_predictions)</span></code></pre></div>
+<pre><code>## # A tibble: 6 x 4
+##   .pred_class Concavity Smoothness Class
+##   &lt;fct&gt;           &lt;dbl&gt;      &lt;dbl&gt; &lt;fct&gt;
+## 1 M               1.19       2.16  M    
+## 2 M               0.923      1.23  M    
+## 3 B              -0.190      0.166 M    
+## 4 M               0.725      0.141 M    
+## 5 B              -0.281      0.104 B    
+## 6 M               1.46       0.767 M</code></pre>
 <p><strong>5. Compute the accuracy</strong></p>
-<p>Finally we can assess our classifier’s accuracy. To do this we need to create a vector containing the class labels for the test
-set. Next we use the function <code>confusionMatrix</code> to get the statistics about the quality of our model, this includes the
-statistic we are interested: accuracy. <code>confusionMatrix</code> takes two arguments:</p>
-<ol style="list-style-type: decimal">
-<li><code>data</code> (the predicted class labels for the test set), and</li>
-<li><code>reference</code> (the original/measured class labels for the test set).</li>
-</ol>
-<div class="sourceCode" id="cb204"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb204-1"><a href="classification-continued.html#cb204-1"></a>Y_test &lt;-<span class="st"> </span>test_set <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb204-2"><a href="classification-continued.html#cb204-2"></a><span class="st">  </span><span class="kw">select</span>(Class) <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb204-3"><a href="classification-continued.html#cb204-3"></a><span class="st">  </span><span class="kw">pull</span>()</span>
-<span id="cb204-4"><a href="classification-continued.html#cb204-4"></a></span>
-<span id="cb204-5"><a href="classification-continued.html#cb204-5"></a>model_quality &lt;-<span class="st"> </span><span class="kw">confusionMatrix</span>(<span class="dt">data =</span> Y_test_predicted, <span class="dt">reference =</span> Y_test)</span>
-<span id="cb204-6"><a href="classification-continued.html#cb204-6"></a>model_quality</span></code></pre></div>
-<pre><code>## Confusion Matrix and Statistics
-## 
-##           Reference
-## Prediction  B  M
-##          B 84 12
-##          M  5 41
-##                                           
-##                Accuracy : 0.8803          
-##                  95% CI : (0.8152, 0.9287)
-##     No Information Rate : 0.6268          
-##     P-Value [Acc &gt; NIR] : 1.19e-11        
-##                                           
-##                   Kappa : 0.7371          
-##                                           
-##  Mcnemar&#39;s Test P-Value : 0.1456          
-##                                           
-##             Sensitivity : 0.9438          
-##             Specificity : 0.7736          
-##          Pos Pred Value : 0.8750          
-##          Neg Pred Value : 0.8913          
-##              Prevalence : 0.6268          
-##          Detection Rate : 0.5915          
-##    Detection Prevalence : 0.6761          
-##       Balanced Accuracy : 0.8587          
-##                                           
-##        &#39;Positive&#39; Class : B               
-## </code></pre>
-<p>A lot of information is output from <code>confusionMatrix</code>, but what we are interested in at this point is accuracy (found
-on the 6th line of printed output). That single value can be obtained from the <code>confusionMatrix</code> object using base/built-in R subsetting:</p>
-<div class="sourceCode" id="cb206"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb206-1"><a href="classification-continued.html#cb206-1"></a>model_quality<span class="op">$</span>overall[<span class="dv">1</span>]</span></code></pre></div>
-<pre><code>##  Accuracy 
-## 0.8802817</code></pre>
-<p>From a value of accuracy of around 0.88, we can say that our K-nearest neighbour classifier predicted the correct class label on roughly 88% of the examples.</p>
+<p>Finally we can assess our classifier’s accuracy. To do this we use the <code>metrics</code> function
+from <code>tidymodels</code> to get the statistics about the quality of our model, specifying
+the <code>truth</code> and <code>estimate</code> arguments:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="classification-continued.html#cb12-1"></a>cancer_test_predictions <span class="op">%&gt;%</span></span>
+<span id="cb12-2"><a href="classification-continued.html#cb12-2"></a><span class="st">    </span><span class="kw">metrics</span>(<span class="dt">truth =</span> Class, <span class="dt">estimate =</span> .pred_class)</span></code></pre></div>
+<pre><code>## # A tibble: 2 x 3
+##   .metric  .estimator .estimate
+##   &lt;chr&gt;    &lt;chr&gt;          &lt;dbl&gt;
+## 1 accuracy binary         0.880
+## 2 kap      binary         0.741</code></pre>
+<p>This shows that the accuracy of the classifier on the test data was 88%.
+We can also look at the <em>confusion matrix</em> for the classifier, which shows
+the table of predicted labels and correct labels, using the <code>conf_mat</code> function:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="classification-continued.html#cb14-1"></a>cancer_test_predictions <span class="op">%&gt;%</span></span>
+<span id="cb14-2"><a href="classification-continued.html#cb14-2"></a><span class="st">    </span><span class="kw">conf_mat</span>(<span class="dt">truth =</span> Class, <span class="dt">estimate =</span> .pred_class)</span></code></pre></div>
+<pre><code>##           Truth
+## Prediction  M  B
+##          M 43  7
+##          B 10 82</code></pre>
+<p>This says that the classifier labelled 43+82 = 125 observations correctly,
+10 observations as benign when they were truly malignant,
+and 7 observations as malignant when they were truly benign.</p>
 </div>
 <div id="tuning-the-classifier" class="section level2">
 <h2><span class="header-section-number">7.4</span> Tuning the classifier</h2>
-<p>The vast majority of predictive models in statistics and machine learning have <em>parameters</em> that you have to pick. For example,
-in the K-nearest neighbour classification algorithm we have been using in the past two chapters, we have had to pick the
-number of neighbours <span class="math inline">\(K\)</span> for the class vote. Is it possible to make this selection, i.e., <em>tune</em> the model, in a principled way?
-Ideally what we want is to somehow maximize the performance of our classifier on data <em>it hasn’t seen yet</em>. So we will play
-the same trick we did before when evaluating our classifier: we’ll split our <strong>overall training data set</strong> further into two subsets, called
-the <strong>training set</strong> and <strong>validation set</strong>. We will use the newly-named <strong>training set</strong> for building the classifier,
-and the <strong>validation set</strong> for evaluating it! Then we will try different values of the parameter <span class="math inline">\(K\)</span>
+<p>The vast majority of predictive models in statistics and machine learning have
+<em>parameters</em> that you have to pick. For example, in the K-nearest neighbour
+classification algorithm we have been using in the past two chapters, we have
+had to pick the number of neighbours <span class="math inline">\(K\)</span> for the class vote. Is it possible to
+make this selection, i.e., <em>tune</em> the model, in a principled way? Ideally what
+we want is to somehow maximize the performance of our classifier on data <em>it
+hasn’t seen yet</em>. So we will play the same trick we did before when evaluating
+our classifier: we’ll split our <strong>overall training data set</strong> further into two
+subsets, called the <strong>training set</strong> and <strong>validation set</strong>. We will use the
+newly-named <strong>training set</strong> for building the classifier, and the <strong>validation
+set</strong> for evaluating it! Then we will try different values of the parameter <span class="math inline">\(K\)</span>
 and pick the one that yields the highest accuracy.</p>
 <blockquote>
 <p><strong>Remember:</strong> <em>don’t touch the test set during the tuning process. Tuning is a part of model training!</em></p>
 </blockquote>
 <div id="cross-validation" class="section level3">
 <h3><span class="header-section-number">7.4.1</span> Cross-validation</h3>
-<p>There is an important detail to mention about the process of tuning: we can, if we want to, split our overall training data up
-in multiple different ways, train and evaluate a classifier for each split, and then choose the parameter based on <em>all</em> of the
-different results. If we just split our overall training data <em>once</em>, our best parameter choice will depend strongly on whatever
-data was lucky enough to end up in the validation set. Perhaps using multiple different train / validation splits, we’ll
-get a better estimate of accuracy, which will lead to a better choice of the number of neighbours <span class="math inline">\(K\)</span> for the overall
-set of training data.</p>
+<p>There is an important detail to mention about the process of tuning: we can, if
+we want to, split our overall training data up in multiple different ways,
+train and evaluate a classifier for each split, and then choose the parameter
+based on <em>all</em> of the different results. If we just split our overall training
+data <em>once</em>, our best parameter choice will depend strongly on whatever data
+was lucky enough to end up in the validation set. Perhaps using multiple
+different train / validation splits, we’ll get a better estimate of accuracy,
+which will lead to a better choice of the number of neighbours <span class="math inline">\(K\)</span> for the
+overall set of training data.</p>
 <blockquote>
 <p><strong>Note:</strong> you might be wondering why we can’t we use the multiple splits to test our final classifier after tuning is done. This is simply
 because at the end of the day, we will produce a single classifier using our overall training data. If we do multiple train / test splits, we will
-end up with multiple classifiers, each with their own accuracy evaluated on different test data!</p>
+end up with multiple classifiers, each with their own accuracy evaluated on different test data.</p>
 </blockquote>
-<p>Let’s investigate this idea in R! In particular, we will use different seed values in the <code>set.seed</code> function to generate
-five different train / validation splits of our overall training data, train five different K-nearest neighbour models, and
-evaluate their accuracy. First we’ll rename our overall training data.</p>
-<div class="sourceCode" id="cb208"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb208-1"><a href="classification-continued.html#cb208-1"></a>X_train_total &lt;-<span class="st"> </span>X_train</span>
-<span id="cb208-2"><a href="classification-continued.html#cb208-2"></a>Y_train_total &lt;-<span class="st"> </span>Y_train</span></code></pre></div>
-<p>Then we’ll try 5 different random train / validation splits of the data and record the accuracy:</p>
-<div class="sourceCode" id="cb209"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb209-1"><a href="classification-continued.html#cb209-1"></a>accuracies &lt;-<span class="st"> </span><span class="kw">c</span>()</span>
-<span id="cb209-2"><a href="classification-continued.html#cb209-2"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="dv">5</span>){</span>
-<span id="cb209-3"><a href="classification-continued.html#cb209-3"></a>    <span class="kw">set.seed</span>(i) <span class="co"># makes the random selection of rows reproducible</span></span>
-<span id="cb209-4"><a href="classification-continued.html#cb209-4"></a>    <span class="co"># create the 75 / 25 train/validation split</span></span>
-<span id="cb209-5"><a href="classification-continued.html#cb209-5"></a>    set_rows &lt;-<span class="st"> </span>Y_train_total <span class="op">%&gt;%</span><span class="st"> </span></span>
-<span id="cb209-6"><a href="classification-continued.html#cb209-6"></a><span class="st">      </span><span class="kw">createDataPartition</span>(<span class="dt">p =</span> <span class="fl">0.75</span>, <span class="dt">list =</span> <span class="ot">FALSE</span>)</span>
-<span id="cb209-7"><a href="classification-continued.html#cb209-7"></a>    </span>
-<span id="cb209-8"><a href="classification-continued.html#cb209-8"></a>    <span class="co">#split the X and Y data into train/validation</span></span>
-<span id="cb209-9"><a href="classification-continued.html#cb209-9"></a>    X_train &lt;-<span class="st"> </span>X_train_total <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">slice</span>(set_rows)</span>
-<span id="cb209-10"><a href="classification-continued.html#cb209-10"></a>    Y_train &lt;-<span class="st"> </span>Y_train_total[set_rows]</span>
-<span id="cb209-11"><a href="classification-continued.html#cb209-11"></a>    X_validation &lt;-<span class="st"> </span>X_train_total <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">slice</span>(<span class="op">-</span>set_rows)</span>
-<span id="cb209-12"><a href="classification-continued.html#cb209-12"></a>    Y_validation &lt;-<span class="st"> </span>Y_train_total[<span class="op">-</span>set_rows]</span>
-<span id="cb209-13"><a href="classification-continued.html#cb209-13"></a>    </span>
-<span id="cb209-14"><a href="classification-continued.html#cb209-14"></a>    <span class="co">#train the KNN model with K=3, and predict the validation labels</span></span>
-<span id="cb209-15"><a href="classification-continued.html#cb209-15"></a>    k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="dv">3</span>)</span>
-<span id="cb209-16"><a href="classification-continued.html#cb209-16"></a>    model_knn &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_train, <span class="dt">y =</span> Y_train, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k)</span>
-<span id="cb209-17"><a href="classification-continued.html#cb209-17"></a>    Y_validation_predicted &lt;-<span class="st"> </span><span class="kw">predict</span>(<span class="dt">object =</span> model_knn, X_validation)</span>
-<span id="cb209-18"><a href="classification-continued.html#cb209-18"></a>    </span>
-<span id="cb209-19"><a href="classification-continued.html#cb209-19"></a>    <span class="co">#compute the accuracy</span></span>
-<span id="cb209-20"><a href="classification-continued.html#cb209-20"></a>    model_quality &lt;-<span class="st"> </span><span class="kw">confusionMatrix</span>(<span class="dt">data =</span> Y_validation_predicted, <span class="dt">reference =</span> Y_validation)</span>
-<span id="cb209-21"><a href="classification-continued.html#cb209-21"></a>    accuracies &lt;-<span class="st"> </span><span class="kw">append</span>(accuracies, model_quality<span class="op">$</span>overall[<span class="dv">1</span>])</span>
-<span id="cb209-22"><a href="classification-continued.html#cb209-22"></a>}</span>
-<span id="cb209-23"><a href="classification-continued.html#cb209-23"></a>accuracies</span></code></pre></div>
-<pre><code>##  Accuracy  Accuracy  Accuracy  Accuracy  Accuracy 
-## 0.8867925 0.8113208 0.9056604 0.8773585 0.8679245</code></pre>
-<p>With five different shuffles of the data, we get five different values for accuracy. None of these is necessarily “more correct” than any other; they’re just five estimates of the true, underlying accuracy of our
-classifier built using our overall training data. We can combine the estimates by taking their average (here 0.8698113) to
-try to get a single assessment of our classifier’s accuracy; this has the effect of reducing the influence of any one (un)lucky
-validation set on the estimate.</p>
-<p>In practice, we don’t use random splits, but rather use a more structured splitting procedure so that each observation in the data
-set is used in a validation set only a single time. The name for this strategy is called <strong>cross-validation</strong>.
-In <strong>cross-validation</strong>, we split our <strong>overall training data</strong> into <span class="math inline">\(C\)</span> evenly-sized chunks,
-and then iteratively use <span class="math inline">\(1\)</span> chunk as the <strong>validation set</strong> and combine the remaining <span class="math inline">\(C-1\)</span> chunks as the <strong>training set</strong>:</p>
+<p>Let’s investigate this idea in R! In particular, we will use different seed
+values in the <code>set.seed</code> function to generate five different train / validation
+splits of our overall training data, train five different K-nearest neighbour
+models, and evaluate their accuracy.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="classification-continued.html#cb16-1"></a>accuracies &lt;-<span class="st"> </span><span class="kw">c</span>()</span>
+<span id="cb16-2"><a href="classification-continued.html#cb16-2"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="dv">5</span>){</span>
+<span id="cb16-3"><a href="classification-continued.html#cb16-3"></a>    <span class="kw">set.seed</span>(i) <span class="co"># makes the random selection of rows reproducible</span></span>
+<span id="cb16-4"><a href="classification-continued.html#cb16-4"></a></span>
+<span id="cb16-5"><a href="classification-continued.html#cb16-5"></a>    <span class="co"># create the 25/75 split of the training data into training and validation</span></span>
+<span id="cb16-6"><a href="classification-continued.html#cb16-6"></a>    cancer_split &lt;-<span class="st"> </span><span class="kw">initial_split</span>(cancer_train, <span class="dt">prop =</span> <span class="fl">0.75</span>, <span class="dt">strata =</span> Class)</span>
+<span id="cb16-7"><a href="classification-continued.html#cb16-7"></a>    cancer_subtrain &lt;-<span class="st"> </span><span class="kw">training</span>(cancer_split)</span>
+<span id="cb16-8"><a href="classification-continued.html#cb16-8"></a>    cancer_validation &lt;-<span class="st"> </span><span class="kw">testing</span>(cancer_split)</span>
+<span id="cb16-9"><a href="classification-continued.html#cb16-9"></a></span>
+<span id="cb16-10"><a href="classification-continued.html#cb16-10"></a>    <span class="co"># train the KNN model with K = 3</span></span>
+<span id="cb16-11"><a href="classification-continued.html#cb16-11"></a>    knn_spec &lt;-<span class="st"> </span><span class="kw">nearest_neighbor</span>(<span class="dt">weight_func =</span> <span class="st">&quot;rectangular&quot;</span>, <span class="dt">neighbors =</span> <span class="dv">3</span>) <span class="op">%&gt;%</span></span>
+<span id="cb16-12"><a href="classification-continued.html#cb16-12"></a><span class="st">       </span><span class="kw">set_engine</span>(<span class="st">&quot;kknn&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb16-13"><a href="classification-continued.html#cb16-13"></a><span class="st">       </span><span class="kw">set_mode</span>(<span class="st">&quot;classification&quot;</span>)</span>
+<span id="cb16-14"><a href="classification-continued.html#cb16-14"></a></span>
+<span id="cb16-15"><a href="classification-continued.html#cb16-15"></a>    knn_fit &lt;-<span class="st"> </span>knn_spec <span class="op">%&gt;%</span></span>
+<span id="cb16-16"><a href="classification-continued.html#cb16-16"></a><span class="st">        </span><span class="kw">fit</span>(Class <span class="op">~</span><span class="st"> </span>., <span class="dt">data =</span> cancer_subtrain)</span>
+<span id="cb16-17"><a href="classification-continued.html#cb16-17"></a></span>
+<span id="cb16-18"><a href="classification-continued.html#cb16-18"></a>    <span class="co"># get predictions on the validation data</span></span>
+<span id="cb16-19"><a href="classification-continued.html#cb16-19"></a>    validation_predicted &lt;-<span class="st"> </span><span class="kw">predict</span>(knn_fit, cancer_validation) <span class="op">%&gt;%</span></span>
+<span id="cb16-20"><a href="classification-continued.html#cb16-20"></a><span class="st">                              </span><span class="kw">bind_cols</span>(cancer_validation)</span>
+<span id="cb16-21"><a href="classification-continued.html#cb16-21"></a>    </span>
+<span id="cb16-22"><a href="classification-continued.html#cb16-22"></a>    <span class="co">#compute the accuracy</span></span>
+<span id="cb16-23"><a href="classification-continued.html#cb16-23"></a>    acc &lt;-<span class="st"> </span>validation_predicted <span class="op">%&gt;%</span><span class="st"> </span></span>
+<span id="cb16-24"><a href="classification-continued.html#cb16-24"></a><span class="st">              </span><span class="kw">metrics</span>(<span class="dt">truth =</span> Class, <span class="dt">estimate =</span> .pred_class) <span class="op">%&gt;%</span></span>
+<span id="cb16-25"><a href="classification-continued.html#cb16-25"></a><span class="st">              </span><span class="kw">filter</span>(.metric <span class="op">==</span><span class="st"> &quot;accuracy&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb16-26"><a href="classification-continued.html#cb16-26"></a><span class="st">              </span><span class="kw">select</span>(.estimate) <span class="op">%&gt;%</span></span>
+<span id="cb16-27"><a href="classification-continued.html#cb16-27"></a><span class="st">              </span><span class="kw">pull</span>()</span>
+<span id="cb16-28"><a href="classification-continued.html#cb16-28"></a>    accuracies &lt;-<span class="st"> </span><span class="kw">append</span>(accuracies, acc)</span>
+<span id="cb16-29"><a href="classification-continued.html#cb16-29"></a>}</span>
+<span id="cb16-30"><a href="classification-continued.html#cb16-30"></a>accuracies</span></code></pre></div>
+<pre><code>## [1] 0.9150943 0.8679245 0.8490566 0.8962264 0.9150943</code></pre>
+<p>With five different shuffles of the data, we get five different values for
+accuracy. None of these is necessarily “more correct” than any other; they’re
+just five estimates of the true, underlying accuracy of our classifier built
+using our overall training data. We can combine the estimates by taking their
+average (here 0.8886792) to try to get a single assessment of our
+classifier’s accuracy; this has the effect of reducing the influence of any one
+(un)lucky validation set on the estimate.</p>
+<p>In practice, we don’t use random splits, but rather use a more structured
+splitting procedure so that each observation in the data set is used in a
+validation set only a single time. The name for this strategy is called
+<strong>cross-validation</strong>. In <strong>cross-validation</strong>, we split our <strong>overall training
+data</strong> into <span class="math inline">\(C\)</span> evenly-sized chunks, and then iteratively use <span class="math inline">\(1\)</span> chunk as the
+<strong>validation set</strong> and combine the remaining <span class="math inline">\(C-1\)</span> chunks
+as the <strong>training set</strong>:</p>
 <p><img src="img/cv.png" width="800" /></p>
-<p>In the picture above, <span class="math inline">\(C=5\)</span> different chunks of the data set are used, resulting in 5 different choices for the <strong>validation set</strong>; we
-call this <em>5-fold</em> cross-validation. To do 5-fold
-cross-validation in R with <code>caret</code>, we use another function called <code>trainControl</code>. This function passes additional information to
-the <code>train</code> function we use to create our classifier. The arguments we pass <code>trainControl</code> are:</p>
-<ol style="list-style-type: decimal">
-<li><code>method="cv"</code>: specifies to use cross-validation for assessing quality</li>
-<li><code>number</code>: how many chunks to split the data into for cross validation</li>
-</ol>
-<div class="sourceCode" id="cb211"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb211-1"><a href="classification-continued.html#cb211-1"></a>train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">5</span>)</span></code></pre></div>
+<p>In the picture above, <span class="math inline">\(C=5\)</span> different chunks of the data set are used,
+resulting in 5 different choices for the <strong>validation set</strong>; we call this
+<em>5-fold</em> cross-validation. To do 5-fold cross-validation in R with <code>tidymodels</code>, we
+use another function: <code>vfold_cv</code>. This function splits our training data into
+<code>v</code> folds automatically:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="classification-continued.html#cb18-1"></a>cancer_vfold &lt;-<span class="st"> </span><span class="kw">vfold_cv</span>(cancer_train, <span class="dt">v =</span> <span class="dv">5</span>, <span class="dt">repeats =</span> <span class="dv">1</span>, <span class="dt">strata =</span> Class)</span>
+<span id="cb18-2"><a href="classification-continued.html#cb18-2"></a>cancer_vfold</span></code></pre></div>
+<pre><code>## #  5-fold cross-validation using stratification 
+## # A tibble: 5 x 2
+##   splits           id   
+##   &lt;list&gt;           &lt;chr&gt;
+## 1 &lt;split [341/86]&gt; Fold1
+## 2 &lt;split [341/86]&gt; Fold2
+## 3 &lt;split [341/86]&gt; Fold3
+## 4 &lt;split [342/85]&gt; Fold4
+## 5 &lt;split [343/84]&gt; Fold5</code></pre>
 <p>Then, when we create our classifier, we add an additional argument to <code>train</code> called <code>trControl</code>, which we set to the <code>train_control</code> object
 we just created. One benefit of using <code>caret</code> for this is that we do not need to manually do any of the work of cross-validation ourselves;
 the <code>train</code> function will handle creating the chunks, doing multiple rounds of training and evaluation, and averaging the results for us.</p>
-<div class="sourceCode" id="cb212"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb212-1"><a href="classification-continued.html#cb212-1"></a><span class="kw">set.seed</span>(<span class="dv">1234</span>)</span>
-<span id="cb212-2"><a href="classification-continued.html#cb212-2"></a>k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="dv">3</span>)</span>
-<span id="cb212-3"><a href="classification-continued.html#cb212-3"></a>knn_model_cv_5fold &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_train_total, <span class="dt">y =</span> Y_train_total, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k, <span class="dt">trControl =</span> train_control)</span>
-<span id="cb212-4"><a href="classification-continued.html#cb212-4"></a>knn_model_cv_5fold</span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="classification-continued.html#cb20-1"></a><span class="kw">set.seed</span>(<span class="dv">1234</span>)</span>
+<span id="cb20-2"><a href="classification-continued.html#cb20-2"></a>k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="dv">3</span>)</span>
+<span id="cb20-3"><a href="classification-continued.html#cb20-3"></a>knn_model_cv_5fold &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_train_total, <span class="dt">y =</span> Y_train_total, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k, <span class="dt">trControl =</span> train_control)</span>
+<span id="cb20-4"><a href="classification-continued.html#cb20-4"></a>knn_model_cv_5fold</span></code></pre></div>
 <pre><code>## k-Nearest Neighbors 
 ## 
-## 427 samples
-##   2 predictor
-##   2 classes: &#39;B&#39;, &#39;M&#39; 
+## 27 samples
+##  2 predictor
+##  2 classes: &#39;M&#39;, &#39;B&#39; 
 ## 
 ## No pre-processing
-## Resampling: Cross-Validated (5 fold) 
-## Summary of sample sizes: 341, 342, 341, 342, 342 
+## Resampling: Cross-Validated (10 fold) 
+## Summary of sample sizes: 23, 25, 23, 24, 24, 25, ... 
 ## Resampling results:
 ## 
-##   Accuracy   Kappa    
-##   0.8596443  0.6999545
+##   Accuracy   Kappa
+##   0.9083333  0.8  
 ## 
 ## Tuning parameter &#39;k&#39; was held constant at a value of 3</code></pre>
 <blockquote>
@@ -674,24 +663,24 @@ computational power: the more folds we choose, the more computation it takes, an
 when you do cross-validation, you need to consider the size of the data, and the speed of the algorithm (e.g., K-nearest neighbour) and
 the speed of your computer. In practice, this is a trial and error process, but typically <span class="math inline">\(C\)</span> is chosen to be either 5 or 10. Here we
 show what happens when we split the data into 10 chunks and do 10-fold cross-validation:</p>
-<div class="sourceCode" id="cb214"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb214-1"><a href="classification-continued.html#cb214-1"></a>train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">10</span>)</span>
-<span id="cb214-2"><a href="classification-continued.html#cb214-2"></a></span>
-<span id="cb214-3"><a href="classification-continued.html#cb214-3"></a><span class="kw">set.seed</span>(<span class="dv">1234</span>)</span>
-<span id="cb214-4"><a href="classification-continued.html#cb214-4"></a>knn_model_cv_10fold &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_train_total, <span class="dt">y =</span> Y_train_total, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k, <span class="dt">trControl =</span> train_control)</span>
-<span id="cb214-5"><a href="classification-continued.html#cb214-5"></a>knn_model_cv_10fold</span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="classification-continued.html#cb22-1"></a>train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">10</span>)</span>
+<span id="cb22-2"><a href="classification-continued.html#cb22-2"></a></span>
+<span id="cb22-3"><a href="classification-continued.html#cb22-3"></a><span class="kw">set.seed</span>(<span class="dv">1234</span>)</span>
+<span id="cb22-4"><a href="classification-continued.html#cb22-4"></a>knn_model_cv_10fold &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_train_total, <span class="dt">y =</span> Y_train_total, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k, <span class="dt">trControl =</span> train_control)</span>
+<span id="cb22-5"><a href="classification-continued.html#cb22-5"></a>knn_model_cv_10fold</span></code></pre></div>
 <pre><code>## k-Nearest Neighbors 
 ## 
-## 427 samples
-##   2 predictor
-##   2 classes: &#39;B&#39;, &#39;M&#39; 
+## 27 samples
+##  2 predictor
+##  2 classes: &#39;M&#39;, &#39;B&#39; 
 ## 
 ## No pre-processing
 ## Resampling: Cross-Validated (10 fold) 
-## Summary of sample sizes: 384, 385, 384, 384, 384, 385, ... 
+## Summary of sample sizes: 23, 25, 23, 24, 24, 25, ... 
 ## Resampling results:
 ## 
-##   Accuracy   Kappa    
-##   0.8640642  0.7121815
+##   Accuracy   Kappa
+##   0.9083333  0.8  
 ## 
 ## Tuning parameter &#39;k&#39; was held constant at a value of 3</code></pre>
 </div>
@@ -705,56 +694,56 @@ In order to improve our classifier, we have one choice of parameter: the number 
 helps us evaluate the accuracy of our classifier, we can use cross-validation to calculate an accuracy for each value of <span class="math inline">\(K\)</span> in
 a reasonable range, and then pick the value of <span class="math inline">\(K\)</span> that gives us the best accuracy. In R, we can accomplish this <em>tuning</em> by
 passing a vector of values for <span class="math inline">\(K\)</span> to the <code>tuneGrid</code> argument of <code>train</code>.</p>
-<div class="sourceCode" id="cb216"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb216-1"><a href="classification-continued.html#cb216-1"></a>train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">10</span>)</span>
-<span id="cb216-2"><a href="classification-continued.html#cb216-2"></a>k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">7</span>, <span class="dv">9</span>, <span class="dv">11</span>, <span class="dv">13</span>, <span class="dv">15</span>, <span class="dv">17</span>))</span>
-<span id="cb216-3"><a href="classification-continued.html#cb216-3"></a></span>
-<span id="cb216-4"><a href="classification-continued.html#cb216-4"></a><span class="kw">set.seed</span>(<span class="dv">1234</span>)</span>
-<span id="cb216-5"><a href="classification-continued.html#cb216-5"></a>knn_model_cv_10fold &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_train_total, <span class="dt">y =</span> Y_train_total, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k, <span class="dt">trControl =</span> train_control)</span>
-<span id="cb216-6"><a href="classification-continued.html#cb216-6"></a>knn_model_cv_10fold</span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="classification-continued.html#cb24-1"></a>train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">10</span>)</span>
+<span id="cb24-2"><a href="classification-continued.html#cb24-2"></a>k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">7</span>, <span class="dv">9</span>, <span class="dv">11</span>, <span class="dv">13</span>, <span class="dv">15</span>, <span class="dv">17</span>))</span>
+<span id="cb24-3"><a href="classification-continued.html#cb24-3"></a></span>
+<span id="cb24-4"><a href="classification-continued.html#cb24-4"></a><span class="kw">set.seed</span>(<span class="dv">1234</span>)</span>
+<span id="cb24-5"><a href="classification-continued.html#cb24-5"></a>knn_model_cv_10fold &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_train_total, <span class="dt">y =</span> Y_train_total, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k, <span class="dt">trControl =</span> train_control)</span>
+<span id="cb24-6"><a href="classification-continued.html#cb24-6"></a>knn_model_cv_10fold</span></code></pre></div>
 <pre><code>## k-Nearest Neighbors 
 ## 
-## 427 samples
-##   2 predictor
-##   2 classes: &#39;B&#39;, &#39;M&#39; 
+## 27 samples
+##  2 predictor
+##  2 classes: &#39;M&#39;, &#39;B&#39; 
 ## 
 ## No pre-processing
 ## Resampling: Cross-Validated (10 fold) 
-## Summary of sample sizes: 384, 385, 384, 384, 384, 385, ... 
+## Summary of sample sizes: 23, 25, 23, 24, 24, 25, ... 
 ## Resampling results across tuning parameters:
 ## 
-##   k   Accuracy   Kappa    
-##    1  0.8498339  0.6811172
-##    3  0.8640642  0.7121815
-##    5  0.8758583  0.7358063
-##    7  0.8806202  0.7446860
-##    9  0.8782946  0.7409422
-##   11  0.8735880  0.7308516
-##   13  0.8713178  0.7246345
-##   15  0.8735880  0.7270036
-##   17  0.8759136  0.7317616
+##   k   Accuracy   Kappa
+##    1  0.9166667  0.84 
+##    3  0.9083333  0.80 
+##    5  0.9333333  0.85 
+##    7  0.9333333  0.85 
+##    9  0.9666667  0.90 
+##   11  0.9416667  0.85 
+##   13  0.9416667  0.85 
+##   15  0.9166667  0.80 
+##   17  0.8333333  0.60 
 ## 
 ## Accuracy was used to select the optimal model using the largest value.
-## The final value used for the model was k = 7.</code></pre>
+## The final value used for the model was k = 9.</code></pre>
 <p>Although <code>caret</code> provides a selection of <span class="math inline">\(K=13\)</span> for us by maximizing the accuracy estimate, it is helpful regardless to visualize
 the accuracy as we increase <span class="math inline">\(K\)</span>. We can access the results from the cross-validation via the<code>results</code> attribute of
 the <code>train</code> object (our classifier).</p>
-<div class="sourceCode" id="cb218"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb218-1"><a href="classification-continued.html#cb218-1"></a>accuracies &lt;-<span class="st"> </span>knn_model_cv_10fold<span class="op">$</span>results</span>
-<span id="cb218-2"><a href="classification-continued.html#cb218-2"></a>accuracies </span></code></pre></div>
-<pre><code>##    k  Accuracy     Kappa AccuracySD    KappaSD
-## 1  1 0.8498339 0.6811172 0.04815812 0.09579558
-## 2  3 0.8640642 0.7121815 0.03825655 0.08036963
-## 3  5 0.8758583 0.7358063 0.04300028 0.09044422
-## 4  7 0.8806202 0.7446860 0.04178478 0.08975960
-## 5  9 0.8782946 0.7409422 0.03928939 0.08319209
-## 6 11 0.8735880 0.7308516 0.04303453 0.08971623
-## 7 13 0.8713178 0.7246345 0.05046981 0.10639911
-## 8 15 0.8735880 0.7270036 0.04440896 0.09727384
-## 9 17 0.8759136 0.7317616 0.04287465 0.09351607</code></pre>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="classification-continued.html#cb26-1"></a>accuracies &lt;-<span class="st"> </span>knn_model_cv_10fold<span class="op">$</span>results</span>
+<span id="cb26-2"><a href="classification-continued.html#cb26-2"></a>accuracies </span></code></pre></div>
+<pre><code>##    k  Accuracy Kappa AccuracySD   KappaSD
+## 1  1 0.9166667  0.84  0.1800206 0.3502380
+## 2  3 0.9083333  0.80  0.2167735 0.4830459
+## 3  5 0.9333333  0.85  0.2108185 0.4743416
+## 4  7 0.9333333  0.85  0.2108185 0.4743416
+## 5  9 0.9666667  0.90  0.1054093 0.3162278
+## 6 11 0.9416667  0.85  0.1245362 0.3374743
+## 7 13 0.9416667  0.85  0.1245362 0.3374743
+## 8 15 0.9166667  0.80  0.1360828 0.3496029
+## 9 17 0.8333333  0.60  0.1883981 0.4594683</code></pre>
 <p>Now we can plot accuracy versus <span class="math inline">\(K\)</span>:</p>
-<div class="sourceCode" id="cb220"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb220-1"><a href="classification-continued.html#cb220-1"></a>accuracy_vs_k &lt;-<span class="st"> </span><span class="kw">ggplot</span>(accuracies, <span class="kw">aes</span>(<span class="dt">x =</span> k, <span class="dt">y =</span> Accuracy)) <span class="op">+</span></span>
-<span id="cb220-2"><a href="classification-continued.html#cb220-2"></a><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></span>
-<span id="cb220-3"><a href="classification-continued.html#cb220-3"></a><span class="st">  </span><span class="kw">geom_line</span>()</span>
-<span id="cb220-4"><a href="classification-continued.html#cb220-4"></a>accuracy_vs_k</span></code></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="classification-continued.html#cb28-1"></a>accuracy_vs_k &lt;-<span class="st"> </span><span class="kw">ggplot</span>(accuracies, <span class="kw">aes</span>(<span class="dt">x =</span> k, <span class="dt">y =</span> Accuracy)) <span class="op">+</span></span>
+<span id="cb28-2"><a href="classification-continued.html#cb28-2"></a><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></span>
+<span id="cb28-3"><a href="classification-continued.html#cb28-3"></a><span class="st">  </span><span class="kw">geom_line</span>()</span>
+<span id="cb28-4"><a href="classification-continued.html#cb28-4"></a>accuracy_vs_k</span></code></pre></div>
 <p><img src="_main_files/figure-html/06-find-k-1.png" width="480" /></p>
 <p>Based off of the visualization above, we might agree with <code>caret</code>’s choice of <span class="math inline">\(K=13\)</span>. But as you can see, there is no exact or perfect
 answer here; any choice between <span class="math inline">\(K=9\)</span> and <span class="math inline">\(K = 17\)</span> would be reasonably justified. Remember: the values you see on this plot are <em>estimates</em>
@@ -771,15 +760,15 @@ for a value where:</p>
 <h3><span class="header-section-number">7.4.3</span> Under/overfitting</h3>
 <p>To build a bit more intuition, what happens if we keep increasing the number of neighbours <span class="math inline">\(K\)</span>? In fact, the accuracy
 actually starts to decrease! Take a look as the plot below as we vary <span class="math inline">\(K\)</span> from 1 to almost the number of observations in the data set:</p>
-<div class="sourceCode" id="cb221"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb221-1"><a href="classification-continued.html#cb221-1"></a>train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">10</span>)</span>
-<span id="cb221-2"><a href="classification-continued.html#cb221-2"></a>k_lots =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="kw">seq</span>(<span class="dt">from =</span> <span class="dv">1</span>, <span class="dt">to =</span> <span class="dv">385</span>, <span class="dt">by =</span> <span class="dv">10</span>))</span>
-<span id="cb221-3"><a href="classification-continued.html#cb221-3"></a><span class="kw">set.seed</span>(<span class="dv">1234</span>)</span>
-<span id="cb221-4"><a href="classification-continued.html#cb221-4"></a>knn_model_cv_10fold_lots &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_train_total, <span class="dt">y =</span> Y_train_total, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k_lots, <span class="dt">trControl =</span> train_control)</span>
-<span id="cb221-5"><a href="classification-continued.html#cb221-5"></a>accuracies_lots &lt;-<span class="st"> </span>knn_model_cv_10fold_lots<span class="op">$</span>results</span>
-<span id="cb221-6"><a href="classification-continued.html#cb221-6"></a>accuracy_vs_k_lots &lt;-<span class="st"> </span><span class="kw">ggplot</span>(accuracies_lots, <span class="kw">aes</span>(<span class="dt">x =</span> k, <span class="dt">y =</span> Accuracy)) <span class="op">+</span></span>
-<span id="cb221-7"><a href="classification-continued.html#cb221-7"></a><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></span>
-<span id="cb221-8"><a href="classification-continued.html#cb221-8"></a><span class="st">  </span><span class="kw">geom_line</span>()</span>
-<span id="cb221-9"><a href="classification-continued.html#cb221-9"></a>accuracy_vs_k_lots</span></code></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="classification-continued.html#cb29-1"></a>train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">10</span>)</span>
+<span id="cb29-2"><a href="classification-continued.html#cb29-2"></a>k_lots =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="kw">seq</span>(<span class="dt">from =</span> <span class="dv">1</span>, <span class="dt">to =</span> <span class="dv">385</span>, <span class="dt">by =</span> <span class="dv">10</span>))</span>
+<span id="cb29-3"><a href="classification-continued.html#cb29-3"></a><span class="kw">set.seed</span>(<span class="dv">1234</span>)</span>
+<span id="cb29-4"><a href="classification-continued.html#cb29-4"></a>knn_model_cv_10fold_lots &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_train_total, <span class="dt">y =</span> Y_train_total, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k_lots, <span class="dt">trControl =</span> train_control)</span>
+<span id="cb29-5"><a href="classification-continued.html#cb29-5"></a>accuracies_lots &lt;-<span class="st"> </span>knn_model_cv_10fold_lots<span class="op">$</span>results</span>
+<span id="cb29-6"><a href="classification-continued.html#cb29-6"></a>accuracy_vs_k_lots &lt;-<span class="st"> </span><span class="kw">ggplot</span>(accuracies_lots, <span class="kw">aes</span>(<span class="dt">x =</span> k, <span class="dt">y =</span> Accuracy)) <span class="op">+</span></span>
+<span id="cb29-7"><a href="classification-continued.html#cb29-7"></a><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></span>
+<span id="cb29-8"><a href="classification-continued.html#cb29-8"></a><span class="st">  </span><span class="kw">geom_line</span>()</span>
+<span id="cb29-9"><a href="classification-continued.html#cb29-9"></a>accuracy_vs_k_lots</span></code></pre></div>
 <p><img src="_main_files/figure-html/06-lots-of-ks-1.png" width="480" /></p>
 <p><strong>Underfitting:</strong> What is actually happening to our classifier that causes this? As we increase the number of neighbours, more and more of the
 training observations (and those that are farther and farther away from the point) get a “say” in what the class of a new observation
