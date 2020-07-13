@@ -500,13 +500,13 @@ head(cancer_train)
 
 Next, we create a *model specification* for K-nearest neighbours classification
 by calling the `nearest_neighbor` function, specifying that we want to use $K = 5$ neighbours
-(we will discuss how to choose $K$ in the next chapter). 
+(we will discuss how to choose $K$ in the next chapter) and the straight-line distance (`weight_func = "rectangular"`). 
 We specify the particular computational
 engine (in this case, the `kknn` engine) for training the model with the `set_engine` function.
 Finally we specify that this is a classification problem with the `set_mode` function.
 
 ```{r 05-tidymodels-3}
-knn_spec <- nearest_neighbor(neighbors = 5) %>%
+knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 5) %>%
        set_engine("kknn") %>%
        set_mode("classification")
 ```
@@ -716,17 +716,16 @@ picking only 3 observations randomly from the malignant group, and keeping all
 of the benign observations.
 
 ```{r 05-unbalanced, fig.height = 4, fig.width = 5}
-set.seed(1)
+set.seed(3)
 rare_cancer <- bind_rows(filter(cancer, Class == "B"),
-		cancer %>%
-		filter(Class == "M") %>%
-		sample_n(3)
-			)
+                         cancer %>% filter(Class == "M") %>% sample_n(3)) %>%
+                  select(Class, Perimeter, Concavity)
+		
 rare_plot <- rare_cancer %>%  
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) + 
     geom_point(alpha = 0.5) +
     labs(color = "Diagnosis") + 
-    scale_color_manual(labels = c("Benign", "Malignant"), values = cbPalette)
+    scale_color_manual(labels = c("Malignant", "Benign"), values = cbPalette)
 rare_plot
 ```
 
@@ -755,9 +754,9 @@ my_distances <- bind_cols(my_distances, select(rare_cancer, Class))
 neighbours <- rare_cancer[order(my_distances$Distance),]
 
 for (i in 1:7) {  
-    clr = cbPalette[1]
+    clr = cbPalette[2]
     if (neighbours$Class[i] == "M"){
-        clr = cbPalette[2]
+        clr = cbPalette[1]
     }
     rare_plot <- rare_plot + 
                  geom_segment(x = new_point[1], 
@@ -777,26 +776,27 @@ classifier would make, we can see that the decision is always "benign," correspo
 <center>
 ```{r 05-upsample-2, echo = FALSE, fig.height = 4, fig.width = 5}
 
-#train a knn classifier
-features <- rare_cancer %>% select(Perimeter, Concavity)
-labels <- rare_cancer %>% select(Class) %>% pull()
-k <- data.frame(k = 7)
-model_knn <- train(x = data.frame(features), y = labels, method='knn', tuneGrid = k)
+knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) %>%
+       set_engine("kknn") %>%
+       set_mode("classification")
+
+knn_fit <- knn_spec %>%
+        fit(Class ~ ., data = rare_cancer)
 
 #create a prediction pt grid
 per_grid <- seq(min(rare_cancer$Perimeter), max(rare_cancer$Perimeter), length.out = 100)
 con_grid <- seq(min(rare_cancer$Concavity), max(rare_cancer$Concavity), length.out = 100)
-pcgrid <- expand.grid(Perimeter=per_grid, Concavity=con_grid)
-knnPredGrid <- predict(model_knn, newdata=pcgrid)
-prediction_table <- bind_cols(pcgrid, data.frame(Class=knnPredGrid))
+pcgrid <- as_tibble(expand.grid(Perimeter=per_grid, Concavity=con_grid))
+knnPredGrid <- predict(knn_fit, pcgrid)
+prediction_table <- bind_cols(knnPredGrid, pcgrid) %>% rename(Class = .pred_class)
 
 #create the basic plt
 rare_plot <- 
   ggplot() + 
-    geom_point(data = prediction_table, mapping=aes(x = Perimeter, y = Concavity, color = Class), alpha=0.02, size=5.)+
-    geom_point(data = rare_cancer, mapping=aes(x = Perimeter, y = Concavity, color = Class), alpha=0.75) +
+    geom_point(data = prediction_table, mapping = aes(x = Perimeter, y = Concavity, color = Class), alpha=0.02, size=5.)+
+    geom_point(data = rare_cancer, mapping = aes(x = Perimeter, y = Concavity, color = Class), alpha=0.75) +
     labs(color = "Diagnosis") + 
-    scale_color_manual(labels = c("Benign", "Malignant"), values = cbPalette)
+    scale_color_manual(labels = c("Malignant","Benign"), values = c(cbPalette[2], cbPalette[1]))
 
 rare_plot
 ```
@@ -806,15 +806,22 @@ Despite the simplicity of the problem, solving it in a statistically sound manne
 fairly nuanced, and a careful treatment would require a lot more detail and mathematics than we will cover in this textbook.
 For the present purposes, it will suffice to rebalance the data by *oversampling* the rare class.
 In other words, we will replicate rare observations multiple times in our data set to give them more
-voting power in the K-nearest neighbour algorithm. In order to do this, we will use the
-`upSample` function from the `caret` library. We show below how to do this, and also
+voting power in the K-nearest neighbour algorithm. In order to do this, we will modify the
+earlier `uc_recipe` recipe to include the step of oversampling based on the `Class` column.
+We show below how to do this, and also
 use the `group_by + summarize` pattern we've seen before to see that our classes are now balanced:
 
 ```{r 05-upsample-cancer}
-rare_cancer <- upSample(x = select(rare_cancer, Perimeter, Concavity),
-			y = select(rare_cancer, Class) %>% pull()
-			)
-rare_cancer %>% 
+ups_recipe <- recipe(Class ~ ., data = rare_cancer) %>%
+       step_upsample(Class, over_ratio = 1, skip = FALSE)
+ups_recipe
+```
+
+```{r 05-upsample-cancer-2}
+ups_prepped <- prep(ups_recipe, training = rare_cancer)
+upsampled_cancer <- bake(ups_prepped, rare_cancer)
+
+upsampled_cancer %>% 
 	group_by(Class) %>%
 	summarize(n = n())
 ```
@@ -825,28 +832,26 @@ to those labelled malignant, the classifier predicts a malignant tumour, and vic
 <center>
 ```{r 05-upsample-plot, echo = FALSE, fig.height = 4, fig.width = 5}
 
-#train a knn classifier
-features <- rare_cancer %>% select(Perimeter, Concavity)
-labels <- rare_cancer %>% select(Class) %>% pull()
-k <- data.frame(k = 7)
-model_knn <- train(x = data.frame(features), y = labels, method='knn', tuneGrid = k)
+knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) %>%
+       set_engine("kknn") %>%
+       set_mode("classification")
+
+knn_fit <- knn_spec %>%
+        fit(Class ~ ., data = upsampled_cancer)
 
 #create a prediction pt grid
-per_grid <- seq(min(rare_cancer$Perimeter), max(rare_cancer$Perimeter), length.out = 100)
-con_grid <- seq(min(rare_cancer$Concavity), max(rare_cancer$Concavity), length.out = 100)
-pcgrid <- expand.grid(Perimeter=per_grid, Concavity=con_grid)
-knnPredGrid <- predict(model_knn, newdata=pcgrid)
-prediction_table <- bind_cols(pcgrid, data.frame(Class=knnPredGrid))
+knnPredGrid <- predict(knn_fit, pcgrid)
+prediction_table <- bind_cols(knnPredGrid, pcgrid) %>% rename(Class = .pred_class)
 
 #create the basic plt
-rare_plot <- 
+upsampled_plot <- 
   ggplot() + 
-    geom_point(data = prediction_table, mapping=aes(x = Perimeter, y = Concavity, color = Class), alpha=0.02, size=5.)+
-    geom_point(data = rare_cancer, mapping=aes(x = Perimeter, y = Concavity, color = Class), alpha=0.75) +
+    geom_point(data = prediction_table, mapping = aes(x = Perimeter, y = Concavity, color = Class), alpha=0.02, size=5.)+
+    geom_point(data = rare_cancer, mapping = aes(x = Perimeter, y = Concavity, color = Class), alpha=0.75) +
     labs(color = "Diagnosis") + 
-    scale_color_manual(labels = c("Benign", "Malignant"), values = cbPalette)
+    scale_color_manual(labels = c("Malignant","Benign"), values = cbPalette)
 
-rare_plot
+upsampled_plot
 ```
 </center>
 
