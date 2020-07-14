@@ -5,9 +5,11 @@ knitr::opts_chunk$set(message = FALSE)
 # Classification II: evaluation & tuning {#classification_continued}
 
 ## Overview 
-This chapter continues the introduction to predictive modelling through classification. While the previous chapter
-covered training and data preprocessing, this chapter focuses on how to split data, how to evaluate prediction accuracy, 
-and how to choose model parameters to maximize performance.
+This chapter continues the introduction to predictive modelling through
+classification. While the previous chapter covered training and data
+preprocessing, this chapter focuses on how to split data, how to evaluate
+prediction accuracy, and how to choose model parameters to maximize
+performance.
 
 ## Chapter learning objectives 
 By the end of the chapter, students will be able to:
@@ -71,8 +73,7 @@ library(tidymodels)
 
 #load data
 cancer <- read_csv("data/unscaled_wdbc.csv") %>% 
-  mutate(Class = as_factor(Class)) %>% # convert the character Class variable to the factor datatype
-  select(Class, Concavity, Smoothness)
+  mutate(Class = as_factor(Class)) # convert the character Class variable to the factor datatype
 
 # colour palette
 cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999") 
@@ -124,23 +125,19 @@ a train / test split of 75% / 25%, as desired.
 As we mentioned last chapter, k-nn is sensitive to the scale of the predictors,
 and so we should perform some preprocessing to standardize them. An
 additional consideration we need to take when doing this is that we should
-create the scaling transformer using **only the training data**. This ensures that
+create the standardization preprocessor using **only the training data**. This ensures that
 our test data does not influence any aspect of our model training. Once we have
-created the scaling transformer, we can then apply it separately to both the
+created the standardization preprocessor, we can then apply it separately to both the
 training and test data sets.
 
 Fortunately, the `recipe` framework from `tidymodels` makes it simple to handle
 this properly. Below we construct and prepare the recipe using only the training
-data (due to `data = cancer_train` in the first line), and 
-then apply it to both the training and testing data.
+data (due to `data = cancer_train` in the first line).
 
 ```{r 06-pre-process}
-cancer_recipe <- recipe(Class ~ .,  data = cancer_train) %>%
-       step_scale(all_numeric()) %>%
-       step_center(all_numeric()) %>%
-       prep()
-cancer_train_baked <- bake(cancer_recipe, cancer_train)
-cancer_test_baked <- bake(cancer_recipe, cancer_test)
+cancer_recipe <- recipe(Class ~ Smoothness + Concavity,  data = cancer_train) %>%
+       step_scale(all_predictors()) %>%
+       step_center(all_predictors())
 ```
 
 **3. Train the classifier**
@@ -157,8 +154,10 @@ knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 3) %>%
        set_engine("kknn") %>%
        set_mode("classification")
 
-knn_fit <- knn_spec %>%
-        fit(Class ~ ., data = cancer_train_baked)
+knn_fit <- workflow() %>%
+             add_recipe(cancer_recipe) %>%
+             add_model(knn_spec) %>%
+        fit(data = cancer_train)
 
 knn_fit
 ```
@@ -171,13 +170,16 @@ knn_fit
 
 **4. Predict the labels in the test set**
 
-Now that we have a K-nearest neighbour classifier object, we can use it to predict the class labels for our test set.
-We use the `bind_cols` to add the column of predictions to the original test data, creating the `cancer_test_predictions` data frame.
-The `Class` variable contains the true diagnoses, while the `.pred_class` contains the predicted diagnoses from the model.
+Now that we have a K-nearest neighbour classifier object, we can use it to
+predict the class labels for our test set.  We use the `bind_cols` to add the
+column of predictions to the original test data, creating the
+`cancer_test_predictions` data frame.  The `Class` variable contains the true
+diagnoses, while the `.pred_class` contains the predicted diagnoses from the
+model.
 
 ```{r 06-predict-test}
-cancer_test_predictions <- predict(knn_fit, cancer_test_baked) %>%
-                            bind_cols(cancer_test_baked)
+cancer_test_predictions <- predict(knn_fit, cancer_test) %>%
+                            bind_cols(cancer_test)
 head(cancer_test_predictions)
 ```
 
@@ -227,7 +229,7 @@ and pick the one that yields the highest accuracy.
 There is an important detail to mention about the process of tuning: we can, if
 we want to, split our overall training data up in multiple different ways,
 train and evaluate a classifier for each split, and then choose the parameter
-based on *all* of the different results. If we just split our overall training
+based on __*all*__ of the different results. If we just split our overall training
 data *once*, our best parameter choice will depend strongly on whatever data
 was lucky enough to end up in the validation set. Perhaps using multiple
 different train / validation splits, we'll get a better estimate of accuracy,
@@ -253,13 +255,16 @@ for (i in 1:5){
     cancer_subtrain <- training(cancer_split)
     cancer_validation <- testing(cancer_split)
 
-    # train the KNN model with K = 3
-    knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 3) %>%
-       set_engine("kknn") %>%
-       set_mode("classification")
+    # recreate the standardization recipe from before (since it must be based on the training data)
+    cancer_recipe <- recipe(Class ~ Smoothness + Concavity,  data = cancer_subtrain) %>%
+       step_scale(all_predictors()) %>%
+       step_center(all_predictors())
 
-    knn_fit <- knn_spec %>%
-        fit(Class ~ ., data = cancer_subtrain)
+    # fit the knn model (we can reuse the old knn_spec model from before)
+    knn_fit <- workflow() %>%
+             add_recipe(cancer_recipe) %>%
+             add_model(knn_spec) %>%
+             fit(data = cancer_subtrain)
 
     # get predictions on the validation data
     validation_predicted <- predict(knn_fit, cancer_validation) %>%
@@ -300,43 +305,64 @@ resulting in 5 different choices for the **validation set**; we call this
 use another function: `vfold_cv`. This function splits our training data into
 `v` folds automatically:
 ```{r 06-vfold}
-cancer_vfold <- vfold_cv(cancer_train, v = 5, repeats = 1, strata = Class)
+cancer_vfold <- vfold_cv(cancer_train, v = 5, strata = Class)
 cancer_vfold
 ```
-
-Then, when we create our classifier, we add an additional argument to `train`
-called `trControl`, which we set to the `train_control` object we just created.
-One benefit of using `caret` for this is that we do not need to manually do any
-of the work of cross-validation ourselves; the `train` function will handle
-creating the chunks, doing multiple rounds of training and evaluation, and
-averaging the results for us. 
-
-```{r 06-5-fold}
-set.seed(1234)
-k = data.frame(k = 3)
-knn_model_cv_5fold <- train(x = X_train_total, y = Y_train_total, method = "knn", tuneGrid = k, trControl = train_control)
-knn_model_cv_5fold
-```
+Then, when we create our data analysis workflow, we use the `fit_resamples` function
+instead of the `fit` function for training. This runs cross-validation on each
+train/validation split. 
 
 > **Note:** we set the seed when we call `train` not only because of the potential for ties, but also because we are doing 
 > cross-validation. Cross-validation uses a random process to select how to partition the training data.
 
+```{r 06-vfold-workflow}
+set.seed(1)
+
+# recreate the standardization recipe from before (since it must be based on the training data)
+cancer_recipe <- recipe(Class ~ Smoothness + Concavity,  data = cancer_train) %>%
+   step_scale(all_predictors()) %>%
+   step_center(all_predictors())
+
+# fit the knn model (we can reuse the old knn_spec model from before)
+knn_fit <- workflow() %>%
+         add_recipe(cancer_recipe) %>%
+         add_model(knn_spec) %>%
+         fit_resamples(resamples = cancer_vfold)
+
+knn_fit
+```
+
+The `collect_metrics` function is used to aggregate the mean and *standard error*
+of the classifier's validation accuracy across the folds. The standard error is 
+a measure of how uncertain we are in the mean value. A detailed treatment of this
+is beyond the scope of this textbook; but roughly, if your estimated mean (that
+the `collect_metrics` function gives you) is 0.88 and standard
+error is 0.02, you can expect the *true* average accuracy of the 
+classifier to be somewhere between 0.86 and 0.90.
+
+```{r 06-vfold-metrics}
+knn_fit %>% collect_metrics()
+```
+
 We can choose any number of folds, and typically the more we use the better our
-accuracy estimate will be. However, we are limited by computational power: the
+accuracy estimate will be (lower standard error). However, we are limited 
+by computational power: the
 more folds we choose, the  more computation it takes, and hence the more time
 it takes to run the analysis. So when you do cross-validation, you need to
 consider the size of the data, and the speed of the algorithm (e.g., K-nearest
 neighbour) and the speed of your computer. In practice, this is a trial and
 error process, but typically $C$ is chosen to be either 5 or 10. Here we show
-what happens when we split the data into 10 chunks and do 10-fold
-cross-validation:
+how the standard error decreases when we use 10-fold cross validation rather
+than 5-fold:
 
 ```{r 06-10-fold}
-train_control <- trainControl(method="cv", number = 10)
+cancer_vfold <- vfold_cv(cancer_train, v = 10, strata = Class)
 
-set.seed(1234)
-knn_model_cv_10fold <- train(x = X_train_total, y = Y_train_total, method = "knn", tuneGrid = k, trControl = train_control)
-knn_model_cv_10fold
+workflow() %>%
+    add_recipe(cancer_recipe) %>%
+    add_model(knn_spec) %>%
+    fit_resamples(resamples = cancer_vfold) %>%
+    collect_metrics()
 ```
 
 ### Parameter value selection
@@ -439,33 +465,33 @@ You can see this effect in the plots below as we vary the number of neighbours $
 
 <center>
 ```{r 06-decision-grid-K, echo = FALSE, fig.height = 7, fig.width = 10}
-library(repr)
-library(gridExtra)
-ks <- c(1, 7, 20, 200)
-plots <- list()
-
-for (i in 1:length(ks)){
-	#train the knn classifier
-	k <- data.frame(k = ks[[i]])
-	model_knn <- train(x = X_train_total, y = Y_train_total, method='knn', tuneGrid = k, trControl = train_control)
-	
-	#create a prediction pt grid
-	con_grid <- seq(min(training_set$Concavity), max(training_set$Concavity), length.out = 100)
-	smo_grid <- seq(min(training_set$Smoothness), max(training_set$Smoothness), length.out = 100)
-	csgrid <- expand.grid(Concavity=con_grid, Smoothness=smo_grid)
-	knnPredGrid <- predict(model_knn, newdata=csgrid)
-	prediction_table <- bind_cols(csgrid, data.frame(Class=knnPredGrid))
-	
-	
-	#create the basic plt
-	plots[[i]] <- ggplot() + 
-	    geom_point(data = prediction_table, mapping=aes(x = Concavity, y = Smoothness, color = Class), alpha=0.05, size=3.)+
-	    geom_point(data = training_set, mapping=aes(x = Concavity, y = Smoothness, color = Class), alpha=0.75) +
-	    labs(color = "Diagnosis") + 
-            ggtitle(paste('K = ', k)) +
-	    scale_color_manual(labels = c("Benign", "Malignant"), values = cbPalette)
-}
-grid.arrange(grobs = plots)
+#library(repr)
+#library(gridExtra)
+#ks <- c(1, 7, 20, 200)
+#plots <- list()
+#
+#for (i in 1:length(ks)){
+#	#train the knn classifier
+#	k <- data.frame(k = ks[[i]])
+#	model_knn <- train(x = X_train_total, y = Y_train_total, method='knn', tuneGrid = k, trControl = train_control)
+#	
+#	#create a prediction pt grid
+#	con_grid <- seq(min(training_set$Concavity), max(training_set$Concavity), length.out = 100)
+#	smo_grid <- seq(min(training_set$Smoothness), max(training_set$Smoothness), length.out = 100)
+#	csgrid <- expand.grid(Concavity=con_grid, Smoothness=smo_grid)
+#	knnPredGrid <- predict(model_knn, newdata=csgrid)
+#	prediction_table <- bind_cols(csgrid, data.frame(Class=knnPredGrid))
+#	
+#	
+#	#create the basic plt
+#	plots[[i]] <- ggplot() + 
+#	    geom_point(data = prediction_table, mapping=aes(x = Concavity, y = Smoothness, color = Class), alpha=0.05, size=3.)+
+#	    geom_point(data = training_set, mapping=aes(x = Concavity, y = Smoothness, color = Class), alpha=0.75) +
+#	    labs(color = "Diagnosis") + 
+#            ggtitle(paste('K = ', k)) +
+#	    scale_color_manual(labels = c("Benign", "Malignant"), values = cbPalette)
+#}
+#grid.arrange(grobs = plots)
 ```
 </center>
 
