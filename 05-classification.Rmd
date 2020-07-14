@@ -471,17 +471,20 @@ In order to classify a new observation using a K-nearest neighbour classifier, w
 4. Classify the new observation based on a majority vote of the neighbour classes
 
 
-## K-nearest neighbours in R
+## K-nearest neighbours with `tidymodels`
 
 Coding the K-nearest neighbour algorithm in R ourselves would get complicated
 if we might have to predict the label/class for multiple new observations, or
 when there are multiple classes and more than two variables. Thankfully, in R,
-the K-nearest neighbour algorithm is implemented in the [`tidymodels`
-package collection](https://www.tidymodels.org/). The `tidymodels` collection
-provides tools to help make and use models, such as classifiers.  Using this package
-will help keep our code simple, readable and accurate; the less we have to code
-ourselves, the less mistakes we are likely to make. We start off by loading 
-`tidymodels`:
+the K-nearest neighbour algorithm is implemented in the `parsnip` package 
+included in the 
+[`tidymodels` package collection](https://www.tidymodels.org/), along with 
+many [other models](https://www.tidymodels.org/find/parsnip/)
+ that you will encounter in this and future classes. The `tidymodels` collection
+provides tools to help make and use models, such as classifiers.  Using the packages
+in this collection will help keep our code simple, readable and accurate; the 
+less we have to code ourselves, the less mistakes we are likely to make. We 
+start off by loading `tidymodels`:
 
 ```{r 05-tidymodels}
 library(tidymodels)
@@ -534,7 +537,7 @@ new_obs <- tibble(Perimeter = 0, Concavity = 3.5)
 predict(knn_fit, new_obs)
 ```
 
-## Data preprocessing 
+## Data preprocessing with `tidymodels`
 
 ### Centering and scaling
 
@@ -574,6 +577,7 @@ variables:
 
 ```{r 05-scaling-1, message = FALSE}
 unscaled_cancer <- read_csv("data/unscaled_wdbc.csv") %>% 
+             mutate(Class = as_factor(Class)) %>%
             select(Class, Area, Smoothness)
 head(unscaled_cancer)
 ```
@@ -585,7 +589,7 @@ predictions? In order to find out, we will create a scatter plot of these two
 predictors (coloured by diagnosis) for both the unstandardized data we just
 loaded, and the standardized version of that same data. 
 
-In the `tidymodels` framework, all data preprocessing happens using a `recipe`.
+In the `tidymodels` framework, all data preprocessing happens using a [`recipe`](https://tidymodels.github.io/recipes/reference/index.html).
 Here we will initialize a recipe for the `unscaled_cancer` data above, specifying
 that the `Class` variable is the target, and all other variables are predictors:
 ```{r 05-scaling-2}
@@ -617,6 +621,8 @@ For example:
 - `Area, Smoothness`: specify both the `Area` and `Smoothness` variable
 - `-Class`: specify everything except the `Class` variable
 
+You can find [a full set of all the steps and variable selection functions](https://tidymodels.github.io/recipes/reference/index.html)
+on the recipes home page.
 We now use the `prep` function to create an object that represents how to apply the recipe
 to our `unscaled_cancer` dataframe, and then the `bake` function to apply the recipe.
 ```{r 05-scaling-4}
@@ -811,8 +817,8 @@ Despite the simplicity of the problem, solving it in a statistically sound manne
 fairly nuanced, and a careful treatment would require a lot more detail and mathematics than we will cover in this textbook.
 For the present purposes, it will suffice to rebalance the data by *oversampling* the rare class.
 In other words, we will replicate rare observations multiple times in our data set to give them more
-voting power in the K-nearest neighbour algorithm. In order to do this, we will modify the
-earlier `uc_recipe` recipe to include the step of oversampling based on the `Class` column.
+voting power in the K-nearest neighbour algorithm. In order to do this, we will add an oversampling
+step to the earlier `uc_recipe` recipe with the `step_upsample` function.
 We show below how to do this, and also
 use the `group_by + summarize` pattern we've seen before to see that our classes are now balanced:
 
@@ -861,5 +867,81 @@ upsampled_plot
 </center>
 
 
+## Putting it together in a `workflow`
+
+The `tidymodels` package collection also provides the `workflow`, a simple way to chain
+together multiple data analysis steps without a lot of otherwise necessary code for intermediate steps.
+To illustrate the whole pipeline, let's start from scratch with the `unscaled_wdbc.csv` data.
+First we will load the data, create a model, and specify a recipe for how the data should be preprocessed:
+```{r 05-workflow}
+
+# load the unscaled cancer data and make sure the target Class variable is a factor
+unscaled_cancer <- read_csv("data/unscaled_wdbc.csv") %>%
+                      mutate(Class = as_factor(Class))
+
+# create the KNN model
+knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) %>%
+       set_engine("kknn") %>%
+       set_mode("classification")
+
+# create the centering / scaling recipe
+uc_recipe <- recipe(Class ~ Area + Smoothness, data = unscaled_cancer) %>%
+       step_scale(all_predictors()) %>%
+       step_center(all_predictors()) 
+```
+Note that each of these steps is exactly the same as earlier, except for one major difference:
+we did not use the `select` function to extract the relevant variables from the data frame,
+and instead simply specified the relevant variables to use via the 
+formula `Class ~ Area + Smoothness` (instead of `Class ~ .`) in the recipe.
+You will also notice that we did not call `prep()` on the recipe; this is unnecssary when it is
+placed in a workflow.
+
+We will now place these steps in a `workflow` using the `add_recipe` and `add_model` functions,
+and finally we will use the `fit` function to run the whole workflow on the `unscaled_cancer` data.
+Note another difference from earlier here: we do not include a formula in the `fit` function. This
+is again because we included the formula in the recipe, so there is no need to respecify it:
+
+```{r 05-workflow-add}
+knn_fit <- workflow() %>%
+           add_recipe(uc_recipe) %>%
+           add_model(knn_spec) %>% 
+	fit(data = unscaled_cancer)
+knn_fit
+```
+Let's visualize the predictions that this trained K-nearest neighbour model will make on new observations.
+Below you will see how to make the coloured prediction map plots from earlier in this chapter.
+The basic idea is to create a grid of synthetic new observations using the `expand.grid` function, 
+predict the label of each, and visualize the predictions with a coloured scatter having a very high transparency 
+(low `alpha` value) and large point radius. We include the code here as a learning challenge; see
+if you can figure out what each line is doing!
+
+```{r 05-workflow-fit-plot} 
+# create the grid of area/smoothness vals, and arrange in a data frame
+are_grid <- seq(min(unscaled_cancer$Area), max(unscaled_cancer$Area), length.out = 100)
+smo_grid <- seq(min(unscaled_cancer$Smoothness), max(unscaled_cancer$Smoothness), length.out = 100)
+asgrid <- as_tibble(expand.grid(Area=are_grid, Smoothness=smo_grid))
+
+# use the fit workflow to make predictions at the grid points
+knnPredGrid <- predict(knn_fit, asgrid)
+
+# bind the predictions as a new column with the grid points
+prediction_table <- bind_cols(knnPredGrid, asgrid) %>% rename(Class = .pred_class)
+
+# plot:
+# 1. the coloured scatter of the original data
+# 2. the faded coloured scatter for the grid points 
+wkflw_plot <-
+  ggplot() +
+    geom_point(data = unscaled_cancer, mapping = aes(x = Area, y = Smoothness, color = Class), alpha=0.75) +
+    geom_point(data = prediction_table, mapping = aes(x = Area, y = Smoothness, color = Class), alpha=0.02, size=5.)+
+    labs(color = "Diagnosis") +
+    scale_color_manual(labels = c("Malignant", "Benign"), values = cbPalette)
+```
+
+<center>
+```{r 05-workflow-plot-show, echo = FALSE, fig.height = 4, fig.width = 5}
+wkflw_plot
+```
+</center>
 
 
