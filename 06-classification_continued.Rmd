@@ -335,10 +335,11 @@ knn_fit
 The `collect_metrics` function is used to aggregate the mean and *standard error*
 of the classifier's validation accuracy across the folds. The standard error is 
 a measure of how uncertain we are in the mean value. A detailed treatment of this
-is beyond the scope of this textbook; but roughly, if your estimated mean (that
+is beyond the scope of this chapter; but roughly, if your estimated mean (that
 the `collect_metrics` function gives you) is 0.88 and standard
 error is 0.02, you can expect the *true* average accuracy of the 
-classifier to be somewhere between 0.86 and 0.90.
+classifier to be somewhere roughly between 0.86 and 0.90 (although it may
+fall outside this range).
 
 ```{r 06-vfold-metrics}
 knn_fit %>% collect_metrics()
@@ -372,69 +373,83 @@ accuracy of our classifier is somewhere around 88%. Whether 88% is good or not
 depends entirely on the downstream application of the data analysis. In the
 present situation, we are trying to predict a tumour diagnosis, with expensive,
 damaging chemo/radiation therapy or patient death as potential consequences of
-misprediction. Hence, we'd like to do better than 88% for this application.  In
-order to improve our classifier, we have one choice of parameter: the number of
+misprediction. Hence, we'd like to do better than 88% for this application.  
+
+In order to improve our classifier, we have one choice of parameter: the number of
 neighbours, $K$. Since cross-validation helps us evaluate the accuracy of our
 classifier, we can use cross-validation to calculate an accuracy for each value
 of $K$ in a reasonable range, and then pick the value of $K$ that gives us the
-best accuracy. In R, we can accomplish this *tuning* by passing a vector of
-values for $K$ to the `tuneGrid` argument of `train`.
-
+best accuracy. The `tidymodels` package collection provides a very simple
+syntax for tuning models: each parameter in the model to be tuned should be specified
+as `tune()` in the model specification rather than given a particular value.
 ```{r 06-range-cross-val}
-train_control <- trainControl(method="cv", number = 10)
-k = data.frame(k = c(1, 3, 5, 7, 9, 11, 13, 15, 17))
-
-set.seed(1234)
-knn_model_cv_10fold <- train(x = X_train_total, y = Y_train_total, method = "knn", tuneGrid = k, trControl = train_control)
-knn_model_cv_10fold
+knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = tune()) %>%
+       set_engine("kknn") %>%
+       set_mode("classification")
 ```
-
-Although `caret` provides a selection of $K=13$ for us by maximizing the
-accuracy estimate, it is helpful regardless to visualize the accuracy as we
-increase $K$. We can access the results from the cross-validation via
-the`results` attribute of the `train` object (our classifier).
-
-```{r 06-accuracies}
-accuracies <- knn_model_cv_10fold$results
-accuracies 
+Then instead of using `fit` or `fit_resamples`, we will use the `tune_grid` function
+to fit the model for each value in a range of parameter values. Here the `grid = 10`
+argument specifies that the tuning should try 10 values of the number of neighbours
+$K$ when tuning. We set the seed prior to tuning to ensure results are reproducible:
+```{r 06-range-cross-val-2}
+set.seed(1)
+knn_results <- workflow() %>%
+                 add_recipe(cancer_recipe) %>%
+                 add_model(knn_spec) %>%
+                 tune_grid(resamples = cancer_vfold, grid = 10) %>%
+                 collect_metrics()
+knn_results
 ```
-
-Now we can plot accuracy versus $K$:
-
+We can select the best value of the number of neighbours (i.e., the one that results
+in the highest classifier accuracy estimate) by plotting the accuracy versus $K$:
 ```{r 06-find-k, fig.height = 4, fig.width = 5}
-accuracy_vs_k <- ggplot(accuracies, aes(x = k, y = Accuracy)) +
+accuracies <- knn_results %>%
+                 filter(.metric == 'accuracy')
+
+accuracy_vs_k <- ggplot(accuracies, aes(x = neighbors, y = mean)) +
   geom_point() +
-  geom_line()
+  geom_line() +
+  labs(x = 'Neighbors', y = 'Accuracy Estimate')
 accuracy_vs_k
 ```
 
-Based off of the visualization above, we might agree with `caret`'s choice of
-$K=13$. But as you can see, there is no exact or perfect answer here; any
-choice between $K=9$ and $K = 17$ would be reasonably justified. Remember: the
+This visualization suggests that $K = 7$ provides the highest accuracy.
+But as you can see, there is no exact or perfect answer here; 
+ any selection between $K = 3$ and $13$ would be reasonably justified, as all
+of these differ in classifier accuracy by less than 1%. Remember: the
 values you see on this plot are *estimates* of the true accuracy of our
-classifier. Although the $K=13$ value is higher than the others on this plot,
+classifier. Although the $K=7$ value is higher than the others on this plot,
 that doesn't mean the classifier is actually more accurate with this parameter
 value! Generally, when selecting $K$ (and other parameters for other predictive
 models), we are looking for a value where:
 
 - we get roughly optimal accuracy, so that our model will likely be accurate
-- changing the value to a nearby one (e.g. from $K=13$ to 12 or 14) doesn't decrease accuracy too much, so that our choice is reliable in the presence of uncertainty
+- changing the value to a nearby one (e.g. from $K=7$ to 6 or 8) doesn't decrease accuracy too much, so that our choice is reliable in the presence of uncertainty
 - the cost of training the model is not prohibitive (e.g., in our situation, if $K$ is too large, predicting becomes expensive!)
 
 ### Under/overfitting
 
 To build a bit more intuition, what happens if we keep increasing the number of neighbours $K$? In fact, the accuracy 
-actually starts to decrease! Take a look as the plot below as we vary $K$ from 1 to almost the number of observations in the data set:
+actually starts to decrease! Rather than setting `grid = 10` and letting `tidymodels` decide what values of $K$ to try,
+let's specify the values explicitly by creating a data frame with a `neighbors` variable. 
+Take a look as the plot below as we vary $K$ from 1 to almost the number of observations in the data set:
 
 ```{r 06-lots-of-ks, fig.height = 4, fig.width = 5}
-train_control <- trainControl(method="cv", number = 10)
-k_lots = data.frame(k = seq(from = 1, to = 385, by = 10))
-set.seed(1234)
-knn_model_cv_10fold_lots <- train(x = X_train_total, y = Y_train_total, method = "knn", tuneGrid = k_lots, trControl = train_control)
-accuracies_lots <- knn_model_cv_10fold_lots$results
-accuracy_vs_k_lots <- ggplot(accuracies_lots, aes(x = k, y = Accuracy)) +
+set.seed(1)
+k_lots = tibble(neighbors = seq(from = 1, to = 385, by = 10))
+knn_results <- workflow() %>%
+                 add_recipe(cancer_recipe) %>%
+                 add_model(knn_spec) %>%
+                 tune_grid(resamples = cancer_vfold, grid = k_lots) %>%
+                 collect_metrics()
+
+accuracies <- knn_results %>%
+                 filter(.metric == 'accuracy')
+
+accuracy_vs_k_lots <- ggplot(accuracies, aes(x = neighbors, y = mean)) +
   geom_point() +
-  geom_line()
+  geom_line() + 
+  labs(x = 'Neighbors', y = 'Accuracy Estimate')
 accuracy_vs_k_lots
 ```
 
@@ -465,33 +480,39 @@ You can see this effect in the plots below as we vary the number of neighbours $
 
 <center>
 ```{r 06-decision-grid-K, echo = FALSE, fig.height = 7, fig.width = 10}
-#library(repr)
-#library(gridExtra)
-#ks <- c(1, 7, 20, 200)
-#plots <- list()
-#
-#for (i in 1:length(ks)){
-#	#train the knn classifier
-#	k <- data.frame(k = ks[[i]])
-#	model_knn <- train(x = X_train_total, y = Y_train_total, method='knn', tuneGrid = k, trControl = train_control)
-#	
-#	#create a prediction pt grid
-#	con_grid <- seq(min(training_set$Concavity), max(training_set$Concavity), length.out = 100)
-#	smo_grid <- seq(min(training_set$Smoothness), max(training_set$Smoothness), length.out = 100)
-#	csgrid <- expand.grid(Concavity=con_grid, Smoothness=smo_grid)
-#	knnPredGrid <- predict(model_knn, newdata=csgrid)
-#	prediction_table <- bind_cols(csgrid, data.frame(Class=knnPredGrid))
-#	
-#	
-#	#create the basic plt
-#	plots[[i]] <- ggplot() + 
-#	    geom_point(data = prediction_table, mapping=aes(x = Concavity, y = Smoothness, color = Class), alpha=0.05, size=3.)+
-#	    geom_point(data = training_set, mapping=aes(x = Concavity, y = Smoothness, color = Class), alpha=0.75) +
-#	    labs(color = "Diagnosis") + 
-#            ggtitle(paste('K = ', k)) +
-#	    scale_color_manual(labels = c("Benign", "Malignant"), values = cbPalette)
-#}
-#grid.arrange(grobs = plots)
+library(gridExtra)
+ks <- c(1, 7, 20, 200)
+plots <- list()
+
+for (i in 1:length(ks)){
+        
+       knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = ks[[i]]) %>%
+       set_engine("kknn") %>%
+       set_mode("classification")
+
+       knn_fit <- workflow() %>%
+                 add_recipe(cancer_recipe) %>%
+                 add_model(knn_spec) %>%
+                 fit(data = cancer_train)
+       
+       #create a prediction pt grid
+       smo_grid <- seq(min(cancer_train$Smoothness), max(cancer_train$Smoothness), length.out = 100)
+       con_grid <- seq(min(cancer_train$Concavity), max(cancer_train$Concavity), length.out = 100)
+       scgrid <- as_tibble(expand.grid(Smoothness=smo_grid, Concavity=con_grid))
+       knnPredGrid <- predict(knn_fit, scgrid)
+       prediction_table <- bind_cols(knnPredGrid, scgrid) %>% rename(Class = .pred_class)
+       
+       #plot 
+       plots[[i]] <- 
+         ggplot() + 
+           geom_point(data = cancer_train, mapping = aes(x = Smoothness, y = Concavity, color = Class), alpha=0.75) +
+           geom_point(data = prediction_table, mapping = aes(x = Smoothness, y = Concavity, color = Class), alpha=0.02, size=5.)+
+           labs(color = "Diagnosis") + 
+           ggtitle(paste('K = ', ks[[i]])) +
+           scale_color_manual(labels = c("Malignant", "Benign"), values = cbPalette)
+      
+}
+grid.arrange(grobs = plots)
 ```
 </center>
 
@@ -500,13 +521,13 @@ You can see this effect in the plots below as we vary the number of neighbours $
 **Shuffling:** When we split the data into train, test, and validation sets, we
 make the assumption that there is no order to our originally collected data
 set. However, if we think that there might be some order to the original data
-set, then we can randomly shuffle the data before splitting it. The `caret`
-package's `createDataPartition` function does this for us. 
+set, then we can randomly shuffle the data before splitting it. The `tidymodels`
+function `initial_split` and `vfold_cv` functions do this for us. 
 
 **Stratification:** If the data are imbalanced, we also need to be extra
 careful about splitting the data to ensure that enough of each class ends up in
-each of the train, validation, and test partitions. Luckily, the
-`createDataPartition` does this for us as well.
+each of the train, validation, and test partitions. The `strata` argument
+in the `initial_split` and `vfold_cv` functions handles this for us too. 
 
 ## Summary
 
@@ -529,13 +550,16 @@ A typical 10-fold cross-validation data set split. <br>Source: https://towardsda
 </figure>
 </center>
 
-The overall workflow for performing K-nearest neighbour classification in `caret` is as follows:
+The overall workflow for performing K-nearest neighbour classification using `tidymodels` is as follows:
 
-1. Use the `createDataPartition` function to split the data into a training and test set. Put the test set aside for now.
-2. Use the `trainControl` function to specify whether to use cross-validation and how many folds
-3. Use the `train` function to train and evaluate the classifier for different values of $K$
-4. Retrain the classifier on *all* the training data, using the best parameter from the previous step
-5. Evaluate the estimated accuracy of the classifier on the test set
+1. Use the `initial_split` function to split the data into a training and test set. Set the `strata` argument to the target variable. Put the test set aside for now.
+2. Use the `vfold_cv` function to split up the training data for cross validation.
+3. Create a `recipe` that specifies the target and predictor variables, as well as preprocessing steps for all variables. Pass the training data as the `data` argument of the recipe.
+4. Create a `nearest_neighbors` model specification, with `neighbors = tune()`.
+5. Add the recipe and model specification to a `workflow()`, and use the `tune_grid` function on the train/validation splits to estimate the classifier accuracy for a range of $K$ values.
+6. Pick a value of $K$ that yields a high accuracy estimate that doesn't change much if you change $K$ to a nearby value.
+7. Make a new model specification for the best parameter value, and retrain the classifier using the `fit` function.
+8. Evaluate the estimated accuracy of the classifier on the test set using the `predict` function.
 
 **Strengths:**
 

@@ -26,7 +26,7 @@
 <meta name="author" content="Melissa Lee" />
 
 
-<meta name="date" content="2020-07-14" />
+<meta name="date" content="2020-07-15" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -699,10 +699,11 @@ cross-validation. Cross-validation uses a random process to select how to partit
 <p>The <code>collect_metrics</code> function is used to aggregate the mean and <em>standard error</em>
 of the classifier’s validation accuracy across the folds. The standard error is
 a measure of how uncertain we are in the mean value. A detailed treatment of this
-is beyond the scope of this textbook; but roughly, if your estimated mean (that
+is beyond the scope of this chapter; but roughly, if your estimated mean (that
 the <code>collect_metrics</code> function gives you) is 0.88 and standard
 error is 0.02, you can expect the <em>true</em> average accuracy of the
-classifier to be somewhere between 0.86 and 0.90.</p>
+classifier to be somewhere roughly between 0.86 and 0.90 (although it may
+fall outside this range).</p>
 <div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="classification-continued.html#cb22-1"></a>knn_fit <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">collect_metrics</span>()</span></code></pre></div>
 <pre><code>## # A tibble: 2 x 5
 ##   .metric  .estimator  mean     n std_err
@@ -739,92 +740,99 @@ accuracy of our classifier is somewhere around 88%. Whether 88% is good or not
 depends entirely on the downstream application of the data analysis. In the
 present situation, we are trying to predict a tumour diagnosis, with expensive,
 damaging chemo/radiation therapy or patient death as potential consequences of
-misprediction. Hence, we’d like to do better than 88% for this application. In
-order to improve our classifier, we have one choice of parameter: the number of
+misprediction. Hence, we’d like to do better than 88% for this application.</p>
+<p>In order to improve our classifier, we have one choice of parameter: the number of
 neighbours, <span class="math inline">\(K\)</span>. Since cross-validation helps us evaluate the accuracy of our
 classifier, we can use cross-validation to calculate an accuracy for each value
 of <span class="math inline">\(K\)</span> in a reasonable range, and then pick the value of <span class="math inline">\(K\)</span> that gives us the
-best accuracy. In R, we can accomplish this <em>tuning</em> by passing a vector of
-values for <span class="math inline">\(K\)</span> to the <code>tuneGrid</code> argument of <code>train</code>.</p>
-<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="classification-continued.html#cb26-1"></a>train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">10</span>)</span>
-<span id="cb26-2"><a href="classification-continued.html#cb26-2"></a>k =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">7</span>, <span class="dv">9</span>, <span class="dv">11</span>, <span class="dv">13</span>, <span class="dv">15</span>, <span class="dv">17</span>))</span>
-<span id="cb26-3"><a href="classification-continued.html#cb26-3"></a></span>
-<span id="cb26-4"><a href="classification-continued.html#cb26-4"></a><span class="kw">set.seed</span>(<span class="dv">1234</span>)</span>
-<span id="cb26-5"><a href="classification-continued.html#cb26-5"></a>knn_model_cv_10fold &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_train_total, <span class="dt">y =</span> Y_train_total, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k, <span class="dt">trControl =</span> train_control)</span>
-<span id="cb26-6"><a href="classification-continued.html#cb26-6"></a>knn_model_cv_10fold</span></code></pre></div>
-<pre><code>## k-Nearest Neighbors 
-## 
-## 569 samples
-##  11 predictor
-##   2 classes: &#39;M&#39;, &#39;B&#39; 
-## 
-## No pre-processing
-## Resampling: Cross-Validated (10 fold) 
-## Summary of sample sizes: 512, 513, 512, 512, 512, 512, ... 
-## Resampling results across tuning parameters:
-## 
-##   k   Accuracy   Kappa    
-##    1  0.7942248  0.5477059
-##    3  0.7312808  0.3896490
-##    5  0.7224138  0.3595184
-##    7  0.7048678  0.3140628
-##    9  0.6960926  0.2755558
-##   11  0.7100683  0.2998363
-##   13  0.6995711  0.2759814
-##   15  0.6995711  0.2706774
-##   17  0.7065898  0.2842655
-## 
-## Accuracy was used to select the optimal model using the largest value.
-## The final value used for the model was k = 1.</code></pre>
-<p>Although <code>caret</code> provides a selection of <span class="math inline">\(K=13\)</span> for us by maximizing the
-accuracy estimate, it is helpful regardless to visualize the accuracy as we
-increase <span class="math inline">\(K\)</span>. We can access the results from the cross-validation via
-the<code>results</code> attribute of the <code>train</code> object (our classifier).</p>
-<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="classification-continued.html#cb28-1"></a>accuracies &lt;-<span class="st"> </span>knn_model_cv_10fold<span class="op">$</span>results</span>
-<span id="cb28-2"><a href="classification-continued.html#cb28-2"></a>accuracies </span></code></pre></div>
-<pre><code>##    k  Accuracy     Kappa AccuracySD    KappaSD
-## 1  1 0.7942248 0.5477059 0.04541515 0.09755692
-## 2  3 0.7312808 0.3896490 0.04807517 0.10686014
-## 3  5 0.7224138 0.3595184 0.04046755 0.08472153
-## 4  7 0.7048678 0.3140628 0.03382200 0.06669857
-## 5  9 0.6960926 0.2755558 0.03932843 0.08751456
-## 6 11 0.7100683 0.2998363 0.02955304 0.07052050
-## 7 13 0.6995711 0.2759814 0.03129697 0.07865112
-## 8 15 0.6995711 0.2706774 0.03812284 0.09339909
-## 9 17 0.7065898 0.2842655 0.03884811 0.09727276</code></pre>
-<p>Now we can plot accuracy versus <span class="math inline">\(K\)</span>:</p>
-<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="classification-continued.html#cb30-1"></a>accuracy_vs_k &lt;-<span class="st"> </span><span class="kw">ggplot</span>(accuracies, <span class="kw">aes</span>(<span class="dt">x =</span> k, <span class="dt">y =</span> Accuracy)) <span class="op">+</span></span>
-<span id="cb30-2"><a href="classification-continued.html#cb30-2"></a><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></span>
-<span id="cb30-3"><a href="classification-continued.html#cb30-3"></a><span class="st">  </span><span class="kw">geom_line</span>()</span>
-<span id="cb30-4"><a href="classification-continued.html#cb30-4"></a>accuracy_vs_k</span></code></pre></div>
+best accuracy. The <code>tidymodels</code> package collection provides a very simple
+syntax for tuning models: each parameter in the model to be tuned should be specified
+as <code>tune()</code> in the model specification rather than given a particular value.</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="classification-continued.html#cb26-1"></a>knn_spec &lt;-<span class="st"> </span><span class="kw">nearest_neighbor</span>(<span class="dt">weight_func =</span> <span class="st">&quot;rectangular&quot;</span>, <span class="dt">neighbors =</span> <span class="kw">tune</span>()) <span class="op">%&gt;%</span></span>
+<span id="cb26-2"><a href="classification-continued.html#cb26-2"></a><span class="st">       </span><span class="kw">set_engine</span>(<span class="st">&quot;kknn&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb26-3"><a href="classification-continued.html#cb26-3"></a><span class="st">       </span><span class="kw">set_mode</span>(<span class="st">&quot;classification&quot;</span>)</span></code></pre></div>
+<p>Then instead of using <code>fit</code> or <code>fit_resamples</code>, we will use the <code>tune_grid</code> function
+to fit the model for each value in a range of parameter values. Here the <code>grid = 10</code>
+argument specifies that the tuning should try 10 values of the number of neighbours
+<span class="math inline">\(K\)</span> when tuning. We set the seed prior to tuning to ensure results are reproducible:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="classification-continued.html#cb27-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb27-2"><a href="classification-continued.html#cb27-2"></a>knn_results &lt;-<span class="st"> </span><span class="kw">workflow</span>() <span class="op">%&gt;%</span></span>
+<span id="cb27-3"><a href="classification-continued.html#cb27-3"></a><span class="st">                 </span><span class="kw">add_recipe</span>(cancer_recipe) <span class="op">%&gt;%</span></span>
+<span id="cb27-4"><a href="classification-continued.html#cb27-4"></a><span class="st">                 </span><span class="kw">add_model</span>(knn_spec) <span class="op">%&gt;%</span></span>
+<span id="cb27-5"><a href="classification-continued.html#cb27-5"></a><span class="st">                 </span><span class="kw">tune_grid</span>(<span class="dt">resamples =</span> cancer_vfold, <span class="dt">grid =</span> <span class="dv">10</span>) <span class="op">%&gt;%</span></span>
+<span id="cb27-6"><a href="classification-continued.html#cb27-6"></a><span class="st">                 </span><span class="kw">collect_metrics</span>()</span>
+<span id="cb27-7"><a href="classification-continued.html#cb27-7"></a>knn_results</span></code></pre></div>
+<pre><code>## # A tibble: 20 x 6
+##    neighbors .metric  .estimator  mean     n std_err
+##        &lt;int&gt; &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt;
+##  1         2 accuracy binary     0.864    10 0.0167 
+##  2         2 roc_auc  binary     0.897    10 0.0127 
+##  3         3 accuracy binary     0.885    10 0.0104 
+##  4         3 roc_auc  binary     0.927    10 0.0111 
+##  5         5 accuracy binary     0.890    10 0.0136 
+##  6         5 roc_auc  binary     0.927    10 0.00960
+##  7         6 accuracy binary     0.890    10 0.0136 
+##  8         6 roc_auc  binary     0.930    10 0.0111 
+##  9         7 accuracy binary     0.890    10 0.00966
+## 10         7 roc_auc  binary     0.931    10 0.0106 
+## 11         9 accuracy binary     0.887    10 0.0104 
+## 12         9 roc_auc  binary     0.935    10 0.0132 
+## 13        10 accuracy binary     0.887    10 0.0104 
+## 14        10 roc_auc  binary     0.934    10 0.0130 
+## 15        12 accuracy binary     0.882    10 0.0164 
+## 16        12 roc_auc  binary     0.940    10 0.0113 
+## 17        13 accuracy binary     0.885    10 0.0170 
+## 18        13 roc_auc  binary     0.939    10 0.0118 
+## 19        15 accuracy binary     0.873    10 0.0153 
+## 20        15 roc_auc  binary     0.940    10 0.0103</code></pre>
+<p>We can select the best value of the number of neighbours (i.e., the one that results
+in the highest classifier accuracy estimate) by plotting the accuracy versus <span class="math inline">\(K\)</span>:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="classification-continued.html#cb29-1"></a>accuracies &lt;-<span class="st"> </span>knn_results <span class="op">%&gt;%</span></span>
+<span id="cb29-2"><a href="classification-continued.html#cb29-2"></a><span class="st">                 </span><span class="kw">filter</span>(.metric <span class="op">==</span><span class="st"> &#39;accuracy&#39;</span>)</span>
+<span id="cb29-3"><a href="classification-continued.html#cb29-3"></a></span>
+<span id="cb29-4"><a href="classification-continued.html#cb29-4"></a>accuracy_vs_k &lt;-<span class="st"> </span><span class="kw">ggplot</span>(accuracies, <span class="kw">aes</span>(<span class="dt">x =</span> neighbors, <span class="dt">y =</span> mean)) <span class="op">+</span></span>
+<span id="cb29-5"><a href="classification-continued.html#cb29-5"></a><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></span>
+<span id="cb29-6"><a href="classification-continued.html#cb29-6"></a><span class="st">  </span><span class="kw">geom_line</span>() <span class="op">+</span></span>
+<span id="cb29-7"><a href="classification-continued.html#cb29-7"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">x =</span> <span class="st">&#39;Neighbors&#39;</span>, <span class="dt">y =</span> <span class="st">&#39;Accuracy Estimate&#39;</span>)</span>
+<span id="cb29-8"><a href="classification-continued.html#cb29-8"></a>accuracy_vs_k</span></code></pre></div>
 <p><img src="_main_files/figure-html/06-find-k-1.png" width="480" /></p>
-<p>Based off of the visualization above, we might agree with <code>caret</code>’s choice of
-<span class="math inline">\(K=13\)</span>. But as you can see, there is no exact or perfect answer here; any
-choice between <span class="math inline">\(K=9\)</span> and <span class="math inline">\(K = 17\)</span> would be reasonably justified. Remember: the
+<p>This visualization suggests that <span class="math inline">\(K = 7\)</span> provides the highest accuracy.
+But as you can see, there is no exact or perfect answer here;
+any selection between <span class="math inline">\(K = 3\)</span> and <span class="math inline">\(13\)</span> would be reasonably justified, as all
+of these differ in classifier accuracy by less than 1%. Remember: the
 values you see on this plot are <em>estimates</em> of the true accuracy of our
-classifier. Although the <span class="math inline">\(K=13\)</span> value is higher than the others on this plot,
+classifier. Although the <span class="math inline">\(K=7\)</span> value is higher than the others on this plot,
 that doesn’t mean the classifier is actually more accurate with this parameter
 value! Generally, when selecting <span class="math inline">\(K\)</span> (and other parameters for other predictive
 models), we are looking for a value where:</p>
 <ul>
 <li>we get roughly optimal accuracy, so that our model will likely be accurate</li>
-<li>changing the value to a nearby one (e.g. from <span class="math inline">\(K=13\)</span> to 12 or 14) doesn’t decrease accuracy too much, so that our choice is reliable in the presence of uncertainty</li>
+<li>changing the value to a nearby one (e.g. from <span class="math inline">\(K=7\)</span> to 6 or 8) doesn’t decrease accuracy too much, so that our choice is reliable in the presence of uncertainty</li>
 <li>the cost of training the model is not prohibitive (e.g., in our situation, if <span class="math inline">\(K\)</span> is too large, predicting becomes expensive!)</li>
 </ul>
 </div>
 <div id="underoverfitting" class="section level3">
 <h3><span class="header-section-number">7.4.3</span> Under/overfitting</h3>
 <p>To build a bit more intuition, what happens if we keep increasing the number of neighbours <span class="math inline">\(K\)</span>? In fact, the accuracy
-actually starts to decrease! Take a look as the plot below as we vary <span class="math inline">\(K\)</span> from 1 to almost the number of observations in the data set:</p>
-<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="classification-continued.html#cb31-1"></a>train_control &lt;-<span class="st"> </span><span class="kw">trainControl</span>(<span class="dt">method=</span><span class="st">&quot;cv&quot;</span>, <span class="dt">number =</span> <span class="dv">10</span>)</span>
-<span id="cb31-2"><a href="classification-continued.html#cb31-2"></a>k_lots =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">k =</span> <span class="kw">seq</span>(<span class="dt">from =</span> <span class="dv">1</span>, <span class="dt">to =</span> <span class="dv">385</span>, <span class="dt">by =</span> <span class="dv">10</span>))</span>
-<span id="cb31-3"><a href="classification-continued.html#cb31-3"></a><span class="kw">set.seed</span>(<span class="dv">1234</span>)</span>
-<span id="cb31-4"><a href="classification-continued.html#cb31-4"></a>knn_model_cv_10fold_lots &lt;-<span class="st"> </span><span class="kw">train</span>(<span class="dt">x =</span> X_train_total, <span class="dt">y =</span> Y_train_total, <span class="dt">method =</span> <span class="st">&quot;knn&quot;</span>, <span class="dt">tuneGrid =</span> k_lots, <span class="dt">trControl =</span> train_control)</span>
-<span id="cb31-5"><a href="classification-continued.html#cb31-5"></a>accuracies_lots &lt;-<span class="st"> </span>knn_model_cv_10fold_lots<span class="op">$</span>results</span>
-<span id="cb31-6"><a href="classification-continued.html#cb31-6"></a>accuracy_vs_k_lots &lt;-<span class="st"> </span><span class="kw">ggplot</span>(accuracies_lots, <span class="kw">aes</span>(<span class="dt">x =</span> k, <span class="dt">y =</span> Accuracy)) <span class="op">+</span></span>
-<span id="cb31-7"><a href="classification-continued.html#cb31-7"></a><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></span>
-<span id="cb31-8"><a href="classification-continued.html#cb31-8"></a><span class="st">  </span><span class="kw">geom_line</span>()</span>
-<span id="cb31-9"><a href="classification-continued.html#cb31-9"></a>accuracy_vs_k_lots</span></code></pre></div>
+actually starts to decrease! Rather than setting <code>grid = 10</code> and letting <code>tidymodels</code> decide what values of <span class="math inline">\(K\)</span> to try,
+let’s specify the values explicitly by creating a data frame with a <code>neighbors</code> variable.
+Take a look as the plot below as we vary <span class="math inline">\(K\)</span> from 1 to almost the number of observations in the data set:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="classification-continued.html#cb30-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb30-2"><a href="classification-continued.html#cb30-2"></a>k_lots =<span class="st"> </span><span class="kw">tibble</span>(<span class="dt">neighbors =</span> <span class="kw">seq</span>(<span class="dt">from =</span> <span class="dv">1</span>, <span class="dt">to =</span> <span class="dv">385</span>, <span class="dt">by =</span> <span class="dv">10</span>))</span>
+<span id="cb30-3"><a href="classification-continued.html#cb30-3"></a>knn_results &lt;-<span class="st"> </span><span class="kw">workflow</span>() <span class="op">%&gt;%</span></span>
+<span id="cb30-4"><a href="classification-continued.html#cb30-4"></a><span class="st">                 </span><span class="kw">add_recipe</span>(cancer_recipe) <span class="op">%&gt;%</span></span>
+<span id="cb30-5"><a href="classification-continued.html#cb30-5"></a><span class="st">                 </span><span class="kw">add_model</span>(knn_spec) <span class="op">%&gt;%</span></span>
+<span id="cb30-6"><a href="classification-continued.html#cb30-6"></a><span class="st">                 </span><span class="kw">tune_grid</span>(<span class="dt">resamples =</span> cancer_vfold, <span class="dt">grid =</span> k_lots) <span class="op">%&gt;%</span></span>
+<span id="cb30-7"><a href="classification-continued.html#cb30-7"></a><span class="st">                 </span><span class="kw">collect_metrics</span>()</span>
+<span id="cb30-8"><a href="classification-continued.html#cb30-8"></a></span>
+<span id="cb30-9"><a href="classification-continued.html#cb30-9"></a>accuracies &lt;-<span class="st"> </span>knn_results <span class="op">%&gt;%</span></span>
+<span id="cb30-10"><a href="classification-continued.html#cb30-10"></a><span class="st">                 </span><span class="kw">filter</span>(.metric <span class="op">==</span><span class="st"> &#39;accuracy&#39;</span>)</span>
+<span id="cb30-11"><a href="classification-continued.html#cb30-11"></a></span>
+<span id="cb30-12"><a href="classification-continued.html#cb30-12"></a>accuracy_vs_k_lots &lt;-<span class="st"> </span><span class="kw">ggplot</span>(accuracies, <span class="kw">aes</span>(<span class="dt">x =</span> neighbors, <span class="dt">y =</span> mean)) <span class="op">+</span></span>
+<span id="cb30-13"><a href="classification-continued.html#cb30-13"></a><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></span>
+<span id="cb30-14"><a href="classification-continued.html#cb30-14"></a><span class="st">  </span><span class="kw">geom_line</span>() <span class="op">+</span><span class="st"> </span></span>
+<span id="cb30-15"><a href="classification-continued.html#cb30-15"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">x =</span> <span class="st">&#39;Neighbors&#39;</span>, <span class="dt">y =</span> <span class="st">&#39;Accuracy Estimate&#39;</span>)</span>
+<span id="cb30-16"><a href="classification-continued.html#cb30-16"></a>accuracy_vs_k_lots</span></code></pre></div>
 <p><img src="_main_files/figure-html/06-lots-of-ks-1.png" width="480" /></p>
 <p><strong>Underfitting:</strong> What is actually happening to our classifier that causes
 this? As we increase the number of neighbours, more and more of the training
@@ -849,6 +857,7 @@ completely different. In general, if the model <em>is influenced too much</em> b
 training data, it is said to <strong>overfit</strong> the data.</p>
 <p>You can see this effect in the plots below as we vary the number of neighbours <span class="math inline">\(K\)</span> in (1, 7, 20, 200):</p>
 <center>
+<img src="_main_files/figure-html/06-decision-grid-K-1.png" width="960" />
 </center>
 </div>
 </div>
@@ -857,12 +866,12 @@ training data, it is said to <strong>overfit</strong> the data.</p>
 <p><strong>Shuffling:</strong> When we split the data into train, test, and validation sets, we
 make the assumption that there is no order to our originally collected data
 set. However, if we think that there might be some order to the original data
-set, then we can randomly shuffle the data before splitting it. The <code>caret</code>
-package’s <code>createDataPartition</code> function does this for us.</p>
+set, then we can randomly shuffle the data before splitting it. The <code>tidymodels</code>
+function <code>initial_split</code> and <code>vfold_cv</code> functions do this for us.</p>
 <p><strong>Stratification:</strong> If the data are imbalanced, we also need to be extra
 careful about splitting the data to ensure that enough of each class ends up in
-each of the train, validation, and test partitions. Luckily, the
-<code>createDataPartition</code> does this for us as well.</p>
+each of the train, validation, and test partitions. The <code>strata</code> argument
+in the <code>initial_split</code> and <code>vfold_cv</code> functions handles this for us too.</p>
 </div>
 <div id="summary" class="section level2">
 <h2><span class="header-section-number">7.6</span> Summary</h2>
@@ -883,13 +892,16 @@ A typical 10-fold cross-validation data set split. <br>Source: <a href="https://
 </figcaption>
 </figure>
 </center>
-<p>The overall workflow for performing K-nearest neighbour classification in <code>caret</code> is as follows:</p>
+<p>The overall workflow for performing K-nearest neighbour classification using <code>tidymodels</code> is as follows:</p>
 <ol style="list-style-type: decimal">
-<li>Use the <code>createDataPartition</code> function to split the data into a training and test set. Put the test set aside for now.</li>
-<li>Use the <code>trainControl</code> function to specify whether to use cross-validation and how many folds</li>
-<li>Use the <code>train</code> function to train and evaluate the classifier for different values of <span class="math inline">\(K\)</span></li>
-<li>Retrain the classifier on <em>all</em> the training data, using the best parameter from the previous step</li>
-<li>Evaluate the estimated accuracy of the classifier on the test set</li>
+<li>Use the <code>initial_split</code> function to split the data into a training and test set. Set the <code>strata</code> argument to the target variable. Put the test set aside for now.</li>
+<li>Use the <code>vfold_cv</code> function to split up the training data for cross validation.</li>
+<li>Create a <code>recipe</code> that specifies the target and predictor variables, as well as preprocessing steps for all variables. Pass the training data as the <code>data</code> argument of the recipe.</li>
+<li>Create a <code>nearest_neighbors</code> model specification, with <code>neighbors = tune()</code>.</li>
+<li>Add the recipe and model specification to a <code>workflow()</code>, and use the <code>tune_grid</code> function on the train/validation splits to estimate the classifier accuracy for a range of <span class="math inline">\(K\)</span> values.</li>
+<li>Pick a value of <span class="math inline">\(K\)</span> that yields a high accuracy estimate that doesn’t change much if you change <span class="math inline">\(K\)</span> to a nearby value.</li>
+<li>Make a new model specification for the best parameter value, and retrain the classifier using the <code>fit</code> function.</li>
+<li>Evaluate the estimated accuracy of the classifier on the test set using the <code>predict</code> function.</li>
 </ol>
 <p><strong>Strengths:</strong></p>
 <ol style="list-style-type: decimal">
