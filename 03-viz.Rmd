@@ -112,16 +112,18 @@ options(warn=-1)
 
 
 ### The Mauna Loa CO2 data set 
- This data set contains the atmospheric concentration of carbon dioxide (CO2, in parts per million) at the Mauna Loa research station in Hawaii 
-from the years 1959-1997. **Question:** Does the concentration of atmospheric CO2 change over time, and are there any interesting patterns to note?
+ The [Mauna Loa CO2 data set](https://www.esrl.noaa.gov/gmd/ccgg/trends/data.html), curated by [Dr. Pieter Tans, NOAA/GML](https://www.esrl.noaa.gov/gmd/staff/Pieter.Tans/) and [Dr. Ralph Keeling, Scripps Institution of Oceanography](https://scrippsco2.ucsd.edu/)
+records the atmospheric concentration of carbon dioxide (CO2, in parts per million) at the Mauna Loa research station in Hawaii from 1959 onwards. **Question:** Does the concentration of atmospheric CO2 change over time, and are there any interesting patterns to note?
 ```{r 03-data-co2, warning=FALSE, message=FALSE}
 # mauna loa carbon dioxide data 
-co2_df <- read_csv("data/maunaloa.csv")
+co2_df <- read_csv("data/mauna_loa.csv") %>%
+		filter(ppm > 0, date_decimal < 2000)
 head(co2_df)
 ```
 
 Since we are investigating a relationship between two variables (CO2 concentration and date), a scatter plot is a good place to start. Scatter plots 
-show the data as individual points with `x` (horizonal axis) and `y` (vertical axis) coordinates. Here, we will use the date as the `x` coordinate 
+show the data as individual points with `x` (horizonal axis) and `y` (vertical axis) coordinates. Here, we will use the decimal
+ date as the `x` coordinate 
 and CO2 concentration as the `y` coordinate. When using the `ggplot2` library, we create the plot object with the `ggplot` function; there are 
 a few basic aspects of a plot that we need to specify:
 
@@ -129,7 +131,7 @@ a few basic aspects of a plot that we need to specify:
     - here, we specify the `co2_df` dataframe
 - the *aesthetic mapping*: tells `ggplot` how the columns in the dataframe map to properties of the visualization
     - to create an aesthetic mapping, we use the `aes` function
-    - here, we set the plot `x` axis to the `date` variable, and the plot `y` axis to the `concentration` variable
+    - here, we set the plot `x` axis to the `date_decimal` variable, and the plot `y` axis to the `ppm` variable
 - the *geometric object*: specifies how the mapped data should be displayed
     - to create a geometric object, we use a `geom_*` function (see the [ggplot reference](https://ggplot2.tidyverse.org/reference/) for a list of geometric objects)
     - here, we use the `geom_point` function to visualize our data as a scatterplot
@@ -138,7 +140,7 @@ There are many other possible arguments we could pass to the aesthetic mapping a
 the purposes of quickly testing things out to see what they look like, though, we can just go with the default settings:
 
 ```{r 03-data-co2-scatter, warning=FALSE, message=FALSE}
-co2_scatter <- ggplot(co2_df, aes(x = date, y = concentration)) + 
+co2_scatter <- ggplot(co2_df, aes(x = date_decimal, y = ppm)) + 
 		geom_point() 
 co2_scatter
 ```
@@ -150,7 +152,7 @@ that the data are ordered by their `x` coordinate, and connect the sequence of `
 the default arguments: 
 
 ```{r 03-data-co2-line, warning=FALSE, message=FALSE}
-co2_line <- ggplot(co2_df, aes(x = date, y = concentration)) + 
+co2_line <- ggplot(co2_df, aes(x = date_decimal, y = ppm)) + 
 		geom_line() 
 co2_line
 ```
@@ -165,7 +167,7 @@ visual noise to remove. But there are a few things we must do to improve clarity
 In order to add axis labels we use the `xlab` and `ylab` functions. To change the font size we use the `theme` function with the `text` argument:
 
 ```{r 03-data-co2-line-2, warning=FALSE, message=FALSE}
-co2_line <- ggplot(co2_df, aes(x = date, y = concentration)) + 
+co2_line <- ggplot(co2_df, aes(x = date_decimal, y = ppm)) + 
                    geom_line() +
                    xlab('Year') +
                    ylab('Atmospheric CO2 (ppm)') + 
@@ -181,7 +183,7 @@ We can transform the axis by passing the `trans` argument, and set limits by pas
 will use the `scale_x_continuous` function with the `limits` argument to zoom in on just five years of data (say, 1990-1995):
 
 ```{r 03-data-co2-line-3, warning=FALSE, message=FALSE}
-co2_line <- ggplot(co2_df, aes(x = date, y = concentration)) + 
+co2_line <- ggplot(co2_df, aes(x = date_decimal, y = ppm)) + 
                    geom_line() +
                    xlab('Year') +
                    ylab('Atmospheric CO2 (ppm)') + 

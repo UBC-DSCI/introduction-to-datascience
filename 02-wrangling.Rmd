@@ -106,7 +106,9 @@ Data is often stored in a wider, not tidy, format because this format is often m
 
 ```{r 02-tidyverse, warning=FALSE, message=FALSE}
 library(tidyverse)
-hist_vote_wide <- read_csv("data/historical_vote_wide.csv")
+hist_vote_wide <- read_csv("data/us_vote.csv") 
+hist_vote_wide <- select(hist_vote_wide, election_year, winner, runnerup)
+hist_vote_wide <- tail(hist_vote_wide, 10)
 hist_vote_wide
 ```
 
@@ -262,12 +264,12 @@ us_data
 ```
 
 Suppose we want to create a subset of the data with only the values for median income and median property value for the state of 
-California ("CA"). To do this, we can use the functions `filter` and `select`. First we use `filter` to create a data frame called `ca_prop_data` that 
+California. To do this, we can use the functions `filter` and `select`. First we use `filter` to create a data frame called `ca_prop_data` that 
 contains only values for the state of California. We then use `select` on this data frame to keep only the median income and 
 median property value variables:
 
 ```{r}
-ca_prop_data <- filter(us_data, state == "CA")
+ca_prop_data <- filter(us_data, state == "California")
 ca_inc_prop <- select(ca_prop_data, med_income, med_prop_val)
 ca_inc_prop
 ```
@@ -277,7 +279,8 @@ we do not need to create an intermediate object to store the output from `filter
 output of `filter` to the input of `select`:
 
 ```{r}
-ca_inc_prop <- filter(us_data, state == "CA") %>% select(med_income, med_prop_val)
+ca_inc_prop <- filter(us_data, state == "California") %>% 
+                    select(med_income, med_prop_val)
 ca_inc_prop
 ```
 
@@ -295,15 +298,15 @@ example, we can pipe together three functions to order the states by commute tim
 is less than 1 million people:
 
 ```{r}
-small_state_commutes <- filter(us_data, population < 1000000) %>% 
-  select(state, mean_commute_minutes) %>% 
-  arrange(mean_commute_minutes)
+small_state_commutes <- filter(us_data, pop < 1000000) %>% 
+  select(state, avg_commute) %>% 
+  arrange(avg_commute)
 small_state_commutes
 ```
 
 > **Note:**: `arrange` is a function that takes the name of a data frame and one or more column(s), and returns a 
 > data frame where the rows are ordered by those columns in ascending order. Here we used only one column for sorting 
-> (`mean_commute_minutes`), but more than one can also be used. To do this, list additional columns separated by commas. 
+> (`avg_commute`), but more than one can also be used. To do this, list additional columns separated by commas. 
 > The order they are listed in indicates the order in which they will be used for sorting. This is much like how an English
 > dictionary sorts words: first by the first letter, then by the second letter, and so on.
 >
@@ -323,9 +326,9 @@ and mean commute time for all US states:
 
 ```{r}
 us_commute_time_summary <- summarize(us_data, 
-                                  min_mean_commute = min(mean_commute_minutes),
-                                  max_mean_commute = max(mean_commute_minutes),
-                                  mean_mean_commute = mean(mean_commute_minutes))
+                                  min_mean_commute = min(avg_commute),
+                                  max_mean_commute = max(avg_commute),
+                                  mean_mean_commute = mean(avg_commute))
 us_commute_time_summary
 ```
 
@@ -341,9 +344,9 @@ columns separated by commas.
 
 ```{r}
 us_commute_time_summary_by_party <- group_by(us_data, party) %>% 
-  summarize(min_mean_commute = min(mean_commute_minutes),
-            max_mean_commute = max(mean_commute_minutes),
-            mean_mean_commute = mean(mean_commute_minutes))
+  summarize(min_mean_commute = min(avg_commute),
+            max_mean_commute = max(avg_commute),
+            mean_mean_commute = mean(avg_commute))
 us_commute_time_summary_by_party
 ```
 
