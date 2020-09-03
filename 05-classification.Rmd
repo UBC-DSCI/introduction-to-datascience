@@ -25,7 +25,7 @@ predictions from our classifier are, as well as how to improve our classifier
 - Perform K-nearest neighbour classification in R using `tidymodels`  
 - Explain why one should center, scale, and balance data in predictive modelling
 - Preprocess data to center, scale, and balance a dataset using a `recipe` 
-- Combine preprocessing and model training using a `workflow`
+- Combine preprocessing and model training using a Tidymodels `workflow`
 
 
 ## The classification problem
@@ -483,7 +483,7 @@ many [other models](https://www.tidymodels.org/find/parsnip/)
  that you will encounter in this and future classes. The `tidymodels` collection
 provides tools to help make and use models, such as classifiers.  Using the packages
 in this collection will help keep our code simple, readable and accurate; the 
-less we have to code ourselves, the less mistakes we are likely to make. We 
+less we have to code ourselves, the fewer mistakes we are likely to make. We 
 start off by loading `tidymodels`:
 
 ```{r 05-tidymodels}
@@ -504,7 +504,12 @@ head(cancer_train)
 
 Next, we create a *model specification* for K-nearest neighbours classification
 by calling the `nearest_neighbor` function, specifying that we want to use $K = 5$ neighbours
-(we will discuss how to choose $K$ in the next chapter) and the straight-line distance (`weight_func = "rectangular"`). 
+(we will discuss how to choose $K$ in the next chapter) and the straight-line 
+distance (`weight_func = "rectangular"`). The `weight_func` argument controls
+how neighbours vote when classifying a new observation; by setting it to `"rectangular"`,
+each of the $K$ nearest neighbours gets exactly 1 vote as described above. Other choices, 
+which weight each neighbour's  vote differently,  can be found on 
+[the tidymodels website](https://parsnip.tidymodels.org/reference/nearest_neighbor.html).
 We specify the particular computational
 engine (in this case, the `kknn` engine) for training the model with the `set_engine` function.
 Finally we specify that this is a classification problem with the `set_mode` function.
@@ -513,6 +518,7 @@ Finally we specify that this is a classification problem with the `set_mode` fun
 knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 5) %>%
        set_engine("kknn") %>%
        set_mode("classification")
+knn_spec
 ```
 
 In order to fit the model on the breast cancer data, we need to pass the model specification
@@ -526,6 +532,15 @@ knn_fit <- knn_spec %>%
         fit(Class ~ ., data = cancer_train)
 knn_fit
 ```
+Here you can see the final trained model summary. It confirms that the computational engine used
+to train the model  was `kknn::train.kknn`. It also shows the fraction of errors made by
+the nearest neighbour model, but we will ignore this for now and discuss it in more detail
+in the next chapter.
+Finally it shows (somewhat confusingly) that the "best" weight function 
+was "rectangular" and "best" setting of $K$ was 5; but since we specified these earlier,
+R is just repeating those settings to us here. In the next chapter, we will actually
+let R tune the model for us. 
+
 Finally, we make the prediction on the new observation by calling the `predict` function,
 passing the fit object we just created. As above when we ran the K-nearest neighbours
 classification algorithm manually, the `knn_fit` object classifies the new observation as 
@@ -623,8 +638,7 @@ For example:
 
 You can find [a full set of all the steps and variable selection functions](https://tidymodels.github.io/recipes/reference/index.html)
 on the recipes home page.
-We now use the `prep` function to create an object that represents how to apply the recipe
-to our `unscaled_cancer` dataframe, and then the `bake` function to apply the recipe.
+We finally use the `bake` function to apply the recipe.
 ```{r 05-scaling-4}
 scaled_cancer <- bake(uc_recipe, unscaled_cancer)
 head(scaled_cancer)
@@ -908,6 +922,11 @@ knn_fit <- workflow() %>%
 	fit(data = unscaled_cancer)
 knn_fit
 ```
+As before, the fit object lists the function that trains the model as well as the "best" settings
+for the number of neighbours and weight function (for now, these are just the values we chose
+ manually when we created `knn_spec` above). But now the fit object also includes information about
+the overall workflow, including the centering and scaling preprocessing steps.
+
 Let's visualize the predictions that this trained K-nearest neighbour model will make on new observations.
 Below you will see how to make the coloured prediction map plots from earlier in this chapter.
 The basic idea is to create a grid of synthetic new observations using the `expand.grid` function, 
