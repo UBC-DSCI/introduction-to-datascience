@@ -2,14 +2,12 @@
 
 
 ## Overview
-Recall from Chapter 1, one of the data analysis questions we often want to answer is an *inferential question* where we make conclusions about some unknown aspect of a population of interest based on observed data sampled from that population. Statistical inference can help us decide if differences we observe between groups' responses exist in the broader population. 
+Recall from Chapter 1, one of the data analysis questions we often want to answer is an *inferential question* where we make conclusions about some unknown aspect of a population of interest based on observed data sampled from that population. Statistical inference is a data analysis question where we want to look for patterns, trends, or relationships in a dataset and decide how applicable these findings are to the wider population. This chapter will start with fundamental ideas of sampling and will work our way to introduce two forms of statistical inference: 
 
-This chapter will start with fundamental ideas of sampling and will work our way to introduce two forms of statistical inference: 
-
-* Point Estimation 
+* Point Estimation  
 * Interval Estimation
 
-Point estimation and interval estimate are two methods of making conclusions about the population using our sample. The term "statistical inference" encompasses a wide range of techniques, and there are many complexities for performing inference. There are other inference methods that we will not discuss in this chapter. However, this chapter will provide you with a broad introduction to sampling and statistical inference. 
+Point estimation and interval estimation are two methods of making conclusions about the population using our sample. The term "statistical inference" encompasses a wide range of techniques, and there are many complexities for performing inference. There are other inference methods that we will not discuss in this chapter. However, this chapter will provide you with a broad introduction to sampling and statistical inference. 
 
 ## Chapter learning objectives 
 By the end of the chapter, students will be able to:
@@ -23,28 +21,106 @@ By the end of the chapter, students will be able to:
 * Describe how sample size influences the sampling distribution.
 
 ## Why do we need sampling? 
-Statistical inference is a data analysis question where we want to look for patterns, trends, or relationships in a dataset and decide how applicable these findings are to the wider population. For example, we might use statistical inference to help us answer questions. For instance, a market researcher may be interested in knowing (1) What proportion of all undergraduate students in North America have an iPhone? Or a real estate analyst may want to know (2) What is the average price of all one-bedroom apartments in Vancouver, Canada?
+Statistical inference can help us decide if differences we observe between groups' responses exist in the broader population. We might use statistical inference to help us answer questions, for instance
 
-In the above questions, we are interested in making conclusions about all one-bedroom apartments in Vancouver, Canada, and all undergraduate students in North America, which represent our populations of interest. A **population** is the complete collection of individuals or cases we are interested in studying. The proportion of the undergraduate students in North America with an iPhone is a **population parameter**. A population parameter is a numerical characteristic of the population. If we asked every single undergraduate in North America whether they own an iPhone or not and calculated the proportion of students that did -- that number would be our population parameter. Collecting information about the population means we would be conducting a *census*, which would provide all of the characteristics of the population. However, in practice, a census is often time-consuming, costly and sometimes impossible. Imagine trying to ask every undergraduate student in North America if they have an iPhone! Therefore a more practical approach would be to take a **sample**, a subset of individuals collected from the population. We may choose a sample from our population and use the observed data to infer the proportion of undergraduate students in North America who have an iPhone. A **sample statistic** is a numerical characteristic of the sample. For example, if we randomly selected 10 undergraduate students in North America and found the proportion of those 10 students who had an iPhone -- that number would be our sample statistic. 
+(1) A market researcher may be interested in knowing: what proportion of all undergraduate students in North America own an iPhone? 
 
-In the first question, the population parameter that we infer about is the population proportion, the proportion of the undergraduate students in North America with an iPhone.The average price of all one-bedroom apartments in Vancouver, Canada is another population parameter, specifically the population mean. When the variable of interest is categorical, the population parameter that we will infer about is the population proportion. When the variable of interest in quantitative the population parameter that we infer about is the population mean. 
-These questions are examples of *point estimation*, where we estimate our population parameter using a single value. 
+(2) Or a real estate analyst may want to know: what is the average price of all one-bedroom apartments in Vancouver, Canada?
 
+In the above questions, we are interested in making conclusions about all undergraduate students in North America and all one-bedroom apartments in Vancouver, Canada, which represent our populations of interest. A **population** is the complete collection of individuals or cases we are interested in studying. The proportion of the undergraduate students in North America with an iPhone is a **population parameter**. A population parameter is a numerical characteristic of the population. If we asked every single undergraduate in North America whether they own an iPhone or not and calculated the proportion of students that did -- that number would be our population parameter. Collecting information about the population means we would be conducting a *census*, which would provide all of the characteristics of the population. However, in practice, a census is often time-consuming, costly and sometimes impossible. Imagine trying to ask every undergraduate student in North America if they have an iPhone! Therefore a more practical approach would be to take a **sample**, a subset of individuals collected from the population. We may choose a sample from our population and use the observed data to infer the proportion of undergraduate students in North America who have an iPhone. A **sample statistic** is a numerical characteristic of the sample. For example, if we randomly selected 10 undergraduate students in North America and found the proportion of those 10 students who had an iPhone -- that number would be our sample statistic. 
 
 INSERT PICTURE 
 
-**An illustrative example** 
+In the first question, the population parameter that we infer about is the population proportion, the proportion of all undergraduate students in North America with an iPhone.The average price of all one-bedroom apartments in Vancouver, Canada is another population parameter, specifically the population mean. When the variable of interest is categorical, the population parameter that we will infer about is the population proportion. When the variable of interest in quantitative the population parameter that we infer about is the population mean. These questions are examples of *point estimation*, where we estimate our population parameter using a single value. 
 
-timbits -- calculate proportion -- this proportion is our sample proportion estimate of the population proportion  
+## Sampling distributions for proportions
+
+Let's start with an illustrative (and tasty!) example. Timbits are small, bite-sized doughnuts sold at a popular Canadian-based fast food restaurant chain founded in Hamilton, Ontario Canada.
+
+![Timbits. Source: wikimedia.org](https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Timbits2.jpg/1600px-Timbits2.jpg){width=50%}
+
+Suppose we want to estimate the true proportion of chocolate doughnuts at Tim Hortons restaurants. In this example, we will make a simulated dataset of timbits. In reality, we rarely have measurements for our entire population. However, in this chapter we will pretend that we do so that we can learn about sampling and estimation. Let's simulate a box of 10,000 timbits. Below we are creating a `tibble()` with id, and the type of timbit, either old fashioned and chocolate as our columns.
+
+```{r 10-example-proportions, echo = TRUE, message = FALSE, warning = FALSE}
+library(tidyverse) 
+library(ggplot2)
+library(infer)
+set.seed(1234)
+virtual_box <- tibble(timbit_id = seq(1, 10000, by = 1),
+                     color = factor(rbinom(10000, 1, 0.63),
+                     labels = c("old fashioned", "chocolate")))
+head(virtual_box)
+```
+
+From our simulated box we can see that the proportion of chocolate timbits is 0.63. This value, 0.63, is our population parameter. In real life, this parameter value is usually unknown, and our aim is to try and estimate it. 
+```{r 10-example-proportions2, echo = TRUE, message = FALSE, warning = FALSE}
+virtual_box %>% 
+    group_by(color) %>% 
+    summarize(n = n(),
+             proportion = n() / 10000)
+```
+
+Suppose we buy a box of 40 timbits and count the number of chocolate timbits. Let's take a random sample of size 40 from our timbits population. The function `rep_sample_n` from the `infer` package will allow us to sample. We input the data frame from which to sample and the size of the sample in the arguments `tbl` and `size` respectively below.
+
+```{r 10-example-proportions3, echo = TRUE, message = FALSE, warning = FALSE}
+samples_1 <- rep_sample_n(tbl = virtual_box, size = 40)
+choc_sample_1 <- summarize(samples_1, n = sum(color == "chocolate"),
+                                        prop = sum(color == "chocolate") / 40)
+choc_sample_1
+```
+Here we see that the proportion of chocolate timbits in this random sample is 0.50. This value, 0.50, is our sample statistic and it serves as our estimate of the population proportion. Here we are using a single number from the sample data to estimate our population parameter. So we are doing what's known as **point estimation**.
+
+Imagine we took another random sample of 40 timbits from the population, do you think you would get the exact same proportion? Let's try sampling from the population again.
+```{r 10-example-proportions4, echo = TRUE, message = FALSE, warning = FALSE}
+set.seed(2)
+samples_2 <- rep_sample_n(virtual_box, size = 40)
+choc_sample_2 <- summarize(samples_2, n = sum(color == "chocolate"),
+                                        prop = sum(color == "chocolate") / 40)
+choc_sample_2
+```
+Notice that we get a different value for our statistic this time. The proportion of chocolate timbits in this sample is 0.675. If we were to do this again, another random sample could again give a different result. 
+
+This is what is known as **sampling variability**. Statistics vary from sample to sample due to sampling variability. But just how much should we expect the statistics of our random samples to vary? It will help us to understand the behaviour of our sample statistics to answer this, therefore we will simulate more from our population of timbits to observe this behaviour. 
+
+To do this we will take many random samples, and for each sample calculate the proportion of chocolate timbits. We can then plot the different sample proportions we calculate to see how much we would expect our sample proportions from this population to vary for samples of size 40. Below we are taking samples of size 40 from the population, and then repeating that process 1000 times by specifying the number of samples of size $n$ to take in the `reps` argument.
+
+```{r 10-example-proportions5, echo = TRUE, message = FALSE, warning = FALSE}
+samples <- rep_sample_n(virtual_box, size = 40, reps = 1000)
+head(samples)
+tail(samples)
+```
+
+Notice the column `replicate` is indicating to us which replicate each timbit belongs to. Since we were doing this 1000 times there are 1000 replicates.
+
+```{r 10-example-proportions6, echo = TRUE, message = FALSE, warning = FALSE}
+sample_estimates <- samples %>% 
+    group_by(replicate) %>% 
+    summarise(sample_proportion = sum(color == "chocolate") / 40)
+head(sample_estimates)
+tail(sample_estimates)
+```
+```{r 10-example-proportions7, echo = TRUE, message = FALSE, warning = FALSE}
+sampling_distribution <-  ggplot(sample_estimates, aes(x = sample_proportion)) +
+    geom_histogram(binwidth = 0.05) +
+    xlab("Sample proportions") +
+    ggtitle("Sampling distribution of the sample proportion") 
+sampling_distribution
+```
+
+> **Note:** If random samples of size $n$ are taken from a population, $\hat{p}$ will be approximately Normal with mean $p$ and standard deviation $\sqrt{\frac{p(1-p)}{n}}$ as long as the sample size $n$ is large enough such that $np$ and $n(1 - p)$ are at least 10, where $p$ is the population proportion, $\hat{p}$ is the sample proportion and $n$ is the sample size. 
 
 
-Suppose we have customer data with two variables measuring
-customer loyalty and satisfaction, and we want to learn whether there are distinct "types"
-of customer. Understanding this might help us come up with better products or
-promotions to improve our business in a data-driven way.
+##Sampling distributions for means 
+source: http://insideairbnb.com/
 
-```{r 10-toy-example-data, echo = FALSE, message = FALSE, warning = FALSE}
-library(tidyverse)
+
+```{r 10-example-means, echo = FALSE, message = FALSE, warning = FALSE}
+airbnb <- read_csv("data/listings.csv") %>% 
+  select(id, neighbourhood = neighbourhood_cleansed, room_type, accommodates, bathrooms = bathrooms_text, bedrooms, beds,  price) %>% 
+  mutate(price = as.numeric(str_remove(price, "[$]")))
+head(airbnb)
+```
+```{r 10-clustering}
 data <- tibble(loyalty = c(7, 7.5, 8, 7, 3, 1, 8, 4, 2, 7, 6, 7, 6, 5, 9, 7, 9, 5, 2),
                csat = c(1, 1, 2, 2, 2, 3, 3, 4, 4, 6, 6, 7, 7, 7, 8, 8, 9, 9, 3),
                cluster = c("1",
@@ -67,8 +143,6 @@ data <- tibble(loyalty = c(7, 7.5, 8, 7, 3, 1, 8, 4, 2, 7, 6, 7, 6, 5, 9, 7, 9, 
                            "2", 
                            "3"))
 marketing_data <- data[,1:2]
-```
-```{r 10-clustering}
 head(marketing_data)
 
 ```{r 10-toy-example-plot, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Modified from http://www.segmentationstudyguide.com/using-cluster-analysis-for-market-segmentation/"}
