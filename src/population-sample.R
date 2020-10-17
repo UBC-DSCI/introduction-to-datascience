@@ -75,9 +75,7 @@ text(110, -80, "Statistic", font = 2)
 
 text(110, -90, expression(italic(hat(p)) * "= 6/10 = 0.60" ))
 text(110, -98, "(proportion of sample who own an iPhone)")
-curvedarrow(c(90, -81), c(35,-81), lwd = 2, lty = 1, lcol = "black", 
-            arr.col = "black", arr.pos = 1, curve = 0, dr = 0.1, 
-            endhead = T)
+arrows(90, -81, 35, -81, length = 0.1, lwd = 2)
 text(60, -72, "Point Estimation", font = 2)
 
 arrows(0, -50, 0, -75, length = 0.1, lwd = 2)

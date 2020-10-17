@@ -19,6 +19,9 @@ By the end of the chapter, students will be able to:
 * Use R to draw random samples from a finite population.
 * Use R to create a sampling distribution from a finite population.
 * Describe how sample size influences the sampling distribution.
+* Define bootstrapping.
+* Use R to created bootstrap distribution to approximate a sampling distribution.
+* Contrast bootstrap and sampling distributions.
 
 ## Why do we need sampling? 
 Statistical inference can help us decide if differences we observe between groups' responses exist in the broader population. We might use statistical inference to help us answer questions, such as
@@ -30,13 +33,15 @@ Statistical inference can help us decide if differences we observe between group
 In the above questions, we are interested in making conclusions about all undergraduate students in North America and all one-bedroom apartments in Vancouver, Canada, which represent our populations of interest. A **population** is the complete collection of individuals or cases we are interested in studying. The proportion of the undergraduate students in North America with an iPhone is a **population parameter**. A population parameter is a numerical characteristic of the population. If we asked every single undergraduate in North America whether they own an iPhone or not and calculated the proportion of students that did -- that number would be our population parameter. Collecting information about the population means we would be conducting a *census*, which would provide all of the characteristics of the population. However, in practice, a census is often time-consuming, costly and sometimes impossible. Imagine trying to ask every undergraduate student in North America if they have an iPhone! Therefore a more practical approach would be to take a **sample**, a subset of individuals collected from the population. We may choose a sample from our population and use the observed data to infer the proportion of undergraduate students in North America who have an iPhone. A **sample statistic** is a numerical characteristic of the sample. For example, if we randomly selected 10 undergraduate students in North America and found the proportion of those 10 students who had an iPhone -- that number would be our sample statistic. 
 
 <center>
-![Population versus sample](img/population_vs_sample.svg){}
+![Figure 11.1: Population versus sample](img/population_vs_sample.svg){}
 </center>
 
 
 In the first question, the population parameter that we infer about is the population proportion, the proportion of all undergraduate students in North America with an iPhone. The average price of all one-bedroom apartments in Vancouver, Canada is another population parameter, specifically the population mean. When the variable of interest is categorical, the population parameter that we will infer about is the population proportion. When the variable of interest is quantitative the population parameter that we infer about is the population mean. These questions are examples of *point estimation*, where we estimate our population parameter using a single value. 
 
-## Sampling distributions for proportions
+## Sampling distributions
+
+### Sampling distributions for proportions
 
 Let's start with an illustrative (and tasty!) example. Timbits are small, bite-sized doughnuts sold at a popular Canadian-based fast food restaurant chain founded in Hamilton, Ontario Canada.
 
@@ -104,11 +109,10 @@ head(sample_estimates)
 tail(sample_estimates)
 ```
 
-```{r 10-example-proportions7, echo = TRUE, message = FALSE, warning = FALSE}
+```{r 10-example-proportions7, echo = TRUE, message = FALSE, warning = FALSE,fig.cap = "Sampling distribution of the sample proportion for sample size 40"}
 sampling_distribution <-  ggplot(sample_estimates, aes(x = sample_proportion)) +
     geom_histogram(fill="#0072B2", color="#e9ecef",binwidth = 0.05) +
-    xlab("Sample proportions") +
-    ggtitle("Sampling distribution of the sample proportion") 
+    xlab("Sample proportions") 
 sampling_distribution
 ```
 The sampling distribution appears to be bell-shaped with one peak. It is centered around `r round(mean(sample_estimates$sample_proportion),1)` and the sample proportions range from about `r round(min(sample_estimates$sample_proportion), 1)` to about `r round(max(sample_estimates$sample_proportion), 1)`. In fact, we could calculate the mean and standard deviation of the sample proportions. 
@@ -122,69 +126,92 @@ We notice that the sample proportions are centered around the population proport
 > **Note:** If random samples of size $n$ are taken from a population, $\hat{p}$ will be approximately Normal with mean $p$ and standard deviation $\sqrt{\frac{p(1-p)}{n}}$ as long as the sample size $n$ is large enough such that $np$ and $n(1 - p)$ are at least 10, where $p$ is the population proportion, $\hat{p}$ is the sample proportion and $n$ is the sample size. 
 
 
-## Sampling distributions for means 
-In the previous section our variable of interest, type of timbit, was categorical, and the population parameter that we inferred about was the population proportion. What if we want to infer something about a quantitative variable? For instance, suppose we were interested in estimating the average price of all Airbnb rentals in Vancouver, Canada. If the variable of interest is quantitative the population parameter that we infer about is the population mean. Airbnb is an online marketplace for arranging or offering lodging. The dataset contains Vancouver in September 2020 from the following source:
-http://insideairbnb.com/.
+### Sampling distributions for means 
+In the previous section our variable of interest, type of timbit, was categorical, and the population parameter that we inferred about was the population proportion. What if we want to infer something about a quantitative variable? If the variable of interest is quantitative the population parameter that we infer about is the population mean. 
 
-Let's imagine that we had the population data for all airbnb listings in Vancouver. Remember, in reality, we rarely have measurements for our entire population, however, for this example we will pretend that we do so that we can learn about sampling and estimation for sample means.
+Here we will look at an example with Airbnb data. Airbnb is an online marketplace for arranging or offering lodging.  The dataset contains Airbnb listings for Vancouver, Canada in September 2020 from [Inside Airbnb](http://insideairbnb.com/). ****** Add something about inside airbnb 
+Suppose we were interested in estimating the average price per night of all Airbnb rentals in Vancouver, Canada. Let's imagine that we have the population data for all airbnb listings in Vancouver. Remember, in reality, we rarely have measurements for our entire population, however, for this example we will pretend that we do so that we can learn about sampling and estimation for sample means. our data contains an id number, neighbourhood, type of room, the number of people that the rental accommodates, number of bathrooms, bedrooms, and beds and finally the price per night of the listing. 
 ```{r 10-example-means1, echo = FALSE, message = FALSE, warning = FALSE}
 airbnb <- read_csv("data/listings.csv") %>% 
   select(id, neighbourhood = neighbourhood_cleansed, room_type, accommodates, bathrooms = bathrooms_text, bedrooms, beds,  price) %>% 
   mutate(price = as.numeric(str_remove(price, "[$]"))) %>% 
   na.omit()
+airbnb <- airbnb %>% 
+  mutate(id = 1:nrow(airbnb))
+head(airbnb)
 ```
 
-```{r 10-example-means2, echo = TRUE, message = FALSE, warning = FALSE}
+We can visualize the population distribution with a histogram. 
+```{r 10-example-means2, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Population distribution of price per night ($) for all Airbnb listings in Vancouver, Canada"}
 population_distribution <-  ggplot(airbnb, aes(x = price)) +
     geom_histogram(fill="#0072B2", color="#e9ecef") +
-    xlab("Price ($)") +
-    ggtitle("Population distribution of price") 
+    xlab("Price per night ($)") 
 population_distribution
 population_parameters <- airbnb %>% 
     summarize(pop_mean = mean(price),
              pop_sd = sd(price))
 population_parameters
+
+mean(airbnb$price)
 ```
+We see that the distribution has peak and is skewed -- most of the listings are less than \$250 per night, but a small proportion of listings cost more than that creating a long tail on the right side of the histogram. Here we can see the population mean is \$`r round(population_parameters$pop_mean,2)` and the population standard deviation is \$`r round(population_parameters$pop_sd, 2)`.
 
-
-
-```{r 10-example-means3, echo = TRUE, message = FALSE, warning = FALSE}
+We can take a sample of 20 observations and create a histogram to visualize the distribution and calculate point estimates for the mean and standard deviation.
+```{r 10-example-means3, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Distribution of price per night ($) for sample of 20 Airbnb listings"}
 sample_1 <- airbnb %>% 
     rep_sample_n(20)
 head(sample_1)
 sample_distribution <- ggplot(sample_1, aes(price)) + 
     geom_histogram(fill="#0072B2", color="#e9ecef") +
-    xlab("Price ($)") +
-    ggtitle("Distribution of sample")
+    xlab("Price per night ($)") 
 sample_distribution
+estimates <- sample_1 %>% 
+    summarize(sample_mean = mean(price),
+             sample_sd = sd(price))
+estimates
 ```
-
-```{r 10-example-means4, echo = TRUE, message = FALSE, warning = FALSE}
+Remember that the population mean was \$`r round(population_parameters$pop_mean,2)` and the population standard deviation was \$`r round(population_parameters$pop_sd,2)`. We see that our point estimates for the mean and standard deviation are \$`r round(estimates$sample_mean,2)` and  \$`r round(estimates$sample_sd,2)` respectively. So how good was our estimate? Remember in practice, we don't usually have access to population data. If we took another random sample from the population then the value of our statistic may change. So we might want to consider how far an estimate of the parameter could be away from the true population parameter? We might also want to know how often that might occur? Therefore again it will help to investigate the set of all possible values that a statistic could take on. 
+```{r 10-example-means4, echo = TRUE, message = FALSE, warning = FALSE, fig.cap= "Sampling distribution of the sample means for sample size of 20"}
 samples <- rep_sample_n(airbnb, size = 20, reps = 1500)
+head(samples)
 
 sample_estimates <- samples %>% 
     group_by(replicate) %>% 
     summarise(sample_mean = mean(price))
+head(sample_estimates)
 
 sampling_distribution_20 <-  ggplot(sample_estimates, aes(x = sample_mean)) +
-    geom_histogram(fill="#0072B2", color="#e9ecef") +
-    xlab("Sample mean price ($)") +
-    ggtitle("Sampling distribution of the sample means") 
-
-grid.arrange(population_distribution, sample_distribution, sampling_distribution_20, nrow = 3)
+    geom_histogram(fill="#0072B2", color="#e9ecef") + 
+    xlab("Sample mean price per night ($)") 
+sampling_distribution_20
 ```
 
+Here we see that the sampling distribution of the mean has one peak and is bell shaped. Most of the estimates are between about  \$`r round(quantile(sample_estimates$sample_mean)[2], -1)` and \$`r round(quantile(sample_estimates$sample_mean)[4], -1)`.
 
-```{r 10-example-means5, echo = TRUE, message = FALSE, warning = FALSE}
+```{r}
+sample_estimates %>% 
+  summarise(mean_of_sample_means = mean(sample_mean))
+```
+Notice as well that the mean of the sample means is `r round(mean(sample_estimates$sample_mean),2)`. Recall that the population mean was \$`r round(mean(airbnb$price),2)`.
+We can compare the distribution of the population, distribution of the sample and the sampling distribution on one graph. 
+
+```{r 10-example-means5, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of population distribution, sample distribution and sampling distribution"}
+grid.arrange(population_distribution + ggtitle("Distribution of population"), 
+             sample_distribution + ggtitle("Distribution of sample"), 
+             sampling_distribution_20 + ggtitle("Sampling distribution of sample mean"), nrow = 3)
+```
+
+Can we do better than that? What if we increase the sample size? Again we will take a random sample of a certain size from the population, calculate the the sample mean and then do that repeatedly. You can compare the population distribution and the sampling distributions for samples of size 20, 50 and 100 below. 
+
+```{r 10-example-means6, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of population distribution and sampling distributions for size 20, 50 and 100"}
 sample_estimates_50 <- rep_sample_n(airbnb, size = 50, reps = 1500) %>% 
     group_by(replicate) %>% 
     summarise(sample_mean = mean(price))
 
 sampling_distribution_50 <-  ggplot(sample_estimates_50, aes(x = sample_mean)) +
     geom_histogram(fill="#0072B2", color="#e9ecef") +
-    xlab("Sample mean price ($)") +
+    xlab("Sample mean price per night($)") +
     ggtitle("n = 50")
-sampling_distribution_50
 
 sample_estimates_100 <- rep_sample_n(airbnb, size = 100, reps = 1500) %>% 
     group_by(replicate) %>% 
@@ -192,17 +219,132 @@ sample_estimates_100 <- rep_sample_n(airbnb, size = 100, reps = 1500) %>%
 
 sampling_distribution_100 <-  ggplot(sample_estimates_100, aes(x = sample_mean)) +
     geom_histogram(fill="#0072B2", color="#e9ecef") +
-    xlab("Sample mean price ($)") +
-    ggtitle("n = 100")
-sampling_distribution_100
+    xlab("Sample mean price per night ($)") +
+    ggtitle("n = 100") 
 
-grid.arrange(population_distribution + geom_vline(xintercept = mean(airbnb$price), col = "red"), sampling_distribution_20 + geom_vline(xintercept = mean(airbnb$price), col = "red"),
-sampling_distribution_50 + geom_vline(xintercept = mean(airbnb$price), col = "red"), 
-sampling_distribution_100 + geom_vline(xintercept = mean(airbnb$price), col = "red"), nrow = 2, ncol = 2)
+grid.arrange(population_distribution + geom_vline(xintercept = mean(airbnb$price), col = "red"), 
+             sampling_distribution_20 + geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red") + xlim(80, 250) + ggtitle("n = 20"),
+             sampling_distribution_50 + geom_vline(xintercept = mean(sample_estimates_50$sample_mean), col = "red") + xlim(80, 250), 
+             sampling_distribution_100 + geom_vline(xintercept = mean(sample_estimates_100$sample_mean), col = "red")+ xlim(80, 250) ,
+             nrow = 2, ncol = 2) 
 ```
-## Summary/Conclusion
 
-## Additional readings:
+What do we notice? The center of the sample mean values are equal to the population mean as indicated by the red vertical line. Also when the sample size increases the sample mean shows less variability, and therefore we get more precise estimates of the population parameter.
+
+> **Note:** If random samples of size $n$ are taken from a population, the sample mean $\bar{x}$ will be approximately Normal with mean $\mu$ and standard deviation $\sqrt{\frac{\sigma}{n}}$ as long as the sample size $n$ is large enough where $\mu$ is the population mean, $\sigma$ is the population standard deviation, $\bar{x}$ is the sample mean and $n$ is the sample size. 
+
+When sampling from a finite population 
+Finite population correction 
+
+### Summary
+- A sampling distribution of a statistics is the distribution of the statistic for all possible samples from the same population of a given sample size.
+- The sample means and proportions calculated from samples drawn from populations were centered around the population parameters we were trying to estimate.
+-	The spread of the sampling distribution is related to the sample size. As the sample size increases the spread of the distribution decreases. 
+- The shape of the sampling distribution is bell-shaped with one peak and centered at the population mean or proportion.
+
+## Bootstrapping 
+```{r 10-bootstrapping-set-up, echo = FALSE, message = FALSE, warning = FALSE}
+n <- 40
+```
+We saw that our sample mean and sample proportions centered around the population parameter we were trying to estimate.	When we estimate the unknown parameter of interest using a single value we are doing **point estimation**, which is a form of statistical inference. However, we saw above that many of the estimates we take won't be the exact value of the population quantity we are trying to estimate. So what can we do? Perhaps we can give some sort of plausible range where we might expect the true population parameter to fall rather than just reporting a single value. In the next section, we will learn about **interval estimation** and construct confidence intervals. 
+
+In order to construct a confidence iterval we need information about the sampling distribution. We saw above how we could construct a sampling distribution when population values were known. What if population values are not known (which is usually the case)? One method we can use is bootstrapping. If we have sample data, then we can use bootstrapping methods to construct a bootstrap sampling distribution and construct a confidence interval. Bootstrapping is a procedure where we use data from a single sample to generate a distribution by repeatedly sampling with replacement from our sample data.
+
+Let's continue working with our Airbnb data. Again let's say we are interested in estimating the population mean price per night of all Airbnb listings in Vancouver, Canada. In practice, we usually only have one sample from the population. In the next section we will explore how to create a bootstrap distribution from a single sample using R. We will then discuss how the bootstrap distribution relates to the sampling distribution.
+
+Let's draw a single sample of size `r n` from the population and visualize the distribution of the sample:
+```{r 10-bootstrapping1, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Histogram of price per night ($) for one sample of size 20"}
+one_sample <- airbnb %>% 
+    rep_sample_n(n) %>% 
+    ungroup() %>% # ungroup the data frame 
+    select(price) # drop the replicate column 
+head(one_sample)
+one_sample_dist <- ggplot(one_sample, aes(price)) + 
+    geom_histogram(fill="#0072B2", color="#e9ecef") +
+    xlab("Price per night ($)") 
+one_sample_dist
+```
+
+```{r 10-bootstrapping2, echo = TRUE, message = FALSE, warning = FALSE}
+one_sample_estimates <- one_sample %>% 
+    summarise(sample_mean = mean(price))
+one_sample_estimates
+```
+We can see that the distribution of the sample is skewed with a few observations out to the right and the mean of the sample is \$`r round(one_sample_estimates$sample_mean,2)`. 
+
+Now we will generate a single bootstrap sample in R using the sample that we just took. We will use the `rep_sample_n` function as we did when we were creating our sampling distribution. Since we want to sample with replacement we change the argument for `replace` from its default value of `FALSE` to `TRUE`.
+
+```{r 10-bootstrapping3, echo = TRUE, message = FALSE, warning = FALSE}
+boot1 <- one_sample %>%
+    rep_sample_n(size = n, replace = TRUE, reps = 1)
+head(boot1)
+boot1_dist <- ggplot(boot1, aes(price)) + 
+    geom_histogram(fill="#0072B2", color="#e9ecef") +
+    xlab("Price per night ($)") +
+    ggtitle("Bootstrap distribution")
+
+boot1_dist
+
+summarise(boot1, mean = mean(price))
+```
+Notice that our bootstrap distribution has a similar shape to the original sample distribution. Though, the shapes of the distributions are similar they are not identical. You'll also notice that the means of the sample and the bootstrap sample differ. How might that happen? Well remember that we are sampling with replacement from the original sample so we don't end with the original sample values again. We are trying to mimic drawing another sample from the population, without actually having to do that.
+
+Let's now take 1000 bootstrap samples from the original sample we drew from the population (`one_sample`)  using `rep_sample_n` and calculate the the means for each of those replicates.
+```{r 10-bootstrapping4, echo = TRUE, message = FALSE, warning = FALSE}
+
+
+boot1000 <- one_sample %>%
+    rep_sample_n(size = n, replace = TRUE, reps = 1000)
+head(boot1000)
+tail(boot1000)
+boot1000_means <- boot1000 %>% 
+  group_by(replicate) %>% 
+  summarize(mean = mean(price))
+head(boot1000_means)
+tail(boot1000_means)
+```
+
+Why are we doing this? As mentioned earlier, in reality we typically only have one sample. 
+
+** NEED TO CHANGE THIS So we can use our sample as an estimate of our population, and sample from that with replacement (i.e., bootstrapping) many times to create many bootstrap samples. We can then calculate point estimates for each bootstrap sample and create a bootstrap distribution of our point estimates and use this as a proxy for a sampling distribution. We can finally use this bootstrap distribution of our point estimates to suggest how we might expected our point estimate to behave if we took another sample.
+
+```{r 10-bootstrapping5, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Distribution of the bootstrap sample means"}
+boot_est_dist <-  ggplot(boot1000_means, aes(x = mean)) +
+    geom_histogram() +
+    xlab("Price per night ($)") 
+boot_est_dist
+```
+
+```{r 10-bootstrapping6, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Comparison of distribution of the bootstrap sample means and sampling distribution"}
+
+samples <- rep_sample_n(airbnb, size = 40, reps = 1000)
+
+sample_estimates <- samples %>% 
+    group_by(replicate) %>% 
+    summarise(sample_mean = mean(price))
+
+sampling_dist <-  ggplot(sample_estimates, aes(x = sample_mean)) +
+    geom_histogram() +
+    xlab("Sample mean price per night (years)") +
+    annotate("text", 85, 160, label = paste("mean = ", round(mean(sample_estimates$mean), 1)))+ 
+  geom_vline(xintercept = mean(sample_estimates$mean), col = "red")
+boot_est_dist <- boot_est_dist + 
+    annotate("text", x = 84, y = 160, label = paste("mean = ", round(mean(boot1000_means$mean), 1))) + geom_vline(xintercept = mean(boot1000_means$mean), col = "red")
+
+grid.arrange(boot_est_dist, sampling_dist, ncol = 2)
+```
+
+
+
+## Using bootstrapping to calculate a plausible range  
+
+
+Once we have created a bootstrap distribution, we can use it to suggest a plausible range where we might expect the true population quantity to lie. One formal name for a commonly used plausible range is called a confidence interval. Confidence intervals can be set at different levels, an example of a commonly used level is 95%. When we report a point estimate with a 95% confidence interval as the plausible range, formally we are saying that if we repeated this process of building confidence intervals more times with more samples, we’d expect ~ 95% of them to contain the value of the population quantity.
+
+How do you choose a level for a confidence interval? You have to consider the downstream application of your estimation and what the cost/consequence of an incorrect estimate would be. The higher the cost/consequence, the higher a confidence level you would want to use. You will learn more about this in later Statistics courses.
+
+To calculate a 95% confidence interval using bootstrapping, we essentially order the values in our bootstrap distribution and then take the value at the 2.5th percentile as the lower bound of the plausible range, and the 97.5th percentile as the upper bound of the plausible range.
+## Additional readings
 
 <!--Watch the video linked to below for an explanation of the K-means clustering algorithm:
 - https://www.coursera.org/lecture/machine-learning-data-analysis/what-is-a-k-means-cluster-analysis-p94tY
