@@ -222,10 +222,29 @@ sampling_distribution_100 <-  ggplot(sample_estimates_100, aes(x = sample_mean))
     xlab("Sample mean price per night ($)") +
     ggtitle("n = 100") 
 
-grid.arrange(population_distribution + geom_vline(xintercept = mean(airbnb$price), col = "red"), 
-             sampling_distribution_20 + geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red") + xlim(80, 250) + ggtitle("n = 20"),
-             sampling_distribution_50 + geom_vline(xintercept = mean(sample_estimates_50$sample_mean), col = "red") + xlim(80, 250), 
-             sampling_distribution_100 + geom_vline(xintercept = mean(sample_estimates_100$sample_mean), col = "red")+ xlim(80, 250) ,
+grid.arrange(population_distribution + 
+               geom_vline(xintercept = mean(airbnb$price, na.rm = T), col = "red") +  
+    ggtitle("Population distribution")  + 
+               annotate("text", 500, 800, 
+                        label = paste("mean = ", round(mean(airbnb$mean), 1))), 
+             sampling_distribution_20 + 
+               geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red") +
+               xlim(80, 250) + 
+               ggtitle("n = 20") + 
+               annotate("text", 210, 150, 
+                        label = paste("mean = ", round(mean(sample_estimates_50$sample_mean), 1))),
+             sampling_distribution_50 + 
+               geom_vline(xintercept = mean(sample_estimates_50$sample_mean), col = "red") +
+               xlim(80, 250) + 
+               annotate("text", 210, 250, 
+                        label = paste("mean = ", 
+                                      round(mean(sample_estimates_50$sample_mean), 1))),
+             sampling_distribution_100 + 
+               geom_vline(xintercept = mean(sample_estimates_100$sample_mean), col = "red")+
+               xlim(80, 250) + 
+               annotate("text", 210, 250, 
+                        label = paste("mean = ", 
+                                      round(mean(sample_estimates_100$sample_mean), 1))),
              nrow = 2, ncol = 2) 
 ```
 
@@ -310,7 +329,7 @@ Why are we doing this? As mentioned earlier, in reality we typically only have o
 
 ```{r 10-bootstrapping5, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Distribution of the bootstrap sample means"}
 boot_est_dist <-  ggplot(boot1000_means, aes(x = mean)) +
-    geom_histogram() +
+    geom_histogram(fill="#0072B2", color="#e9ecef") +
     xlab("Price per night ($)") 
 boot_est_dist
 ```
@@ -324,12 +343,13 @@ sample_estimates <- samples %>%
     summarise(sample_mean = mean(price))
 
 sampling_dist <-  ggplot(sample_estimates, aes(x = sample_mean)) +
-    geom_histogram() +
+    geom_histogram(fill="#0072B2", color="#e9ecef") +
     xlab("Sample mean price per night (years)") +
-    annotate("text", 85, 160, label = paste("mean = ", round(mean(sample_estimates$mean), 1)))+ 
-  geom_vline(xintercept = mean(sample_estimates$mean), col = "red")
+    annotate("text", 200, 100, label = paste("mean = ", round(mean(sample_estimates$sample_mean), 1)))+ 
+  geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red")
 boot_est_dist <- boot_est_dist + 
-    annotate("text", x = 84, y = 160, label = paste("mean = ", round(mean(boot1000_means$mean), 1))) + geom_vline(xintercept = mean(boot1000_means$mean), col = "red")
+    annotate("text", x = 200, y = 100, label = paste("mean = ", round(mean(boot1000_means$mean), 1))) + 
+  geom_vline(xintercept = mean(boot1000_means$mean), col = "red")
 
 grid.arrange(boot_est_dist, sampling_dist, ncol = 2)
 ```
