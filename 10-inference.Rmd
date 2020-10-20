@@ -203,7 +203,7 @@ grid.arrange(population_distribution + ggtitle("Distribution of population"),
 
 Can we do better than that? What if we increase the sample size? Again we will take a random sample of a certain size from the population, calculate the the sample mean and then do that repeatedly. You can compare the population distribution and the sampling distributions for samples of size 20, 50 and 100 below. 
 
-```{r 10-example-means6, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of population distribution and sampling distributions for size 20, 50 and 100"}
+```{r 10-example-means6, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of population distribution and sampling distributions for sizes 20, 50 and 100"}
 sample_estimates_50 <- rep_sample_n(airbnb, size = 50, reps = 1500) %>% 
     group_by(replicate) %>% 
     summarise(sample_mean = mean(price))
@@ -222,35 +222,42 @@ sampling_distribution_100 <-  ggplot(sample_estimates_100, aes(x = sample_mean))
     xlab("Sample mean price per night ($)") +
     ggtitle("n = 100") 
 
-grid.arrange(population_distribution + 
-               geom_vline(xintercept = mean(airbnb$price, na.rm = T), col = "red") +  
+grid.arrange(
+  # population 
+  population_distribution + 
+    geom_vline(xintercept = round(population_parameters$pop_mean,1), col = "red") +  
     ggtitle("Population distribution")  + 
-               annotate("text", 500, 800, 
-                        label = paste("mean = ", round(mean(airbnb$mean), 1))), 
-             sampling_distribution_20 + 
-               geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red") +
-               xlim(80, 250) + 
-               ggtitle("n = 20") + 
-               annotate("text", 210, 150, 
-                        label = paste("mean = ", round(mean(sample_estimates_50$sample_mean), 1))),
-             sampling_distribution_50 + 
-               geom_vline(xintercept = mean(sample_estimates_50$sample_mean), col = "red") +
-               xlim(80, 250) + 
-               annotate("text", 210, 250, 
-                        label = paste("mean = ", 
-                                      round(mean(sample_estimates_50$sample_mean), 1))),
-             sampling_distribution_100 + 
-               geom_vline(xintercept = mean(sample_estimates_100$sample_mean), col = "red")+
-               xlim(80, 250) + 
-               annotate("text", 210, 250, 
-                        label = paste("mean = ", 
-                                      round(mean(sample_estimates_100$sample_mean), 1))),
-             nrow = 2, ncol = 2) 
+    annotate("text", 500, 800, label = paste("mean = ", round(population_parameters$pop_mean,1)))+
+    annotate("text", 500, 700, label = paste("sd = ", round(population_parameters$pop_sd,1))), 
+
+  # n = 20 
+  sampling_distribution_20 + 
+    geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red") +
+    xlim(80, 250) + 
+    ggtitle("n = 20") + 
+    annotate("text", 210, 110, label = paste("mean = ", round(mean(sample_estimates$sample_mean), 1)))+
+      annotate("text", 210, 95, label = paste("sd = ", round(sd(sample_estimates$sample_mean), 1))),
+
+  # n = 50          
+   sampling_distribution_50 + 
+    geom_vline(xintercept = mean(sample_estimates_50$sample_mean), col = "red") +
+    xlim(80, 250) + 
+    annotate("text", 210, 160, label = paste("mean = ", round(mean(sample_estimates_50$sample_mean), 1)))+
+        annotate("text", 210, 140, label = paste("sd = ", round(sd(sample_estimates_50$sample_mean), 1))),
+
+  # n = 100           
+  sampling_distribution_100 + 
+    geom_vline(xintercept = mean(sample_estimates_100$sample_mean), col = "red")+
+    xlim(80, 250) + 
+    annotate("text", 210, 230, label = paste("mean = ", round(mean(sample_estimates_100$sample_mean), 1)))+
+      annotate("text", 210, 205, label = paste("sd = ", round(sd(sample_estimates_100$sample_mean), 1))),
+
+  nrow = 2, ncol = 2) 
 ```
 
 What do we notice? The center of the sample mean values are equal to the population mean as indicated by the red vertical line. Also when the sample size increases the sample mean shows less variability, and therefore we get more precise estimates of the population parameter.
 
-> **Note:** If random samples of size $n$ are taken from a population, the sample mean $\bar{x}$ will be approximately Normal with mean $\mu$ and standard deviation $\sqrt{\frac{\sigma}{n}}$ as long as the sample size $n$ is large enough where $\mu$ is the population mean, $\sigma$ is the population standard deviation, $\bar{x}$ is the sample mean and $n$ is the sample size. 
+> **Note:** If random samples of size $n$ are taken from a population, the sample mean $\bar{x}$ will be approximately Normal with mean $\mu$ and standard deviation $\frac{\sigma}{\sqrt{n}}$ as long as the sample size $n$ is large enough where $\mu$ is the population mean, $\sigma$ is the population standard deviation, $\bar{x}$ is the sample mean and $n$ is the sample size. 
 
 When sampling from a finite population 
 Finite population correction 
@@ -267,11 +274,9 @@ n <- 40
 ```
 We saw that our sample mean and sample proportions centered around the population parameter we were trying to estimate.	When we estimate the unknown parameter of interest using a single value we are doing **point estimation**, which is a form of statistical inference. However, we saw above that many of the estimates we take won't be the exact value of the population quantity we are trying to estimate. So what can we do? Perhaps we can give some sort of plausible range where we might expect the true population parameter to fall rather than just reporting a single value. In the next section, we will learn about **interval estimation** and construct confidence intervals. 
 
-In order to construct a confidence iterval we need information about the sampling distribution. We saw above how we could construct a sampling distribution when population values were known. What if population values are not known (which is usually the case)? One method we can use is bootstrapping. If we have sample data, then we can use bootstrapping methods to construct a bootstrap sampling distribution and construct a confidence interval. Bootstrapping is a procedure where we use data from a single sample to generate a distribution by repeatedly sampling with replacement from our sample data.
+In order to construct a confidence interval we need information about the sampling distribution. We saw above how we could construct a sampling distribution when population values were known. What if population values are not known? (which is usually the case) One method we can use is bootstrapping. If we have sample data, then we can use bootstrapping methods to construct a bootstrap sampling distribution and construct a confidence interval. Bootstrapping is a procedure where we use data from a single sample to generate a distribution by repeatedly sampling with replacement from our sample data. In the this section we will explore how to create a bootstrap distribution from a single sample using R.
 
-Let's continue working with our Airbnb data. Again let's say we are interested in estimating the population mean price per night of all Airbnb listings in Vancouver, Canada. In practice, we usually only have one sample from the population. In the next section we will explore how to create a bootstrap distribution from a single sample using R. We will then discuss how the bootstrap distribution relates to the sampling distribution.
-
-Let's draw a single sample of size `r n` from the population and visualize the distribution of the sample:
+Let's continue working with our Airbnb data. Again let's say we are interested in estimating the population mean price per night of all Airbnb listings in Vancouver, Canada. Let's draw a single sample of size `r n` from the population and visualize the distribution of the sample:
 ```{r 10-bootstrapping1, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Histogram of price per night ($) for one sample of size 20"}
 one_sample <- airbnb %>% 
     rep_sample_n(n) %>% 
@@ -289,9 +294,16 @@ one_sample_estimates <- one_sample %>%
     summarise(sample_mean = mean(price))
 one_sample_estimates
 ```
-We can see that the distribution of the sample is skewed with a few observations out to the right and the mean of the sample is \$`r round(one_sample_estimates$sample_mean,2)`. 
+We can see that the distribution of the sample is skewed with a few observations out to the right and the mean of the sample is \$`r round(one_sample_estimates$sample_mean,2)`. Remember in practice, we usually only have one sample from the population. So this sample and estimate is what we have to work with.
 
-Now we will generate a single bootstrap sample in R using the sample that we just took. We will use the `rep_sample_n` function as we did when we were creating our sampling distribution. Since we want to sample with replacement we change the argument for `replace` from its default value of `FALSE` to `TRUE`.
+Now we will generate a single bootstrap sample in R using the sample that we just took. The process for doing this is as follows: 
+1. Randomly select an observation from the data of size $n$
+2. Replace that observation
+3. Randomly select an observation again from the sample data until you have $n$ observations 
+4. Calculate the statistic on the sample of size $n$
+5. Repeat this procedure $N$ number of times
+
+We will use the `rep_sample_n` function as we did when we were creating our sampling distribution. Since we want to sample with replacement we change the argument for `replace` from its default value of `FALSE` to `TRUE`.
 
 ```{r 10-bootstrapping3, echo = TRUE, message = FALSE, warning = FALSE}
 boot1 <- one_sample %>%
@@ -323,14 +335,12 @@ head(boot1000_means)
 tail(boot1000_means)
 ```
 
-Why are we doing this? As mentioned earlier, in reality we typically only have one sample. 
-
-** NEED TO CHANGE THIS So we can use our sample as an estimate of our population, and sample from that with replacement (i.e., bootstrapping) many times to create many bootstrap samples. We can then calculate point estimates for each bootstrap sample and create a bootstrap distribution of our point estimates and use this as a proxy for a sampling distribution. We can finally use this bootstrap distribution of our point estimates to suggest how we might expected our point estimate to behave if we took another sample.
+Why are we doing this? As mentioned earlier, in reality we typically only have one sample and we can sample from that original sample with replacement (i.e., bootstrapping) many times to create many bootstrap samples. We can then calculate point estimates for each bootstrap sample and create a bootstrap distribution of our point estimates. Finally this bootstrap distribution of our point estimates suggests how we might expect our point estimate to behave if we took another sample.
 
 ```{r 10-bootstrapping5, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Distribution of the bootstrap sample means"}
 boot_est_dist <-  ggplot(boot1000_means, aes(x = mean)) +
     geom_histogram(fill="#0072B2", color="#e9ecef") +
-    xlab("Price per night ($)") 
+    xlab("Sample mean price per night ($)") 
 boot_est_dist
 ```
 
@@ -348,13 +358,15 @@ sampling_dist <-  ggplot(sample_estimates, aes(x = sample_mean)) +
     annotate("text", 200, 100, label = paste("mean = ", round(mean(sample_estimates$sample_mean), 1)))+ 
   geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red")
 boot_est_dist <- boot_est_dist + 
-    annotate("text", x = 200, y = 100, label = paste("mean = ", round(mean(boot1000_means$mean), 1))) + 
+    annotate("text", x = 220, y = 100, label = paste("mean = ", round(mean(boot1000_means$mean), 1))) + 
   geom_vline(xintercept = mean(boot1000_means$mean), col = "red")
 
 grid.arrange(boot_est_dist, sampling_dist, ncol = 2)
 ```
 
-
+```{r}
+grid.arrange(population_distribution + ggtitle("Distribution of population"), one_sample_dist, ncol = 2)
+```
 
 ## Using bootstrapping to calculate a plausible range  
 
