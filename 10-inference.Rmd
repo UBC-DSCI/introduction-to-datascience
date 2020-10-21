@@ -129,7 +129,7 @@ We notice that the sample proportions are centered around the population proport
 ### Sampling distributions for means 
 In the previous section our variable of interest, type of timbit, was categorical, and the population parameter that we inferred about was the population proportion. What if we want to infer something about a quantitative variable? If the variable of interest is quantitative the population parameter that we infer about is the population mean. 
 
-Here we will look at an example with Airbnb data. Airbnb is an online marketplace for arranging or offering lodging.  The dataset contains Airbnb listings for Vancouver, Canada in September 2020 from [Inside Airbnb](http://insideairbnb.com/). ****** Add something about inside airbnb 
+Here we will look at an example with Airbnb data. Airbnb is an online marketplace for arranging or offering lodging.  The dataset contains Airbnb listings for Vancouver, Canada in September 2020 from [Inside Airbnb](http://insideairbnb.com/).
 Suppose we were interested in estimating the average price per night of all Airbnb rentals in Vancouver, Canada. Let's imagine that we have the population data for all airbnb listings in Vancouver. Remember, in reality, we rarely have measurements for our entire population, however, for this example we will pretend that we do so that we can learn about sampling and estimation for sample means. our data contains an id number, neighbourhood, type of room, the number of people that the rental accommodates, number of bathrooms, bedrooms, and beds and finally the price per night of the listing. 
 ```{r 10-example-means1, echo = FALSE, message = FALSE, warning = FALSE}
 airbnb <- read_csv("data/listings.csv") %>% 
@@ -241,7 +241,7 @@ grid.arrange(
   # n = 50          
    sampling_distribution_50 + 
     geom_vline(xintercept = mean(sample_estimates_50$sample_mean), col = "red") +
-    xlim(80, 250) + 
+    xlim(80, 260) + 
     annotate("text", 210, 160, label = paste("mean = ", round(mean(sample_estimates_50$sample_mean), 1)))+
         annotate("text", 210, 140, label = paste("sd = ", round(sd(sample_estimates_50$sample_mean), 1))),
 
@@ -269,12 +269,14 @@ Finite population correction
 - The shape of the sampling distribution is bell-shaped with one peak and centered at the population mean or proportion.
 
 ## Bootstrapping 
+### Bootstrap distribution
 ```{r 10-bootstrapping-set-up, echo = FALSE, message = FALSE, warning = FALSE}
 n <- 40
 ```
 We saw that our sample mean and sample proportions centered around the population parameter we were trying to estimate.	When we estimate the unknown parameter of interest using a single value we are doing **point estimation**, which is a form of statistical inference. However, we saw above that many of the estimates we take won't be the exact value of the population quantity we are trying to estimate. So what can we do? Perhaps we can give some sort of plausible range where we might expect the true population parameter to fall rather than just reporting a single value. In the next section, we will learn about **interval estimation** and construct confidence intervals. 
 
 In order to construct a confidence interval we need information about the sampling distribution. We saw above how we could construct a sampling distribution when population values were known. What if population values are not known? (which is usually the case) One method we can use is bootstrapping. If we have sample data, then we can use bootstrapping methods to construct a bootstrap sampling distribution and construct a confidence interval. Bootstrapping is a procedure where we use data from a single sample to generate a distribution by repeatedly sampling with replacement from our sample data. In the this section we will explore how to create a bootstrap distribution from a single sample using R.
+
 
 Let's continue working with our Airbnb data. Again let's say we are interested in estimating the population mean price per night of all Airbnb listings in Vancouver, Canada. Let's draw a single sample of size `r n` from the population and visualize the distribution of the sample:
 ```{r 10-bootstrapping1, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Histogram of price per night ($) for one sample of size 20"}
@@ -296,14 +298,7 @@ one_sample_estimates
 ```
 We can see that the distribution of the sample is skewed with a few observations out to the right and the mean of the sample is \$`r round(one_sample_estimates$sample_mean,2)`. Remember in practice, we usually only have one sample from the population. So this sample and estimate is what we have to work with.
 
-Now we will generate a single bootstrap sample in R using the sample that we just took. The process for doing this is as follows: 
-1. Randomly select an observation from the data of size $n$
-2. Replace that observation
-3. Randomly select an observation again from the sample data until you have $n$ observations 
-4. Calculate the statistic on the sample of size $n$
-5. Repeat this procedure $N$ number of times
-
-We will use the `rep_sample_n` function as we did when we were creating our sampling distribution. Since we want to sample with replacement we change the argument for `replace` from its default value of `FALSE` to `TRUE`.
+Now we will generate a single bootstrap sample in R using the sample that we just took. We will use the `rep_sample_n` function as we did when we were creating our sampling distribution. Since we want to sample with replacement we change the argument for `replace` from its default value of `FALSE` to `TRUE`.
 
 ```{r 10-bootstrapping3, echo = TRUE, message = FALSE, warning = FALSE}
 boot1 <- one_sample %>%
@@ -344,7 +339,8 @@ boot_est_dist <-  ggplot(boot1000_means, aes(x = mean)) +
 boot_est_dist
 ```
 
-```{r 10-bootstrapping6, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Comparison of distribution of the bootstrap sample means and sampling distribution"}
+Let's compare our bootstrap distribution with our sampling distribution. What do you notice? 
+```{r 10-bootstrapping6, echo = F, message = FALSE, warning = FALSE, fig.cap = "Comparison of distribution of the bootstrap sample means and sampling distribution"}
 
 samples <- rep_sample_n(airbnb, size = 40, reps = 1000)
 
@@ -355,20 +351,33 @@ sample_estimates <- samples %>%
 sampling_dist <-  ggplot(sample_estimates, aes(x = sample_mean)) +
     geom_histogram(fill="#0072B2", color="#e9ecef") +
     xlab("Sample mean price per night (years)") +
-    annotate("text", 200, 100, label = paste("mean = ", round(mean(sample_estimates$sample_mean), 1)))+ 
+  annotate("text", 210, 100, label = paste("mean = ", round(mean(sample_estimates$sample_mean), 1)))+ 
   geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red")
+
 boot_est_dist <- boot_est_dist + 
-    annotate("text", x = 220, y = 100, label = paste("mean = ", round(mean(boot1000_means$mean), 1))) + 
+    annotate("text", x = 170, y = 125, label = paste("mean = ", round(mean(boot1000_means$mean), 1))) + 
   geom_vline(xintercept = mean(boot1000_means$mean), col = "red")
 
-grid.arrange(boot_est_dist, sampling_dist, ncol = 2)
+grid.arrange(sampling_dist + xlim(80, 250) + ggtitle("Sampling distribution"), 
+             boot_est_dist + xlim(80, 210) + ggtitle("Bootstrap distribution"),
+             ncol = 2)
 ```
 
 ```{r}
 grid.arrange(population_distribution + ggtitle("Distribution of population"), one_sample_dist, ncol = 2)
 ```
 
-## Using bootstrapping to calculate a plausible range  
+**Center**: First we see how the sampling distribution is centered at \$`r round(mean(airbnb$price),2)`, the population mean value. The sampling is done at random and the estimates are centered at the population mean as we learned in the previous section. However, the bootstrap distribution is centered at \$`r round(mean(boot1000_means$mean), 2)))`, which is the original sample's mean price per night. Remember that we are resampling from the original sampling over and over again. 
+**Shape & Spread**: Now the shape and spread of the two distributions are somewhat similar. 
+
+
+The bootstrap distribution is centered at the original sample’s mean, so it doesn’t necessarily provide a better estimate of the true population mean. 
+The bootstrap distribution will likely not have the same center as the sampling distribution. In other words, bootstrapping cannot improve the quality of an estimate.
+
+Second, let’s now compare the spread of the two distributions: they are somewhat similar. Even if the bootstrap distribution might not have the same center as the sampling distribution, it will likely have very similar shape and spread. In other words, bootstrapping will give you a good estimate of the standard error.
+
+
+### Using bootstrapping to calculate a plausible range  
 
 
 Once we have created a bootstrap distribution, we can use it to suggest a plausible range where we might expect the true population quantity to lie. One formal name for a commonly used plausible range is called a confidence interval. Confidence intervals can be set at different levels, an example of a commonly used level is 95%. When we report a point estimate with a 95% confidence interval as the plausible range, formally we are saying that if we repeated this process of building confidence intervals more times with more samples, we’d expect ~ 95% of them to contain the value of the population quantity.
@@ -376,18 +385,21 @@ Once we have created a bootstrap distribution, we can use it to suggest a plausi
 How do you choose a level for a confidence interval? You have to consider the downstream application of your estimation and what the cost/consequence of an incorrect estimate would be. The higher the cost/consequence, the higher a confidence level you would want to use. You will learn more about this in later Statistics courses.
 
 To calculate a 95% confidence interval using bootstrapping, we essentially order the values in our bootstrap distribution and then take the value at the 2.5th percentile as the lower bound of the plausible range, and the 97.5th percentile as the upper bound of the plausible range.
+
+### Summary 
+
+If you have a sample of size $n$. The process of bootstrapping is as follows: 
+1. Randomly select an observation from the original sample (which was drawn from the population)
+2. Record the observation's value 
+3. Replace that observation
+4. Repeat steps 1 - 3 until you have $n$ observations, which form a bootstrap sample
+5. Calculate the bootstrap point estimate (e.g., mean, median, proportion, slope, etc.) of the $n$ observations in your bootstrap sample
+6. Repeat steps (1) - (5) many times to create a bootstrap distribution - a distribution of bootstrap point estimates
+7. Calculate the plausible range of values around our observed point estimate
+
 ## Additional readings
 
-<!--Watch the video linked to below for an explanation of the K-means clustering algorithm:
-- https://www.coursera.org/lecture/machine-learning-data-analysis/what-is-a-k-means-cluster-analysis-p94tY
+For more about statistical inference and bootstrapping, refer to pages 187-190  
+of [Introduction to Statistical Learning with Applications in R](http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf) by Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani, and Chapters 7 - 8 of [Modern Dive](https://moderndive.com/) Statistical Inference via Data Science by Chester Ismay and Albert Y. Kim
 
-*note - when the advertisement pops up to register for this course, you can
-just click to ignore it (i.e., no need to sign up to watch the entire video)*
 
--->
-
-For more about clustering and K-means, refer to pages 385-390 and 404-405 
-of [Introduction to Statistical Learning with Applications in R](http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf) by Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani, as well
-as the companion video linked to below:
-
-<iframe width="840" height="473" src="https://www.youtube.com/embed/aIybuNt9ps4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
