@@ -1,6 +1,16 @@
 # Introduction to Statistical Inference {#inference}
 
+```{r set-up, echo = F, message = F}
+max_count <- function(dist) {
+  ggp_data <- ggplot_build(dist)
+  max(ggp_data$data[[1]]$count)}
 
+max_x <- function(dist){ 
+  ggp_data <- ggplot_build(dist)
+  max(ggp_data$data[[1]]$xmax)
+}
+
+```
 ## Overview
 Recall from Chapter 1, one of the data analysis questions we often want to answer is an *inferential question* where we make conclusions about some unknown aspect of a population of interest based on observed data sampled from that population. Statistical inference is a data analysis question where we want to look for patterns, trends, or relationships in a dataset and decide how applicable these findings are to the wider population. This chapter will start with fundamental ideas of sampling and will work our way to introduce two forms of statistical inference: 
 
@@ -111,7 +121,7 @@ tail(sample_estimates)
 
 ```{r 10-example-proportions7, echo = TRUE, message = FALSE, warning = FALSE,fig.cap = "Sampling distribution of the sample proportion for sample size 40"}
 sampling_distribution <-  ggplot(sample_estimates, aes(x = sample_proportion)) +
-    geom_histogram(fill="#0072B2", color="#e9ecef",binwidth = 0.05) +
+    geom_histogram(fill="#0072B2", color="#e9ecef", binwidth = 0.05) +
     xlab("Sample proportions") 
 sampling_distribution
 ```
@@ -204,53 +214,64 @@ grid.arrange(population_distribution + ggtitle("Distribution of population"),
 Can we do better than that? What if we increase the sample size? Again we will take a random sample of a certain size from the population, calculate the the sample mean and then do that repeatedly. You can compare the population distribution and the sampling distributions for samples of size 20, 50 and 100 below. 
 
 ```{r 10-example-means6, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of population distribution and sampling distributions for sizes 20, 50 and 100"}
+## Sampling n = 50 and n = 100 
 sample_estimates_50 <- rep_sample_n(airbnb, size = 50, reps = 1500) %>% 
     group_by(replicate) %>% 
     summarise(sample_mean = mean(price))
-
-sampling_distribution_50 <-  ggplot(sample_estimates_50, aes(x = sample_mean)) +
-    geom_histogram(fill="#0072B2", color="#e9ecef") +
-    xlab("Sample mean price per night($)") +
-    ggtitle("n = 50")
 
 sample_estimates_100 <- rep_sample_n(airbnb, size = 100, reps = 1500) %>% 
     group_by(replicate) %>% 
     summarise(sample_mean = mean(price))
 
+## Sampling distribution n = 50 
+sampling_distribution_50 <-  ggplot(sample_estimates_50, aes(x = sample_mean)) +
+    geom_histogram(fill="#0072B2", color="#e9ecef") +
+    xlab("Sample mean price per night($)") +
+    ggtitle("n = 50")
+
+## Sampling distribution n = 100 
 sampling_distribution_100 <-  ggplot(sample_estimates_100, aes(x = sample_mean)) +
     geom_histogram(fill="#0072B2", color="#e9ecef") +
     xlab("Sample mean price per night ($)") +
     ggtitle("n = 100") 
 
 grid.arrange(
-  # population 
+  # population
   population_distribution + 
-    geom_vline(xintercept = round(population_parameters$pop_mean,1), col = "red") +  
+    geom_vline(xintercept = round(population_parameters$pop_mean,1), col = "red") +
     ggtitle("Population distribution")  + 
-    annotate("text", 500, 800, label = paste("mean = ", round(population_parameters$pop_mean,1)))+
-    annotate("text", 500, 700, label = paste("sd = ", round(population_parameters$pop_sd,1))), 
+    annotate("text", x = max_x(population_distribution), y= max_count(population_distribution), hjust = 1, vjust = 1, 
+             label = paste("mean = ", round(population_parameters$pop_mean,1))) +
+    annotate("text", x =  max_x(population_distribution), y = max_count(population_distribution), hjust = 1, vjust = 3,
+             label = paste("sd = ", round(population_parameters$pop_sd,1))), 
 
   # n = 20 
   sampling_distribution_20 + 
     geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red") +
     xlim(80, 250) + 
     ggtitle("n = 20") + 
-    annotate("text", 210, 110, label = paste("mean = ", round(mean(sample_estimates$sample_mean), 1)))+
-      annotate("text", 210, 95, label = paste("sd = ", round(sd(sample_estimates$sample_mean), 1))),
+    annotate("text", x = max_x(sampling_distribution_20), y= max_count(sampling_distribution_20), hjust = 1, vjust = 1,
+             label = paste("mean = ", round(mean(sample_estimates$sample_mean), 1)))+
+    annotate("text", x =  max_x(sampling_distribution_20), y = max_count(sampling_distribution_20), hjust = 1, vjust = 3,
+               label = paste("sd = ", round(sd(sample_estimates$sample_mean), 1))),
 
   # n = 50          
    sampling_distribution_50 + 
     geom_vline(xintercept = mean(sample_estimates_50$sample_mean), col = "red") +
     xlim(80, 260) + 
-    annotate("text", 210, 160, label = paste("mean = ", round(mean(sample_estimates_50$sample_mean), 1)))+
-        annotate("text", 210, 140, label = paste("sd = ", round(sd(sample_estimates_50$sample_mean), 1))),
+    annotate("text", x = max_x(sampling_distribution_50), y= max_count(sampling_distribution_50), hjust = 1, vjust = 1,
+             label = paste("mean = ", round(mean(sample_estimates_50$sample_mean), 1)))+
+    annotate("text", x =  max_x(sampling_distribution_50), y = max_count(sampling_distribution_50), hjust = 1, vjust = 3,
+                 label = paste("sd = ", round(sd(sample_estimates_50$sample_mean), 1))),
 
   # n = 100           
   sampling_distribution_100 + 
     geom_vline(xintercept = mean(sample_estimates_100$sample_mean), col = "red")+
     xlim(80, 250) + 
-    annotate("text", 210, 230, label = paste("mean = ", round(mean(sample_estimates_100$sample_mean), 1)))+
-      annotate("text", 210, 205, label = paste("sd = ", round(sd(sample_estimates_100$sample_mean), 1))),
+    annotate("text", x =  max_x(sampling_distribution_100), y = max_count(sampling_distribution_100), hjust = 1, vjust = 1,
+             label = paste("mean = ", round(mean(sample_estimates_100$sample_mean), 1)))+
+    annotate("text", x =  max_x(sampling_distribution_100), y = max_count(sampling_distribution_100), hjust = 1, vjust = 3,
+               label = paste("sd = ", round(sd(sample_estimates_100$sample_mean), 1))),
 
   nrow = 2, ncol = 2) 
 ```
@@ -355,7 +376,7 @@ sampling_dist <-  ggplot(sample_estimates, aes(x = sample_mean)) +
   geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red")
 
 boot_est_dist <- boot_est_dist + 
-    annotate("text", x = 170, y = 125, label = paste("mean = ", round(mean(boot1000_means$mean), 1))) + 
+  annotate("text", x = 170, y = 125, label = paste("mean = ", round(mean(boot1000_means$mean), 1))) + 
   geom_vline(xintercept = mean(boot1000_means$mean), col = "red")
 
 grid.arrange(sampling_dist + xlim(80, 250) + ggtitle("Sampling distribution"), 
@@ -367,10 +388,10 @@ grid.arrange(sampling_dist + xlim(80, 250) + ggtitle("Sampling distribution"),
 grid.arrange(population_distribution + ggtitle("Distribution of population"), one_sample_dist, ncol = 2)
 ```
 
-**Center**: First we see how the sampling distribution is centered at \$`r round(mean(airbnb$price),2)`, the population mean value. The sampling is done at random and the estimates are centered at the population mean as we learned in the previous section. However, the bootstrap distribution is centered at \$`r round(mean(boot1000_means$mean), 2)))`, which is the original sample's mean price per night. Remember that we are resampling from the original sampling over and over again. 
+**Center**: First we see how the sampling distribution is centered at \$`r round(mean(airbnb$price),2)`, the population mean value. The sampling is done at random and the estimates are centered at the population mean as we learned in the previous section. However, the bootstrap distribution is centered at \$`r round(mean(boot1000_means$mean), 2)`, which is the original sample's mean price per night. Remember that we are resampling from the original sampling over and over again. 
 **Shape & Spread**: Now the shape and spread of the two distributions are somewhat similar. 
 
-
+*** Fix this!!! 
 The bootstrap distribution is centered at the original sample’s mean, so it doesn’t necessarily provide a better estimate of the true population mean. 
 The bootstrap distribution will likely not have the same center as the sampling distribution. In other words, bootstrapping cannot improve the quality of an estimate.
 
