@@ -2,7 +2,6 @@
 
 ```{r set-up, echo = F, message = F}
 library(tidyverse) 
-
 max_count <- function(dist) {
   max(ggplot_build(dist)$data[[1]]$count)
 }
@@ -15,8 +14,9 @@ min_x <- function(dist) {
   ggp_data <- ggplot_build(dist)
   min(ggp_data$data[[1]]$xmin)
 }
-
 ```
+
+
 ## Overview
 Recall from Chapter 1, one of the data analysis questions we often want to answer is an *inferential question* where we make conclusions about some unknown aspect of a population of interest based on observed data sampled from that population. Statistical inference is a data analysis question where we want to look for patterns, trends, or relationships in a dataset and decide how applicable these findings are to the wider population. This chapter will start with fundamental ideas of sampling and will work our way to introduce two forms of statistical inference: 
 
@@ -204,14 +204,14 @@ sampling_distribution_20
 
 Here we see that the sampling distribution of the mean has one peak and is bell shaped. Most of the estimates are between about  \$`r round(quantile(sample_estimates$sample_mean)[2], -1)` and \$`r round(quantile(sample_estimates$sample_mean)[4], -1)`.
 
-```{r}
+```{r 10-example-means4.5}
 sample_estimates %>% 
   summarise(mean_of_sample_means = mean(sample_mean))
 ```
 Notice as well that the mean of the sample means is `r round(mean(sample_estimates$sample_mean),2)`. Recall that the population mean was \$`r round(mean(airbnb$price),2)`.
 We can compare the distribution of the population, distribution of the sample and the sampling distribution on one graph. 
 
-```{r 10-example-means5, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of population distribution, sample distribution and sampling distribution"}
+```{r 10-example-means5, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of population distribution sample distribution and sampling distribution"}
 grid.arrange(population_distribution + ggtitle("Distribution of population"), 
              sample_distribution + ggtitle("Distribution of sample"), 
              sampling_distribution_20 + ggtitle("Sampling distribution of sample mean"), nrow = 3)
@@ -242,7 +242,7 @@ sampling_distribution_100 <-  ggplot(sample_estimates_100, aes(x = sample_mean))
     ggtitle("n = 100") + xlim(min_x(sampling_distribution_20), max_x(sampling_distribution_20))
 ```
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of population distribution and sampling distributions for sizes 20, 50 and 100"}
+```{r 10-example-means7, fig.cap = "Comparision of population distribution and sampling distributions"}
 annotated_population <- population_distribution + 
     geom_vline(xintercept = round(population_parameters$pop_mean,1), col = "red") +
     ggtitle("Population distribution")  + 
@@ -275,7 +275,11 @@ annotated_sampling_dist_100 <- sampling_distribution_100 +
     annotate("text", x =  max_x(sampling_distribution_20), y = max_count(sampling_distribution_100), hjust = 1, vjust = 3,
                label = paste("sd = ", round(sd(sample_estimates_100$sample_mean), 1)))
 
-grid.arrange(annotated_population, annotated_sampling_dist_20, annotated_sampling_dist_50, annotated_sampling_dist_100,  nrow = 2, ncol = 2) 
+grid.arrange(annotated_population, 
+             annotated_sampling_dist_20, 
+             annotated_sampling_dist_50, 
+             annotated_sampling_dist_100,  
+             nrow = 2, ncol = 2) 
 ```
 
 What do we notice? The center of the sample mean values are equal to the population mean as indicated by the red vertical line. Also when the sample size increases the sample mean shows less variability, and therefore we get more precise estimates of the population parameter.
@@ -309,7 +313,7 @@ For a sample of size $n$, the process we will go through is as follows:
 7. Calculate the plausible range of values around our observed point estimate
 
 ### Bootstrapping in R 
-Let's continue working with our Airbnb data. Again let's say we are interested in estimating the population mean price per night of all Airbnb listings in Vancouver, Canada. Let's draw a single sample of size `r n` from the population and visualize the distribution of the sample:
+Let's continue working with our Airbnb data. Again let's say we are interested in estimating the population mean price per night of all Airbnb listings in Vancouver, Canada. Let's draw a single sample of size `r 40` from the population and visualize the distribution of the sample:
 ```{r 10-bootstrapping1, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Histogram of price per night ($) for one sample of size 20"}
 one_sample <- airbnb %>% 
     rep_sample_n(40) %>% 
@@ -448,7 +452,7 @@ boot3_dist <- ggplot(boot3, aes(price)) +
         axis.ticks.y = element_blank(),
         axis.text.y = element_blank()) 
 
-bootstrap_dist <- boot_est_dist+ ggtitle("Bootstrap distribution") + xlab("Sample means") + 
+bootstrap_dist <- boot_est_dist+ ggtitle("Bootstrap \n distribution") + xlab("Sample means") + 
     theme(axis.ticks.x = element_blank(),
         axis.text.x = element_blank(), 
         axis.title.y =element_blank(), 
@@ -458,8 +462,7 @@ bootstrap_dist <- boot_est_dist+ ggtitle("Bootstrap distribution") + xlab("Sampl
 require(grid)
 mygb = function(x,y) {
   grid.bezier(x=x, y=y, gp=gpar(fill="black"), 
-              arrow=arrow(type="closed", length=unit(2,"mm")))
-}
+              arrow=arrow(type="closed", length=unit(2,"mm")))}
 
 grid.arrange(pop_dist, 
              sam_dist, 
@@ -470,7 +473,7 @@ grid.arrange(pop_dist,
   widths = c(1, 1, 1, 1, 1),
   layout_matrix = rbind(c(1, NA, 3, NA, 6),
                         c(1, 2, 4, NA, 6),
-                        c(1, NA, 5, NA, 6)
+                        c(NA, NA, 5, NA, NA)
 )) 
 # pop to sample 
 mygb(x=c(0.15,0.3,0.3,0.3), y=c(0.8,0.8,0.65,0.65))
@@ -484,6 +487,7 @@ mygb(x=c(0.35,0.35,0.42,0.42), y=c(0.45,0.45,0.2,0.2))
 mygb(x=c(0.6,0.6,0.65,0.65), y=c(0.8,0.8,0.8,0.8))
 mygb(x=c(0.6,0.6,0.65,0.65), y=c(0.5,0.5,0.5,0.5))
 mygb(x=c(0.6,0.6,0.65,0.65), y=c(0.2,0.2,0.2,0.2))
+
 ```
 
 ### Using bootstrapping to calculate a plausible range  
@@ -521,5 +525,3 @@ Here we notice that our 95\% confidence interval does indeed contain the true po
 
 For more about statistical inference and bootstrapping, refer to pages 187-190  
 of [Introduction to Statistical Learning with Applications in R](http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf) by Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani, and Chapters 7 - 8 of [Modern Dive](https://moderndive.com/) Statistical Inference via Data Science by Chester Ismay and Albert Y. Kim
-
-
