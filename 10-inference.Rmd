@@ -443,22 +443,46 @@ in a more reliable point estimate of the population parameter.
 ## Bootstrapping 
 ### Bootstrapping Overview 
 
-We saw that our sample mean and sample proportions centred around the population parameter we were trying to estimate.	When we estimate the unknown parameter of interest using a single value, we are doing **point estimation**, a form of statistical inference. However, we saw above that many of the estimates we take won't be the exact value of the population quantity we are trying to estimate. So what can we do? Perhaps we can give some plausible range of values for the true population parameter rather than just reporting a single value. The next section will discuss **interval estimation** and construct **confidence intervals**. 
+We saw in the previous section that we could compute a **point estimate** of a population
+parameter using a sample of observations from the population. And since we had access to the
+population, we could evaluate how accurate the estimate was, and even get a sense for how much
+the estimate would vary for different samples from the population. 
+But in real data analysis settings, we usually have *just one sample* from our population,
+and do not have access to the population itself. So how do we get a sense for how
+variable our point estimate is when we only have one sample to work with?
+In this section, we will discuss **interval estimation** and construct **confidence intervals** 
+using just a single sample from a population.
 
-We can construct confidence intervals using information from a sampling distribution. However, we would need certain conditions and assumptions about the population distribution to do so. We can also use ** bootstrapping**, which can be used to construct a bootstrap distribution and confidence interval given specific sample data. Bootstrapping is a procedure where we use data from a single sample from the population to generate a distribution by repeatedly sampling with replacement from our original sample data. This section will explore how to create a bootstrap distribution from a single sample using R.
+Here is the key idea. First, if you take a big enough sample, it *looks like* the population. 
 
+[TODO: visualize increasing sample size means sample looks like pop]
+
+In the previous section, we took many samples of the same size *from our population* to get
+a sense for the variability of a sample statistic. But if our sample is big enough that it looks like our population,
+we can pretend that our sample *is* the population, and take more samples (with replacement) of the same size
+from it instead! This very clever technique is called **the bootstrap**.
+Note that by taking many samples from our single, observed sample, we do not obtain the true sampling distribution,
+but rather an approximation that we call **the bootstrap distribution**. 
+
+> Note that we need to sample *with* replacement when using the bootstrap. Otherwise, if we had a sample of size $n$,
+> and obtained a sample from it of size $n$ *without* replacement, it would just return our original sample.
+
+This section will explore how to create a bootstrap distribution from a single sample using R.
 For a sample of size $n$, the process we will go through is as follows: 
 
 1. Randomly select an observation from the original sample, which was drawn from the population
 2. Record the observation's value 
 3. Replace that observation
-4. Repeat steps 1 - 3 (sampling with replacement) until you have $n$ observations, which form a bootstrap sample
+4. Repeat steps 1 - 3 (sampling *with* replacement) until you have $n$ observations, which form a bootstrap sample
 5. Calculate the bootstrap point estimate (e.g., mean, median, proportion, slope, etc.) of the $n$ observations in your bootstrap sample
-6. Repeat steps (1) - (5) many times to create a distribution of point estimates (bootstrap distribution)
+6. Repeat steps (1) - (5) many times to create a distribution of point estimates (the bootstrap distribution)
 7. Calculate the plausible range of values around our observed point estimate
 
 ### Bootstrapping in R 
-Let's continue working with our Airbnb data. Again let's say we are interested in estimating the population mean price per night of all Airbnb listings in Vancouver, Canada. Let's draw a single sample of size `r 40` from the population and visualize the distribution of the sample:
+Let's continue working with our Airbnb data. Again let's say we are interested
+in estimating the population mean price per night of all Airbnb listings in
+Vancouver, Canada. Let's draw a single sample of size `r 40` from the
+population and visualize the distribution of the sample:
 
 ```{r 10-bootstrapping1, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Histogram of price per night ($) for one sample of size 20"}
 one_sample <- airbnb %>% 
