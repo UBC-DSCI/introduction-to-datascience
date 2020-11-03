@@ -45,29 +45,65 @@ By the end of the chapter, students will be able to:
 * Contrast the bootstrap and sampling distributions.
 
 ## Why do we need sampling? 
-Statistical inference can help us decide if differences we observe between groups' responses exist in the broader population. We might use statistical inference to help us answer questions, such as
+Statistical inference can help us decide how quantities we observe in
+a subset of data relate to the same quantities in the broader
+population. Here is an example question that we might use statistical inference to answer:
 
-(1) A market researcher may be interested in knowing: what proportion of all undergraduate students in North America own an iPhone? 
+*What proportion of all undergraduate students in North America own an iPhone?*
 
-(2) Or a real estate analyst may want to know: what is the average price of all one-bedroom apartments in Vancouver, Canada?
+In the above question, we are interested in making a conclusion about *all*
+undergraduate students in North America.  This is our **population**: 
+in general, the population is the complete collection of individuals or cases we are interested in studying. 
+Further, in the above question, we are interested in computing a quantity&mdash;the proportion
+of iPhone owners&mdash;based on the entire population. This is our **population parameter**:
+in general, a population parameter is a numerical characteristic
+of the entire population. In order to compute this number in the example above, we would need to ask 
+every single undergraduate in North America whether or not they own an iPhone. In practice,
+directly computing population parameters is often time-consuming and costly, and sometimes impossible. 
 
-In the above questions, we are interested in making conclusions about all undergraduate students in North America and all one-bedroom apartments in Vancouver, Canada, representing our populations. A **population** is the complete collection of individuals or cases we are interested in studying. The proportion of undergraduate students in North America with an iPhone is a **population parameter**. A population parameter is a numerical characteristic of the population. If we asked every single undergraduate in North America whether they own an iPhone or not and calculated the proportion of students that did -- that number would be our population parameter. Collecting information about the population means we would be conducting a *census*, which would provide all of the population's characteristics. However, in practice, a census is often time-consuming, costly and sometimes impossible. Imagine trying to ask every undergraduate student in North America if they have an iPhone! Therefore a more practical approach would be to take a **sample**, a subset of individuals collected from the population. We may choose a sample from our population and use the observed data to infer the proportion of undergraduate students in North America who have an iPhone. A **sample statistic** is a numerical characteristic of the sample.  If we randomly selected ten undergraduate students in North America and found the proportion of those ten students who had an iPhone -- that number would be our sample statistic. The picture below shows the difference between a population versus a sample and a parameter versus a statistic. 
+A more practical approach would be to collect measurements for a **sample**: a subset of
+individuals collected from the population. We can then compute a **sample statistic**&mdash;a numerical
+characteristic of the sample&mdash;that estimates the population parameter. For example, if we 
+randomly selected 100 undergraduate students across North America (the sample) and computed the fraction of those
+students who own an iPhone (the sample statistic), we might suspect that that fraction is a reasonable
+estimate of the full population fraction. 
 
 <center>
 ![Figure 11.1: Population versus sample](img/population_vs_sample.svg){}
 </center>
 
-In question (1), the population parameter we infer about is the population proportion, the proportion of all undergraduate students in North America with an iPhone. The average price of all one-bedroom apartments in Vancouver, Canada, is another population parameter, specifically the population mean. When the variable of interest is categorical, the population parameter that we will infer about is the population proportion. When the variable of interest is quantitative, the population parameter that we infer about is the population mean. These questions are examples of point estimation, where we estimate our population parameter using a single value. 
+Note that proportions are not the *only* kind of population parameter we might be interested in.
+Let's consider another example question that we might tackle with statistical inference:
+
+*What is the average price of one-bedroom apartments in Vancouver, Canada?*
+
+Here, the population consists of all one-bedroom apartments in Vancouver, and the population
+parameter is the *average price*. But even within this one example, we could also be interested
+in many other population parameters: the median price, the fraction of one-bedroom apartments that cost more than 1 million dollars,
+the standard deviation of the price, and the list goes on.
+If we were somehow able to observe the whole population of one-bedroom apartments in Vancouver, 
+we could compute each of these numbers exactly; therefore these are all population parameters. 
+There are many kinds of observations and population parameters that you will run into in practice,
+but in this chapter we will focus on two settings:
+
+1. Using quantitative observations to estimate the average (or mean)
+2. Using categorical observations to estimate the proportion of each category
 
 ## Sampling distributions
 
 ### Sampling distributions for proportions
 
-Let's start with an illustrative (and tasty!) example. Timbits are small, bite-sized doughnuts sold at a popular Canadian-based fast-food restaurant chain founded in Hamilton, Ontario, Canada.
+Let's start with an illustrative (and tasty!) example. Timbits are 
+bite-sized doughnuts sold at Tim Hortons, a popular Canadian-based fast-food restaurant
+chain founded in Hamilton, Ontario, Canada. 
 
 ![Timbits. Source: wikimedia.org](https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Timbits2.jpg/1600px-Timbits2.jpg){width=50%}
 
-Suppose we want to estimate the true proportion of chocolate doughnuts at Tim Hortons restaurants. In this example, we will make a simulated dataset of Timbits. In reality, we rarely have measurements for our entire population. However, in this chapter, we will pretend that we do so that we can learn about sampling and estimation. Let's simulate a box of 10,000 Timbits. Below we are creating a `tibble()` with a subject id and Timbit type as our columns.
+Suppose we wanted to estimate the true proportion of chocolate doughnuts at Tim
+Hortons restaurants. Now, of course, we (the authors!) do not have access to the true population.
+So in this chapter, we will simulate a synthetic box of 10,000 Timbits with two types&mdash;old-fashioned 
+and chocolate&mdash;as our population, and use this to illustrate
+inferential concepts. Below we create a `tibble()` with a subject ID and Timbit type as our columns.
 
 ```{r 10-example-proportions, echo = TRUE, message = FALSE, warning = FALSE}
 library(tidyverse) 
@@ -81,7 +117,9 @@ virtual_box <- tibble(timbit_id = seq(1, 10000, by = 1),
 head(virtual_box)
 ```
 
-From our simulated box, we can see that the proportion of chocolate Timbits is 0.63. This value, 0.63, is our population parameter. This parameter value is usually unknown in real life, and we aim to try and estimate it. 
+From our simulated box, we can see that the proportion of chocolate Timbits is
+0.63. This value, 0.63, is the *population parameter*. Note that this parameter value is
+usually unknown in real data analysis problems.
 
 ```{r 10-example-proportions2, echo = TRUE, message = FALSE, warning = FALSE}
 virtual_box %>% 
@@ -90,7 +128,11 @@ virtual_box %>%
              proportion = n() / 10000)
 ```
 
-Suppose we buy a box of 40 Timbits and count the number of chocolate Timbits. Let's take a random sample of size 40 from our Timbits population. The function `rep_sample_n` from the `infer` package will allow us to sample. We input the data frame from which to sample and the sample size in the arguments `tbl` and `size` respectively below.
+Suppose we buy a box of 40 randomly-selected Timbits and count the number of chocolate Timbits,
+i.e., take a random sample of size 40 from our Timbits population. The function
+`rep_sample_n` from the `infer` package will allow us to sample. The arguments
+of `rep_sample_n` are (1) the data frame to sample from, and (2) the size of the sample
+to take.
 
 ```{r 10-example-proportions3, echo = TRUE, message = FALSE, warning = FALSE}
 samples_1 <- rep_sample_n(tbl = virtual_box, size = 40)
@@ -98,9 +140,13 @@ choc_sample_1 <- summarize(samples_1, n = sum(color == "chocolate"),
                                         prop = sum(color == "chocolate") / 40)
 choc_sample_1
 ```
-Here we see that the proportion of chocolate Timbits in this random sample is `r round(choc_sample_1$prop,2)`. This value, `r round(choc_sample_1$prop,2)`, is our sample statistic, and it serves as our estimate of the population proportion. Here we are using a single number from the sample data to estimate our population parameter. So we are doing what's known as **point estimation**.
+Here we see that the proportion of chocolate Timbits in this random sample is
+`r round(choc_sample_1$prop,2)`. This value is our sample statistic; since it is a single
+value that is used to estimate a population parameter, we refer to it as a **point estimate**.
 
-Imagine we took another random sample of 40 Timbits from the population. Do you think you would get the same proportion? Let's try sampling from the population again and see what happens. 
+Now imagine we took another random sample of 40 Timbits from the population. Do you
+think you would get the same proportion? Let's try sampling from the population
+again and see what happens. 
 
 ```{r 10-example-proportions4, echo = TRUE, message = FALSE, warning = FALSE}
 set.seed(2)
@@ -110,7 +156,23 @@ choc_sample_2 <- summarize(samples_2, n = sum(color == "chocolate"),
 choc_sample_2
 ```
 
-Notice that we get a different value for our statistic this time. The proportion of chocolate Timbits in this sample is `r round(choc_sample_2$prop, 2)`. If we were to do this again, another random sample could also give a different result. Statistics vary from sample to sample due to **sampling variability**. But just how much should we expect the statistics of our random samples to change? It will help us to understand the behaviour of our sample statistics to answer this. Therefore we will simulate more from our population of Timbits to observe this behaviour. We will take many random samples, and for each sample, calculate the proportion of chocolate Timbits. We can then construct the distribution of sample proportions we calculate. The distribution of statistics for all possible samples of size $n$ draw from a population is called a **sampling distribution**. The sampling distribution will help us see how much we would expect our sample proportions from this population to vary for samples of size 40. Below we are taking samples of size 40 from the population and then repeating that process 1000 times by specifying the number of samples of size $n$ to take in the `reps` argument.
+Notice that we get a different value for our statistic this time. The
+proportion of chocolate Timbits in this sample is `r round(choc_sample_2$prop, 2)`. 
+If we were to do this again, another random sample could also give a
+different result. Statistics vary from sample to sample 
+due to **sampling variability**. 
+
+But just how much should we expect the statistics of our random
+samples to vary? In order to understand this, we will simulate more samples
+of size 40 from our population of Timbits, and calculate the 
+proportion of chocolate Timbits in each sample. We can then
+construct the distribution of sample proportions we calculate. The distribution
+of the statistic for all possible samples of size $n$ from a population is
+called a **sampling distribution**. The sampling distribution will help us see
+how much we would expect our sample proportions from this population to vary
+for samples of size 40. Below we again use the `rep_sample_n` to take samples
+of size 40 from our population of Timbits, but we set the `reps` argument
+to specify the number of samples to take.
 
 ```{r 10-example-proportions5, echo = TRUE, message = FALSE, warning = FALSE}
 samples <- rep_sample_n(virtual_box, size = 40, reps = 1000)
@@ -118,7 +180,8 @@ head(samples)
 tail(samples)
 ```
 
-Notice the column `replicate` is indicating the replicate with which each Timbit belongs. Since we were doing this 1000 times, there are 1000 replicates.
+Notice the column `replicate` is indicating the replicate with which each
+Timbit belongs. Since we took 1000 samples of size 40, there are 1000 replicates.
 
 ```{r 10-example-proportions6, echo = TRUE, message = FALSE, warning = FALSE}
 sample_estimates <- samples %>% 
@@ -134,23 +197,46 @@ sampling_distribution <-  ggplot(sample_estimates, aes(x = sample_proportion)) +
     xlab("Sample proportions") 
 sampling_distribution
 ```
-The sampling distribution appears to be bell-shaped with one peak. It is centered around `r round(mean(sample_estimates$sample_proportion),1)` and the sample proportions range from about `r round(min(sample_estimates$sample_proportion), 1)` to about `r round(max(sample_estimates$sample_proportion), 1)`. In fact, we could calculate the mean and standard deviation of the sample proportions. 
+
+The sampling distribution appears to be bell-shaped with one peak. It is
+centered around `r round(mean(sample_estimates$sample_proportion),1)` and the
+sample proportions range from about `r round(min(sample_estimates$sample_proportion), 1)` to 
+about `r round(max(sample_estimates$sample_proportion), 1)`. In fact, we can calculate
+the mean and standard deviation of the sample proportions. 
 
 ```{r 10-example-proportions8, echo = TRUE, message = FALSE, warning = FALSE}
 sample_estimates %>% 
   summarise(mean = mean(sample_proportion), sd = sd(sample_proportion))
 ```
-We notice that the sample proportions are centred around the population proportion value. The standard deviation of the sample proportions is `r round(sd(sample_estimates$sample_proportion), 3)`.
 
+We notice that the sample proportions are centred around the population
+proportion value. The standard deviation of the sample proportions 
+is `r round(sd(sample_estimates$sample_proportion), 3)`.
+
+<!--
 > **Note:** If random samples of size $n$ are taken from a population, $\hat{p}$ will be approximately Normal with mean $p$ and standard deviation $\sqrt{\frac{p(1-p)}{n}}$ as long as the sample size $n$ is large enough such that $np$ and $n(1 - p)$ are at least 10, where $p$ is the population proportion, $\hat{p}$ is the sample proportion and $n$ is the sample size. 
+-->
 
 
 ### Sampling distributions for means 
 
-In the previous section, our variable of interest, Timbit type, was categorical. Thus the population parameter that we inferred was the population proportion. What if we want to infer something about a quantitative variable? If the variable of interest is quantitative, the population parameter that we infer about is the population mean. 
+In the previous section, our variable of interest, Timbit type, was
+categorical. Thus the population parameter that we inferred was the population
+proportion. What if we want to infer something about a quantitative variable?
+If the variable of interest is quantitative, the population parameter that we
+infer about is the population mean. 
 
-Here we will look at an example with Airbnb data. Airbnb is an online marketplace for arranging or offering places to stay. The dataset contains Airbnb listings for Vancouver, Canada, in September 2020 from [Inside Airbnb](http://insideairbnb.com/).
-Suppose we were interested in estimating the average price per night of all Airbnb rentals in Vancouver, Canada. Let's imagine that we have the population data for all Airbnb listings in Vancouver. We rarely have measurements for our entire population. However, for this example, we will pretend that we do so that we can learn about sampling and estimation for sample means. Our data contains an id number, neighbourhood, type of room, the number of people that the rental accommodates, number of bathrooms, bedrooms, beds, and finally, the listing price per night.
+Here we will look at an example with Airbnb data. Airbnb is an online
+marketplace for arranging or offering places to stay. The dataset contains
+Airbnb listings for Vancouver, Canada, in September 2020 
+from [Inside Airbnb](http://insideairbnb.com/).  Suppose we were interested in estimating
+the average price per night of all Airbnb rentals in Vancouver, Canada. Let's
+imagine that we have the population data for all Airbnb listings in Vancouver.
+We rarely have measurements for our entire population. However, for this
+example, we will pretend that we do so that we can learn about sampling and
+estimation for sample means. Our data contains an id number, neighbourhood,
+type of room, the number of people that the rental accommodates, number of
+bathrooms, bedrooms, beds, and finally, the listing price per night.
 
 ```{r 10-example-means1, echo = FALSE, message = FALSE, warning = FALSE}
 airbnb <- read_csv("data/listings.csv") %>% 
