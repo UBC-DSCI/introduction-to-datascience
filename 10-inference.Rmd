@@ -75,19 +75,20 @@ estimate of the full population fraction.
 Note that proportions are not the *only* kind of population parameter we might be interested in.
 Let's consider another example question that we might tackle with statistical inference:
 
-*What is the average price of one-bedroom apartments in Vancouver, Canada?*
+*What is the average price-per-night of one-bedroom apartment rentals in Vancouver, Canada?*
 
-Here, the population consists of all one-bedroom apartments in Vancouver, and the population
-parameter is the *average price*. But even within this one example, we could also be interested
-in many other population parameters: the median price, the fraction of one-bedroom apartments that cost more than 1 million dollars,
+Here, the population consists of all one-bedroom apartment rental offerings in Vancouver, and the population
+parameter is the *average price-per-night*. But even within this one example, we could also be interested
+in many other population parameters: the median price, the fraction of 
+one-bedroom apartments that cost more than \$200 per night,
 the standard deviation of the price, and the list goes on.
 If we were somehow able to observe the whole population of one-bedroom apartments in Vancouver, 
 we could compute each of these numbers exactly; therefore these are all population parameters. 
 There are many kinds of observations and population parameters that you will run into in practice,
 but in this chapter we will focus on two settings:
 
-1. Using quantitative observations to estimate the average (or mean)
-2. Using categorical observations to estimate the proportion of each category
+1. Using categorical observations to estimate the proportion of each category
+2. Using quantitative observations to estimate the average (or mean)
 
 ## Sampling distributions
 
@@ -213,30 +214,27 @@ We notice that the sample proportions are centred around the population
 proportion value. The standard deviation of the sample proportions 
 is `r round(sd(sample_estimates$sample_proportion), 3)`.
 
-<!--
 > **Note:** If random samples of size $n$ are taken from a population, $\hat{p}$ will be approximately Normal with mean $p$ and standard deviation $\sqrt{\frac{p(1-p)}{n}}$ as long as the sample size $n$ is large enough such that $np$ and $n(1 - p)$ are at least 10, where $p$ is the population proportion, $\hat{p}$ is the sample proportion and $n$ is the sample size. 
--->
 
 
 ### Sampling distributions for means 
 
-In the previous section, our variable of interest, Timbit type, was
-categorical. Thus the population parameter that we inferred was the population
-proportion. What if we want to infer something about a quantitative variable?
-If the variable of interest is quantitative, the population parameter that we
-infer about is the population mean. 
+In the previous section, our variable of interest&mdash;Timbit flavour&mdash;was
+*categorical*, and the population parameter of interest was the proportion of chocolate
+Timbits. What if we wanted to infer something about a population of *quantitative* variables instead?
+As mentioned in the introduction to this chapter, there are many choices of population parameter
+for each type of observed variable. In this section, we will study the case where we are interested
+in the population mean of a quantitative variable.
 
-Here we will look at an example with Airbnb data. Airbnb is an online
+In particular, we will look at an example using data from Airbnb, an online
 marketplace for arranging or offering places to stay. The dataset contains
 Airbnb listings for Vancouver, Canada, in September 2020 
-from [Inside Airbnb](http://insideairbnb.com/).  Suppose we were interested in estimating
-the average price per night of all Airbnb rentals in Vancouver, Canada. Let's
-imagine that we have the population data for all Airbnb listings in Vancouver.
-We rarely have measurements for our entire population. However, for this
-example, we will pretend that we do so that we can learn about sampling and
-estimation for sample means. Our data contains an id number, neighbourhood,
+from [Inside Airbnb](http://insideairbnb.com/). 
+Let's imagine (for learning purposes) that our dataset represents the population of all Airbnb rental listings in Vancouver,
+and we are interested in the population mean price per night.
+Our data contains an ID number, neighbourhood,
 type of room, the number of people that the rental accommodates, number of
-bathrooms, bedrooms, beds, and finally, the listing price per night.
+bathrooms, bedrooms, beds, and the price per night.
 
 ```{r 10-example-means1, echo = FALSE, message = FALSE, warning = FALSE}
 airbnb <- read_csv("data/listings.csv") %>% 
@@ -248,7 +246,7 @@ airbnb <- airbnb %>%
 head(airbnb)
 ```
 
-We can visualize the population distribution with a histogram. 
+We can visualize the population distribution of the price per night with a histogram. 
 ```{r 10-example-means2, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Population distribution of price per night ($) for all Airbnb listings in Vancouver, Canada"}
 population_distribution <-  ggplot(airbnb, aes(x = price)) +
     geom_histogram(fill="#0072B2", color="#e9ecef") +
@@ -258,12 +256,19 @@ population_parameters <- airbnb %>%
     summarize(pop_mean = mean(price),
              pop_sd = sd(price))
 population_parameters
-
-mean(airbnb$price)
 ```
-We see that the distribution has one peak and is skewed -- most of the listings are less than \$250 per night. Still, a small proportion of listings cost more than that, creating a long tail on the histogram's right side. Here we can see the population mean is \$`r round(population_parameters$pop_mean,2)` and the population standard deviation is \$`r round(population_parameters$pop_sd, 2)`.
 
-We can take a sample of 20 observations and create a histogram to visualize the distribution and calculate point estimates for the mean and standard deviation.
+We see that the distribution has one peak and is skewed&mdash;most of the listings
+are less than \$250 per night, but a small proportion of listings cost more
+than that, creating a long tail on the histogram's right side. 
+The population mean is \$`r round(population_parameters$pop_mean,2)` and the
+population standard deviation is \$`r round(population_parameters$pop_sd, 2)`.
+
+Suppose we take a sample of 20 observations from our population. Below we 
+create a histogram to visualize the
+distribution of observations in the sample,
+and calculate the mean and standard deviation of our sample. These two numbers
+are **point estimates** for the mean and standard deviation of the full population.
 
 ```{r 10-example-means3, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Distribution of price per night ($) for sample of 20 Airbnb listings"}
 sample_1 <- airbnb %>% 
@@ -278,8 +283,24 @@ estimates <- sample_1 %>%
              sample_sd = sd(price))
 estimates
 ```
+Recall that the population mean 
+was \$`r round(population_parameters$pop_mean,2)` and the population standard deviation
+was \$`r round(population_parameters$pop_sd,2)`. We see that our point
+estimates for the mean and standard deviation 
+are \$`r round(estimates$sample_mean, 2)` and  \$`r round(estimates$sample_sd,2)`,
+respectively. So our estimates were actually quite close to the population parameters: the mean was 
+about `r round(100*abs(estimates$sample_mean - population_parameters$pop_mean)/population_parameters$pop_mean, 1)`% off,
+while the standard deviation was 
+about `r round(100*abs(estimates$sample_sd - population_parameters$pop_sd)/population_parameters$pop_sd, 1)`% off.
+Note that in practice, we usually cannot compute the accuracy of the estimate, since we do not have access to the population
+parameter; if we did, we wouldn't need to estimate it!
 
-Remember that the population mean was \$`r round(population_parameters$pop_mean,2)` and the population standard deviation was \$`r round(population_parameters$pop_sd,2)`. We see that our point estimates for the mean and standard deviation are \$`r round(estimates$sample_mean, 2)` and  \$`r round(estimates$sample_sd,2)` respectively. So how good was our estimate? In practice, we don't usually have access to population data. If we took another random sample from the population, then the value of our statistic may change. So we might want to consider how far an estimate of the parameter could be away from the true population parameter? We might also want to know how often that might occur? Therefore, it will help if we investigate all possible values that a statistic could take. 
+Also recall from the previous section that the point estimate can vary; if 
+we took another random sample from the population, then the value of our statistic may change.
+So then did we just get lucky with our point estimate above?
+How much does our estimate vary across different samples of size 20 in this example? Again, since we have access to the population,
+we can take many samples and plot the **sampling distribution** of the point estimates to get a sense
+for this variation. In this case, we'll use 1500 samples of size 20.
 
 ```{r 10-example-means4, echo = TRUE, message = FALSE, warning = FALSE, fig.cap= "Sampling distribution of the sample means for sample size of 20"}
 samples <- rep_sample_n(airbnb, size = 20, reps = 1500)
@@ -296,29 +317,49 @@ sampling_distribution_20 <-  ggplot(sample_estimates, aes(x = sample_mean)) +
 sampling_distribution_20
 ```
 
-Here we see that the sampling distribution of the mean has one peak and is bell-shaped. Most of the estimates are between about  \$`r round(quantile(sample_estimates$sample_mean)[2], -1)` and \$`r round(quantile(sample_estimates$sample_mean)[4], -1)`.
-
+Here we see that the sampling distribution of the mean has one peak and is
+bell-shaped. Most of the estimates are between 
+about  \$`r round(quantile(sample_estimates$sample_mean)[2], -1)` and 
+\$`r round(quantile(sample_estimates$sample_mean)[4], -1)`; but there are
+a good fraction of cases outside this range (i.e., where the point estimate
+was not close to the population parameter). So it does indeed look like we were quite lucky
+when we estimated the population mean 
+with only `r round(100*abs(estimates$sample_mean - population_parameters$pop_mean)/population_parameters$pop_mean, 1)`% error.
+Let's visualize the population
+distribution, distribution of the sample, and the sampling distribution on one 
+plot to compare them.
+<!---
 ```{r 10-example-means4.5}
 sample_estimates %>% 
   summarise(mean_of_sample_means = mean(sample_mean))
 ```
-Notice that the mean of the sample means is `r round(mean(sample_estimates$sample_mean),2)`. Recall that the population mean was \$`r round(mean(airbnb$price),2)`. We can compare the population distribution, distribution of the sample, and the sampling distribution on one graph. 
+Notice that the mean of the sample means is \$`r round(mean(sample_estimates$sample_mean),2)`. Recall that the population mean
+was \$`r round(mean(airbnb$price),2)`. 
+-->
 
 ```{r 10-example-means5, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of population distribution, sample distribution and sampling distribution"}
-grid.arrange(population_distribution + ggtitle("Distribution of population"), 
-             sample_distribution + ggtitle("Distribution of sample"), 
-             sampling_distribution_20 + ggtitle("Sampling distribution of sample mean"), nrow = 3)
+grid.arrange(population_distribution + ggtitle("Population distribution"), 
+             sample_distribution + ggtitle("Sample"), 
+             sampling_distribution_20 + ggtitle("Sampling distribution of the sample mean"), nrow = 3)
 ```
 
-Can we do better than that? What if we increase the sample size? Again we will take a random sample of a specific size from the population, calculate the sample mean, and repeat. You can compare the population distribution and the sampling distributions for samples of size 20, 50 and 100 below. 
+Given that there is quite a bit of variation in the sampling distribution of the sample mean&mdash;i.e., 
+the point estimate that we obtain is not very reliable&mdash;is there any way to improve the estimate?
+One way to improve a point estimate is to take a *larger* sample. To illustrate what effect this has,
+we will take 1500 samples of size 20, 50, 100, and 500, and plot the sampling distribution of the sample mean
+below. 
 
 ```{r 10-example-means6, echo = FALSE, message = FALSE, warning = FALSE}
-## Sampling n = 50 and n = 100 
+## Sampling n = 50, 100, 500 
 sample_estimates_50 <- rep_sample_n(airbnb, size = 50, reps = 1500) %>% 
     group_by(replicate) %>% 
     summarise(sample_mean = mean(price))
 
 sample_estimates_100 <- rep_sample_n(airbnb, size = 100, reps = 1500) %>% 
+    group_by(replicate) %>% 
+    summarise(sample_mean = mean(price))
+
+sample_estimates_500 <- rep_sample_n(airbnb, size = 500, reps = 1500) %>% 
     group_by(replicate) %>% 
     summarise(sample_mean = mean(price))
 
@@ -333,17 +374,16 @@ sampling_distribution_100 <-  ggplot(sample_estimates_100, aes(x = sample_mean))
     geom_histogram(fill="#0072B2", color="#e9ecef") +
     xlab("Sample mean price per night ($)") +
     ggtitle("n = 100") + xlim(min_x(sampling_distribution_20), max_x(sampling_distribution_20))
+
+## Sampling distribution n = 500 
+sampling_distribution_500 <-  ggplot(sample_estimates_500, aes(x = sample_mean)) +
+    geom_histogram(fill="#0072B2", color="#e9ecef") +
+    xlab("Sample mean price per night ($)") +
+    ggtitle("n = 100") + xlim(min_x(sampling_distribution_20), max_x(sampling_distribution_20))
+
 ```
 
-```{r 10-example-means7,  echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of population distribution and sampling distributions"}
-annotated_population <- population_distribution + 
-    geom_vline(xintercept = round(population_parameters$pop_mean,1), col = "red") +
-    ggtitle("Population distribution")  + 
-    annotate("text", x = max_x(population_distribution), y= max_count(population_distribution), hjust = 1, vjust = 1, 
-             label = paste("mean = ", round(population_parameters$pop_mean,1))) +
-    annotate("text", x =  max_x(population_distribution), y = max_count(population_distribution), hjust = 1, vjust = 3,
-             label = paste("sd = ", round(population_parameters$pop_sd,1)))
-
+```{r 10-example-means7,  echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of sampling distributions"}
 annotated_sampling_dist_20 <- sampling_distribution_20 + 
     geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red") +
     xlim(min_x(sampling_distribution_20), max_x(sampling_distribution_20)) + 
@@ -368,23 +408,37 @@ annotated_sampling_dist_100 <- sampling_distribution_100 +
     annotate("text", x =  max_x(sampling_distribution_20), y = max_count(sampling_distribution_100), hjust = 1, vjust = 3,
                label = paste("sd = ", round(sd(sample_estimates_100$sample_mean), 1)))
 
-grid.arrange(annotated_population, 
-             annotated_sampling_dist_20, 
+annotated_sampling_dist_500 <- sampling_distribution_500 + 
+    geom_vline(xintercept = mean(sample_estimates_500$sample_mean), col = "red") +
+    annotate("text", x =  max_x(sampling_distribution_20), y = max_count(sampling_distribution_500), hjust = 1, vjust = 1,
+             label = paste("mean = ", round(mean(sample_estimates_500$sample_mean), 1)))+
+    annotate("text", x =  max_x(sampling_distribution_20), y = max_count(sampling_distribution_500), hjust = 1, vjust = 3,
+               label = paste("sd = ", round(sd(sample_estimates_500$sample_mean), 1)))
+
+grid.arrange(annotated_sampling_dist_20, 
              annotated_sampling_dist_50, 
              annotated_sampling_dist_100,  
+             annotated_sampling_dist_500,  
              nrow = 2, ncol = 2) 
 ```
 
-What do we notice? The center of the sample mean values are equal to the population mean as indicated by the red vertical line. Also, when the sample size increases, the sample mean shows less variability. Therefore, we get more precise estimates of the population parameter.
+Based on the visualization, two points about the sample mean become clear.
+First, the
+mean of the sample mean (across samples) is equal to the population mean.
+Second, increasing the size of the sample
+decreases the standard deviation (i.e., the variability) in the sample mean
+point estimate of the population mean. Therefore, a larger sample size results
+in a more reliable point estimate of the population parameter.
 
 > **Note:** If random samples of size $n$ are taken from a population, the sample mean $\bar{x}$ will be approximately Normal with mean $\mu$ and standard deviation $\frac{\sigma}{\sqrt{n}}$ as long as the sample size $n$ is large enough. $\mu$ is the population mean, $\sigma$ is the population standard deviation, $\bar{x}$ is the sample mean, and $n$ is the sample size. 
 > If samples are selected from a finite population as we are doing in this chapter, we should apply a finite population correction. We multiply $\frac{\sigma}{\sqrt{n}}$ by $\sqrt{\frac{N - n}{N - 1}}$ where $N$ is the population size and $n$ is the sample size. If our sample size, $n$, is small relative to the population size, this finite correction factor is less important. 
 
 ### Summary
-1. A sampling distribution of a statistic is the distribution of the statistic for all possible samples from the same population of a given sample size.
-2. The sample means and proportions calculated from samples drawn from populations were centered around the population parameters we were trying to estimate.
-3.	The spread of the sampling distribution is related to the sample size. As the sample size increases, the spread of the distribution decreases. 
-4. The shape of the sampling distribution is bell-shaped with one peak and centred at the population mean or proportion.
+1. A *statistic* is a value computed using a sample from a population; a *point estimate* is a statistic that is a single value (e.g. a mean or proportion)
+2. The *sampling distribution* of a statistic is the distribution of the statistic for all possible samples of a fixed size from the same population.
+3. The sample means and proportions calculated from samples are centered around the population mean and proportion, respectively.
+4. The spread of the sampling distribution is related to the sample size. As the sample size increases, the spread of the sampling distribution decreases. 
+5. The shape of the sampling distribution is usually bell-shaped with one peak and centred at the population mean or proportion.
 
 ## Bootstrapping 
 ### Bootstrapping Overview 
