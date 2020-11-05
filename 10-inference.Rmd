@@ -1,6 +1,6 @@
 # Introduction to Statistical Inference {#inference}
 
-```{r 10-setup, include= F}
+```{r 11-setup, include= F}
 library(tidyverse) 
 require(grid) #  grid.bezier()
 
@@ -99,34 +99,35 @@ bite-sized doughnuts sold at Tim Hortons, a popular Canadian-based fast-food res
 chain founded in Hamilton, Ontario, Canada. 
 
 ![Timbits. Source: wikimedia.org](https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Timbits2.jpg/1600px-Timbits2.jpg){width=50%} 
-<!--- CC0 https://commons.wikimedia.org/wiki/File:Timbits2.jpg --->
 
 
 Suppose we wanted to estimate the true proportion of chocolate doughnuts at Tim
 Hortons restaurants. Now, of course, we (the authors!) do not have access to the true population.
-So in this chapter, we will simulate a synthetic box of 10,000 Timbits with two types&mdash;old-fashioned 
+So in this chapter, we will simulate a synthetic box of 10,000 Timbits with two flavours&mdash;old-fashioned 
 and chocolate&mdash;as our population, and use this to illustrate
-inferential concepts. Below we create a `tibble()` with a subject ID and Timbit type as our columns.
+inferential concepts. Below we have a `tibble()` called `virtual_box` with a subject ID and Timbit flavour as our columns. We have also loaded our necessary packages: `tidyverse` and the `infer` package, which we will need to perform sampling later in the chapter.  
 
-```{r 10-example-proportions, echo = TRUE, message = FALSE, warning = FALSE}
-library(tidyverse) 
-library(ggplot2)
-library(infer)
+```{r 11-example-proportions, echo = FALSE, message = FALSE, warning = FALSE}
 library(gridExtra)
 set.seed(1234)
 virtual_box <- tibble(timbit_id = seq(1, 10000, by = 1),
-                     color = factor(rbinom(10000, 1, 0.63),
+                     flavour = factor(rbinom(10000, 1, 0.63),
                      labels = c("old fashioned", "chocolate")))
+
+```
+
+```{r 11-example-proportions1}
+library(tidyverse) 
+library(infer)
 head(virtual_box)
 ```
 
 From our simulated box, we can see that the proportion of chocolate Timbits is
-0.63. This value, 0.63, is the *population parameter*. Note that this parameter value is
-usually unknown in real data analysis problems.
+0.63. This value, 0.63, is the *population parameter*. Note that this parameter value is usually unknown in real data analysis problems.
 
-```{r 10-example-proportions2, echo = TRUE, message = FALSE, warning = FALSE}
+```{r 11-example-proportions2, echo = TRUE, message = FALSE, warning = FALSE}
 virtual_box %>% 
-    group_by(color) %>% 
+    group_by(flavour) %>% 
     summarize(n = n(),
              proportion = n() / 10000)
 ```
@@ -137,10 +138,10 @@ i.e., take a random sample of size 40 from our Timbits population. The function
 of `rep_sample_n` are (1) the data frame to sample from, and (2) the size of the sample
 to take.
 
-```{r 10-example-proportions3, echo = TRUE, message = FALSE, warning = FALSE}
+```{r 11-example-proportions3, echo = TRUE, message = FALSE, warning = FALSE}
 samples_1 <- rep_sample_n(tbl = virtual_box, size = 40)
-choc_sample_1 <- summarize(samples_1, n = sum(color == "chocolate"),
-                                        prop = sum(color == "chocolate") / 40)
+choc_sample_1 <- summarize(samples_1, n = sum(flavour == "chocolate"),
+                                        prop = sum(flavour == "chocolate") / 40)
 choc_sample_1
 ```
 Here we see that the proportion of chocolate Timbits in this random sample is
@@ -151,11 +152,11 @@ Now imagine we took another random sample of 40 Timbits from the population. Do 
 think you would get the same proportion? Let's try sampling from the population
 again and see what happens. 
 
-```{r 10-example-proportions4, echo = TRUE, message = FALSE, warning = FALSE}
+```{r 11-example-proportions4, echo = TRUE, message = FALSE, warning = FALSE}
 set.seed(2)
 samples_2 <- rep_sample_n(virtual_box, size = 40)
-choc_sample_2 <- summarize(samples_2, n = sum(color == "chocolate"),
-                                        prop = sum(color == "chocolate") / 40)
+choc_sample_2 <- summarize(samples_2, n = sum(flavour == "chocolate"),
+                                        prop = sum(flavour == "chocolate") / 40)
 choc_sample_2
 ```
 
@@ -177,7 +178,7 @@ for samples of size 40. Below we again use the `rep_sample_n` to take samples
 of size 40 from our population of Timbits, but we set the `reps` argument
 to specify the number of samples to take.
 
-```{r 10-example-proportions5, echo = TRUE, message = FALSE, warning = FALSE}
+```{r 11-example-proportions5, echo = TRUE, message = FALSE, warning = FALSE}
 samples <- rep_sample_n(virtual_box, size = 40, reps = 1000)
 head(samples)
 tail(samples)
@@ -186,15 +187,15 @@ tail(samples)
 Notice the column `replicate` is indicating the replicate with which each
 Timbit belongs. Since we took 1000 samples of size 40, there are 1000 replicates.
 
-```{r 10-example-proportions6, echo = TRUE, message = FALSE, warning = FALSE}
+```{r 11-example-proportions6, echo = TRUE, message = FALSE, warning = FALSE}
 sample_estimates <- samples %>% 
     group_by(replicate) %>% 
-    summarise(sample_proportion = sum(color == "chocolate") / 40)
+    summarise(sample_proportion = sum(flavour == "chocolate") / 40)
 head(sample_estimates)
 tail(sample_estimates)
 ```
 
-```{r 10-example-proportions7, echo = TRUE, message = FALSE, warning = FALSE,fig.cap = "Sampling distribution of the sample proportion for sample size 40"}
+```{r 11-example-proportions7, echo = TRUE, message = FALSE, warning = FALSE,fig.cap = "Sampling distribution of the sample proportion for sample size 40"}
 sampling_distribution <-  ggplot(sample_estimates, aes(x = sample_proportion)) +
     geom_histogram(fill="#0072B2", color="#e9ecef", binwidth = 0.05) +
     xlab("Sample proportions") 
@@ -207,7 +208,7 @@ sample proportions range from about `r round(min(sample_estimates$sample_proport
 about `r round(max(sample_estimates$sample_proportion), 1)`. In fact, we can calculate
 the mean and standard deviation of the sample proportions. 
 
-```{r 10-example-proportions8, echo = TRUE, message = FALSE, warning = FALSE}
+```{r 11-example-proportions8, echo = TRUE, message = FALSE, warning = FALSE}
 sample_estimates %>% 
   summarise(mean = mean(sample_proportion), sd = sd(sample_proportion))
 ```
@@ -238,7 +239,7 @@ Our data contains an ID number, neighbourhood,
 type of room, the number of people that the rental accommodates, number of
 bathrooms, bedrooms, beds, and the price per night.
 
-```{r 10-example-means1, echo = FALSE, message = FALSE, warning = FALSE}
+```{r 11-example-means1, echo = FALSE, message = FALSE, warning = FALSE}
 airbnb <- read_csv("data/listings.csv") %>% 
   select(id, neighbourhood = neighbourhood_cleansed, room_type, accommodates, bathrooms = bathrooms_text, bedrooms, beds,  price) %>% 
   mutate(price = as.numeric(str_remove(price, "[$]"))) %>% 
@@ -249,7 +250,7 @@ head(airbnb)
 ```
 
 We can visualize the population distribution of the price per night with a histogram. 
-```{r 10-example-means2, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Population distribution of price per night ($) for all Airbnb listings in Vancouver, Canada"}
+```{r 11-example-means2, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Population distribution of price per night ($) for all Airbnb listings in Vancouver, Canada"}
 population_distribution <-  ggplot(airbnb, aes(x = price)) +
     geom_histogram(fill="#0072B2", color="#e9ecef") +
     xlab("Price per night ($)") 
@@ -272,7 +273,7 @@ distribution of observations in the sample,
 and calculate the mean and standard deviation of our sample. These two numbers
 are **point estimates** for the mean and standard deviation of the full population.
 
-```{r 10-example-means3, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Distribution of price per night ($) for sample of 20 Airbnb listings"}
+```{r 11-example-means3, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Distribution of price per night ($) for sample of 20 Airbnb listings"}
 sample_1 <- airbnb %>% 
     rep_sample_n(20)
 head(sample_1)
@@ -304,7 +305,7 @@ How much does our estimate vary across different samples of size 20 in this exam
 we can take many samples and plot the **sampling distribution** of the point estimates to get a sense
 for this variation. In this case, we'll use 1500 samples of size 20.
 
-```{r 10-example-means4, echo = TRUE, message = FALSE, warning = FALSE, fig.cap= "Sampling distribution of the sample means for sample size of 20"}
+```{r 11-example-means4, echo = TRUE, message = FALSE, warning = FALSE, fig.cap= "Sampling distribution of the sample means for sample size of 20"}
 samples <- rep_sample_n(airbnb, size = 20, reps = 1500)
 head(samples)
 
@@ -331,7 +332,7 @@ Let's visualize the population
 distribution, distribution of the sample, and the sampling distribution on one 
 plot to compare them.
 <!---
-```{r 10-example-means4.5}
+```{r 11-example-means4.5}
 sample_estimates %>% 
   summarise(mean_of_sample_means = mean(sample_mean))
 ```
@@ -339,7 +340,7 @@ Notice that the mean of the sample means is \$`r round(mean(sample_estimates$sam
 was \$`r round(mean(airbnb$price),2)`. 
 -->
 
-```{r 10-example-means5, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of population distribution, sample distribution and sampling distribution"}
+```{r 11-example-means5, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of population distribution, sample distribution and sampling distribution"}
 grid.arrange(population_distribution + ggtitle("Population distribution"), 
              sample_distribution + ggtitle("Sample"), 
              sampling_distribution_20 + ggtitle("Sampling distribution of the sample mean"), nrow = 3)
@@ -351,7 +352,7 @@ One way to improve a point estimate is to take a *larger* sample. To illustrate 
 we will take 1500 samples of size 20, 50, 100, and 500, and plot the sampling distribution of the sample mean
 below. 
 
-```{r 10-example-means6, echo = FALSE, message = FALSE, warning = FALSE}
+```{r 11-example-means6, echo = FALSE, message = FALSE, warning = FALSE}
 ## Sampling n = 50, 100, 500 
 sample_estimates_50 <- rep_sample_n(airbnb, size = 50, reps = 1500) %>% 
     group_by(replicate) %>% 
@@ -385,7 +386,7 @@ sampling_distribution_500 <-  ggplot(sample_estimates_500, aes(x = sample_mean))
 
 ```
 
-```{r 10-example-means7,  echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of sampling distributions"}
+```{r 11-example-means7,  echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of sampling distributions"}
 annotated_sampling_dist_20 <- sampling_distribution_20 + 
     geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red") +
     xlim(min_x(sampling_distribution_20), max_x(sampling_distribution_20)) + 
@@ -453,13 +454,12 @@ the estimate would vary for different samples from the population.
 But in real data analysis settings, we usually have *just one sample* from our population,
 and do not have access to the population itself. So how do we get a sense for how
 variable our point estimate is when we only have one sample to work with?
-In this section, we will discuss **interval estimation**
-using just a single sample from a population.
+In this section, we will discuss **interval estimation** and construct **confidence intervals** using just a single sample from a population.
 
 Here is the key idea. First, if you take a big enough sample, it *looks like* the population. Notice the histograms' shapes for samples of different sizes taken from the population in the picture below. We see that for a large enough sample, the sample's distribution looks like that of the population.
 
 
-```{r 10-example-bootstrapping0, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of samples of different sizes from the population"}
+```{r 11-example-bootstrapping0, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of samples of different sizes from the population"}
 
 sample_10 <- airbnb %>% 
     rep_sample_n(10)
@@ -530,7 +530,7 @@ in estimating the population mean price per night of all Airbnb listings in
 Vancouver, Canada. We will draw a single sample of size 40 from the
 population and visualize the distribution of the sample:
 
-```{r 10-bootstrapping1, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Histogram of price per night ($) for one sample of size 40"}
+```{r 11-bootstrapping1, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Histogram of price per night ($) for one sample of size 40"}
 one_sample <- airbnb %>% 
     rep_sample_n(40) %>% 
     ungroup() %>% # ungroup the data frame 
@@ -542,7 +542,7 @@ one_sample_dist <- ggplot(one_sample, aes(price)) +
 one_sample_dist
 ```
 
-```{r 10-bootstrapping2, echo = TRUE, message = FALSE, warning = FALSE}
+```{r 11-bootstrapping2, echo = TRUE, message = FALSE, warning = FALSE}
 one_sample_estimates <- one_sample %>% 
     summarise(sample_mean = mean(price))
 one_sample_estimates
@@ -559,14 +559,13 @@ will use the `rep_sample_n` function as we did when we were creating our
 sampling distribution. Since we want to sample with replacement, we change the
 argument for `replace` from its default value of `FALSE` to `TRUE`.
 
-```{r 10-bootstrapping3, echo = TRUE, message = FALSE, warning = FALSE}
+```{r 11-bootstrapping3, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Bootstrap distribution"}
 boot1 <- one_sample %>%
     rep_sample_n(size = 40, replace = TRUE, reps = 1)
 head(boot1)
 boot1_dist <- ggplot(boot1, aes(price)) + 
     geom_histogram(fill="#0072B2", color="#e9ecef") +
-    xlab("Price per night ($)") +
-    ggtitle("Bootstrap distribution")
+    xlab("Price per night ($)") 
 
 boot1_dist
 
@@ -587,7 +586,7 @@ each of those replicates. Recall that this assumes that `one_sample` *looks like
 our original population; but since we do not have access to the population itself,
 this is often the best we can do.
 
-```{r 10-bootstrapping4, echo = TRUE, message = FALSE, warning = FALSE}
+```{r 11-bootstrapping4, echo = TRUE, message = FALSE, warning = FALSE}
 boot1500 <- one_sample %>%
     rep_sample_n(size = 40, replace = TRUE, reps = 1500)
 head(boot1500)
@@ -603,7 +602,7 @@ We now calculate point estimates for each bootstrap sample and generate a bootst
 distribution of our point estimates. The bootstrap distribution suggests how we
 might expect our point estimate to behave if we took another sample.
 
-```{r 10-bootstrapping5, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Distribution of the bootstrap sample means"}
+```{r 11-bootstrapping5, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Distribution of the bootstrap sample means"}
 boot_est_dist <-  ggplot(boot1500_means, aes(x = mean)) +
     geom_histogram(fill="#0072B2", color="#e9ecef") +
     xlab("Sample mean price per night ($)") 
@@ -611,7 +610,7 @@ boot_est_dist <-  ggplot(boot1500_means, aes(x = mean)) +
 
 Let's compare our bootstrap distribution with the true sampling distribution (taking many samples from the population). 
 
-```{r 10-bootstrapping6, echo = F, message = FALSE, warning = FALSE, fig.cap = "Comparison of distribution of the bootstrap sample means and sampling distribution"}
+```{r 11-bootstrapping6, echo = F, message = FALSE, warning = FALSE, fig.cap = "Comparison of distribution of the bootstrap sample means and sampling distribution"}
 
 samples <- rep_sample_n(airbnb, size = 40, reps = 1500)
 
@@ -624,16 +623,16 @@ sampling_dist <-  ggplot(sample_estimates, aes(x = sample_mean)) +
     xlab("Sample mean price per night ($)")
 
 sampling_dist <- sampling_dist +
-  annotate("text", x = max_x(sampling_dist), max_count(sampling_dist), hjust = 1, vjust =3,
+  annotate("text", x = max_x(sampling_dist), max_count(sampling_dist), hjust = 1, vjust =1,
            label = paste("mean = ", round(mean(sample_estimates$sample_mean), 1))) + 
-  annotate("text", x = max_x(sampling_dist), max_count(sampling_dist), hjust = 1, vjust =5,
+  annotate("text", x = max_x(sampling_dist), max_count(sampling_dist), hjust = 1, vjust =3,
            label = paste("sd = ", round(sd(sample_estimates$sample_mean), 1))) + 
   geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red")
 
 annotated_boot_est_dist <- boot_est_dist + 
-  annotate("text", x = max_x(boot_est_dist), max_count(boot_est_dist), hjust = 1, vjust =0,
+  annotate("text", x = max_x(boot_est_dist), max_count(boot_est_dist), hjust = 1, vjust =1,
            label = paste("mean = ", round(mean(boot1500_means$mean), 1))) + 
-    annotate("text", x = max_x(boot_est_dist), max_count(boot_est_dist), hjust = 1, vjust =2,
+    annotate("text", x = max_x(boot_est_dist), max_count(boot_est_dist), hjust = 1, vjust =3,
            label = paste("sd = ", round(sd(boot1500_means$mean), 1))) + 
   geom_vline(xintercept = mean(boot1500_means$mean), col = "red")
 
@@ -651,7 +650,7 @@ original sample's mean value. The second important point is that the shape and s
 and the bootstrap distribution is similar; the bootstrap distribution lets us get a sense for the variability of the 
 point estimate.
 
-```{r 10-bootstrapping7, echo = F, message = FALSE, warning = FALSE, fig.cap = "Summary of bootstrapping process"}
+```{r 11-bootstrapping7, echo = F, message = FALSE, warning = FALSE, fig.cap = "Summary of bootstrapping process"}
 pop_dist <- population_distribution + ggtitle("Population") + xlab("Price") +
   theme(axis.ticks.x = element_blank(),
         axis.text.x = element_blank(), 
@@ -762,9 +761,11 @@ grid.text(".", x = unit(0.7, "npc"),
 ```
 
 ### Using the bootstrap to calculate a plausible range  
-Now that we have constructed our bootstrap distribution let's use it to find a range of plausible values for the population mean. We will find the range of values that cover the middle 95\% of the bootstrap distribution. Note that there's nothing particularly special about 95\%, we could have used other levels, such as 90\% or 99\%. The level you choose will depend on your application, which is beyond the scope of this textbook.
 
-To calculate our interval estimate, we will do the following:
+Now that we have constructed our bootstrap distribution let's use it to create
+an approximate bootstrap confidence interval, a range of plausible values for the population mean. We will construct a 95\% percentile bootstrap confidence interval and find the range of values that cover the middle 95\% of the bootstrap distribution. Note that there's nothing particularly special about 95\%, we could have used other confidence levels, such as 90\% or 99\%. The confidence level you choose will depend on your application, which is beyond the scope of this textbook.
+
+To calculate our 95\% percentile bootstrap confidence interval, we will do the following:
 
 1. Arrange the observations in the bootstrap distribution in ascending order 
 2. Find the value such that 2.5\% of observations fall below it (the 2.5\% percentile). Use that value as the lower bound of the interval 
@@ -772,7 +773,7 @@ To calculate our interval estimate, we will do the following:
 
 To do this in R, we can use the `quantile()` function:
 
-```{r 10-bootstrapping8, echo = T, message = FALSE, warning = FALSE}
+```{r 11-bootstrapping8, echo = T, message = FALSE, warning = FALSE}
 bounds <- boot1500_means %>% 
     select(mean) %>% 
     pull() %>% 
@@ -782,7 +783,7 @@ bounds
 
 Our interval, \$`r round(bounds[1],2) ` to \$`r round(bounds[2],2)`, captures the middle 95\% of the sample mean prices in the bootstrap distribution. We can visualize the interval on our distribution in the picture below. 
 
-```{r 10-bootstrapping9, echo = F, message = FALSE, warning = FALSE, fig.cap = "Distribution of the bootstrap sample means with 95% confidence interval lower and upper bounds"}
+```{r 11-bootstrapping9, echo = F, message = FALSE, warning = FALSE, fig.cap = "Distribution of the bootstrap sample means with percentile lower and upper bounds"}
 boot_est_dist + 
   geom_vline(xintercept = bounds, col = "#E69F00", size = 2, linetype = 2) + 
   annotate("text", x = bounds[1], max_count(boot_est_dist), hjust = 0.5, vjust =2,
