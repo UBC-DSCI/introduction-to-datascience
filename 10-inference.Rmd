@@ -47,7 +47,7 @@ By the end of the chapter, students will be able to:
 ## Why do we need sampling? 
 Statistical inference can help us decide how quantities we observe in
 a subset of data relate to the same quantities in the broader
-population. Here is an example question that we might use statistical inference to answer:
+population. Suppose a retailer is considering selling iPhone accessories, and they want to estimate how big the market might be. Additionally, they are strategizing how they might market their products on North American college and university campuses. This retailer might use statistical inference to answer the question: 
 
 *What proportion of all undergraduate students in North America own an iPhone?*
 
@@ -72,20 +72,11 @@ estimate of the proportion of students who own an iPhone in the entire populatio
 ![Figure 11.1: Population versus sample](img/population_vs_sample.svg){}
 </center>
 
-Note that proportions are not the *only* kind of population parameter we might be interested in.
-Let's consider another example question that we might tackle with statistical inference:
+Note that proportions are not the *only* kind of population parameter we might be interested in. Suppose an undergraduate student studying at the University of British Columbia in Vancouver is looking for an apartment to rent. They need to create a budget, so they want to know something about studio apartment rental prices in Vancouver, BC. This student might use statistical inference to tackle the question:
 
-*What is the average price-per-night of one-bedroom apartment rentals in Vancouver, Canada?*
+*What is the average price-per-month of studio apartment rentals in Vancouver, Canada?*
 
-Here, the population consists of all one-bedroom apartment rental offerings in Vancouver, and the population
-parameter is the *average price-per-night*. But even within this one example, we could also be interested
-in many other population parameters: the median price, the fraction of 
-one-bedroom apartments that cost more than \$200 per night,
-the standard deviation of the price, and the list goes on.
-If we were somehow able to observe the whole population of one-bedroom apartments in Vancouver, 
-we could compute each of these numbers exactly; therefore these are all population parameters. 
-There are many kinds of observations and population parameters that you will run into in practice,
-but in this chapter we will focus on two settings:
+The population consists of all studio apartment rentals in Vancouver, and the population parameter is the *average price-per-month*. Here we used the average as a measure of center to describe the "typical value" of studio apartment rental prices. But even within this one example, we could also be interested in many other population parameters. For instance, we know that not every studio apartment in Vancouver will have the same price-per-month. So we might be interested in how much monthly prices vary. We'd then want to find a measure of the variability (or spread) of the rentals, such as the standard deviation or variance. We might be interested in the fraction of studio apartments that cost more than \$1000 per month, and the list goes on. The question we want to answer will help us determine the parameter we want to estimate. If we were somehow able to observe the whole population of studio apartment rental offerings in Vancouver, we could compute each of these numbers exactly; therefore, these are all population parameters. There are many kinds of observations and population parameters that you will run into in practice, but in this chapter, we will focus on two settings:
 
 1. Using categorical observations to estimate the proportion of each category
 2. Using quantitative observations to estimate the average (or mean)
@@ -254,22 +245,19 @@ population_distribution <-  ggplot(airbnb, aes(x = price)) +
     xlab("Price per night ($)") 
 population_distribution
 population_parameters <- airbnb %>% 
-    summarize(pop_mean = mean(price),
-             pop_sd = sd(price))
+    summarize(pop_mean = mean(price))
 population_parameters
 ```
 
 We see that the distribution has one peak and is skewed&mdash;most of the listings
 are less than \$250 per night, but a small proportion of listings cost more
 than that, creating a long tail on the histogram's right side. 
-The population mean is \$`r round(population_parameters$pop_mean,2)` and the
-population standard deviation is \$`r round(population_parameters$pop_sd, 2)`.
+The population mean is \$`r round(population_parameters$pop_mean,2)`.
 
 Suppose we take a sample of 20 observations from our population. Below we 
 create a histogram to visualize the
 distribution of observations in the sample,
-and calculate the mean and standard deviation of our sample. These two numbers
-are **point estimates** for the mean and standard deviation of the full population.
+and calculate the mean of our sample. This number is a **point estimate** for the mean of the full population.
 
 ```{r 11-example-means3, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Distribution of price per night ($) for sample of 20 Airbnb listings"}
 sample_1 <- airbnb %>% 
@@ -280,19 +268,13 @@ sample_distribution <- ggplot(sample_1, aes(price)) +
     xlab("Price per night ($)") 
 sample_distribution
 estimates <- sample_1 %>% 
-    summarize(sample_mean = mean(price),
-             sample_sd = sd(price))
+    summarize(sample_mean = mean(price))
 estimates
 ```
 Recall that the population mean 
-was \$`r round(population_parameters$pop_mean,2)` and the population standard deviation
-was \$`r round(population_parameters$pop_sd,2)`. We see that our point
-estimates for the mean and standard deviation 
-are \$`r round(estimates$sample_mean, 2)` and  \$`r round(estimates$sample_sd,2)`,
-respectively. So our estimates were actually quite close to the population parameters: the mean was 
-about `r round(100*abs(estimates$sample_mean - population_parameters$pop_mean)/population_parameters$pop_mean, 1)`% off,
-while the standard deviation was 
-about `r round(100*abs(estimates$sample_sd - population_parameters$pop_sd)/population_parameters$pop_sd, 1)`% off.
+was \$`r round(population_parameters$pop_mean,2)`. We see that our point
+estimate for the mean is \$`r round(estimates$sample_mean, 2)`. So our estimate was actually quite close to the population parameter: the mean was 
+about `r round(100*abs(estimates$sample_mean - population_parameters$pop_mean)/population_parameters$pop_mean, 1)`% off.
 Note that in practice, we usually cannot compute the accuracy of the estimate, since we do not have access to the population
 parameter; if we did, we wouldn't need to estimate it!
 
@@ -360,7 +342,7 @@ sample_estimates_100 <- rep_sample_n(airbnb, size = 100, reps = 1500) %>%
     group_by(replicate) %>% 
     summarise(sample_mean = mean(price))
 
-sample_estimates_500 <- rep_sample_n(airbnb, size = 500, reps = 1500) %>% 
+sample_estimates_500 <- rep_sample_n(airbnb, size = 500, reps = 10000) %>% 
     group_by(replicate) %>% 
     summarise(sample_mean = mean(price))
 
