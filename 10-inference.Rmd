@@ -24,7 +24,7 @@ Another common data analysis task in practice is to draw conclusions about some 
 aspect of a population of interest based on observed data sampled from that
 population; we typically do not get data on the *entire* population.
 Data analysis questions regarding how summaries, 
-patterns, trends, or relationships in a dataset 
+patterns, trends, or relationships in a data set 
 extend to the wider population are called *inferential questions*. This chapter will start
 with the fundamental ideas of sampling from populations, and then will work towards
 introducing two common techniques in statistical inference: *point estimation* and
@@ -114,7 +114,7 @@ virtual_box <- tibble(timbit_id = seq(1, 10000, by = 1),
 ```{r 11-example-proportions1}
 library(tidyverse) 
 library(infer)
-head(virtual_box)
+virtual_box
 ```
 
 From our simulated box, we can see that the proportion of chocolate Timbits is
@@ -170,7 +170,7 @@ called a **sampling distribution**. The sampling distribution will help us see
 how much we would expect our sample proportions from this population to vary
 for samples of size 40. Below we again use the `rep_sample_n` to take samples
 of size 40 from our population of Timbits, but we set the `reps` argument
-to specify the number of samples to take, here 15,000.
+to specify the number of samples to take, here 15,000. We will use the function `head()` to see the first few rows and `tail()` to obtain the last few rows of our `samples` data frame.
 
 ```{r 11-example-proportions5, echo = TRUE, message = FALSE, warning = FALSE}
 samples <- rep_sample_n(virtual_box, size = 40, reps = 15000)
@@ -207,7 +207,9 @@ sample_estimates %>%
   summarise(mean = mean(sample_proportion))
 ```
 
-We notice that the sample proportions are centred around the population proportion value, `r round(mean(sample_estimates$sample_proportion), 2)`! In general, if we take repeated random samples from the population, we expect all the sample proportions to average out to the population proportion. This means that the sample proportion is neither an overestimate or an underestimate of the population proportion. This distribution tells us what we might expect from proportions from samples of size $40$ when our population proportion is 0.63. If we can somehow learn what sampling distributions look like, we can use this knowledge to make statistical inference about our population parameter when we are in the more common, and realistic scenario of only having a single sample and not knowing the population proportion. 
+We notice that the sample proportions are centred around the population proportion value, `r round(mean(sample_estimates$sample_proportion), 2)`! In general, the mean of the distribution of $\hat{p}$ should be equal to $p$, which is good because the sample proportion is neither an overestimate nor an underestimate of the population proportion.
+
+So what can we learn from this sampling distribution? This distribution tells us what we might expect from proportions from samples of size $40$ when our population proportion is 0.63. If we can somehow learn what the sampling distribution looks like, we can use it to make inferences about our population when only having a single sample.  
 
 <!--- > **Note:** If random samples of size $n$ are taken from a population, $\hat{p}$ will be approximately Normal with mean $p$ and standard deviation $\sqrt{\frac{p(1-p)}{n}}$ as long as the sample size $n$ is large enough such that $np$ and $n(1 - p)$ are at least 10, where $p$ is the population proportion, $\hat{p}$ is the sample proportion and $n$ is the sample size. 
 --->
@@ -216,20 +218,11 @@ We notice that the sample proportions are centred around the population proporti
 
 In the previous section, our variable of interest&mdash;Timbit flavour&mdash;was
 *categorical*, and the population parameter of interest was the proportion of chocolate
-Timbits. What if we wanted to infer something about a population of *quantitative* variables instead?
-As mentioned in the introduction to this chapter, there are many choices of population parameter
-for each type of observed variable. In this section, we will study the case where we are interested
-in the population mean of a quantitative variable.
+Timbits. As mentioned in the introduction to this chapter, there are many choices of population parameter for each type of observed variable. What if we wanted to infer something about a population of *quantitative* variables instead? For instance, a traveller visiting Vancouver, BC may wish to know about the prices of staying somewhere using Airbnb, an online marketplace for arranging places to stay. Particularly, they might be interested in estimating the population mean price per night of Airbnb listings in Vancouver, BC. In this section, we will study the case where we are interested in the population mean of a quantitative variable.
 
-In particular, we will look at an example using data from Airbnb, an online
-marketplace for arranging or offering places to stay. The dataset contains
-Airbnb listings for Vancouver, Canada, in September 2020 
-from [Inside Airbnb](http://insideairbnb.com/). 
-Let's imagine (for learning purposes) that our dataset represents the population of all Airbnb rental listings in Vancouver,
-and we are interested in the population mean price per night.
+We will look at an example using data from [Inside Airbnb](http://insideairbnb.com/). The data set contains Airbnb listings for Vancouver, Canada, in September 2020. Let's imagine (for learning purposes) that our data set represents the population of all Airbnb rental listings in Vancouver, and we are interested in the population mean price per night.
 Our data contains an ID number, neighbourhood,
-type of room, the number of people that the rental accommodates, number of
-bathrooms, bedrooms, beds, and the price per night.
+type of room, the number of people the rental accommodates, number of bathrooms, bedrooms, beds, and the price per night.
 
 ```{r 11-example-means1, echo = FALSE, message = FALSE, warning = FALSE}
 airbnb <- read_csv("data/listings.csv") %>% 
@@ -264,7 +257,7 @@ create a histogram to visualize the
 distribution of observations in the sample,
 and calculate the mean of our sample. This number is a **point estimate** for the mean of the full population.
 
-```{r 11-example-means3, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Distribution of price per night ($) for sample of 20 Airbnb listings"}
+```{r 11-example-means3, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Distribution of price per night ($) for sample of 20 Airbnb listings", out.width = "50%"}
 sample_1 <- airbnb %>% 
     rep_sample_n(20)
 head(sample_1)
