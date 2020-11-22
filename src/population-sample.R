@@ -71,7 +71,7 @@ text(0, -80, "Parameter", font = 2)
 text(0, -92, 
      "unknown p \n (proportion of population who own an iPhone)")
 
-text(110, -80, "Statistic", font = 2)
+text(110, -80, "Point Estimate", font = 2)
 
 text(110, -90, expression(italic(hat(p)) * "= 6/10 = 0.60" ))
 text(110, -98, "(proportion of sample who own an iPhone)")
