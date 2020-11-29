@@ -96,10 +96,8 @@ Last chapter, we learned about using the `tidyverse` `read_csv` function when re
 (column names are present, and commas are used as the delimiter/separator between columns). In this section, we will learn how to read 
 files do not satisfy the default expectations of `read_csv`. 
 
-Before we jump into the cases where the data aren't in the expected default format for `tidyverse` and `read_csv`, let's revisit the simpler
-case where the defaults hold and the only argument we need to give to the function is the path to the file, `data/can_lang.csv`. 
-We put `data/` before the name of the file when we are loading the data set because this data set is located in a sub-folder, named `data`, 
-relative to where we are running our R code.
+Before we jump into the cases where the data aren't in the expected default format for `tidyverse` and `read_csv`, let's revisit the more straightforward
+case where the defaults hold, and the only argument we need to give to the function is the path to the file, `data/can_lang.csv`. The `can_lang` data set contains data from the 2016 Canadian census on counts of Canadian languages. We put `data/` before the file's name when we are loading the data set because this data set is located in a sub-folder, named `data`, relative to where we are running our R code.
 
 Here is what the file would look like in a plain text editor:
 
@@ -111,7 +109,6 @@ And here is a review of how we can use `read_csv` to load it into R:
 
 ```{r load data, warning=FALSE, message=FALSE}
 library(tidyverse)
-
 canlang_data <- read_csv("data/can_lang.csv")
 canlang_data
 ```
@@ -177,7 +174,7 @@ on the file's name in the Jupyter home menu. We demonstrate this in the video be
 
 ## Reading data from an Microsoft Excel file
 
-There are many other ways to store tabular data sets beyond plain text files, and similarly many ways to load those data sets into R. For example, it is very common to encounter,
+There are many other ways to store tabular data sets beyond plain text files, and similarly, many ways to load those data sets into R. For example, it is very common to encounter,
 and need to load into R, data stored as a Microsoft Excel spreadsheet (with the filename extension `.xlsx`). 
 To be able to do this, a key thing to know is that even though `.csv` and `.xlsx` files look almost 
 identical when loaded into Excel, the data themselves are stored completely differently.
@@ -228,17 +225,17 @@ canlang_data <- read_excel("data/can_lang.xlsx")
 canlang_data
 ```
 
-If the `.xlsx` file has multiple sheets, then you have to use the `sheet` argument to specify either the sheet number or name. You can also specify cell ranges using the `range` argument. This is useful in cases where a single sheet contains multiple tables (a sad thing that happens to many Excel spreadsheets).
+If the `.xlsx` file has multiple sheets, you have to use the `sheet` argument to specify the sheet number or name. You can also specify cell ranges using the `range` argument. This functionality is useful when a single sheet contains multiple tables (a sad thing that happens to many Excel spreadsheets).
 
-As with plain text files, you should always try to explore the data file before importing it into R. This helps you decide which arguments you need to use to successfully load the data into R. If you do not have the Excel program on your computer, there are other free programs you can use to preview the file. Examples include Google Sheets and Libre Office. 
+As with plain text files, you should always explore the data file before importing it into R. Exploring the data beforehand helps you decide which arguments you need to to load the data into R successfully. If you do not have the Excel program on your computer, you can use other free programs to preview the file. Examples include Google Sheets and Libre Office. 
 
 ## Reading data from a database
 
-Another very common form of data storage to be read into R for the purpose of data analysis is the relational database. There are many relational database management systems, such as
+Another very common form of data storage to be read into R for data analysis is the relational database. There are many relational database management systems, such as
 SQLite, MySQL, PosgreSQL, Oracle, and many more. Almost all employ SQL (*structured query language*) to pull data from the database. Thankfully, you don't need to know SQL
 to analyze data from a database; 
 several packages have been written 
-that allow R to connect to relational databases and use the R programming language as the front end (what the user types in) to pull data from them. In this book we will 
+that allows R to connect to relational databases and use the R programming language as the front end (what the user types in) to pull data from them. In this book, we will 
 give examples of how to do this using R with SQLite and PostgreSQL databases.
 
 ### Reading data from a SQLite database
@@ -252,7 +249,7 @@ library(DBI)
 con_lang_data <- dbConnect(RSQLite::SQLite(), "data/can_lang.db")
 ```
 
-Often times relational databases have many tables, and their power comes from the useful ways they can be joined. Thus anytime you want to access data from a relational database you need to know the table names. You can get the names of all the tables in the database using the `dbListTables` function:
+Often relational databases have many tables, and their power comes from the useful ways they can be joined. Thus anytime you want to access data from a relational database, you need to know the table names. You can get the names of all the tables in the database using the `dbListTables` function:
 
 ```{r}
 tables <- dbListTables(con_lang_data)
@@ -272,7 +269,7 @@ It does this because databases are often more efficient at selecting, filtering 
 stored on your computer, but rather a more powerful machine somewhere on the web. So R is lazy and waits to bring this data into memory until you explicitly tell 
 it to do so using the `collect` function from the `dbplyr` library.
 
-Here we will filter for only the Aboriginal languages category according to the 2016 Canada Census, and then use `collect` to finally bring this data into R as a data frame. 
+Here we will filter for only rows in the Aboriginal languages category according to the 2016 Canada Census, and then use `collect` to finally bring this data into R as a data frame. 
 
 ```{r}
 aboriginal_lang_db <- filter(lang_db, category == "Aboriginal languages")
@@ -418,27 +415,27 @@ We see the lowest rating given to a movie is 1, indicating that it must have bee
 ## Writing data from R to a `.csv` file
 
 At the middle and end of a data analysis, we often want to write a data frame that has changed (either through filtering, selecting, mutating or summarizing) to a file 
-so that we can share it with others or use it for another step in the analysis. The most straightforward way to do this is to use the `write_csv` function from the `tidyverse` library. 
-The default arguments for this file are to use a comma (`,`) as the delimiter and include column names. Below we demonstrate creating a new version of the Canadian languages data without the official languages category according to the Canadian 2016 Census, and then writing this to a `.csv` file:
+to share it with others or use it for another step in the analysis. The most straightforward way to do this is to use the `write_csv` function from the `tidyverse` library. 
+The default arguments for this file are to use a comma (`,`) as the delimiter and include column names. Below we demonstrate creating a new version of the Canadian languages data set without the official languages category according to the Canadian 2016 Census, and then writing this to a `.csv` file:
 
 ```
 no_official_lang_data <- filter(can_lang, category != "Official languages")
-write_csv(no_official_lang_data, "data/no_official_lang.csv")
+write_csv(no_official_lang_data, "data/no_official_languages.csv")
 ```
 
 ## Scraping data off the web using R
 
-In the first part of this chapter we learned how to read in data from plain text files that are usually "rectangular" in shape using the tidyverse `read_*` functions. Sadly, not all data comes in this simple format, but happily there are many other tools we can use to read in more messy/wild data formats. One common place people often want/need to read in data from is websites. Such data exists in an a non-rectangular format. One quick and easy solution to get this data is to copy and paste it, however this becomes painstakingly long and boring when there is a lot of data that needs gathering, and anytime you start doing a lot of copying and pasting it is very likely you will introduce errors. 
+In the first part of this chapter, we learned how to read in data from plain text files that are usually "rectangular" in shape using the `tidyverse` `read_*` functions. Sadly, not all data comes in this simple format, but we can happily use many other tools to read in more messy/wild data formats. One common place people often want/need to read in data from is websites. Such data exists in a non-rectangular format. One quick and easy solution to get this data is to copy and paste it. However, this becomes painstakingly long and boring when there is a lot of data that needs gathering. And any time you start doing a lot of copying and pasting, you will likely introduce errors. 
 
-The formal name for gathering non-rectangular data from the web and transforming it into a more useful format for data analysis is **web scraping**. There are two different ways to do web scraping: 1) screen scraping (similar to copying and pasting from a website, but done in a programmatic way to minimize errors and maximize efficiency) and 2) web APIs (**a**pplication **p**rogramming **i**nterface) (a website that provides a programatic way of returning the data as JSON or XML files via http requests). In this course we will explore the first method, screen scraping using R's [`rvest` package](https://github.com/hadley/rvest).
+The formal name for gathering non-rectangular data from the web and transforming it into a more useful format for data analysis is **web scraping**. There are two different ways to do web scraping: 1) screen scraping (similar to copying and pasting from a website, but done in a programmatic way to minimize errors and maximize efficiency) and 2) web APIs (**a**pplication **p**rogramming **i**nterface) (a website that provides a programatic way of returning the data as JSON or XML files via http requests). In this course, we will explore the first method, screen scraping using R's [`rvest` package](https://github.com/hadley/rvest).
 
 ### HTML and CSS selectors
 
-Before we jump into scraping, let's set up some motivation and learn a little bit about what the "source code" of a website looks like. Say we are interested in knowing the average rental price (per square footage) of the most recently available 1 bedroom apartments in Vancouver from https://vancouver.craigslist.org. When we visit the Vancouver Craigslist website and search for 1 bedroom apartments, this is what we are shown:
+Before we jump into scraping, let's set up some motivation and learn a little bit about what the "source code" of a website looks like. Say we are interested in knowing the average rental price (per square footage) of the most recently available one-bedroom apartments in Vancouver from https://vancouver.craigslist.org. When we visit the Vancouver Craigslist website and search for one-bedroom apartments, this is what we are shown:
 
 ![](img/craigslist_human.png)
 
-From that page, it's pretty easy for our human eyes to find the apartment price and square footage. But how can we do this programmatically so we don't have to copy and paste all these numbers? Well, we have to deal with the webpage source code, which we show a snippet of below (and link to the [entire source code here](img/website_source.txt)):
+From that page, it's pretty easy for our human eyes to find the apartment price and square footage. But how can we do this programmatically, so we don't have to copy and paste all these numbers? Well, we have to deal with the webpage source code, which we show a snippet of below (and link to the [entire source code here](img/website_source.txt)):
 
 ```
         <span class="result-meta">
@@ -486,7 +483,7 @@ From that page, it's pretty easy for our human eyes to find the apartment price 
 
 ```
 
-This is not easy for our human eyeballs to read! However, it is easy for us to use programmatic tools to extract the data we need by specifying which HTML tags (things inside `<` and `>` in the code above). For example, if we look in the code above and search for lines with a price, we can also look at the tags that are near that price and see if there's a common "word" we can use that is near the price but doesn't exist on other lines that have information we are not interested in:
+This is not easy for our human eyeballs to read! However, it is easy for us to use programmatic tools to extract the data we need by specifying which HTML tags (things inside `<` and `>` in the code above). For example, if we look in the code above and search for lines with a price, we can also look at the tags that are near that price and see if there's a common "word" we can use that is near the price but doesn't exist on other lines that have the information we are not interested in:
 
 ```
 <span class="result-price">$800</span>
