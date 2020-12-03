@@ -32,17 +32,23 @@ of how we can use and manipulate these objects.
 
 Let's first start by defining exactly what a data frame is. From a data perspective, it is a rectangle where the rows are the observations:
 
-<img src="img/obs.jpeg" width="650">
+```{r 02-obs, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Rows are the observations in a tidy data frame", fig.retina = 2, out.width = "650"}
+knitr::include_graphics("img/obs.jpeg")
+```
 
 and the columns are the variables:
 
-<img src="img/vars.jpeg" width="650">
 
+```{r 02-vars, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Columns are the variables in a tidy data frame", fig.retina = 2, out.width = "650"}
+knitr::include_graphics("img/vars.jpeg")
+```
 
 From a computer programming perspective, in R, a data frame is a special subtype of a list object whose elements (columns) are *vectors*. 
 For example, the data frame below has 3 elements that are vectors whose names are `state`, `year` and `population`.
 
-<img src="img/vectors.jpeg" width="650">
+```{r 02-vectors, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Vectors in a tidy data frame", fig.retina = 2, out.width = "650"}
+knitr::include_graphics("img/vectors.jpeg")
+```
 
 ### What is a vector?
 
@@ -50,7 +56,9 @@ In R, vectors are objects that can contain 1 or more elements. The vector elemen
 example types of vectors are character (e.g., letter or words), numeric (whole numbers and fractions) and logical (e.g., `TRUE` or `FALSE`). In 
 the vector shown below, the elements are of numeric type:
 
-<img src="img/vector.jpeg" width="600">
+```{r 02-vector, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Example of a vector in a tidy data frame", fig.retina = 2, out.width = "600"}
+knitr::include_graphics("img/vector.jpeg")
+```
 
 ### How are vectors different from a list?
 
@@ -58,7 +66,10 @@ Lists are also objects in R that have multiple elements. Vectors and lists diffe
 within a single vector must be of the same type (e.g., all elements are numbers), whereas elements within a single list can be of different 
 types (e.g., characters, numbers, logicals and even other lists can be elements in the same list).
 
-<img src="img/vec_vs_list.jpeg" width="600">
+```{r 02-vec-vs-list, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "A vector versus a list", fig.retina = 2, out.width = "600"}
+knitr::include_graphics("img/vec_vs_list.jpeg")
+```
+
 
 ### What does this have to do with data frames?
 
@@ -66,7 +77,9 @@ As mentioned earlier, a data frame is really a special type of list where the el
 object enables us to easily work with our data in a rectangular/spreadsheet like manner, and to have columns/vectors of 
 different characteristics associated/linked in one object. This is similar to a table in a spreadsheet or a database.
 
-<img src="img/dataframe.jpeg" width="650">
+```{r 02-dataframe, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Data frame and vector types", fig.retina = 2, out.width = "650"}
+knitr::include_graphics("img/dataframe.jpeg")
+```
 
 ## Tidy Data
 
@@ -82,8 +95,12 @@ Tidy data satisfy the following three criteria:
 - each column is a single variable, and
 - each value is a single cell (i.e., its row and column position in the data frame is not shared with another value)
 
-<img src="img/tidy.png" width="650">
-*image source: [R for Data Science](https://r4ds.had.co.nz/) by Garrett Grolemund & Hadley Wickham*
+
+
+```{r 02-tidy-image, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Image source: [R for Data Science](https://r4ds.had.co.nz/) by Garrett Grolemund & Hadley Wickham", fig.retina = 2, out.width = "650"}
+knitr::include_graphics("img/tidy.png")
+```
+
 
 > **Definitions to know:**
 >
@@ -98,41 +115,38 @@ Tidy data satisfy the following three criteria:
 First, one of the most popular plotting toolsets in R, the `ggplot2` library, expects the data to be in a tidy format. Second, most statistical analysis functions expect data in tidy format. Given that both of these tasks are central in virtually any data analysis 
 project, it is well worth spending the time to get your data into a tidy format up front. Luckily there are many well designed `tidyverse` data cleaning/wrangling tools to help you easily tidy your data. Let's explore them now!
 
-### Going from wide to long (or tidy!) using `gather`
+### Going from wide to long (or tidy!) using `pivot_longer`
 
-One common thing that often has to be done to get data into a tidy format is to combine columns that are really part the same variable but currently stored in separate columns. To do this we can use the function `gather`. `gather` acts to combine columns, and thus makes the data frame narrower.
+One common thing that often has to be done to get data into a tidy format is to combine columns that are really part the same variable but currently stored in separate columns. To do this we can use the function `pivot_longer`. `pivot_longer` acts to combine columns, and thus makes the data frame narrower.
 
-Data is often stored in a wider, not tidy, format because this format is often more intuitive for human readability and understanding, and humans create data sets. An example of this is shown below:
+Data is often stored in a wider, not tidy, format because this format is often more intuitive for human readability and understanding, and humans create data sets. We will work with a subset of the `region_lang` data, which contains data retreived from the 2016 Canadian census. Our dataset contains counts of how many Canadians report each language as their mother tongue for the five biggest cities in Canada. Our dataset is stored in an untidy format as shown below:
 
 ```{r 02-tidyverse, warning=FALSE, message=FALSE}
 library(tidyverse)
-hist_vote_wide <- read_csv("data/us_vote.csv") 
-hist_vote_wide <- select(hist_vote_wide, election_year, winner, runnerup)
-hist_vote_wide <- tail(hist_vote_wide, 10)
-hist_vote_wide
+region_lang_wide <- read_csv("data/region_lang_top5_cities_wide.csv") 
+region_lang_wide
 ```
 
-What is wrong with our untidy format above? From a data analysis perspective, this format is not ideal because in this format the outcome of the variable "result" (winner or runner up) is stored as column names and not easily accessible for the data analysis functions we will want to apply to our data set. Additionally, the values of the "candidate" variable are spread across two columns and will require some sort of binding or joining to get them into one single column to allow us to do our desired visualization and statistical tasks later on.
+What is wrong with our untidy format above? From a data analysis perspective, this format is not ideal because in this format the outcome of the variable "region" (Toronto, Montreal, Vancouver, Calgary and Edmonton) is stored as column names and not easily accessible for the data analysis functions we will want to apply to our data set. For instance, suppose we wanted to look *** ADD EXAMPLE HERE** Additionally, the values of the "mother_tongue" variable are spread across multiple columns and will require some sort of binding or joining to get them into one single column to allow us to do our desired visualization and statistical tasks later on.
 
-To accomplish this data tranformation we will use the `tidyverse` function `gather`. To use gather we need to specify:
+To accomplish this data tranformation we will use the `tidyverse` function `pivot_longer`. To use gather we need to specify the:
 
-1. the dataset
+1. `data`: the dataset
 
-2. the key: the name of a new column that will be created, whose values will come from the *names of the columns* that we want to combine (the `result` argument)
+2. `cols` : the names of the columns that we want to combine  (the `cols` argument)
 
-3. the value: the name of a new column that will be created, whose values will come from the *values of the columns* we want to combine (the `value` argument)
+3. `names_to`: the name of a new column that will be created, whose values will come from the *names of the columns* that we want to combine 
 
-4. the names of the columns that we want to combine  (we list these after specifying the key and value, and separate the column names with commas)
+4. `values_to`: the name of a new column that will be created, whose values will come from the *values of the columns* we want to combine 
 
-For the above example, we use gather to combine the winner and runnerup columns into a single column called candidate, and create a column called 
-result that contains the outcome of the election for each candidate:
+For the above example, we use `pivot_longer` to combine the Toronto, Montreal, Vancouver, Calgary and Edmonton columns into a single column called `region`, and create a column called `mother_tongue` that contains the count of how many Canadians report each language as their mother tongue for each census division:
 
 ```{r}
-hist_vote_tidy <- gather(hist_vote_wide, 
-                         key = result, 
-                         value = candidate, 
-                         winner, runnerup)
-hist_vote_tidy
+region_lang_tidy <- pivot_longer(region_lang_wide, 
+                         cols = Toronto:Vancouver,
+                         names_to = "region", 
+                         values_to = "mother_tongue")
+region_lang_tidy
 ```
 
 > **Splitting code across lines**: In the code above, the call to the `gather` function is split across several lines.*
