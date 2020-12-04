@@ -119,7 +119,7 @@ project, it is well worth spending the time to get your data into a tidy format 
 
 One common thing that often has to be done to get data into a tidy format is to combine columns that are really part the same variable but currently stored in separate columns. To do this we can use the function `pivot_longer`. `pivot_longer` acts to combine columns, and thus makes the data frame narrower.
 
-Data is often stored in a wider, not tidy, format because this format is often more intuitive for human readability and understanding, and humans create data sets. We will work with a subset of the `region_lang` data, which contains data retreived from the 2016 Canadian census. Our data set contains the counts for each census division of how many Canadians report each language as their mother tongue for five major Canadian cities (Toronto, Montreal, Vancouver, Calgary and Edmonton).  Our data set is stored in an untidy format as shown below:
+Data is often stored in a wider, not tidy, format because this format is often more intuitive for human readability and understanding, and humans create data sets. We will work with a subset of the `region_lang` data, which contains data retrieved from the 2016 Canadian census. Our data set contains the counts for each census division of how many Canadians report each language as their mother tongue for five major Canadian cities (Toronto, Montreal, Vancouver, Calgary and Edmonton).  Our data set is stored in an untidy format as shown below:
 
 ```{r 02-tidyverse, warning=FALSE, message=FALSE}
 library(tidyverse)
@@ -127,7 +127,7 @@ region_lang_wide <- read_csv("data/region_lang_top5_cities_wide.csv")
 region_lang_wide
 ```
 
-What is wrong with our untidy format above? From a data analysis perspective, this format is not ideal because in this format the outcome of the variable "region" (Toronto, Montreal, Vancouver, Calgary and Edmonton) is stored as column names and not easily accessible for the data analysis functions we will want to apply to our data set. For instance, suppose we wanted to look *** ADD EXAMPLE HERE** Additionally, the values of the "mother_tongue" variable are spread across multiple columns and will require some sort of binding or joining to get them into one single column to allow us to do our desired visualization and statistical tasks later on.
+What is wrong with our untidy format above? From a data analysis perspective, this format is not ideal because in this format the outcome of the variable "region" (Toronto, Montreal, Vancouver, Calgary and Edmonton) is stored as column names and not easily accessible for the data analysis functions we will want to apply to our data set. Additionally, the values of the "mother_tongue" variable are spread across multiple columns and will require some sort of binding or joining to get them into one single column to allow us to do our desired visualization and statistical tasks later on.
 
 To accomplish this data tranformation we will use the `tidyverse` function `pivot_longer`. To use gather we need to specify the:
 
@@ -160,7 +160,17 @@ The data above is now tidy because all 3 criteria for tidy data have now been me
 2. Each observation, i.e., each category, language, region, and count of Canadians where that language is the mother tongue, are in a single row.
 3. Each value is a single cell, i.e., its row, column position in the data frame is not shared with another value.
 
-### Using separate to deal with multiple delimiters
+### Going from long to wide using `pivot_wider`
+
+Suppose we have the opposite problem we had above and we need to separate observation currently stored in a single column into multiple columns. To do this we can use the function `pivot_wider`. `pivot_wider` acts to increase the number of columns, and thus makes the data frame wider.
+
+For example, each observation is a census division, but each observation is is two rows, as shown in the example below:
+```{r 02-reading-long, warning=FALSE, message=FALSE}
+region_lang_long <- read_csv("data/region_lang_top5_cities_narrow.csv") 
+region_lang_long
+```
+
+### Using `separate` to deal with multiple delimiters
 
 As discussed above, data are also not considered tidy when multiple values are stored in the same cell. In addition to the 
 previous untidiness we addressed in the earlier version of this data set, the one we show below is even messier: 
@@ -171,7 +181,7 @@ region_lang_messy <- read_csv("data/region_lang_top5_cities_messy.csv")
 region_lang_messy 
 ```
 
-First we’ll use gather to create the region and mother_tongue columns, as we did previously:
+First we’ll use gather to create two columns: region and value, similar to what we did previously:
 
 ```{r}
 region_lang_long_messy <- pivot_longer(region_lang_messy, 
@@ -181,14 +191,16 @@ region_lang_long_messy <- pivot_longer(region_lang_messy,
 region_lang_long_messy
 ```
 
-Then we'll use `separate` to split the  `value` column into two columns, one that contains only the counts of Canadians that speak each language as their mother tongue, and one that contains the population for the region:
+Then we'll use `separate` to split the `value` column into two columns, one that contains only the counts of Canadians that speak each language most at home, and one that contains the counts for most at work for each census division:
 
 ```{r}
 region_lang_pop_tidy <- separate(region_lang_long_messy,
                                  col = value, 
-                                 into = c("mother_tongue", "region_population"), 
+                                 into = c("most_at_home", "most_at_work"), 
                                  sep = "/") 
-(region_lang_pop_tidy)
+region_lang_pop_tidy <- mutate(region_lang_pop_tidy,  
+                               most_at_home = as.integer(most_at_home), 
+                               most_at_work = as.integer(most_at_work))
 ```
 
 Is this data now tidy? Well, if we recall the 3 criteria for tidy data:
@@ -198,24 +210,30 @@ Is this data now tidy? Well, if we recall the 3 criteria for tidy data:
 - each value is a single cell.
 
 We can see that this data now satisfies all 3 criteria, making it easier to analyze.
-For example, we could visualize the number of winning candidates for each party over this time span:
+For example, we could visualize the two most common languages reported by Canadians as their primary language at home for each of these five major Canadian cities:
 
-```{r 02-candidate-count, fig.height=4, fig.width=4}
-ggplot(hist_vote_party_tidy, aes(x = result, fill = party)) +
-  geom_bar() +
-  scale_fill_manual(values=c("blue", "red")) +
-  xlab("US Presidential election result") +
-  ylab("Number of US Presidential candidates") +
-  ggtitle("US Presidential candidates (1980 - 2016)") 
+```{r 02-plot}
+top10 <- region_lang_pop_tidy %>% 
+  arrange(desc(most_at_home)) %>% 
+  group_by(region) %>% 
+  slice(1:2)
+
+ggplot(top10, aes(x = region, y = most_at_home, fill = language)) + 
+  geom_bar(stat = "identity")+ 
+  scale_fill_brewer(palette="Set1") +
+  theme(axis.text.x = element_text(angle = 90)) +
+  scale_y_continuous(name = "Number of Canadians reporting \n their primary language at home", 
+                     labels = scales::comma) +
+  xlab("Region") +
+  ggtitle("Top two languages reported by Canadians \n as their primary language at home \n for five major Canadian cities") 
 
 ```
 
-From this visualization, we can see that between 1980 - 2016 (inclusive) the Republican party has 
-won more US Presidential elections than the Democratic party.
+From this visualization, we can see that in Calgary, Edmonton, Toronto and Vancouver English was cited as the most common primary language used at home. However, in Montreal French was the most common language used at home and English was second. Punjabi, Tagalog, Cantonese and Mandarin were the second most common languages in Calgary, Edmonton, Toronto and Vancouver respectively. 
 
 ### Notes on defining tidy data
 
-Is there only one shape for tidy data for a given data set? Not necessarily, it depends on the statistical question you are asking and what the variables are for that question. For tidy data, each variable should be its own column. So just as its important to match your statistical question with the appropriate data analysis tool (classification, clustering, hypothesis testing, etc). It's important to match your statistical question with the appropriate variables and ensure they are each represented as individual columns to make the data tidy.
+Is there only one shape for tidy data for a given data set? Not necessarily! It depends on the statistical question you are asking and what the variables are for that question. For tidy data, each variable should be its own column. So just as its important to match your statistical question with the appropriate data analysis tool (classification, clustering, hypothesis testing, etc). It's important to match your statistical question with the appropriate variables and ensure they are each represented as individual columns to make the data tidy.
 
 ## Combining functions using the pipe operator, `%>%`:
 
