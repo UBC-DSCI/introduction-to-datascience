@@ -124,7 +124,7 @@ We will use `read_csv` to import a subset of the `region_lang` data called `regi
 
 ```{r 02-tidyverse, warning=FALSE, message=FALSE}
 library(tidyverse)
-lang_wide <- read_csv("data/region_lang_top5_cities_wide.csv") 
+lang_wide <- read_csv("data/region_lang_top5_cities_wide.csv")
 lang_wide
 ```
 
@@ -144,10 +144,11 @@ To accomplish this data transformation, we will use the `tidyverse` function `pi
 For the above example, we use `pivot_longer` to combine the Toronto, Montreal, Vancouver, Calgary and Edmonton columns into a single column called `region`, and create a column called `mother_tongue` that contains the count of how many Canadians report each language as their mother tongue for each metropolitan area. We use a colon `:` between Toronto and Edmonton tells R to select all the columns in between Toronto and Edmonton: 
 
 ```{r}
-lang_mother_tidy <- pivot_longer(lang_wide, 
-                         cols = Toronto:Edmonton,
-                         names_to = "region", 
-                         values_to = "mother_tongue")
+lang_mother_tidy <- pivot_longer(lang_wide,
+  cols = Toronto:Edmonton,
+  names_to = "region",
+  values_to = "mother_tongue"
+)
 lang_mother_tidy
 ```
 
@@ -169,7 +170,7 @@ Suppose we have observations spread across multiple rows rather than in a single
 
 The data set `region_lang_top5_cities_long.csv` contains the number of Canadians reporting the primary language at home and work for five major cities (Toronto, Montreal, Vancouver, Calgary and Edmonton). 
 ```{r 02-reading-long, warning=FALSE, message=FALSE}
-lang_long <- read_csv("data/region_lang_top5_cities_long.csv") 
+lang_long <- read_csv("data/region_lang_top5_cities_long.csv")
 lang_long
 ```
 
@@ -182,9 +183,10 @@ What is wrong with this format above? In this example, each observation should b
 3. `values_from`: the name of the column from which to take the values
 
 ```{r , warning=FALSE, message=FALSE}
-lang_home_tidy <- pivot_wider(lang_long, 
-                                names_from = type, 
-                                values_from = count)
+lang_home_tidy <- pivot_wider(lang_long,
+  names_from = type,
+  values_from = count
+)
 lang_home_tidy
 ```
 
@@ -203,16 +205,17 @@ the Toronto, Montreal, Vancouver, Calgary and Edmonton columns contain the numbe
 
 ```{r, warning=FALSE, message=FALSE}
 lang_messy <- read_csv("data/region_lang_top5_cities_messy.csv")
-lang_messy 
+lang_messy
 ```
 
 First we’ll use `pivot_longer` to create two columns, `region` and `value`, similar to what we did previously:
 
 ```{r}
-lang_messy_longer <- pivot_longer(lang_messy, 
-                         cols = Toronto:Edmonton,
-                         names_to = "region", 
-                         values_to = "value")
+lang_messy_longer <- pivot_longer(lang_messy,
+  cols = Toronto:Edmonton,
+  names_to = "region",
+  values_to = "value"
+)
 lang_messy_longer
 ```
 
@@ -220,18 +223,20 @@ Then we'll use `separate` to split the `value` column into two columns, one that
 
 ```{r}
 lang_no_delimiter <- separate(lang_messy_longer,
-                                 col = value, 
-                                 into = c("most_at_home", "most_at_work"),
-                                 sep = "/") 
+  col = value,
+  into = c("most_at_home", "most_at_work"),
+  sep = "/"
+)
 lang_no_delimiter
 ```
 
 You might notice in the table above the word `<chr>` is beneath each of the column names. This word under the column name indicates the data type of each column. Here all of our variables are "character" data types. Recall, a character data type is a letter or a number. In the previous example, `most_at_home` and `most_at_work`  were `<dbl>` (double) data types (you can verify this by looking at the tables in the previous sections). This change is due to the delimiter "/" when we read in this messy data set. R read the columns in as character types, and it stayed that way after we separated the columns. Here it makes sense for region, category, and language to be stored as a character type. However, if we want to apply any functions that treat the `most_at_home` and `most_at_work` columns as a number (e.g. finding the maximum of the column), it won't be possible to do if the variable is stored as a `character`. R has a variety of data types, but here we will use the function `mutate` to convert these two columns to an "integer" data type. Integers data types are numbers that do not have any decimals. `mutate` is a function that will allow us to create a new variable in our data set. We specify the data set in the first argument, and in the proceeding arguments, we specify the function (`as.integer`) we want to apply to which columns (most_at_home, most_at_work). Then we give the mutated variable a new name. Here we are naming the columns the same names (most_at_home, most_at_work), but you can call these mutated variables anything you'd like. 
 
 ```{r}
-lang_no_delimiter <- mutate(lang_no_delimiter,  
-                               most_at_home = as.integer(most_at_home), 
-                               most_at_work = as.integer(most_at_work))
+lang_no_delimiter <- mutate(lang_no_delimiter,
+  most_at_home = as.integer(most_at_home),
+  most_at_work = as.integer(most_at_work)
+)
 lang_no_delimiter
 ```
 Now we see `<int>` appears under our columns, most_at_home and most_at_work, indicating they are integer data types! 
@@ -246,20 +251,21 @@ We can see that this data now satisfies all three criteria, making it easier to 
 For example, we could visualize what the two most common languages reported by Canadians as their primary language at home are for each of these five major Canadian cities:
 
 ```{r 02-plot}
-top2 <- lang_no_delimiter %>% 
-  arrange(desc(most_at_home)) %>% 
-  group_by(region) %>% 
+top2 <- lang_no_delimiter %>%
+  arrange(desc(most_at_home)) %>%
+  group_by(region) %>%
   slice(1:2)
 
-ggplot(top2, aes(x = region, y = most_at_home, fill = language)) + 
-  geom_bar(stat = "identity") + 
-  scale_fill_brewer(palette="Set1") +
+ggplot(top2, aes(x = region, y = most_at_home, fill = language)) +
+  geom_bar(stat = "identity") +
+  scale_fill_brewer(palette = "Set1") +
   theme(axis.text.x = element_text(angle = 90)) +
-  scale_y_continuous(name = "Number of Canadians reporting \n their primary language at home", 
-                     labels = scales::comma) +
+  scale_y_continuous(
+    name = "Number of Canadians reporting \n their primary language at home",
+    labels = scales::comma
+  ) +
   xlab("Region") +
-  ggtitle("Top two languages reported by Canadians \n as their primary language at home \n for five major Canadian cities") 
-
+  ggtitle("Top two languages reported by Canadians \n as their primary language at home \n for five major Canadian cities")
 ```
 
 From this visualization, we can see that in Calgary, Edmonton, Toronto and Vancouver, English was cited as the most common primary language used at home. However, in Montreal, French was the most common language used at home, and English was second. Punjabi, Tagalog, Cantonese and Mandarin were the second most common languages in Calgary, Edmonton, Toronto and Vancouver respectively. 
@@ -336,8 +342,8 @@ Although this is valid code, there is a more readable approach we could take by 
 output of `filter` to the input of `select`:
 
 ```{r}
-van_data_selected <- filter(lang_home_tidy, region == "Vancouver") %>% 
-                    select(language, most_at_home)
+van_data_selected <- filter(lang_home_tidy, region == "Vancouver") %>%
+  select(language, most_at_home)
 van_data_selected
 ```
 
@@ -353,8 +359,8 @@ The `%>%` can be used with any function in R. Additionally, we can pipe together
 
 
 ```{r}
-large_region_lang <- filter(lang_home_tidy, most_at_home > 10000) %>% 
-  select(region, language, most_at_home) %>% 
+large_region_lang <- filter(lang_home_tidy, most_at_home > 10000) %>%
+  select(region, language, most_at_home) %>%
   arrange(most_at_home)
 large_region_lang
 ```
@@ -380,9 +386,10 @@ for a column, the minimum value for a column, etc. Below we show how to use the 
 number of Canadians reporting a particular language as their primary language at home:
 
 ```{r}
-lang_summary <- summarize(lang_home_tidy, 
-                          min_most_at_home = min(most_at_home),
-                          most_most_at_home = max(most_at_home))
+lang_summary <- summarize(lang_home_tidy,
+  min_most_at_home = min(most_at_home),
+  most_most_at_home = max(most_at_home)
+)
 lang_summary
 ```
 
@@ -393,9 +400,11 @@ A common pairing with `summarize` is `group_by`. Pairing these functions togethe
 The `group_by` function takes at least two arguments. The first is the data frame that will be grouped, and the second and onwards are columns to use in the grouping. Here we use only one column for grouping (`region`), but more than one can also be used. To do this, list additional columns separated by commas. 
 
 ```{r}
-lang_summary_by_region <- group_by(lang_home_tidy, region) %>% 
-  summarize(min_most_at_home = min(most_at_home),
-            max_most_at_home = max(most_at_home))
+lang_summary_by_region <- group_by(lang_home_tidy, region) %>%
+  summarize(
+    min_most_at_home = min(most_at_home),
+    max_most_at_home = max(most_at_home)
+  )
 lang_summary_by_region
 ```
 
