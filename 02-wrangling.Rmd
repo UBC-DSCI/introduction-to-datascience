@@ -114,13 +114,11 @@ First, one of R's most popular plotting tool sets, the `ggplot2` library, expect
 
 ### Going from wide to long (or tidy!) using `pivot_longer`
 
-One common thing that often has to be done to get data into a tidy format is to combine columns that are really part of the same variable but currently stored in separate columns. We can use the function `pivot_longer`, which combines columns, thus making the data frame narrower.
-
-Data is often stored in a wider, not tidy, format because this format is often more intuitive for human readability and understanding, and humans create data sets. 
+One common thing that often has to be done to get data into a tidy format is to combine columns that are really part of the same variable but currently stored in separate columns. Data is often stored in a wider, not tidy, format because this format is often more intuitive for human readability and understanding, and humans create data sets. We can use the function `pivot_longer`, which combines columns, thus making the data frame narrower. 
 
 To learn how to use `pivot_longer`, we will work with a data set called [region_lang](https://ttimbers.github.io/canlang/), containing data retrieved from the 2016 Canadian census. For each census metropolitan area, this data set includes counts of how many Canadians cited each language as their mother tongue, the language spoken most often at home/work and which language they know. 
 
-We will use `read_csv` to import a subset of the `region_lang` data called `region_lang_top5_cities_wide.csv`, which contains only the counts of how many Canadians cited each language as their mother tongue for five major Canadian cities (Toronto, Montreal, Vancouver, Calgary and Edmonton). Our data set is stored in an untidy format, as shown below:
+We will use `read_csv` to import a subset of the region_lang data called `region_lang_top5_cities_wide.csv`, which contains only the counts of how many Canadians cited each language as their mother tongue for five major Canadian cities (Toronto, Montreal, Vancouver, Calgary and Edmonton). Our data set is stored in an untidy format, as shown below:
 
 ```{r 02-tidyverse, warning=FALSE, message=FALSE}
 library(tidyverse)
@@ -129,7 +127,7 @@ lang_wide
 ```
 
 
-What is wrong with our untidy format above? From a data analysis perspective, this format is not ideal because, in this format, the outcome of the variable "region" (Toronto, Montreal, Vancouver, Calgary and Edmonton) is stored as column names. Thus it is not easily accessible for the data analysis functions we will want to apply to our data set. Additionally, the values of the "mother_tongue" variable are spread across multiple columns. They will require binding or joining to get them into one column to allow us to do our desired visualization and statistical tasks later on.
+What is wrong with our untidy format above? From a data analysis perspective, this format is not ideal because, in this format, the outcome of the variable "region" (Toronto, Montreal, Vancouver, Calgary and Edmonton) is stored as column names. Thus it is not easily accessible for the data analysis functions we will want to apply to our data set. Additionally, the values of the "mother_tongue" variable are spread across multiple columns. They will require binding or joining to get them into one column to do our desired visualization and statistical tasks later. For instance, suppose we want to know which languages had the highest number of Canadians reporting it as their mother tongue among all regions. It is difficult to do this in its current format. We will have much more efficient and readable code if we tidy our data first. 
 
 To accomplish this data transformation, we will use the `tidyverse` function `pivot_longer`. To use `pivot_longer` we need to specify the:
 
@@ -160,8 +158,8 @@ lang_mother_tidy
 
 The data above is now tidy because all 3 criteria for tidy data have now been met:
 
-1. All the variables (`region` and `mother_tongue`) are now their own columns in the data frame. 
-2. Each observation, i.e., each category, language, region, and count of Canadians where that language is the mother tongue, are in a single row.
+1. All the variables (`category`, `language`, `region` and ``mother_tongue``) are now their own columns in the data frame. 
+2. Each observation, i.e., each `category`, `language`, `region`, and count of Canadians where that language is the mother tongue, are in a single row.
 3. Each value is a single cell, i.e., its row, column position in the data frame is not shared with another value.
 
 ### Going from long to wide using `pivot_wider`
@@ -174,7 +172,7 @@ lang_long <- read_csv("data/region_lang_top5_cities_long.csv")
 lang_long
 ```
 
-What is wrong with this format above? In this example, each observation should be a region for a language. However, in the messy data set above, each observation is split across multiple rows (notice it is split across two rows). To fix this, we will use `pivot_wider`, and we need to specify the:
+What is wrong with this format above? In this example, each observation should be a language in a region. However, in the messy data set above, each observation is split across multiple rows (notice it is split across two rows). To fix this, we will use `pivot_wider`, and we need to specify the:
 
 1. `data`: the data set
 
@@ -192,7 +190,7 @@ lang_home_tidy
 
 The data above is now tidy! We can go through the three criteria again to check that this data is a tidy data set. 
 
-1. All the variables are their own columns in the data frame, `most_at_home`, and `most_at_work` have been separated into their own columns in the data frame. 
+1. All the variables are their own columns in the data frame, i.e., `most_at_home`, and `most_at_work` have been separated into their own columns in the data frame. 
 2. Each observation, i.e., each `category`, `language`, `region`, `most_at_home` and `most_at_work`, are in a single row.
 3. Each value is a single cell, i.e., its row, column position in the data frame is not shared with another value.
 
@@ -200,8 +198,9 @@ You might notice that we have the same number of columns in our tidy data set as
 
 ### Using `separate` to deal with multiple delimiters
 
-Data are also not considered tidy when multiple values are stored in the same cell, as discussed above. In addition to the previous untidiness we addressed in the earlier version of this data set, the one we show below is even messier: 
-the Toronto, Montreal, Vancouver, Calgary and Edmonton columns contain the number of Canadians reporting their primary language at home and work in one column separated by the delimiter "/". The column names are the values of a variable, AND each value does not have its own cell! To make this messy data tidy, we'll have to fix both of these issues.
+Data are also not considered tidy when multiple values are stored in the same cell, as discussed above. In addition to the previous untidiness we addressed in the earlier versions of this data set, the one we show below is even messier: 
+
+the `Toronto`, `Montreal`, `Vancouver`, `Calgary` and `Edmonton` columns contain the number of Canadians reporting their primary language at home and work in one column separated by the delimiter "/". The column names are the values of a variable, AND each value does not have its own cell! To make this messy data tidy, we'll have to fix both of these issues.
 
 ```{r, warning=FALSE, message=FALSE}
 lang_messy <- read_csv("data/region_lang_top5_cities_messy.csv")
@@ -230,7 +229,7 @@ lang_no_delimiter <- separate(lang_messy_longer,
 lang_no_delimiter
 ```
 
-You might notice in the table above the word `<chr>` is beneath each of the column names. This word under the column name indicates the data type of each column. Here all of our variables are "character" data types. Recall, a character data type is a letter or a number. In the previous example, `most_at_home` and `most_at_work`  were `<dbl>` (double) data types (you can verify this by looking at the tables in the previous sections). This change is due to the delimiter "/" when we read in this messy data set. R read the columns in as character types, and it stayed that way after we separated the columns. Here it makes sense for region, category, and language to be stored as a character type. However, if we want to apply any functions that treat the `most_at_home` and `most_at_work` columns as a number (e.g. finding the maximum of the column), it won't be possible to do if the variable is stored as a `character`. R has a variety of data types, but here we will use the function `mutate` to convert these two columns to an "integer" data type. Integers data types are numbers that do not have any decimals. `mutate` is a function that will allow us to create a new variable in our data set. We specify the data set in the first argument, and in the proceeding arguments, we specify the function (`as.integer`) we want to apply to which columns (most_at_home, most_at_work). Then we give the mutated variable a new name. Here we are naming the columns the same names (most_at_home, most_at_work), but you can call these mutated variables anything you'd like. 
+You might notice in the table above the word `<chr>` appears beneath each of the column names. The word under the column name indicates the data type of each column. Here all of our variables are "character" data types. Recall, a character data type is a letter or a number. In the previous example, `most_at_home` and `most_at_work`  were `<dbl>` (double) (you can verify this by looking at the tables in the previous sections), which is a numeric data type. This change is due to the delimiter "/" when we read in this messy data set. R read the columns in as character types, and it stayed that way after we separated the columns. Here it makes sense for `region`, `category`, and `language` to be stored as a character type. However, if we want to apply any functions that treat the `most_at_home` and `most_at_work` columns as a number (e.g. finding the maximum of the column), it won't be possible to do if the variable is stored as a `character`. R has a variety of data types, but here we will use the function `mutate` to convert these two columns to an "integer" data type. Integer data types are numbers that do not have any decimals. `mutate` is a function that will allow us to create a new variable in our data set. We specify the data set in the first argument, and in the proceeding arguments, we specify the function we want to apply (`as.integer`) to which columns (`most_at_home`, `most_at_work`). Then we give the mutated variable a new name. Here we are naming the columns the same names ("most_at_home", "most_at_work"), but you can call these mutated variables anything you'd like. 
 
 ```{r}
 lang_no_delimiter <- mutate(lang_no_delimiter,
@@ -239,7 +238,7 @@ lang_no_delimiter <- mutate(lang_no_delimiter,
 )
 lang_no_delimiter
 ```
-Now we see `<int>` appears under our columns, most_at_home and most_at_work, indicating they are integer data types! 
+Now we see `<int>` appears under our columns, `most_at_home` and `most_at_work`, indicating they are integer data types! 
 
 Is this data now tidy? Well, if we recall the three criteria for tidy data:
 
@@ -329,7 +328,7 @@ Let's work with our tidy `lang_home_tidy` data set from above, which contains th
 lang_home_tidy
 ```
 
-Suppose we want to create a subset of the data with only the languages and counts for each language spoken most at home for the city of Vancouver. To do this, we can use the functions `filter` and `select`. First, we use `filter` to create a data frame called `van_data` that contains only values for Vancouver. We then use `select` on this data frame to keep only the variables we want:
+Suppose we want to create a subset of the data with only the languages and counts of each language spoken most at home for the city of Vancouver. To do this, we can use the functions `filter` and `select`. First, we use `filter` to create a data frame called `van_data` that contains only values for Vancouver. We then use `select` on this data frame to keep only the variables we want:
 
 ```{r}
 van_data <- filter(lang_home_tidy, region == "Vancouver")
@@ -355,7 +354,7 @@ As you can see, both of these approaches give us the same output, but the second
 
 ### Using `%>%` with more than two functions
 
-The `%>%` can be used with any function in R. Additionally, we can pipe together more than two functions. For example, we can pipe together three functions to order the rows by counts of the language most spoken at home for only the counts that are more than 10,000 and only include region, language and most_at_home columns:
+The `%>%` can be used with any function in R. Additionally, we can pipe together more than two functions. For example, we can pipe together three functions to order the rows by counts of the language most spoken at home for only the counts that are more than 10,000 and only include the region, language and count of Canadians reporting their primary language at home in our table:
 
 
 ```{r}
