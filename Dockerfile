@@ -1,3 +1,4 @@
+# Copyright (c) UBC-DSCI Development Team.
 FROM rocker/verse:4.0.0
 
 RUN apt-get update --fix-missing \
