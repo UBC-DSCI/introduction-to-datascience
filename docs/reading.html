@@ -173,8 +173,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul></li>
 <li class="chapter" data-level="2.5" data-path="reading.html"><a href="reading.html#reading-data-from-an-microsoft-excel-file"><i class="fa fa-check"></i><b>2.5</b> Reading data from an Microsoft Excel file</a></li>
 <li class="chapter" data-level="2.6" data-path="reading.html"><a href="reading.html#reading-data-from-a-database"><i class="fa fa-check"></i><b>2.6</b> Reading data from a database</a><ul>
-<li class="chapter" data-level="2.6.1" data-path="reading.html"><a href="reading.html#reading-data-from-a-sqlite-database"><i class="fa fa-check"></i><b>2.6.1</b> Reading data from a SQLite database</a></li>
-<li class="chapter" data-level="2.6.2" data-path="reading.html"><a href="reading.html#reading-data-from-a-postgresql-database"><i class="fa fa-check"></i><b>2.6.2</b> Reading data from a PostgreSQL database</a></li>
+<li class="chapter" data-level="2.6.1" data-path="reading.html"><a href="reading.html#connecting-to-a-database"><i class="fa fa-check"></i><b>2.6.1</b> Connecting to a database</a></li>
+<li class="chapter" data-level="2.6.2" data-path="reading.html"><a href="reading.html#interacting-with-a-database"><i class="fa fa-check"></i><b>2.6.2</b> Interacting with a database</a></li>
 </ul></li>
 <li class="chapter" data-level="2.7" data-path="reading.html"><a href="reading.html#writing-data-from-r-to-a-.csv-file"><i class="fa fa-check"></i><b>2.7</b> Writing data from R to a <code>.csv</code> file</a></li>
 <li class="chapter" data-level="2.8" data-path="reading.html"><a href="reading.html#scraping-data-off-the-web-using-r"><i class="fa fa-check"></i><b>2.8</b> Scraping data off the web using R</a><ul>
@@ -348,13 +348,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h1><span class="header-section-number">Chapter 2</span> Reading in data locally and from the web</h1>
 <div id="overview" class="section level2">
 <h2><span class="header-section-number">2.1</span> Overview</h2>
-<p>In this chapter, you’ll learn to read spreadsheet-like data of various formats into R from your local device and from the web.
-“Reading” (or “loading”) is the process of converting data (stored as plain text, a database, HTML, etc.) into an object (e.g., a dataframe)
-that R can easily access and manipulate, and is thus the gateway to any data analysis; you won’t be able to analyze
-data unless you’ve loaded it first. And because there are many ways to store data, there are similarly many ways to read data into R.
-If you spend more time upfront matching the data reading method to the type of data you have,
-you will have to spend less time re-formatting, cleaning and wrangling your data (the second step to all data analyses).
-It’s like making sure your shoelaces are tied well before going for a run so that you don’t trip later on!</p>
+<p>In this chapter, you’ll learn to read spreadsheet-like data of various formats into R from your local device and the web. “Reading” (or “loading”) is the process of converting data (stored as plain text, a database, HTML, etc.) into an object (e.g., a data frame) that R can easily access and manipulate. Thus reading data is the gateway to any data analysis; you won’t be able to analyze data unless you’ve loaded it first. And because there are many ways to store data, there are similarly many ways to read data into R. The more time you spend upfront matching the data reading method to the type of data you have, the less time you will have to devote to re-formatting, cleaning and wrangling your data (the second step to all data analyses). It’s like making sure your shoelaces are tied well before going for a run so that you don’t trip later on!</p>
 </div>
 <div id="chapter-learning-objectives-1" class="section level2">
 <h2><span class="header-section-number">2.2</span> Chapter learning objectives</h2>
@@ -388,6 +382,7 @@ It’s like making sure your shoelaces are tied well before going for a run so t
 <li><p>list the tables in a database using the <code>DBI</code> library’s <code>dbListTables</code> function</p></li>
 <li><p>create a reference to a database table that is queriable using the <code>tbl</code> from the <code>dbplyr</code> library</p></li>
 <li><p>retrieve data from a database query and bring it into R using the <code>collect</code> function from the <code>dbplyr</code> library</p></li>
+<li><p>use <code>write_csv</code> to save a data frame to a <code>.csv</code> file</p></li>
 <li><p>(<em>optional</em>) scrape data from the web</p>
 <ul>
 <li>read/scrape data from an internet URL using the rvest <code>html_nodes</code> and <code>html_text</code> functions</li>
@@ -397,29 +392,36 @@ It’s like making sure your shoelaces are tied well before going for a run so t
 </div>
 <div id="absolute-and-relative-file-paths" class="section level2">
 <h2><span class="header-section-number">2.3</span> Absolute and relative file paths</h2>
-<p>When you load a data set into R, you first need to tell R where that files lives. The file could live on your
-computer (<em>local</em>), or somewhere on the internet (<em>remote</em>). In this section we will discuss the case where the file lives on your computer.</p>
+<p>When you load a data set into R, you first need to tell R where those files live. The file could live on your
+computer (<em>local</em>) or somewhere on the internet (<em>remote</em>). In this section, we will discuss the case where the file lives on your computer.</p>
 <p>The place where the file lives on your computer is called the “path”. You can think of the path as directions to the file. There are two kinds of
-paths: relative paths and absolute paths. A relative path is where the file is in respect to where you currently are on the computer (e.g., where the
+paths: relative paths and absolute paths. A relative path is where the file is with respect to where you currently are on the computer (e.g., where the
 Jupyter notebook file that you’re working in is). On the other hand, an absolute path is where the file is in respect to the base (or root) folder of
 the computer’s filesystem.</p>
 <p>Suppose our computer’s filesystem looks like the picture below, and we are working in the Jupyter notebook titled <code>worksheetk_02.ipynb</code>. If we want to
 read in the <code>.csv</code> file named <code>happiness_report.csv</code> into our Jupyter notebook using R, we could do this using either a relative or an absolute path.
-We show what both choices below.</p>
-<p><img src="img/file-system-for-export-to-intro-datascience.svg" width="840"></p>
+We show both choices below.</p>
+<div class="figure"><span id="fig:11-population-vs-sample"></span>
+<img src="img/file-system-for-export-to-intro-datascience.svg" alt="Example file system" width="840" />
+<p class="caption">
+Figure 2.1: Example file system
+</p>
+</div>
 <p><strong>Reading <code>happiness_report.csv</code> using a relative path:</strong></p>
 <pre><code>happiness_data &lt;- read_csv(&quot;data/happiness_report.csv&quot;)</code></pre>
 <p><strong>Reading <code>happiness_report.csv</code> using an absolute path:</strong></p>
 <pre><code>happiness_data &lt;- read_csv(&quot;/home/jupyter/dsci-100/worksheet_02/data/happiness_report.csv&quot;)</code></pre>
-<p>So which one should you use? Generally speaking, to ensure your code can be run on a different computer, you should use relative paths (and it’s also less typing!).
-This is because the absolute path of a file (the names of folders between the computer’s root <code>/</code> and the file) isn’t usually the same across multiple computers.
-For example, suppose Alice and Bob are working on a project together
-on the <code>happiness_report.csv</code> data. Alice’s file is stored at</p>
-<p><code>/home/alice/project/data/happiness_report.csv</code>,</p>
-<p>while Bob’s is stored at</p>
-<p><code>/home/bob/project/data/happiness_report.csv</code>.</p>
-<p>Even though Alice and Bob stored their files in the same place on their computers (in their home folders), the absolute paths are different due to their different usernames.
-If Bob has code that loads the <code>happiness_report.csv</code> data using an absolute path, the code won’t work on Alice’s computer.
+<p>So which one should you use? Generally speaking, to ensure your code can be run
+on a different computer, you should use relative paths. An added bonus is that
+it’s also less typing! This is because the absolute path of a file (the names of
+folders between the computer’s root <code>/</code> and the file) isn’t usually the same
+across different computers. For example, suppose Fatima and Jayden are working on a
+project together on the <code>happiness_report.csv</code> data. Fatima’s file is stored at</p>
+<p><code>/home/Fatima/project/data/happiness_report.csv</code>,</p>
+<p>while Jayden’s is stored at</p>
+<p><code>/home/Jayden/project/data/happiness_report.csv</code>.</p>
+<p>Even though Fatima and Jayden stored their files in the same place on their computers (in their home folders), the absolute paths are different due to their different usernames.
+If Jayden has code that loads the <code>happiness_report.csv</code> data using an absolute path, the code won’t work on Fatima’s computer.
 But the relative path from inside the <code>project</code> folder (<code>data/happiness_report.csv</code>) is the same on both computers; any code that uses relative paths will work on both!</p>
 <!--Why would the absolute path not work on a different computer? The reason for this is that the names and the folder structure of the path between a computer's root 
 folder (named `/`) and any files and folders you are usually working with will be different depending on who owns the computer (usually there is a different user name 
@@ -432,189 +434,212 @@ on each computer) and where the files and folders happen to be located on that p
 <div id="reading-tabular-data-from-a-plain-text-file-into-r" class="section level2">
 <h2><span class="header-section-number">2.4</span> Reading tabular data from a plain text file into R</h2>
 <p>Now we will learn more about reading tabular data from a plain text file into R, as well as how to write tabular data to a file.
-Last chapter we learned about using the <code>tidyverse</code> <code>read_csv</code> function when reading files that match that functions expected defaults
-(column names are present and commas are used as the delimiter/separator between columns). In this section, we will learn how to read
-files do not satisfy the default expectations of <code>read_csv</code>.</p>
-<p>Before we jump into the cases where the data aren’t in the expected default format for <code>tidyverse</code> and <code>read_csv</code>, let’s revisit the simpler
-case where the defaults hold and the only argument we need to give to the function is the path to the file, <code>data/state_property_vote.csv</code>.
-We put <code>data/</code> before the name of the file when we are loading the dataset because this dataset is located in a sub-folder, named <code>data</code>,
-relative to where we are running our R code.</p>
-<p>Here is what the file would look in a plain text editor:</p>
-<pre><code>state,pop,med_prop_val,med_income,avg_commute,party
-Montana,1042520,217200,46608,16.35,Republican
-Alabama,4863300,136200,42917,23.78,Republican
-Arizona,6931071,205900,50036,23.69,Republican
-Arkansas,2988248,123300,41335,20.49,Republican
-California,39250017,477500,61927,27.67,Democratic
-Colorado,5540545,314200,61324,23.02,Democratic
-Connecticut,3576452,274600,70007,24.92,Democratic
-Delaware,952065,243400,59853,24.97,Democratic
-District of Columbia,681170,576100,75506,28.96,Democratic</code></pre>
-<p>And here is a review of how we can use <code>read_csv</code> to load it into R:</p>
-<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="reading.html#cb34-1"></a><span class="kw">library</span>(tidyverse)</span>
-<span id="cb34-2"><a href="reading.html#cb34-2"></a>us_data &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/state_property_vote.csv&quot;</span>)</span>
-<span id="cb34-3"><a href="reading.html#cb34-3"></a>us_data</span></code></pre></div>
-<pre><code>## # A tibble: 52 x 6
-##    state                     pop med_prop_val med_income avg_commute party     
-##    &lt;chr&gt;                   &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt; &lt;chr&gt;     
-##  1 Montana               1042520       217200      46608        16.4 Republican
-##  2 Alabama               4863300       136200      42917        23.8 Republican
-##  3 Arizona               6931071       205900      50036        23.7 Republican
-##  4 Arkansas              2988248       123300      41335        20.5 Republican
-##  5 California           39250017       477500      61927        27.7 Democratic
-##  6 Colorado              5540545       314200      61324        23.0 Democratic
-##  7 Connecticut           3576452       274600      70007        24.9 Democratic
-##  8 Delaware               952065       243400      59853        25.0 Democratic
-##  9 District of Columbia   681170       576100      75506        29.0 Democratic
-## 10 Florida              20612439       197700      47439        25.8 Republican
-## # … with 42 more rows</code></pre>
+Last chapter, we learned about using the <code>tidyverse</code> <code>read_csv</code> function when reading files that match that function’s expected defaults
+(column names are present, and commas are used as the delimiter/separator between columns). In this section, we will learn how to read
+files that do not satisfy the default expectations of <code>read_csv</code>.</p>
+<p>Before we jump into the cases where the data aren’t in the expected default format for <code>tidyverse</code> and <code>read_csv</code>, let’s revisit the more straightforward
+case where the defaults hold, and the only argument we need to give to the function is the path to the file, <code>data/can_lang.csv</code>. The <code>can_lang</code> data set contains language data from the 2016 Canadian census. We put <code>data/</code> before the file’s name when we are loading the data set because this data set is located in a sub-folder, named <code>data</code>, relative to where we are running our R code.</p>
+<p>Here is what the file would look like in a plain text editor:</p>
+<pre><code>category,language,mother_tongue,most_at_home,most_at_work,lang_known
+Aboriginal languages,&quot;Aboriginal languages, n.o.s.&quot;,590,235,30,665
+Non-Official &amp; Non-Aboriginal languages,Afrikaans,10260,4785,85,23415
+Non-Official &amp; Non-Aboriginal languages,&quot;Afro-Asiatic languages, n.i.e.&quot;,1150,445,10,2775
+Non-Official &amp; Non-Aboriginal languages,Akan (Twi),13460,5985,25,22150
+Non-Official &amp; Non-Aboriginal languages,Albanian,26895,13135,345,31930
+Aboriginal languages,&quot;Algonquian languages, n.i.e.&quot;,45,10,0,120
+Aboriginal languages,Algonquin,1260,370,40,2480
+Non-Official &amp; Non-Aboriginal languages,American Sign Language,2685,3020,1145,21930
+Non-Official &amp; Non-Aboriginal languages,Amharic,22465,12785,200,33670</code></pre>
+<p>And here is a review of how we can use <code>read_csv</code> to load it into R. First we
+load the <code>tidyverse</code> library to gain access to useful functions for reading the
+data.</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="reading.html#cb34-1"></a><span class="kw">library</span>(tidyverse)</span></code></pre></div>
+<blockquote>
+<p>Note: it is normal and expected that a message is printed out after
+loading the <code>tidyverse</code> and some libraries. Generally, this message let’s you
+know if functions from the different libraries were loaded share the same name
+(which is confusing to R), and if so, which one you can access using just it’s
+name (and which one you need to refer the library name and the function name to
+refer to it, this is called masking). Additionally, the <code>tidyverse</code> is a special
+R library - it is a meta-library or meta-package that bundles together several
+related and commonly used packages. Because of this it lists the libraries it
+does the job of loading. In future when we load this library in this book we
+will silence these messages to help with readability of the book.</p>
+</blockquote>
+<p>Next we use <code>read_csv</code> to load the data into R, and in that call we specify the
+relative path to the file.</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="reading.html#cb35-1"></a>canlang_data &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/can_lang.csv&quot;</span>)</span></code></pre></div>
+<pre><code>## Parsed with column specification:
+## cols(
+##   category = col_character(),
+##   language = col_character(),
+##   mother_tongue = col_double(),
+##   most_at_home = col_double(),
+##   most_at_work = col_double(),
+##   lang_known = col_double()
+## )</code></pre>
+<blockquote>
+<p>Note: it is also normal and expected that a message is printed out after using
+the <code>read_csv</code> and related functions. This message functions to let you know the
+data types of each of the columns that R inferred while reading the data into R.
+In future when we use this and related functions to load data in this book we
+will silence these messages to help with readability of the book.</p>
+</blockquote>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="reading.html#cb37-1"></a>canlang_data</span></code></pre></div>
+<pre><code>## # A tibble: 214 x 6
+##    category                              language                    mother_tongue most_at_home most_at_work lang_known
+##    &lt;chr&gt;                                 &lt;chr&gt;                               &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;
+##  1 Aboriginal languages                  Aboriginal languages, n.o.…           590          235           30        665
+##  2 Non-Official &amp; Non-Aboriginal langua… Afrikaans                           10260         4785           85      23415
+##  3 Non-Official &amp; Non-Aboriginal langua… Afro-Asiatic languages, n.…          1150          445           10       2775
+##  4 Non-Official &amp; Non-Aboriginal langua… Akan (Twi)                          13460         5985           25      22150
+##  5 Non-Official &amp; Non-Aboriginal langua… Albanian                            26895        13135          345      31930
+##  6 Aboriginal languages                  Algonquian languages, n.i.…            45           10            0        120
+##  7 Aboriginal languages                  Algonquin                            1260          370           40       2480
+##  8 Non-Official &amp; Non-Aboriginal langua… American Sign Language               2685         3020         1145      21930
+##  9 Non-Official &amp; Non-Aboriginal langua… Amharic                             22465        12785          200      33670
+## 10 Non-Official &amp; Non-Aboriginal langua… Arabic                             419890       223535         5585     629055
+## # … with 204 more rows</code></pre>
 <div id="skipping-rows-when-reading-in-data" class="section level3">
 <h3><span class="header-section-number">2.4.1</span> Skipping rows when reading in data</h3>
-<p>Often times information about how data was collected, or other relevant information, is included at the top of the data file. This information is usually written in sentence and paragraph form, with no delimiter because it is not organized into columns. An example of this is shown below:</p>
-<pre><code>Data source: https://datausa.io/
-Record of how data was collected: https://github.com/UBC-DSCI/introduction-to-datascience/blob/master/data/retrieve_data.ipynb
-Date collected: 2020-07-08
-state,pop,med_prop_val,med_income,avg_commute,party
-Montana,1042520,217200,46608,16.35,Republican
-Alabama,4863300,136200,42917,23.78,Republican
-Arizona,6931071,205900,50036,23.69,Republican
-Arkansas,2988248,123300,41335,20.49,Republican
-California,39250017,477500,61927,27.67,Democratic
-Colorado,5540545,314200,61324,23.02,Democratic
-Connecticut,3576452,274600,70007,24.92,Democratic
-Delaware,952065,243400,59853,24.97,Democratic
-District of Columbia,681170,576100,75506,28.96,Democratic</code></pre>
-<p>Using <code>read_csv</code> as we did previously does not allow us to correctly load the data into R. In the case of this file we end up only reading in one column of the data set:</p>
-<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="reading.html#cb37-1"></a>us_data &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/state_property_vote_meta-data.csv&quot;</span>)</span></code></pre></div>
-<pre><code>## Parsed with column specification:
-## cols(
-##   `Data source: https://datausa.io/` = col_character()
-## )</code></pre>
-<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="reading.html#cb39-1"></a>us_data</span></code></pre></div>
-<pre><code>## # A tibble: 55 x 1
-##    `Data source: https://datausa.io/`                                                                                            
-##    &lt;chr&gt;                                                                                                                         
-##  1 Record of how data was collected: https://github.com/UBC-DSCI/introduction-to-datascience/blob/master/data/retrieve_data.ipynb
-##  2 Date collected: 2020-07-08                                                                                                    
-##  3 state                                                                                                                         
-##  4 Montana                                                                                                                       
-##  5 Alabama                                                                                                                       
-##  6 Arizona                                                                                                                       
-##  7 Arkansas                                                                                                                      
-##  8 California                                                                                                                    
-##  9 Colorado                                                                                                                      
-## 10 Connecticut                                                                                                                   
-## # … with 45 more rows</code></pre>
+<p>Often times information about how data was collected, or other relevant information, is included at the top of the data file. This information is usually written in sentence and paragraph form, with no delimiter because it is not organized into columns. An example of this is shown below. This
+information gives the data scientist useful context and information about the data, however, it is not well formatted or intended to be read into
+a data frame cell along with the tabular data that follows later in the file.</p>
+<pre><code>Data source: https://ttimbers.github.io/canlang/
+Data originally published in: Statistics Canada Census of Population 2016.
+Reproduced and distributed on an as is basis with the permission of Statistics Canada.
+category,language,mother_tongue,most_at_home,most_at_work,lang_known
+Aboriginal languages,&quot;Aboriginal languages, n.o.s.&quot;,590,235,30,665
+Non-Official &amp; Non-Aboriginal languages,Afrikaans,10260,4785,85,23415
+Non-Official &amp; Non-Aboriginal languages,&quot;Afro-Asiatic languages, n.i.e.&quot;,1150,445,10,2775
+Non-Official &amp; Non-Aboriginal languages,Akan (Twi),13460,5985,25,22150
+Non-Official &amp; Non-Aboriginal languages,Albanian,26895,13135,345,31930
+Aboriginal languages,&quot;Algonquian languages, n.i.e.&quot;,45,10,0,120
+Aboriginal languages,Algonquin,1260,370,40,2480
+Non-Official &amp; Non-Aboriginal languages,American Sign Language,2685,3020,1145,21930
+Non-Official &amp; Non-Aboriginal languages,Amharic,22465,12785,200,33670</code></pre>
+<p>With this extra information being present at the top of the file, using <code>read_csv</code> as we did previously does not allow us to correctly load the data into R. In the case of this file we end up only reading in one column of the data set:</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="reading.html#cb40-1"></a>canlang_data &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/can_lang_meta-data.csv&quot;</span>)</span></code></pre></div>
+<blockquote>
+<p>Note: In contrast to the normal and expected messages above, this time R
+printed out a warning for us indicating that there might be a problem with how
+our data is being read in.</p>
+</blockquote>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="reading.html#cb41-1"></a>canlang_data</span></code></pre></div>
+<pre><code>## # A tibble: 217 x 1
+##    `Data source: https://ttimbers.github.io/canlang/`                                    
+##    &lt;chr&gt;                                                                                 
+##  1 Data originally published in: Statistics Canada Census of Population 2016.            
+##  2 Reproduced and distributed on an as is basis with the permission of Statistics Canada.
+##  3 category                                                                              
+##  4 Aboriginal languages                                                                  
+##  5 Non-Official &amp; Non-Aboriginal languages                                               
+##  6 Non-Official &amp; Non-Aboriginal languages                                               
+##  7 Non-Official &amp; Non-Aboriginal languages                                               
+##  8 Non-Official &amp; Non-Aboriginal languages                                               
+##  9 Aboriginal languages                                                                  
+## 10 Aboriginal languages                                                                  
+## # … with 207 more rows</code></pre>
 <p>To successfully read data like this into R, the <code>skip</code> argument can be useful to tell R how many lines to skip before it should start reading in the data. In the example above, we would set this value to 3:</p>
-<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="reading.html#cb41-1"></a>us_data &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/state_property_vote_meta-data.csv&quot;</span>, <span class="dt">skip =</span> <span class="dv">3</span>)</span></code></pre></div>
-<pre><code>## Parsed with column specification:
-## cols(
-##   state = col_character(),
-##   pop = col_double(),
-##   med_prop_val = col_double(),
-##   med_income = col_double(),
-##   avg_commute = col_double(),
-##   party = col_character()
-## )</code></pre>
-<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="reading.html#cb43-1"></a>us_data</span></code></pre></div>
-<pre><code>## # A tibble: 52 x 6
-##    state                     pop med_prop_val med_income avg_commute party     
-##    &lt;chr&gt;                   &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt; &lt;chr&gt;     
-##  1 Montana               1042520       217200      46608        16.4 Republican
-##  2 Alabama               4863300       136200      42917        23.8 Republican
-##  3 Arizona               6931071       205900      50036        23.7 Republican
-##  4 Arkansas              2988248       123300      41335        20.5 Republican
-##  5 California           39250017       477500      61927        27.7 Democratic
-##  6 Colorado              5540545       314200      61324        23.0 Democratic
-##  7 Connecticut           3576452       274600      70007        24.9 Democratic
-##  8 Delaware               952065       243400      59853        25.0 Democratic
-##  9 District of Columbia   681170       576100      75506        29.0 Democratic
-## 10 Florida              20612439       197700      47439        25.8 Republican
-## # … with 42 more rows</code></pre>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="reading.html#cb43-1"></a>canlang_data &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/can_lang_meta-data.csv&quot;</span>, <span class="dt">skip =</span> <span class="dv">3</span>)</span>
+<span id="cb43-2"><a href="reading.html#cb43-2"></a>canlang_data</span></code></pre></div>
+<pre><code>## # A tibble: 214 x 6
+##    category                              language                    mother_tongue most_at_home most_at_work lang_known
+##    &lt;chr&gt;                                 &lt;chr&gt;                               &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;
+##  1 Aboriginal languages                  Aboriginal languages, n.o.…           590          235           30        665
+##  2 Non-Official &amp; Non-Aboriginal langua… Afrikaans                           10260         4785           85      23415
+##  3 Non-Official &amp; Non-Aboriginal langua… Afro-Asiatic languages, n.…          1150          445           10       2775
+##  4 Non-Official &amp; Non-Aboriginal langua… Akan (Twi)                          13460         5985           25      22150
+##  5 Non-Official &amp; Non-Aboriginal langua… Albanian                            26895        13135          345      31930
+##  6 Aboriginal languages                  Algonquian languages, n.i.…            45           10            0        120
+##  7 Aboriginal languages                  Algonquin                            1260          370           40       2480
+##  8 Non-Official &amp; Non-Aboriginal langua… American Sign Language               2685         3020         1145      21930
+##  9 Non-Official &amp; Non-Aboriginal langua… Amharic                             22465        12785          200      33670
+## 10 Non-Official &amp; Non-Aboriginal langua… Arabic                             419890       223535         5585     629055
+## # … with 204 more rows</code></pre>
 </div>
 <div id="read_delim-as-a-more-flexible-method-to-get-tabular-data-into-r" class="section level3">
 <h3><span class="header-section-number">2.4.2</span> <code>read_delim</code> as a more flexible method to get tabular data into R</h3>
-<p>When our tabular data comes in a different format, we can use the <code>read_delim</code> function instead. For example, a different version of this same dataset has no column names and uses tabs as the delimiter instead of commas.</p>
+<p>When our tabular data comes in a different format, we can use the <code>read_delim</code> function instead. For example, a different version of this same data set has no column names and uses tabs as the delimiter instead of commas.</p>
 <p>Here is how the file would look in a plain text editor:</p>
-<pre><code>Montana 1042520 217200  46608   16.35   Republican
-Alabama 4863300 136200  42917   23.78   Republican
-Arizona 6931071 205900  50036   23.69   Republican
-Arkansas    2988248 123300  41335   20.49   Republican
-California  39250017    477500  61927   27.67   Democratic
-Colorado    5540545 314200  61324   23.02   Democratic
-Connecticut 3576452 274600  70007   24.92   Democratic
-Delaware    952065  243400  59853   24.97   Democratic
-District of Columbia    681170  576100  75506   28.96   Democratic
-Florida 20612439    197700  47439   25.8    Republican</code></pre>
-<p>To get this into R using the <code>read_delim()</code> function, we specify the first argument as the path to the file (as done with <code>read_csv</code>), and then provide values to the <code>delim</code> argument (here a tab, which we represent by <code>"\t"</code>) and the <code>col_names</code> argument (here we specify that there are no column names be assigning it the value of <code>FALSE</code>). Both <code>read_csv()</code> and <code>read_delim()</code> have a <code>col_names</code> argument and the default is <code>TRUE</code>.</p>
-<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="reading.html#cb46-1"></a>us_data &lt;-<span class="st"> </span><span class="kw">read_delim</span>(<span class="st">&quot;data/state_property_vote.tsv&quot;</span>,  <span class="dt">delim =</span> <span class="st">&quot;</span><span class="ch">\t</span><span class="st">&quot;</span>, <span class="dt">col_names =</span> <span class="ot">FALSE</span>)</span></code></pre></div>
-<pre><code>## Parsed with column specification:
-## cols(
-##   X1 = col_character(),
-##   X2 = col_double(),
-##   X3 = col_double(),
-##   X4 = col_double(),
-##   X5 = col_double(),
-##   X6 = col_character()
-## )</code></pre>
-<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="reading.html#cb48-1"></a>us_data</span></code></pre></div>
-<pre><code>## # A tibble: 52 x 6
-##    X1                         X2     X3    X4    X5 X6        
-##    &lt;chr&gt;                   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;     
-##  1 Montana               1042520 217200 46608  16.4 Republican
-##  2 Alabama               4863300 136200 42917  23.8 Republican
-##  3 Arizona               6931071 205900 50036  23.7 Republican
-##  4 Arkansas              2988248 123300 41335  20.5 Republican
-##  5 California           39250017 477500 61927  27.7 Democratic
-##  6 Colorado              5540545 314200 61324  23.0 Democratic
-##  7 Connecticut           3576452 274600 70007  24.9 Democratic
-##  8 Delaware               952065 243400 59853  25.0 Democratic
-##  9 District of Columbia   681170 576100 75506  29.0 Democratic
-## 10 Florida              20612439 197700 47439  25.8 Republican
-## # … with 42 more rows</code></pre>
+<pre><code>Aboriginal languages    Aboriginal languages, n.o.s.    590 235 30  665
+Non-Official &amp; Non-Aboriginal languages Afrikaans   10260   4785    85  23415
+Non-Official &amp; Non-Aboriginal languages Afro-Asiatic languages, n.i.e.  1150    445 10  2775
+Non-Official &amp; Non-Aboriginal languages Akan (Twi)  13460   5985    25  22150
+Non-Official &amp; Non-Aboriginal languages Albanian    26895   13135   345 31930
+Aboriginal languages    Algonquian languages, n.i.e.    45  10  0   120
+Aboriginal languages    Algonquin   1260    370 40  2480
+Non-Official &amp; Non-Aboriginal languages American Sign Language  2685    3020    1145    21930
+Non-Official &amp; Non-Aboriginal languages Amharic 22465   12785   200 33670
+Non-Official &amp; Non-Aboriginal languages Arabic  419890  223535  5585    629055</code></pre>
+<p>To get this into R using the <code>read_delim()</code> function, we specify the first argument as the path to the file (as done with <code>read_csv</code>), and then provide values to the <code>delim</code> argument (here a tab, which we represent by <code>"\t"</code>) and the <code>col_names</code> argument (here we specify that there are no column names to assign, and give it the value of <code>FALSE</code>). Both <code>read_csv()</code> and <code>read_delim()</code> have a <code>col_names</code> argument and the default is <code>TRUE</code>.</p>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="reading.html#cb46-1"></a>canlang_data &lt;-<span class="st"> </span><span class="kw">read_delim</span>(<span class="st">&quot;data/can_lang.tsv&quot;</span>, <span class="dt">delim =</span> <span class="st">&quot;</span><span class="ch">\t</span><span class="st">&quot;</span>, <span class="dt">col_names =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb46-2"><a href="reading.html#cb46-2"></a>canlang_data</span></code></pre></div>
+<pre><code>## # A tibble: 214 x 6
+##    X1                                      X2                                 X3     X4    X5     X6
+##    &lt;chr&gt;                                   &lt;chr&gt;                           &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;
+##  1 Aboriginal languages                    Aboriginal languages, n.o.s.      590    235    30    665
+##  2 Non-Official &amp; Non-Aboriginal languages Afrikaans                       10260   4785    85  23415
+##  3 Non-Official &amp; Non-Aboriginal languages Afro-Asiatic languages, n.i.e.   1150    445    10   2775
+##  4 Non-Official &amp; Non-Aboriginal languages Akan (Twi)                      13460   5985    25  22150
+##  5 Non-Official &amp; Non-Aboriginal languages Albanian                        26895  13135   345  31930
+##  6 Aboriginal languages                    Algonquian languages, n.i.e.       45     10     0    120
+##  7 Aboriginal languages                    Algonquin                        1260    370    40   2480
+##  8 Non-Official &amp; Non-Aboriginal languages American Sign Language           2685   3020  1145  21930
+##  9 Non-Official &amp; Non-Aboriginal languages Amharic                         22465  12785   200  33670
+## 10 Non-Official &amp; Non-Aboriginal languages Arabic                         419890 223535  5585 629055
+## # … with 204 more rows</code></pre>
 <p>Data frames in R need to have column names, thus if you read data into R as a data frame without column names then R assigns column names for them. If you used the <code>read_*</code> functions to read the data into R, then R gives each column a name of X1, X2, …, XN, where N is the number of columns in the data set.</p>
 </div>
 <div id="reading-tabular-data-directly-from-a-url" class="section level3">
 <h3><span class="header-section-number">2.4.3</span> Reading tabular data directly from a URL</h3>
 <p>We can also use <code>read_csv()</code> or <code>read_delim()</code> (and related functions) to read in tabular data directly from a url that contains tabular data. In this case, we provide the url to <code>read_csv()</code> as the path to the file instead of a path to a local file on our computer. Similar to when we specify a path on our local computer, here we need to surround the url by quotes. All other arguments that we use are the same as when using these functions with a local file on our computer.</p>
-<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="reading.html#cb50-1"></a>us_data &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;https://raw.githubusercontent.com/UBC-DSCI/introduction-to-datascience/master/data/state_property_vote.csv&quot;</span>)</span></code></pre></div>
-<pre><code>## Parsed with column specification:
-## cols(
-##   state = col_character(),
-##   pop = col_double(),
-##   med_prop_val = col_double(),
-##   med_income = col_double(),
-##   avg_commute = col_double(),
-##   party = col_character()
-## )</code></pre>
-<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="reading.html#cb52-1"></a>us_data</span></code></pre></div>
-<pre><code>## # A tibble: 52 x 6
-##    state                     pop med_prop_val med_income avg_commute party     
-##    &lt;chr&gt;                   &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt; &lt;chr&gt;     
-##  1 Montana               1042520       217200      46608        16.4 Republican
-##  2 Alabama               4863300       136200      42917        23.8 Republican
-##  3 Arizona               6931071       205900      50036        23.7 Republican
-##  4 Arkansas              2988248       123300      41335        20.5 Republican
-##  5 California           39250017       477500      61927        27.7 Democratic
-##  6 Colorado              5540545       314200      61324        23.0 Democratic
-##  7 Connecticut           3576452       274600      70007        24.9 Democratic
-##  8 Delaware               952065       243400      59853        25.0 Democratic
-##  9 District of Columbia   681170       576100      75506        29.0 Democratic
-## 10 Florida              20612439       197700      47439        25.8 Republican
-## # … with 42 more rows</code></pre>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="reading.html#cb48-1"></a>canlang_data &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;https://raw.githubusercontent.com/UBC-DSCI/introduction-to-datascience/master/data/can_lang.csv&quot;</span>)</span>
+<span id="cb48-2"><a href="reading.html#cb48-2"></a>canlang_data</span></code></pre></div>
+<pre><code>## # A tibble: 214 x 6
+##    category                              language                    mother_tongue most_at_home most_at_work lang_known
+##    &lt;chr&gt;                                 &lt;chr&gt;                               &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;
+##  1 Aboriginal languages                  Aboriginal languages, n.o.…           590          235           30        665
+##  2 Non-Official &amp; Non-Aboriginal langua… Afrikaans                           10260         4785           85      23415
+##  3 Non-Official &amp; Non-Aboriginal langua… Afro-Asiatic languages, n.…          1150          445           10       2775
+##  4 Non-Official &amp; Non-Aboriginal langua… Akan (Twi)                          13460         5985           25      22150
+##  5 Non-Official &amp; Non-Aboriginal langua… Albanian                            26895        13135          345      31930
+##  6 Aboriginal languages                  Algonquian languages, n.i.…            45           10            0        120
+##  7 Aboriginal languages                  Algonquin                            1260          370           40       2480
+##  8 Non-Official &amp; Non-Aboriginal langua… American Sign Language               2685         3020         1145      21930
+##  9 Non-Official &amp; Non-Aboriginal langua… Amharic                             22465        12785          200      33670
+## 10 Non-Official &amp; Non-Aboriginal langua… Arabic                             419890       223535         5585     629055
+## # … with 204 more rows</code></pre>
 </div>
 <div id="previewing-a-data-file-before-reading-it-into-r" class="section level3">
 <h3><span class="header-section-number">2.4.4</span> Previewing a data file before reading it into R</h3>
 <p>In all the examples above, we gave you previews of the data file before we read it into R. This is essential so that you can see whether or not there are column names, what the
-delimiters are, and if there are lines you need to skip. You should do this yourself when trying to read in data files. In Jupyter, you preview data as a plain text file by clicking
-on the file’s name in the Jupyter home menu. We demonstrate this in the video below:</p>
+delimiters are, and if there are lines you need to skip. You should do this yourself when trying to read in data files. In Jupyter, you preview data as a plain text file by right-clicking
+on the file’s name in the Jupyter home menu and selecting “Open with” and then selecting “Editor”.</p>
+<div class="figure"><span id="fig:open-data-w-editor-01"></span>
+<img src="_main_files/figure-html/open-data-w-editor-01-1.png" alt="Opening data files with an editor in Jupyter" width="100%" />
+<p class="caption">
+Figure 2.2: Opening data files with an editor in Jupyter
+</p>
+</div>
+<div class="figure"><span id="fig:open-data-w-editor-02"></span>
+<img src="_main_files/figure-html/open-data-w-editor-02-1.png" alt="A data file as viewed in an editor in Jupyter" width="100%" />
+<p class="caption">
+Figure 2.3: A data file as viewed in an editor in Jupyter
+</p>
+</div>
+<p>If you do not specify to open the data file with an editor, then Jupyter will
+render a nice table for you and you will not be able to see the column
+delimiters, and therefore you will not know which function to use, nor
+which arguments to use and values to specify for them.</p>
+<p>This is also demonstrated in the video below:</p>
 <iframe width="840" height="473" src="https://www.youtube.com/embed/6orO4YMAyeQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
 </iframe>
 </div>
 </div>
 <div id="reading-data-from-an-microsoft-excel-file" class="section level2">
 <h2><span class="header-section-number">2.5</span> Reading data from an Microsoft Excel file</h2>
-<p>There are many other ways to store tabular datasets beyond plain text files, and similarly many ways to load those datasets into R. For example, it is very common to encounter,
+<p>There are many other ways to store tabular data sets beyond plain text files, and similarly, many ways to load those data sets into R. For example, it is very common to encounter,
 and need to load into R, data stored as a Microsoft Excel spreadsheet (with the filename extension <code>.xlsx</code>).
 To be able to do this, a key thing to know is that even though <code>.csv</code> and <code>.xlsx</code> files look almost
 identical when loaded into Excel, the data themselves are stored completely differently.
@@ -653,117 +678,120 @@ X?a??4VT?,D?Jq
 <p>This type of file representation allows Excel files to store additional things that you cannot store in a <code>.csv</code> file, such as fonts, text formatting, graphics, multiple sheets
 and more. And despite looking odd in a plain text editor, we can read Excel spreadsheets into R using the <code>readxl</code> package developed
 specifically for this purpose.</p>
-<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb55-1"><a href="reading.html#cb55-1"></a><span class="kw">library</span>(readxl)</span>
-<span id="cb55-2"><a href="reading.html#cb55-2"></a>us_data &lt;-<span class="st"> </span><span class="kw">read_excel</span>(<span class="st">&quot;data/state_property_vote.xlsx&quot;</span>)</span>
-<span id="cb55-3"><a href="reading.html#cb55-3"></a>us_data</span></code></pre></div>
-<pre><code>## # A tibble: 52 x 6
-##    state                     pop med_prop_val med_income avg_commute party     
-##    &lt;chr&gt;                   &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt; &lt;chr&gt;     
-##  1 Montana               1042520       217200      46608        16.4 Republican
-##  2 Alabama               4863300       136200      42917        23.8 Republican
-##  3 Arizona               6931071       205900      50036        23.7 Republican
-##  4 Arkansas              2988248       123300      41335        20.5 Republican
-##  5 California           39250017       477500      61927        27.7 Democratic
-##  6 Colorado              5540545       314200      61324        23.0 Democratic
-##  7 Connecticut           3576452       274600      70007        24.9 Democratic
-##  8 Delaware               952065       243400      59853        25.0 Democratic
-##  9 District of Columbia   681170       576100      75506        29.0 Democratic
-## 10 Florida              20612439       197700      47439        25.8 Republican
-## # … with 42 more rows</code></pre>
-<p>If the <code>.xlsx</code> file has multiple sheets, then you have to use the <code>sheet</code> argument to specify either the sheet number or name. You can also specify cell ranges using the <code>range</code> argument. This is useful in cases where a single sheet contains multiple tables (a sad thing that happens to many Excel spreadsheets).</p>
-<p>As with plain text files, you should always try to explore the data file before importing it into R. This helps you decide which arguments you need to use to successfully load the data into R. If you do not have the Excel program on your computer, there are other free programs you can use to preview the file. Examples include Google Sheets and Libre Office.</p>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="reading.html#cb51-1"></a><span class="kw">library</span>(readxl)</span>
+<span id="cb51-2"><a href="reading.html#cb51-2"></a>canlang_data &lt;-<span class="st"> </span><span class="kw">read_excel</span>(<span class="st">&quot;data/can_lang.xlsx&quot;</span>)</span>
+<span id="cb51-3"><a href="reading.html#cb51-3"></a>canlang_data</span></code></pre></div>
+<pre><code>## # A tibble: 214 x 6
+##    category                              language                    mother_tongue most_at_home most_at_work lang_known
+##    &lt;chr&gt;                                 &lt;chr&gt;                               &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;
+##  1 Aboriginal languages                  Aboriginal languages, n.o.…           590          235           30        665
+##  2 Non-Official &amp; Non-Aboriginal langua… Afrikaans                           10260         4785           85      23415
+##  3 Non-Official &amp; Non-Aboriginal langua… Afro-Asiatic languages, n.…          1150          445           10       2775
+##  4 Non-Official &amp; Non-Aboriginal langua… Akan (Twi)                          13460         5985           25      22150
+##  5 Non-Official &amp; Non-Aboriginal langua… Albanian                            26895        13135          345      31930
+##  6 Aboriginal languages                  Algonquian languages, n.i.…            45           10            0        120
+##  7 Aboriginal languages                  Algonquin                            1260          370           40       2480
+##  8 Non-Official &amp; Non-Aboriginal langua… American Sign Language               2685         3020         1145      21930
+##  9 Non-Official &amp; Non-Aboriginal langua… Amharic                             22465        12785          200      33670
+## 10 Non-Official &amp; Non-Aboriginal langua… Arabic                             419890       223535         5585     629055
+## # … with 204 more rows</code></pre>
+<p>If the <code>.xlsx</code> file has multiple sheets, you have to use the <code>sheet</code> argument to specify the sheet number or name. You can also specify cell ranges using the <code>range</code> argument. This functionality is useful when a single sheet contains multiple tables (a sad thing that happens to many Excel spreadsheets).</p>
+<p>As with plain text files, you should always explore the data file before importing it into R. Exploring the data beforehand helps you decide which arguments you need to to load the data into R successfully. If you do not have the Excel program on your computer, you can use other programs to preview the file. Examples include Google Sheets and Libre Office.</p>
 </div>
 <div id="reading-data-from-a-database" class="section level2">
 <h2><span class="header-section-number">2.6</span> Reading data from a database</h2>
-<p>Another very common form of data storage to be read into R for the purpose of data analysis is the relational database. There are many relational database management systems, such as
-SQLite, MySQL, PosgreSQL, Oracle, and many more. Almost all employ SQL (<em>structured query language</em>) to pull data from the database. Thankfully, you don’t need to know SQL
+<p>Another very common form of data storage is the relational database. There are many relational database management systems, such as
+<a href="https://www.sqlite.org/index.html">SQLite</a>, <a href="https://www.mysql.com/">MySQL</a>, <a href="https://www.postgresql.org/">PostgreSQL</a>, <a href="https://www.oracle.com/ca-en/index.html">Oracle</a>, and many more. These different relational database management systems each have their own advantages and limitations. Almost all employ SQL (<em>structured query language</em>) to pull data from the database. Thankfully, you don’t need to know SQL
 to analyze data from a database;
 several packages have been written
-that allow R to connect to relational databases and use the R programming language as the front end (what the user types in) to pull data from them. In this book we will
+that allows R to connect to relational databases and use the R programming language as the front end (what the user types in) to pull data from them. These different relational database management systems have their own advantages, limitations, and excels in particular scenarios. In this book, we will
 give examples of how to do this using R with SQLite and PostgreSQL databases.</p>
-<div id="reading-data-from-a-sqlite-database" class="section level3">
-<h3><span class="header-section-number">2.6.1</span> Reading data from a SQLite database</h3>
+<div id="connecting-to-a-database" class="section level3">
+<h3><span class="header-section-number">2.6.1</span> Connecting to a database</h3>
+<div id="reading-data-from-a-sqlite-database" class="section level4">
+<h4><span class="header-section-number">2.6.1.1</span> Reading data from a SQLite database</h4>
 <p>SQLite is probably the simplest relational database that one can use in combination with R. SQLite databases are self-contained and usually stored and accessed locally on one computer. Data is usually stored in a file with a <code>.db</code> extension. Similar to Excel files, these are not plain text files and cannot be read in a plain text editor.</p>
 <p>The first thing you need to do to read data into R from a database is to connect to the database. We do that using the <code>dbConnect</code> function from the <code>DBI</code> (database interface) package. This does not read in the data, but simply tells R where the database is and opens up a communication channel.</p>
-<div class="sourceCode" id="cb57"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb57-1"><a href="reading.html#cb57-1"></a><span class="kw">library</span>(DBI)</span>
-<span id="cb57-2"><a href="reading.html#cb57-2"></a>con_state_data &lt;-<span class="st"> </span><span class="kw">dbConnect</span>(RSQLite<span class="op">::</span><span class="kw">SQLite</span>(), <span class="st">&quot;data/state_property_vote.db&quot;</span>)</span></code></pre></div>
-<p>Often times relational databases have many tables, and their power comes from the useful ways they can be joined. Thus anytime you want to access data from a relational database you need to know the table names. You can get the names of all the tables in the database using the <code>dbListTables</code> function:</p>
-<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="reading.html#cb58-1"></a>tables &lt;-<span class="st"> </span><span class="kw">dbListTables</span>(con_state_data)</span>
-<span id="cb58-2"><a href="reading.html#cb58-2"></a>tables</span></code></pre></div>
-<pre><code>## [1] &quot;state&quot;</code></pre>
-<p>We only get one table name returned form calling <code>dbListTables</code>, and this tells us that there is only one table in this database. To reference a table in the database so we can do things like select columns and filter rows, we use the <code>tbl</code> function from the <code>dbplyr</code> package:</p>
-<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="reading.html#cb60-1"></a><span class="kw">library</span>(dbplyr)</span>
-<span id="cb60-2"><a href="reading.html#cb60-2"></a>state_db &lt;-<span class="st"> </span><span class="kw">tbl</span>(con_state_data, <span class="st">&quot;state&quot;</span>)</span>
-<span id="cb60-3"><a href="reading.html#cb60-3"></a>state_db</span></code></pre></div>
-<pre><code>## # Source:   table&lt;state&gt; [?? x 6]
-## # Database: sqlite 3.30.1 [/home/rstudio/introduction-to-datascience/data/state_property_vote.db]
-##    state                     pop med_prop_val med_income avg_commute party     
-##    &lt;chr&gt;                   &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt; &lt;chr&gt;     
-##  1 Montana               1042520       217200      46608        16.4 Republican
-##  2 Alabama               4863300       136200      42917        23.8 Republican
-##  3 Arizona               6931071       205900      50036        23.7 Republican
-##  4 Arkansas              2988248       123300      41335        20.5 Republican
-##  5 California           39250017       477500      61927        27.7 Democratic
-##  6 Colorado              5540545       314200      61324        23.0 Democratic
-##  7 Connecticut           3576452       274600      70007        24.9 Democratic
-##  8 Delaware               952065       243400      59853        25.0 Democratic
-##  9 District of Columbia   681170       576100      75506        29.0 Democratic
-## 10 Florida              20612439       197700      47439        25.8 Republican
+<div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="reading.html#cb53-1"></a><span class="kw">library</span>(DBI)</span>
+<span id="cb53-2"><a href="reading.html#cb53-2"></a>con_lang_data &lt;-<span class="st"> </span><span class="kw">dbConnect</span>(RSQLite<span class="op">::</span><span class="kw">SQLite</span>(), <span class="st">&quot;data/can_lang.db&quot;</span>)</span></code></pre></div>
+<p>Often relational databases have many tables, and their power comes from the useful ways they can be joined. Thus anytime you want to access data from a relational database, you need to know the table names. You can get the names of all the tables in the database using the <code>dbListTables</code> function:</p>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="reading.html#cb54-1"></a>tables &lt;-<span class="st"> </span><span class="kw">dbListTables</span>(con_lang_data)</span>
+<span id="cb54-2"><a href="reading.html#cb54-2"></a>tables</span></code></pre></div>
+<pre><code>## [1] &quot;lang&quot;</code></pre>
+<p>We only get one table name returned from calling <code>dbListTables</code>, which tells us that there is only one table in this database. To reference a table in the database to do things like select columns and filter rows, we use the <code>tbl</code> function from the <code>dbplyr</code> package. The package <code>dbplyr</code> allows us to work with data stored in databases as if they were local data frames, which is useful because we can do a lot with big datasets without actually having to bring these vast amounts of data into your computer!</p>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="reading.html#cb56-1"></a><span class="kw">library</span>(dbplyr)</span>
+<span id="cb56-2"><a href="reading.html#cb56-2"></a>lang_db &lt;-<span class="st"> </span><span class="kw">tbl</span>(con_lang_data, <span class="st">&quot;lang&quot;</span>)</span>
+<span id="cb56-3"><a href="reading.html#cb56-3"></a>lang_db</span></code></pre></div>
+<pre><code>## # Source:   table&lt;lang&gt; [?? x 6]
+## # Database: sqlite 3.30.1 [/home/rstudio/introduction-to-datascience/data/can_lang.db]
+##    category                              language                    mother_tongue most_at_home most_at_work lang_known
+##    &lt;chr&gt;                                 &lt;chr&gt;                               &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;
+##  1 Aboriginal languages                  Aboriginal languages, n.o.…           590          235           30        665
+##  2 Non-Official &amp; Non-Aboriginal langua… Afrikaans                           10260         4785           85      23415
+##  3 Non-Official &amp; Non-Aboriginal langua… Afro-Asiatic languages, n.…          1150          445           10       2775
+##  4 Non-Official &amp; Non-Aboriginal langua… Akan (Twi)                          13460         5985           25      22150
+##  5 Non-Official &amp; Non-Aboriginal langua… Albanian                            26895        13135          345      31930
+##  6 Aboriginal languages                  Algonquian languages, n.i.…            45           10            0        120
+##  7 Aboriginal languages                  Algonquin                            1260          370           40       2480
+##  8 Non-Official &amp; Non-Aboriginal langua… American Sign Language               2685         3020         1145      21930
+##  9 Non-Official &amp; Non-Aboriginal langua… Amharic                             22465        12785          200      33670
+## 10 Non-Official &amp; Non-Aboriginal langua… Arabic                             419890       223535         5585     629055
 ## # … with more rows</code></pre>
 <p>Although it looks like we just got a data frame from the database, we didn’t! It’s a <em>reference</em>, showing us data that is still in the SQLite database (note the first two lines of the output).
-It does this because databases are often more efficient at selecting, filtering and joining large datasets than R. And typically, the database will not even be
+It does this because databases are often more efficient at selecting, filtering and joining large data sets than R. And typically, the database will not even be
 stored on your computer, but rather a more powerful machine somewhere on the web. So R is lazy and waits to bring this data into memory until you explicitly tell
 it to do so using the <code>collect</code> function from the <code>dbplyr</code> library.</p>
-<p>Here we will filter for only states that voted for the Republican candidate in the 2016 Presidential election, and then use <code>collect</code> to finally bring this data into R as a data frame.</p>
-<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="reading.html#cb62-1"></a>republican_db &lt;-<span class="st"> </span><span class="kw">filter</span>(state_db, party <span class="op">==</span><span class="st"> &quot;Republican&quot;</span>)</span>
-<span id="cb62-2"><a href="reading.html#cb62-2"></a>republican_db</span></code></pre></div>
+<p>Here we will filter for only rows in the Aboriginal languages category according to the 2016 Canada Census, and then use <code>collect</code> to finally bring this data into R as a data frame.</p>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="reading.html#cb58-1"></a>aboriginal_lang_db &lt;-<span class="st"> </span><span class="kw">filter</span>(lang_db, category <span class="op">==</span><span class="st"> &quot;Aboriginal languages&quot;</span>)</span>
+<span id="cb58-2"><a href="reading.html#cb58-2"></a>aboriginal_lang_db</span></code></pre></div>
 <pre><code>## # Source:   lazy query [?? x 6]
-## # Database: sqlite 3.30.1 [/home/rstudio/introduction-to-datascience/data/state_property_vote.db]
-##    state         pop med_prop_val med_income avg_commute party     
-##    &lt;chr&gt;       &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt; &lt;chr&gt;     
-##  1 Montana   1042520       217200      46608        16.4 Republican
-##  2 Alabama   4863300       136200      42917        23.8 Republican
-##  3 Arizona   6931071       205900      50036        23.7 Republican
-##  4 Arkansas  2988248       123300      41335        20.5 Republican
-##  5 Florida  20612439       197700      47439        25.8 Republican
-##  6 Georgia  10310371       166800      49240        26.9 Republican
-##  7 Idaho     1683140       189400      47572        19.7 Republican
-##  8 Indiana   6633053       134800      49384        22.7 Republican
-##  9 Iowa      3134693       142300      53816        18.1 Republican
-## 10 Kansas    2907289       144900      52392        18.5 Republican
+## # Database: sqlite 3.30.1 [/home/rstudio/introduction-to-datascience/data/can_lang.db]
+##    category             language                     mother_tongue most_at_home most_at_work lang_known
+##    &lt;chr&gt;                &lt;chr&gt;                                &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;
+##  1 Aboriginal languages Aboriginal languages, n.o.s.           590          235           30        665
+##  2 Aboriginal languages Algonquian languages, n.i.e.            45           10            0        120
+##  3 Aboriginal languages Algonquin                             1260          370           40       2480
+##  4 Aboriginal languages Athabaskan languages, n.i.e.            50           10            0         85
+##  5 Aboriginal languages Atikamekw                             6150         5465         1100       6645
+##  6 Aboriginal languages Babine (Wetsuwet&#39;en)                   110           20           10        210
+##  7 Aboriginal languages Beaver                                 190           50            0        340
+##  8 Aboriginal languages Blackfoot                             2815         1110           85       5645
+##  9 Aboriginal languages Carrier                               1025          250           15       2100
+## 10 Aboriginal languages Cayuga                                  45           10           10        125
 ## # … with more rows</code></pre>
-<div class="sourceCode" id="cb64"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb64-1"><a href="reading.html#cb64-1"></a>republican_data &lt;-<span class="st"> </span><span class="kw">collect</span>(republican_db)</span>
-<span id="cb64-2"><a href="reading.html#cb64-2"></a>republican_data</span></code></pre></div>
-<pre><code>## # A tibble: 30 x 6
-##    state         pop med_prop_val med_income avg_commute party     
-##    &lt;chr&gt;       &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt; &lt;chr&gt;     
-##  1 Montana   1042520       217200      46608        16.4 Republican
-##  2 Alabama   4863300       136200      42917        23.8 Republican
-##  3 Arizona   6931071       205900      50036        23.7 Republican
-##  4 Arkansas  2988248       123300      41335        20.5 Republican
-##  5 Florida  20612439       197700      47439        25.8 Republican
-##  6 Georgia  10310371       166800      49240        26.9 Republican
-##  7 Idaho     1683140       189400      47572        19.7 Republican
-##  8 Indiana   6633053       134800      49384        22.7 Republican
-##  9 Iowa      3134693       142300      53816        18.1 Republican
-## 10 Kansas    2907289       144900      52392        18.5 Republican
-## # … with 20 more rows</code></pre>
+<div class="sourceCode" id="cb60"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb60-1"><a href="reading.html#cb60-1"></a>aboriginal_lang_data &lt;-<span class="st"> </span><span class="kw">collect</span>(aboriginal_lang_db)</span>
+<span id="cb60-2"><a href="reading.html#cb60-2"></a>aboriginal_lang_data</span></code></pre></div>
+<pre><code>## # A tibble: 67 x 6
+##    category             language                     mother_tongue most_at_home most_at_work lang_known
+##    &lt;chr&gt;                &lt;chr&gt;                                &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;      &lt;dbl&gt;
+##  1 Aboriginal languages Aboriginal languages, n.o.s.           590          235           30        665
+##  2 Aboriginal languages Algonquian languages, n.i.e.            45           10            0        120
+##  3 Aboriginal languages Algonquin                             1260          370           40       2480
+##  4 Aboriginal languages Athabaskan languages, n.i.e.            50           10            0         85
+##  5 Aboriginal languages Atikamekw                             6150         5465         1100       6645
+##  6 Aboriginal languages Babine (Wetsuwet&#39;en)                   110           20           10        210
+##  7 Aboriginal languages Beaver                                 190           50            0        340
+##  8 Aboriginal languages Blackfoot                             2815         1110           85       5645
+##  9 Aboriginal languages Carrier                               1025          250           15       2100
+## 10 Aboriginal languages Cayuga                                  45           10           10        125
+## # … with 57 more rows</code></pre>
 <p>Why bother to use the <code>collect</code> function? The data looks pretty similar in both outputs shown above. And <code>dbplyr</code> provides lots of functions similar to <code>filter</code> that
 you can use to directly feed the database reference (what <code>tbl</code> gives you) into downstream analysis functions (e.g., <code>ggplot2</code> for data visualization and <code>lm</code> for
 linear regression modeling). However, this does not
 work in <em>every</em> case; look what happens when we try to use <code>nrow</code> to count rows in a data frame:</p>
-<div class="sourceCode" id="cb66"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb66-1"><a href="reading.html#cb66-1"></a><span class="kw">nrow</span>(republican_db)</span></code></pre></div>
+<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="reading.html#cb62-1"></a><span class="kw">nrow</span>(aboriginal_lang_db)</span></code></pre></div>
 <pre><code>## [1] NA</code></pre>
 <p>or <code>tail</code> to preview the last 6 rows of a data frame:</p>
-<pre><code>tail(republican_db)</code></pre>
+<pre><code>tail(aboriginal_lang_db)</code></pre>
 <pre><code>## Error: tail() is not supported by sql sources</code></pre>
-<p>Additionally, some operations will
-not work to extract columns or single values from the reference given by the <code>tbl</code> function. Thus, once you have finished your data wrangling of the <code>tbl</code> database
-reference object, it is advisable to then bring it into your local machine’s memory using <code>collect</code> as a data frame.</p>
+<p>Additionally, some operations will not work to extract columns or single values from the reference given by the <code>tbl</code> function. Thus, once you have finished your data wrangling of the <code>tbl</code> database reference object, it is advisable to bring it into your local machine’s memory using <code>collect</code> as a data frame.</p>
+<blockquote>
+<p>Warning: Usually, databases are very big! Reading the object into your local machine may give an error or take a lot of time to run so be careful if you plan to do this!</p>
+</blockquote>
 </div>
-<div id="reading-data-from-a-postgresql-database" class="section level3">
-<h3><span class="header-section-number">2.6.2</span> Reading data from a PostgreSQL database</h3>
-<p>PostgreSQL (also called Postgres) is a very popular free and open-source option for relational database software. Unlike SQLite, PostgreSQL uses
+<div id="reading-data-from-a-postgresql-database" class="section level4">
+<h4><span class="header-section-number">2.6.1.2</span> Reading data from a PostgreSQL database</h4>
+<p>PostgreSQL (also called Postgres) is a very popular and open-source option for relational database software. Unlike SQLite, PostgreSQL uses
 a client–server database engine, as it was designed to be used and accessed on a network. This means that you have to provide more
 information to R when connecting to Postgres databases. The additional information that you need to include when you call the <code>dbConnect</code>
 function is listed below:</p>
@@ -780,6 +808,10 @@ Below we demonstrate how to connect to a version of the <code>can_mov_db</code> 
 can_mov_db_con &lt;- dbConnect(RPostgres::Postgres(), dbname = &quot;can_mov_db&quot;,
                         host = &quot;r7k3-mds1.stat.ubc.ca&quot;, port = 5432,
                         user = &quot;user0001&quot;, password = &#39;################&#39;)</code></pre>
+</div>
+</div>
+<div id="interacting-with-a-database" class="section level3">
+<h3><span class="header-section-number">2.6.2</span> Interacting with a database</h3>
 <p>After opening the connection, everything looks and behaves almost identically to when we were using an SQLite database in R. For example, we can again
 use <code>dbListTables</code> to find out what tables are in the <code>can_mov_db</code> database:</p>
 <pre><code>dbListTables(can_mov_db_con)</code></pre>
@@ -829,26 +861,35 @@ avg_rating_db</code></pre>
 min(avg_rating_data)</code></pre>
 <pre><code>[1] 1</code></pre>
 <p>We see the lowest rating given to a movie is 1, indicating that it must have been a really bad movie…</p>
+<p><strong>Why should we bother with databases at all?</strong></p>
+<p>Opening a database stored in a <code>.db</code> file involved a lot more effort than just opening a <code>.csv</code>, <code>.tsv</code>, or any of the other plain text or Excel formats. It was a bit of a pain to use a database in that setting since we had to use <code>dbplyr</code> to translate <code>tidyverse</code>-like commands (<code>filter</code>, <code>select</code>, <code>head</code>, etc.) into SQL commands that the database understands. Not all <code>tidyverse</code> commands can currently be translated with SQLite databases. For example, we can compute a mean with an SQLite database but can’t easily compute a median. So you might be wondering why should we use databases at all?</p>
+<p>Databases are beneficial in a large-scale setting:</p>
+<ul>
+<li>they enable storing large data sets across multiple computers with automatic redundancy and backups</li>
+<li>they allow multiple users to access them simultaneously and remotely without conflicts and errors</li>
+<li>they provide mechanisms for ensuring data integrity and validating input</li>
+<li>they provide security to keep data safe
+For example, <a href="https://www.internetlivestats.com/google-search-statistics/">there are billions of Google searches conducted daily</a>. Can you imagine if Google stored all of the data from those queries in a single <code>.csv file</code>!? Chaos would ensue!</li>
+</ul>
 </div>
 </div>
 <div id="writing-data-from-r-to-a-.csv-file" class="section level2">
 <h2><span class="header-section-number">2.7</span> Writing data from R to a <code>.csv</code> file</h2>
 <p>At the middle and end of a data analysis, we often want to write a data frame that has changed (either through filtering, selecting, mutating or summarizing) to a file
-so that we can share it with others or use it for another step in the analysis. The most straightforward way to do this is to use the <code>write_csv</code> function from the <code>tidyverse</code> library.
-The default arguments for this file are to use a comma (<code>,</code>) as the delimiter and include column names. Below we demonstrate creating a new version of the US state-level
-property, income, population and voting data from 2015 and 2016 that does not contain the territory of Puerto Rico, and then writing this to a <code>.csv</code> file:</p>
-<pre><code>state_data &lt;- filter(us_data, state != &quot;Puerto Rico&quot;)
-write_csv(state_data, &quot;data/us_states_only.csv&quot;)</code></pre>
+to share it with others or use it for another step in the analysis. The most straightforward way to do this is to use the <code>write_csv</code> function from the <code>tidyverse</code> library.
+The default arguments for this file are to use a comma (<code>,</code>) as the delimiter and include column names. Below we demonstrate creating a new version of the Canadian languages data set without the official languages category according to the Canadian 2016 Census, and then writing this to a <code>.csv</code> file:</p>
+<pre><code>no_official_lang_data &lt;- filter(can_lang, category != &quot;Official languages&quot;)
+write_csv(no_official_lang_data, &quot;data/no_official_languages.csv&quot;)</code></pre>
 </div>
 <div id="scraping-data-off-the-web-using-r" class="section level2">
 <h2><span class="header-section-number">2.8</span> Scraping data off the web using R</h2>
-<p>In the first part of this chapter we learned how to read in data from plain text files that are usually “rectangular” in shape using the tidyverse <code>read_*</code> functions. Sadly, not all data comes in this simple format, but happily there are many other tools we can use to read in more messy/wild data formats. One common place people often want/need to read in data from is websites. Such data exists in an a non-rectangular format. One quick and easy solution to get this data is to copy and paste it, however this becomes painstakingly long and boring when there is a lot of data that needs gathering, and anytime you start doing a lot of copying and pasting it is very likely you will introduce errors.</p>
-<p>The formal name for gathering non-rectangular data from the web and transforming it into a more useful format for data analysis is <strong>web scraping</strong>. There are two different ways to do web scraping: 1) screen scraping (similar to copying and pasting from a website, but done in a programmatic way to minimize errors and maximize efficiency) and 2) web APIs (<strong>a</strong>pplication <strong>p</strong>rogramming <strong>i</strong>nterface) (a website that provides a programatic way of returning the data as JSON or XML files via http requests). In this course we will explore the first method, screen scraping using R’s <a href="https://github.com/hadley/rvest"><code>rvest</code> package</a>.</p>
+<p>In the first part of this chapter, we learned how to read in data from plain text files that are usually “rectangular” in shape using the <code>tidyverse</code> <code>read_*</code> functions. Sadly, not all data comes in this simple format, but we can happily use many other tools to read in more messy/wild data formats. One common place people often want/need to read in data from is websites. Such data exists in a non-rectangular format. One quick and easy solution to get this data is to copy and paste it. However, this becomes painstakingly long and boring when there is a lot of data that needs gathering. And any time you start doing a lot of copying and pasting, you will likely introduce errors.</p>
+<p>The formal name for gathering non-rectangular data from the web and transforming it into a more useful format for data analysis is <strong>web scraping</strong>. There are two different ways to do web scraping: 1) screen scraping (similar to copying and pasting from a website, but done in a programmatic way to minimize errors and maximize efficiency) and 2) web APIs (<strong>a</strong>pplication <strong>p</strong>rogramming <strong>i</strong>nterface) (a website that provides a programatic way of returning the data as JSON or XML files via http requests). In this course, we will explore the first method, screen scraping using R’s <a href="https://github.com/hadley/rvest"><code>rvest</code> package</a>.</p>
 <div id="html-and-css-selectors" class="section level3">
 <h3><span class="header-section-number">2.8.1</span> HTML and CSS selectors</h3>
-<p>Before we jump into scraping, let’s set up some motivation and learn a little bit about what the “source code” of a website looks like. Say we are interested in knowing the average rental price (per square footage) of the most recently available 1 bedroom apartments in Vancouver from <a href="https://vancouver.craigslist.org" class="uri">https://vancouver.craigslist.org</a>. When we visit the Vancouver Craigslist website and search for 1 bedroom apartments, this is what we are shown:</p>
+<p>Before we jump into scraping, let’s set up some motivation and learn a little bit about what the “source code” of a website looks like. Say we are interested in knowing the average rental price (per square footage) of the most recently available one-bedroom apartments in Vancouver from <a href="https://vancouver.craigslist.org" class="uri">https://vancouver.craigslist.org</a>. When we visit the Vancouver Craigslist website and search for one-bedroom apartments, this is what we are shown:</p>
 <p><img src="img/craigslist_human.png" /></p>
-<p>From that page, it’s pretty easy for our human eyes to find the apartment price and square footage. But how can we do this programmatically so we don’t have to copy and paste all these numbers? Well, we have to deal with the webpage source code, which we show a snippet of below (and link to the <a href="img/website_source.txt">entire source code here</a>):</p>
+<p>From that page, it’s pretty easy for our human eyes to find the apartment price and square footage. But how can we do this programmatically, so we don’t have to copy and paste all these numbers? Well, we have to deal with the webpage source code, which we show a snippet of below (and link to the <a href="img/website_source.txt">entire source code here</a>):</p>
 <pre><code>        &lt;span class=&quot;result-meta&quot;&gt;
                 &lt;span class=&quot;result-price&quot;&gt;$800&lt;/span&gt;
 
@@ -892,7 +933,7 @@ write_csv(state_data, &quot;data/us_states_only.csv&quot;)</code></pre>
         &lt;a href=&quot;https://vancouver.craigslist.org/nvn/apa/d/north-vancouver-luxury-1-bedroom/6788463837.html&quot; data-id=&quot;6788463837&quot; class=&quot;result-title hdrlnk&quot;&gt;Luxury 1 Bedroom CentreView with View - Lonsdale&lt;/a&gt;
 
 </code></pre>
-<p>This is not easy for our human eyeballs to read! However, it is easy for us to use programmatic tools to extract the data we need by specifying which HTML tags (things inside <code>&lt;</code> and <code>&gt;</code> in the code above). For example, if we look in the code above and search for lines with a price, we can also look at the tags that are near that price and see if there’s a common “word” we can use that is near the price but doesn’t exist on other lines that have information we are not interested in:</p>
+<p>This is not easy for our human eyeballs to read! However, it is easy for us to use programmatic tools to extract the data we need by specifying which HTML tags (things inside <code>&lt;</code> and <code>&gt;</code> in the code above). For example, if we look in the code above and search for lines with a price, we can also look at the tags that are near that price and see if there’s a common “word” we can use that is near the price but doesn’t exist on other lines that have the information we are not interested in:</p>
 <pre><code>&lt;span class=&quot;result-price&quot;&gt;$800&lt;/span&gt;</code></pre>
 <p>and</p>
 <pre><code>&lt;span class=&quot;result-price&quot;&gt;$2285&lt;/span&gt;</code></pre>
@@ -917,27 +958,24 @@ write_csv(state_data, &quot;data/us_states_only.csv&quot;)</code></pre>
 <div id="using-rvest" class="section level3">
 <h3><span class="header-section-number">2.8.3</span> Using <code>rvest</code></h3>
 <p>Now that we have our CSS selectors we can use <code>rvest</code> R package to scrape our desired data from the website. First we start by loading the <code>rvest</code> package:</p>
-<div class="sourceCode" id="cb85"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb85-1"><a href="reading.html#cb85-1"></a><span class="kw">library</span>(rvest)</span></code></pre></div>
-<blockquote>
-<p><strong><code>library(rvest)</code> gives error…</strong></p>
-<p>If you get an error about R not being able to find the package (e.g., <code>Error in library(rvest) : there is no package called ‘rvest’</code>) this is likely because it was not installed. To install the <code>rvest</code> package, run the following command once inside R (and then delete that line of code): <code>install.packages("rvest")</code>.</p>
-</blockquote>
+<div class="sourceCode" id="cb81"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb81-1"><a href="reading.html#cb81-1"></a><span class="kw">library</span>(rvest)</span></code></pre></div>
 <p>Next, we tell R what page we want to scrape by providing the webpage’s URL in quotations to the function <code>read_html</code>:</p>
-<div class="sourceCode" id="cb86"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb86-1"><a href="reading.html#cb86-1"></a>page &lt;-<span class="st"> </span><span class="kw">read_html</span>(<span class="st">&quot;https://en.wikipedia.org/wiki/Canada&quot;</span>)</span></code></pre></div>
-<p>Then we send the page object to the <code>html_nodes</code> function. We also provide that function with the CSS selectors we obtained from the selectorgadget tool. These should be surrounded by quotations. The <code>html_nodes</code> function select nodes from the HTML document using CSS selectors. nodes are the HTML tag pairs as well as the content between the tags. For our CSS selector <code>td:nth-child(5)</code> and example node that would be selected would be: <code>&lt;td style="text-align:left;background:#f0f0f0;"&gt;&lt;a href="/wiki/London,_Ontario" title="London, Ontario"&gt;London&lt;/a&gt;&lt;/td&gt;</code></p>
-<div class="sourceCode" id="cb87"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb87-1"><a href="reading.html#cb87-1"></a>population_nodes &lt;-<span class="st"> </span><span class="kw">html_nodes</span>(page, <span class="st">&quot;td:nth-child(5) , td:nth-child(7) , .infobox:nth-child(122) td:nth-child(1) , .infobox td:nth-child(3)&quot;</span>)</span>
-<span id="cb87-2"><a href="reading.html#cb87-2"></a><span class="kw">head</span>(population_nodes)</span></code></pre></div>
+<div class="sourceCode" id="cb82"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb82-1"><a href="reading.html#cb82-1"></a>page &lt;-<span class="st"> </span><span class="kw">read_html</span>(<span class="st">&quot;https://en.wikipedia.org/wiki/Canada&quot;</span>)</span></code></pre></div>
+<p>Then we send the page object to the <code>html_nodes</code> function. We also provide that function with the CSS selectors we obtained from the selectorgadget tool. These should be surrounded by quotations. The <code>html_nodes</code> function select nodes from the HTML document using CSS selectors. Nodes are the HTML tag pairs as well as the content between the tags. For our CSS selector <code>td:nth-child(5)</code> and example node that would be selected would be: <code>&lt;td style="text-align:left;background:#f0f0f0;"&gt;&lt;a href="/wiki/London,_Ontario" title="London, Ontario"&gt;London&lt;/a&gt;&lt;/td&gt;</code></p>
+<div class="sourceCode" id="cb83"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb83-1"><a href="reading.html#cb83-1"></a>population_nodes &lt;-<span class="st"> </span><span class="kw">html_nodes</span>(page, <span class="st">&quot;td:nth-child(5) , td:nth-child(7) , .infobox:nth-child(122) td:nth-child(1) , .infobox td:nth-child(3)&quot;</span>)</span>
+<span id="cb83-2"><a href="reading.html#cb83-2"></a><span class="kw">head</span>(population_nodes)</span></code></pre></div>
 <pre><code>## {xml_nodeset (6)}
 ## [1] &lt;td style=&quot;text-align:right;&quot;&gt;5,928,040&lt;/td&gt;
-## [2] &lt;td style=&quot;text-align:left;background:#f0f0f0;&quot;&gt;&lt;a href=&quot;/wiki/London,_Ontario&quot; title=&quot;London, Ontario&quot;&gt;London&lt;/a&gt;&lt;/td&gt;
+## [2] &lt;td style=&quot;text-align:left;background:#f0f0f0;&quot;&gt;&lt;a href=&quot;/wiki/London,_Ontario&quot; title=&quot;London, Ontario&quot;&gt;London&lt;/ ...
 ## [3] &lt;td style=&quot;text-align:right;&quot;&gt;494,069\n&lt;/td&gt;
 ## [4] &lt;td style=&quot;text-align:right;&quot;&gt;4,098,927&lt;/td&gt;
-## [5] &lt;td style=&quot;text-align:left;background:#f0f0f0;&quot;&gt;\n&lt;a href=&quot;/wiki/St._Catharines&quot; title=&quot;St. Catharines&quot;&gt;St. Catharines&lt;/a&gt;–&lt;a href=&quot;/wiki/Niagara_Falls,_Ontario&quot;  ...
+## [5] &lt;td style=&quot;text-align:left;background:#f0f0f0;&quot;&gt;\n&lt;a href=&quot;/wiki/St._Catharines&quot; title=&quot;St. Catharines&quot;&gt;St. Cath ...
 ## [6] &lt;td style=&quot;text-align:right;&quot;&gt;406,074\n&lt;/td&gt;</code></pre>
 <p>Next we extract the meaningful data from the HTML nodes using the <code>html_text</code> function. For our example, this functions only required argument is the an html_nodes object, which we named <code>rent_nodes</code>. In the case of this example node: <code>&lt;td style="text-align:left;background:#f0f0f0;"&gt;&lt;a href="/wiki/London,_Ontario" title="London, Ontario"&gt;London&lt;/a&gt;&lt;/td&gt;</code>, the <code>html_text</code> function would return <code>London</code>.</p>
-<div class="sourceCode" id="cb89"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb89-1"><a href="reading.html#cb89-1"></a>population_text &lt;-<span class="st"> </span><span class="kw">html_text</span>(population_nodes)</span>
-<span id="cb89-2"><a href="reading.html#cb89-2"></a><span class="kw">head</span>(population_text)</span></code></pre></div>
-<pre><code>## [1] &quot;5,928,040&quot;              &quot;London&quot;                 &quot;494,069\n&quot;              &quot;4,098,927&quot;              &quot;St. Catharines–Niagara&quot; &quot;406,074\n&quot;</code></pre>
+<div class="sourceCode" id="cb85"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb85-1"><a href="reading.html#cb85-1"></a>population_text &lt;-<span class="st"> </span><span class="kw">html_text</span>(population_nodes)</span>
+<span id="cb85-2"><a href="reading.html#cb85-2"></a><span class="kw">head</span>(population_text)</span></code></pre></div>
+<pre><code>## [1] &quot;5,928,040&quot;              &quot;London&quot;                 &quot;494,069\n&quot;              &quot;4,098,927&quot;             
+## [5] &quot;St. Catharines–Niagara&quot; &quot;406,074\n&quot;</code></pre>
 <p>Are we done? Not quite… If you look at the data closely you see that the data is not in an optimal format for data analysis. Both the city names and population are encoded as characters in a single vector instead of being in a data frame with one character column for city and one numeric column for population (think of how you would organize the data in a spreadsheet). Additionally, the populations contain commas (not useful for programmatically dealing with numbers), and some even contain a line break character at the end (<code>\n</code>). Next chapter we will learn more about data wrangling using R so that we can easily clean up this data with a few lines of code.</p>
 </div>
 </div>
