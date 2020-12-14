@@ -186,7 +186,7 @@ lang_long <- read_csv("data/region_lang_top5_cities_long.csv")
 lang_long
 ```
 
-What is wrong with this format above? In this example, each observation should be a language in a region. However, in the messy data set above, each observation is split across multiple rows (notice it is split across two rows). For instance, suppose we wanted to visualize the relationship between the number of Canadians reporting their primary language at home and at work. It would be difficult to do that with the data in its current format. To fix this, we will use `pivot_wider`, and we need to specify the:
+What is wrong with this format above? In this example, each observation should be a language in a region. However, in the messy data set above, each observation is split across multiple two rows - one where the count for `most_at_home` is recorded and one where the count for `most_at_work` is recorded. Suppose we wanted to visualize the relationship between the number of Canadians reporting their primary language at home and at work. It would be difficult to do that with the data in its current format. To fix this, we will use `pivot_wider`, and we need to specify the:
 
 1. `data`: the data set
 
@@ -232,7 +232,15 @@ lang_messy_longer <- pivot_longer(lang_messy,
 lang_messy_longer
 ```
 
-Then we'll use `separate` to split the `value` column into two columns, one that contains only the counts of Canadians that speak each language most at home, and one that contains the counts for most at work for each region:
+Then we'll use `separate` to split the `value` column into two columns, one that contains only the counts of Canadians that speak each language most at home, and one that contains the counts for most at work for each region. To use `separate` we need to specify the:
+
+1. `data`: the data set
+
+2. `col`: the name of a the column we need to split
+
+3. `into`: a character vector of the new column names we would like to put the split data into
+
+4. `sep`: the separator on which to split
 
 ```{r}
 lang_no_delimiter <- separate(lang_messy_longer,
@@ -243,16 +251,18 @@ lang_no_delimiter <- separate(lang_messy_longer,
 lang_no_delimiter
 ```
 
-You might notice in the table above the word `<chr>` appears beneath each of the column names. The word under the column name indicates the data type of each column. Here all of our variables are "character" data types. Recall, a character data type is a letter or a number. In the previous example, `most_at_home` and `most_at_work`  were `<dbl>` (double) (you can verify this by looking at the tables in the previous sections), which is a numeric data type. This change is due to the delimiter "/" when we read in this messy data set. R read the columns in as character types, and it stayed that way after we separated the columns. Here it makes sense for `region`, `category`, and `language` to be stored as a character type. However, if we want to apply any functions that treat the `most_at_home` and `most_at_work` columns as a number (e.g. finding the maximum of the column), it won't be possible to do if the variable is stored as a `character`. R has a variety of data types, but here we will use the function `mutate` to convert these two columns to an "integer" data type. Integer data types are numbers that do not have any decimals. `mutate` is a function that will allow us to create a new variable in our data set. We specify the data set in the first argument, and in the proceeding arguments, we specify the function we want to apply (`as.integer`) to which columns (`most_at_home`, `most_at_work`). Then we give the mutated variable a new name. Here we are naming the columns the same names ("most_at_home", "most_at_work"), but you can call these mutated variables anything you'd like. 
+You might notice in the table above the word `<chr>` appears beneath each of the column names. The word under the column name indicates the data type of each column. Here all of our variables are "character" data types. Recall, a character data type is a letter or a number. In the previous example, `most_at_home` and `most_at_work`  were `<dbl>` (double) (you can verify this by looking at the tables in the previous sections), which is a numeric data type. This change is due to the delimiter "/" when we read in this messy data set. R read the columns in as character types, and it stayed that way after we separated the columns. 
+
+Here it makes sense for `region`, `category`, and `language` to be stored as a character type. However, if we want to apply any functions that treat the `most_at_home` and `most_at_work` columns as a number (e.g. finding the maximum of the column), it won't be possible to do if the variable is stored as a `character`. R has a variety of data types, but here we will use the function `mutate` to convert these two columns to an "numeric" data type. `mutate` is a function that will allow us to create a new variable in our data set. We specify the data set in the first argument, and in the proceeding arguments, we specify the function we want to apply (`as.numeric`) to which columns (`most_at_home`, `most_at_work`). Then we give the mutated variable a new name. Here we are naming the columns the same names ("most_at_home", "most_at_work"), but you can call these mutated variables anything you'd like. 
 
 ```{r}
 lang_no_delimiter <- mutate(lang_no_delimiter,
-  most_at_home = as.integer(most_at_home),
-  most_at_work = as.integer(most_at_work)
+  most_at_home = as.numeric(most_at_home),
+  most_at_work = as.numeric(most_at_work)
 )
 lang_no_delimiter
 ```
-Now we see `<int>` appears under our columns, `most_at_home` and `most_at_work`, indicating they are integer data types! 
+Now we see `<dbl>` appears under our columns, `most_at_home` and `most_at_work`, indicating they are double data types (which is one of the sub-types of numeric)!
 
 Is this data now tidy? Well, if we recall the three criteria for tidy data:
 
@@ -261,24 +271,28 @@ Is this data now tidy? Well, if we recall the three criteria for tidy data:
 - each value is a single cell.
 
 We can see that this data now satisfies all three criteria, making it easier to analyze.
-For example, we could visualize what the two most common languages reported by Canadians as their primary language at home are for each of these five major Canadian cities:
+For example, we could visualize how many people speak each of Canada's two 
+official languages (English and French) as their primary language at home in 
+these 5 regions. To do this, we first need to filter the data set for the 
+rows that list the category as "Official languages", and then we can again use
+`ggplot` to create our data visualization. Here we create a bar chart to 
+represent the counts for each region, and colour the counts by language. 
 
 ```{r 02-plot}
-top2 <- lang_no_delimiter %>%
-  arrange(desc(most_at_home)) %>%
-  group_by(region) %>%
-  slice(1:2)
+official_langs <- filter(lang_no_delimiter, category == "Official languages")
 
-ggplot(top2, aes(x = region, y = most_at_home, fill = language)) +
+ggplot(official_langs, aes(x = region, y = most_at_work, fill = language)) +
   geom_bar(stat = "identity") +
-  scale_fill_brewer(palette = "Set1") +
-  theme(axis.text.x = element_text(angle = 90)) +
+  scale_color_manual(values = c("deepskyblue2","firebrick1")) + # choose point colours
+  #theme(axis.text.x = element_text(angle = 90)) +
   scale_y_continuous(
-    name = "Number of Canadians reporting \n their primary language at home",
+    name = "Number of Canadians reporting their primary language at home",
     labels = scales::comma
   ) +
-  xlab("Region") +
-  ggtitle("Top two languages reported by Canadians \n as their primary language at home \n for five major Canadian cities")
+  xlab("Region") + 
+  coord_flip() +
+  ggtitle("Official languages spoken most often at home for five major Canadian cities") +
+  theme_bw()
 ```
 
 From this visualization, we can see that in Calgary, Edmonton, Toronto and Vancouver, English was cited as the most common primary language used at home. However, in Montreal, French was the most common language used at home, and English was second. Punjabi, Tagalog, Cantonese and Mandarin were the second most common languages in Calgary, Edmonton, Toronto and Vancouver respectively. 
