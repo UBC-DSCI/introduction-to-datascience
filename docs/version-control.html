@@ -52,8 +52,79 @@
 
 
 
+<script src="libs/htmlwidgets-1.5.1/htmlwidgets.js"></script>
+<script src="libs/plotly-binding-4.9.2.1/plotly.js"></script>
+<script src="libs/typedarray-0.1/typedarray.min.js"></script>
+<link href="libs/crosstalk-1.1.0.1/css/crosstalk.css" rel="stylesheet" />
+<script src="libs/crosstalk-1.1.0.1/js/crosstalk.min.js"></script>
+<link href="libs/plotly-htmlwidgets-css-1.52.2/plotly-htmlwidgets.css" rel="stylesheet" />
+<script src="libs/plotly-main-1.52.2/plotly-latest.min.js"></script>
 
 
+<style type="text/css">
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
 
 <link rel="stylesheet" href="style.css" type="text/css" />
 </head>
@@ -579,33 +650,42 @@ can do this directly on the JupyterHub by clicking “History” in the Git tab.
 <p>It is good practice when collaborating with others, that you pull any changes
 your collaborators might have pushed to GitHub at the start of every work
 session. If you do not do this, and your collaborators have pushed some changes
-to the project to GitHub, then you will be unable to push your changes to GitHub
-without first pulling and merging their changes with yours. Usually, getting out
-of this situation is not too troublesome, and in most cases Git can
-automatically merge the changes for you, even if you and your collaborators were
-working on different parts of the same file!</p>
+to the project to GitHub, then you will be unable to push your changes to
+GitHub. This situation can be recognized by this error message:</p>
+<p><img src="_main_files/figure-html/merge_conflict_01-1.png" width="1792" /></p>
+<p>Usually, getting out of this situation is not too troublesome. First you need to
+pull the changes that exist on GitHub that you do not yet have on your machine.
+Usually when this happens, Git can automatically merge the changes for you,
+even if you and your collaborators were working on different parts of the same
+file!</p>
 <p>If however, you and your collaborators made changes to the same line of the same
-file, Git will not be able to automatically merge the changes, as it will not
-know whether to keep your version of the line, your collaborators version of the
-line, or some blend of the two. When this happens, Git will tell you that you
-have a merge conflict and that it needs human intervention (you!) to tell Git
-which version of the line(s) where the merge conflict occurred to keep.</p>
+file, Git will not be able to automatically merge the changes when you pull
+them, as it will not know whether to keep your version of the line(s), your
+collaborators version of the line(s), or some blend of the two. When this
+happens, Git will tell you that you have a merge conflict and that it needs
+human intervention (you!), and which file(s) this occurs in.</p>
+<p><img src="_main_files/figure-html/merge_conflict_03-1.png" width="1792" /></p>
 </div>
 <div id="handling-merge-conflicts" class="section level3">
 <h3><span class="header-section-number">5.8.3</span> Handling merge conflicts</h3>
-<p>To handle the merge conflict, we need to open the file that had the merge
+<p>To fix the merge conflict we need to open the file that had the merge
 conflict in a plain text editor and look for special marks that Git puts in the
-file to tell you where the merge conflict occurred. The beginning of the merge
+file to tell you where the merge conflict occurred.</p>
+<p><img src="_main_files/figure-html/merge_conflict_04-1.png" width="1792" /></p>
+<p>The beginning of the merge
 conflict is preceded by <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> and the end of the merge conflict is
 marked by <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>. Between these markings, Git also inserts a separator
 (<code>=======</code>). The version of the change before the separator is your change, and
 the version that follows the separator was the change that existed on GitHub.</p>
+<p><img src="_main_files/figure-html/merge_conflict_05-1.png" width="1792" /></p>
 <p>Once you have decided which version of the change to keep, you need to use the
 plain text editor to remove the special marks that Git added to tell you where
 the merge conflict was, as well as edit the changes so that only a single
 version of the change is left in the file (either your version, your
-collaborator’s version, or some blend of the two). The file must be saved, and
-then added and committed before you will be able to push the changes to GitHub.</p>
+collaborator’s version, or some blend of the two).</p>
+<p><img src="_main_files/figure-html/merge_conflict_06-1.png" width="1792" /></p>
+<p>The file must be saved, and then added and committed before you will be able to
+push the changes to GitHub.</p>
 </div>
 <div id="communicating-using-github-issues" class="section level3">
 <h3><span class="header-section-number">5.8.4</span> Communicating using GitHub issues</h3>
@@ -652,7 +732,7 @@ the large text box and clicking comment:</p>
 <p><img src="_main_files/figure-html/issue_04-1.png" width="1792" /></p>
 <p>When a conversation is resolved, you can click “Close issue”, and closed issue
 can be later viewed be clicking “Closed” header link in the issue tab:</p>
-<p><img src="_main_files/figure-html/issue_05-1.png" width="1792" /></p>
+<p><img src="_main_files/figure-html/issue_06-1.png" width="1792" /></p>
 
 </div>
 </div>
@@ -719,6 +799,20 @@ gitbook.start({
 });
 </script>
 
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
 </body>
 
 </html>
