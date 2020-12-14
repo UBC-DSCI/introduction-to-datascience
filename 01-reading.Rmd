@@ -69,7 +69,7 @@ So which one should you use? Generally speaking, to ensure your code can be run
 on a different computer, you should use relative paths. An added bonus is that 
 it's also less typing! This is because the absolute path of a file (the names of 
 folders between the computer's root `/` and the file) isn't usually the same 
-across multiple computers. For example, suppose Fatima and Jayden are working on a 
+across different computers. For example, suppose Fatima and Jayden are working on a 
 project together on the `happiness_report.csv` data. Fatima's file is stored at 
 
 `/home/Fatima/project/data/happiness_report.csv`, 
@@ -97,10 +97,10 @@ See this video for another explanation:
 Now we will learn more about reading tabular data from a plain text file into R, as well as how to write tabular data to a file. 
 Last chapter, we learned about using the `tidyverse` `read_csv` function when reading files that match that function's expected defaults 
 (column names are present, and commas are used as the delimiter/separator between columns). In this section, we will learn how to read 
-files do not satisfy the default expectations of `read_csv`. 
+files that do not satisfy the default expectations of `read_csv`. 
 
 Before we jump into the cases where the data aren't in the expected default format for `tidyverse` and `read_csv`, let's revisit the more straightforward
-case where the defaults hold, and the only argument we need to give to the function is the path to the file, `data/can_lang.csv`. The `can_lang` data set contains data from the 2016 Canadian census on counts of Canadian languages. We put `data/` before the file's name when we are loading the data set because this data set is located in a sub-folder, named `data`, relative to where we are running our R code.
+case where the defaults hold, and the only argument we need to give to the function is the path to the file, `data/can_lang.csv`. The `can_lang` data set contains language data from the 2016 Canadian census. We put `data/` before the file's name when we are loading the data set because this data set is located in a sub-folder, named `data`, relative to where we are running our R code.
 
 Here is what the file would look like in a plain text editor:
 
@@ -108,23 +108,50 @@ Here is what the file would look like in a plain text editor:
 head -n 10 data/can_lang.csv
 ```
 
-And here is a review of how we can use `read_csv` to load it into R:
+And here is a review of how we can use `read_csv` to load it into R. First we 
+load the `tidyverse` library to gain access to useful functions for reading the 
+data. 
 
-```{r load data, warning=FALSE, message=FALSE}
+> Note: it is normal and expected that a message is printed out after 
+loading the `tidyverse` and some libraries. Generally, this message let's you
+know if functions from the different libraries were loaded share the same name
+(which is confusing to R), and if so, which one you can access using just it's
+name (and which one you need to refer the library name and the function name to
+refer to it, this is called masking). Additionally, the `tidyverse` is a special
+R library - it is a meta-library or meta-package that bundles together several
+related and commonly used packages. Because of this it lists the libraries it 
+does the job of loading. In future when we load this library in this book we 
+will silence these messages to help with readability of the book.
+
+```{r}
 library(tidyverse)
+```
+
+Next we use `read_csv` to load the data into R, and in that call we specify the
+relative path to the file.
+
+> Note: it is also normal and expected that a message is printed out after using
+the `read_csv` and related functions. This message functions to let you know the
+data types of each of the columns that R inferred while reading the data into R.
+In future when we use this and related functions to load data in this book we 
+will silence these messages to help with readability of the book.
+
+```{r load data}
 canlang_data <- read_csv("data/can_lang.csv")
 canlang_data
 ```
 
 ### Skipping rows when reading in data
 
-Often times information about how data was collected, or other relevant information, is included at the top of the data file. This information is usually written in sentence and paragraph form, with no delimiter because it is not organized into columns. An example of this is shown below:
+Often times information about how data was collected, or other relevant information, is included at the top of the data file. This information is usually written in sentence and paragraph form, with no delimiter because it is not organized into columns. An example of this is shown below. This
+information gives the data scientist useful context and information about the data, however, it is not well formatted or intended to be read into
+a data frame cell along with the tabular data that follows later in the file.
 
 ```{bash, echo=FALSE, comment=NA}
 head -n 13 data/can_lang_meta-data.csv
 ```
 
-Using `read_csv` as we did previously does not allow us to correctly load the data into R. In the case of this file we end up only reading in one column of the data set:
+With this extra information being present at the top of the file, using `read_csv` as we did previously does not allow us to correctly load the data into R. In the case of this file we end up only reading in one column of the data set:
 
 ```{r}
 canlang_data <- read_csv("data/can_lang_meta-data.csv")
