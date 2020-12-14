@@ -13,19 +13,19 @@ By the end of the chapter, students will be able to:
 * recall and use the following tidyverse functions and operators for their intended data wrangling tasks:
     - `select`
     - `filter`
-    - `%>%`
-    - `map`
     - `mutate`
-    - `summarize`
-    - `group_by`
+    - `%>%`
+    - `%in%`
     - `pivot_longer`
     - `pivot_wider`
     - `separate`
-    - `%in%`
+    - `summarize`
+    - `group_by`
+    - `map`
 
 ## Vectors and Data frames
 
-At this point, we know how to load data into R from various file formats. Once loaded into R, all the tools we have learned about for reading data into R represent the data as a data frame. So now we will spend some time learning more about data frames in R so that we have a better understanding 
+At this point, we know how to load data into R from various file formats. Once loaded into R, most of the tools we have learned about for reading data into R represent the data as a data frame. So now we will spend some time learning more about data frames in R so that we have a better understanding 
 of how we can use and manipulate these objects.
 
 ### What is a data frame?
@@ -64,7 +64,7 @@ knitr::include_graphics("img/vector.jpeg")
 
 Lists are also objects in R that have multiple elements. Vectors and lists differ by the requirement of element type consistency. All elements 
 within a single vector must be of the same type (e.g., all elements are numbers), whereas elements within a single list can be of different 
-types (e.g., characters, numbers, logicals and even other lists can be elements in the same list).
+types (e.g., characters, numbers, logicals and even other lists can be elements in the same list). 
 
 ```{r 02-vec-vs-list, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "A vector versus a list", fig.retina = 2, out.width = "600"}
 knitr::include_graphics("img/vec_vs_list.jpeg")
@@ -81,9 +81,23 @@ different characteristics associated/linked in one object. This is similar to a 
 knitr::include_graphics("img/dataframe.jpeg")
 ```
 
+The functions from the `tidyverse` library that we are using often give us a 
+special class of data frame, called a tibble. Tibbles have some additional 
+features and benefits over the built-in data frame object. These include 
+ability to add grouping (and other useful) attributes, as well as more
+predictable type preservation when subsetting. Because tibble is just a data 
+frame with some added features, we will collectively refer to both built-in R
+data frames and tibbles as data frames in this book.
+
+> You can use the function `class` on a data object to assess whether a data 
+frame is a built in R data frame or a tibble. If the data object is a date frame
+`class` will return `"data.frame"`, whereas if the data object is a tibble it 
+will return `"tbl_df" "tbl" "data.frame"`. You can easily convert built in R 
+data frames to tibbles using the `tidyverse` `as_tibble` function.
+
 ## Tidy Data
 
-There are many ways a spreadsheet-like data set can be organized. This chpater will focus on the *tidy data* format of organization, and how to make your raw (and likely messy) data tidy. We want to tidy our data because a variety of tools we would like to use in R are designed to work most effectively (and efficiently) with tidy data. 
+There are many ways a spreadsheet-like data set can be organized. This chapter will focus on the *tidy data* format of organization, and how to make your raw (and likely messy) data tidy. We want to tidy our data because a variety of tools we would like to use in R are designed to work most effectively (and efficiently) with tidy data. 
 
 ### What is tidy data?
 
@@ -110,15 +124,15 @@ knitr::include_graphics("img/tidy_data.jpeg")
 
 ### Why is tidy data important in R?
 
-First, one of R's most popular plotting tool sets, the `ggplot2` library, expects the data to be in a tidy format. Second, most statistical analysis functions expect data in a tidy format. Given that both of these tasks are central in virtually any data analysis project, it is well worth spending the time to get your data into a tidy format upfront. Luckily there are many well-designed `tidyverse` data cleaning/wrangling tools to help you easily tidy your data. Let's explore them now!
+First, one of R's most popular plotting tool sets, the `ggplot2` library (which is one of the libraries that the `tidyverse` library loads), expects the data to be in a tidy format. Second, most statistical analysis functions also expect data in a tidy format. Given that both of these tasks are central in almost all data analysis projects, it is well worth spending the time to get your data into a tidy format upfront. Luckily there are many well-designed `tidyverse` data cleaning/wrangling tools to help you easily tidy your data. Let's explore them now!
 
 ### Going from wide to long (or tidy!) using `pivot_longer`
 
-One common thing that often has to be done to get data into a tidy format is to combine columns that are really part of the same variable but currently stored in separate columns. Data is often stored in a wider, not tidy, format because this format is often more intuitive for human readability and understanding, and humans create data sets. We can use the function `pivot_longer`, which combines columns, thus making the data frame narrower. 
+One common thing that often has to be done to get data into a tidy format is to combine columns that are really part of the same variable but currently stored in separate columns. Data is often stored in a wider, not tidy, format because this format is often more intuitive for human readability and understanding, and humans create data sets. We can use the function `pivot_longer`, which combines columns, thus making the data frame longer and narrower. 
 
-To learn how to use `pivot_longer`, we will work with a data set called [region_lang](https://ttimbers.github.io/canlang/), containing data retrieved from the 2016 Canadian census. For each census metropolitan area, this data set includes counts of how many Canadians cited each language as their mother tongue, the language spoken most often at home/work and which language they know. 
+To learn how to use `pivot_longer`, we will work with a data set called [`region_lang`](https://ttimbers.github.io/canlang/), containing data retrieved from the 2016 Canadian census. For each census metropolitan area, this data set includes counts of how many Canadians cited each language as their mother tongue, the language spoken most often at home/work and which language they know. 
 
-We will use `read_csv` to import a subset of the region_lang data called `region_lang_top5_cities_wide.csv`, which contains only the counts of how many Canadians cited each language as their mother tongue for five major Canadian cities (Toronto, Montreal, Vancouver, Calgary and Edmonton). Our data set is stored in an untidy format, as shown below:
+We will use `read_csv` to import a subset of the `region_lang` data called `region_lang_top5_cities_wide.csv`, which contains only the counts of how many Canadians cited each language as their mother tongue for five major Canadian cities (Toronto, Montreal, Vancouver, Calgary and Edmonton). Our data set is stored in an untidy format, as shown below:
 
 ```{r 02-tidyverse, warning=FALSE, message=FALSE}
 library(tidyverse)
@@ -127,7 +141,7 @@ lang_wide
 ```
 
 
-What is wrong with our untidy format above? From a data analysis perspective, this format is not ideal because, in this format, the outcome of the variable "region" (Toronto, Montreal, Vancouver, Calgary and Edmonton) is stored as column names. Thus it is not easily accessible for the data analysis functions we will want to apply to our data set. Additionally, the values of the "mother_tongue" variable are spread across multiple columns. They will require binding or joining to get them into one column to do our desired visualization and statistical tasks later. For instance, suppose we want to know which languages had the highest number of Canadians reporting it as their mother tongue among all regions. It is difficult to do this in its current format. We will have much more efficient and readable code if we tidy our data first. 
+What is wrong with our untidy format above? From a data analysis perspective, this format is not ideal because, in this format, the outcome of the variable *region* (Toronto, Montreal, Vancouver, Calgary and Edmonton) is stored as column names. Thus it is not easily accessible for the data analysis functions we will want to apply to our data set. Additionally, the values of the *mother tongue* variable are spread across multiple columns. This will prevent us from doing any desired visualization or statistical tasks until we somehow combine them into one column. For instance, suppose we want to know which languages had the highest number of Canadians reporting it as their mother tongue among all five regions? This question would be very difficult to answer with the data in its current format. It would be much easier to answer if we tidy our data first. 
 
 To accomplish this data transformation, we will use the `tidyverse` function `pivot_longer`. To use `pivot_longer` we need to specify the:
 
