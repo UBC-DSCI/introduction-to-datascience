@@ -283,19 +283,17 @@ official_langs <- filter(lang_no_delimiter, category == "Official languages")
 
 ggplot(official_langs, aes(x = region, y = most_at_work, fill = language)) +
   geom_bar(stat = "identity") +
-  scale_color_manual(values = c("deepskyblue2","firebrick1")) + # choose point colours
-  #theme(axis.text.x = element_text(angle = 90)) +
+  scale_color_manual(values = c("deepskyblue2","firebrick1")) +
+  xlab("Region") + 
   scale_y_continuous(
     name = "Number of Canadians reporting their primary language at home",
     labels = scales::comma
   ) +
-  xlab("Region") + 
-  coord_flip() +
-  ggtitle("Official languages spoken most often at home for five major Canadian cities") +
+  coord_flip() + # making bars horizontal
   theme_bw()
 ```
 
-From this visualization, we can see that in Calgary, Edmonton, Toronto and Vancouver, English was cited as the most common primary language used at home. However, in Montreal, French was the most common language used at home, and English was second. Punjabi, Tagalog, Cantonese and Mandarin were the second most common languages in Calgary, Edmonton, Toronto and Vancouver respectively. 
+From this visualization, we can see that in Calgary, Edmonton, Toronto and Vancouver, English was reported as the most common primary language used at home compared to French. However, in Montreal, French was reported as the most common primary language used at home over English. 
 
 ### Notes on defining tidy data
 
@@ -314,7 +312,7 @@ a data frame `data`:
 One way of doing is to just write multiple lines of code, storing temporary objects as you go:
 
 ```
-output_1 <- mutate(data, new_col = old_col*2)
+output_1 <- mutate(data, new_col = old_col * 2)
 output_2 <- filter(output_1, other_col > 5)
 output <- select(output_2, new_col)
 ```
@@ -326,7 +324,7 @@ through and find where `output_1` and `output_2` are used in each subsequent lin
 Another option for doing this would be to *compose* the functions:
 
 ```
-output <- select(filter(mutate(data, new_col = old_col*2), other_col > 5), new_col)
+output <- select(filter(mutate(data, new_col = old_col * 2), other_col > 5), new_col)
 ```
 
 Code like this can also be difficult to understand. Functions compose (reading from left to right) in the *opposite order* in which
@@ -337,7 +335,7 @@ The *pipe operator* `%>%` solves this problem, resulting in cleaner and easier-t
 
 ```
 output <- data %>% 
-            mutate(new_col = old_col*2) %>%
+            mutate(new_col = old_col * 2) %>%
             filter(other_col > 5) %>%
             select(new_col)
 ```
@@ -345,7 +343,9 @@ output <- data %>%
 You can think of the pipe as a physical pipe. It takes the output from the function on the left-hand side of the pipe, and
 passes it as the first argument to the function on the right-hand side of the pipe. Note here that we have again split the 
 code across multiple lines for readability; R is fine with this, since it knows that a line ending in a pipe `%>%` is continued
-on the next line.
+on the next line. Similarly, you see that after the first pipe, the remaining 
+lines are indented until the end of the pipeline. This is not required for the 
+R code to work, but again is used to aid in improving code readability.
 
 Next, let's learn about the details of using the pipe, and look at some examples of how to use it in data analysis.
 
@@ -382,7 +382,18 @@ As you can see, both of these approaches give us the same output, but the second
 
 ### Using `%>%` with more than two functions
 
-The `%>%` can be used with any function in R. Additionally, we can pipe together more than two functions. For example, we can pipe together three functions to order the rows by counts of the language most spoken at home for only the counts that are more than 10,000 and only include the region, language and count of Canadians reporting their primary language at home in our table:
+The `%>%` can be used with any function in R. Additionally, we can pipe together more than two functions. For example, we can pipe together three functions to order the rows by counts of the language most spoken at home for only the counts that are more than 10,000 and only include the region, language and count of Canadians reporting their primary language at home in our table. 
+
+To order the  by counts of the language most spoken at home we will use another 
+`tidyverse` function, `arrange`. This function takes column names as input and 
+orders the rows in the data frame in ascending order based on the values in the 
+columns. Here we use only one column for sorting (`most_at_home`), but more than 
+one can also be used. To do this, list additional columns separated by commas. 
+The order they are listed in indicates the order in which they will be used for 
+sorting. This is much like how an English dictionary sorts words: first by the 
+first letter, then by the second letter, and so on. *Note: If you want to sort 
+in reverse order, you can pair a function called `desc` with `arrange` (e.g., 
+`arrange(desc(column_name))`).*
 
 
 ```{r}
@@ -392,13 +403,7 @@ large_region_lang <- filter(lang_home_tidy, most_at_home > 10000) %>%
 large_region_lang
 ```
 
-> **Note:**: `arrange` is a function that takes the name of a data frame and one or more column(s), and returns a 
-> data frame where the rows are ordered by those columns in ascending order. Here we used only one column for sorting 
-> (`most_at_home`), but more than one can also be used. To do this, list additional columns separated by commas. 
-> The order they are listed in indicates the order in which they will be used for sorting. This is much like how an English
-> dictionary sorts words: first by the first letter, then by the second letter, and so on.
->
-> **Another Note:** You might also have noticed that we split the function calls across lines after the pipe, similar as to 
+> **Note:** You might also have noticed that we split the function calls across lines after the pipe, similar as to 
 > when we did this earlier in the chapter for long function calls. Again this is allowed and recommeded, especially when the 
 > piped function calls would create a long line of code. Doing this makes your code more readable. When you do this it is important 
 > to end each line with the pipe operator `%>%` to tell R that your code is continuing onto the next line. 
@@ -409,7 +414,7 @@ large_region_lang
 
 As a part of many data analyses, we need to calculate a summary value for the data (a summary statistic). A useful `dplyr` function for doing this is 
 `summarize`. Examples of summary statistics we might want to calculate are the number of observations, the average/mean value 
-for a column, the minimum value for a column, etc. Below we show how to use the summarize function to calculate the minimum and maximum 
+for a column, the minimum value for a column, etc. Below we show how to use the `summarize` function to calculate the minimum and maximum 
 number of Canadians reporting a particular language as their primary language at home:
 
 ```{r}
@@ -419,6 +424,11 @@ lang_summary <- summarize(lang_home_tidy,
 )
 lang_summary
 ```
+
+From this we see that there are some languages in the data set the no one speaks
+as their primary language at home, as well as that the most commonly spoken 
+primary language at home is spoken by  `r format(lang_summary$most_most_at_home[1], scientific = FALSE, big.mark = ",")` 
+people.
 
 ### Calculating group summary statistics:
 
@@ -435,12 +445,12 @@ lang_summary_by_region <- group_by(lang_home_tidy, region) %>%
 lang_summary_by_region
 ```
 
-## Additional reading on the `dplyr` functions
+### Additional reading on the `dplyr` functions
 
-We haven't explicitly said this yet, but the `tidyverse` is actually a *meta R package*: it installs a collection of R packages that all follow 
+As we breifly mentioned earlier in a note, the `tidyverse` is actually a *meta R package*: it installs and loads a collection of R packages that all follow 
 the tidy data philosophy we discussed above. One of the `tidyverse` packages is `dplyr` - a data wrangling workhorse. You have already met six of 
 the dplyr function (`select`, `filter`, `mutate`, `arrange`, `summarize`, and `group_by`). To learn more about those six and meet a few more 
-useful functions, read the post [at this link](http://stat545.com/block010_dplyr-end-single-table.html#where-were-we).
+useful functions, we recommend you checkout [this chapter](http://stat545.com/block010_dplyr-end-single-table.html#where-were-we) of the Stat 545 book.
 
 
 ## Using `purrr`'s `map*` functions to iterate
@@ -498,26 +508,14 @@ max_of_columns
 
 Which `map_*` function you choose depends on what you want to do with the output; you don't always have to pick `map_df`!
 
-What if you need to add other arguments to the functions you want to map? For example, what if there were NA values in our columns that we wanted to know the maximum of? Well, then we also need to add the argument `na.rm  = TRUE` to the `max` function so that we get a more useful value than NA returned (remember that is what happens with many of the built-in R statistical functions when NA's are present...). What we need to do in that case is do what is called "creating an anonymous function" within the `map_df` function. We do that in the place where we previously specified our max function. Here we will put the two calls to `map_df` right after each other so you can see the difference:
+What if you need to add other arguments to the functions you want to map? For example, what if there were NA values in our columns that we wanted to know the maximum of? Well, then we also need to add the argument `na.rm  = TRUE` to the `max` function so that we get a more useful value than NA returned (remember that is what happens with many of the built-in R statistical functions when NA's are present...). What we need to do in that case is add these additional
+arguments to the end of our call to to `map` and they will be passed to the 
+function that we are mapping. An example of this is shown below:
 
-```
-# no additional arguments to the max function 
-map_df(mtcars, max)
-```
-versus
-```
-# adding the na.rm  = TRUE argument to the max function
-map_df(mtcars, function(df) max(df, na.rm  = TRUE))
+```{r}
+map_df(mtcars, max, na.rm  = TRUE)
 ```
 
-You can see that's quite a bit of extra typing... So the creators of `purrr` have made a shortcut for this because it is so commonly done. In the shortcut we replace `function(VARIABLE)` with a `~` and replace the `VARIABLE` in the function call with a `.`, see the example below:
-
-```
-# adding the na.rm  = TRUE argument to the max function using the shortcut 
-map_df(mtcars, ~ max(., na.rm  = TRUE))
-```
-
-### A bit more about the `map_*` functions
 
 The `map_*` functions are generally quite useful for solving problems involving iteration/repetition. Additionally, their use is not limited to columns 
 of a data frame; `map_*` functions can be used to apply functions to elements of a vector or list, and even to lists of data frames, or nested data frames.
