@@ -1,5 +1,12 @@
 # Reading in data locally and from the web {#reading}
 
+```{r 01-reading, echo = FALSE, message = FALSE, warning = FALSE}
+library(magick)
+library(magrittr)
+library(knitr)
+knitr::opts_chunk$set(message = FALSE)
+```
+
 ## Overview 
 
 In this chapter, you’ll learn to read spreadsheet-like data of various formats into R from your local device and the web. “Reading” (or “loading”) is the process of converting data (stored as plain text, a database, HTML, etc.) into an object (e.g., a data frame) that R can easily access and manipulate. Thus reading data is the gateway to any data analysis; you won’t be able to analyze data unless you’ve loaded it first. And because there are many ways to store data, there are similarly many ways to read data into R. The more time you spend upfront matching the data reading method to the type of data you have, the less time you will have to devote to re-formatting, cleaning and wrangling your data (the second step to all data analyses). It’s like making sure your shoelaces are tied well before going for a run so that you don’t trip later on!
@@ -112,6 +119,10 @@ And here is a review of how we can use `read_csv` to load it into R. First we
 load the `tidyverse` library to gain access to useful functions for reading the 
 data. 
 
+```{r, message = TRUE}
+library(tidyverse)
+```
+
 > Note: it is normal and expected that a message is printed out after 
 loading the `tidyverse` and some libraries. Generally, this message let's you
 know if functions from the different libraries were loaded share the same name
@@ -123,12 +134,12 @@ related and commonly used packages. Because of this it lists the libraries it
 does the job of loading. In future when we load this library in this book we 
 will silence these messages to help with readability of the book.
 
-```{r}
-library(tidyverse)
-```
-
 Next we use `read_csv` to load the data into R, and in that call we specify the
 relative path to the file.
+
+```{r load_data, message = TRUE}
+canlang_data <- read_csv("data/can_lang.csv")
+```
 
 > Note: it is also normal and expected that a message is printed out after using
 the `read_csv` and related functions. This message functions to let you know the
@@ -136,8 +147,7 @@ data types of each of the columns that R inferred while reading the data into R.
 In future when we use this and related functions to load data in this book we 
 will silence these messages to help with readability of the book.
 
-```{r load data}
-canlang_data <- read_csv("data/can_lang.csv")
+```{r view_data}
 canlang_data
 ```
 
@@ -155,6 +165,13 @@ With this extra information being present at the top of the file, using `read_cs
 
 ```{r}
 canlang_data <- read_csv("data/can_lang_meta-data.csv")
+```
+
+> Note: In contrast to the normal and expected messages above, this time R 
+printed out a warning for us indicating that there might be a problem with how 
+our data is being read in.
+
+```{r}
 canlang_data
 ```
 
@@ -175,7 +192,7 @@ Here is how the file would look in a plain text editor:
 head -n 10 data/can_lang.tsv
 ```
 
-To get this into R using the `read_delim()` function, we specify the first argument as the path to the file (as done with `read_csv`), and then provide values to the `delim` argument (here a tab, which we represent by `"\t"`) and the `col_names` argument (here we specify that there are no column names be assigning it the value of `FALSE`). Both `read_csv()` and `read_delim()` have a `col_names` argument and the default is `TRUE`. 
+To get this into R using the `read_delim()` function, we specify the first argument as the path to the file (as done with `read_csv`), and then provide values to the `delim` argument (here a tab, which we represent by `"\t"`) and the `col_names` argument (here we specify that there are no column names to assign, and give it the value of `FALSE`). Both `read_csv()` and `read_delim()` have a `col_names` argument and the default is `TRUE`. 
 
 
 ```{r}
@@ -196,8 +213,25 @@ canlang_data
 ### Previewing a data file before reading it into R
 
 In all the examples above, we gave you previews of the data file before we read it into R. This is essential so that you can see whether or not there are column names, what the 
-delimiters are, and if there are lines you need to skip. You should do this yourself when trying to read in data files. In Jupyter, you preview data as a plain text file by clicking
-on the file's name in the Jupyter home menu. We demonstrate this in the video below:
+delimiters are, and if there are lines you need to skip. You should do this yourself when trying to read in data files. In Jupyter, you preview data as a plain text file by right-clicking
+on the file's name in the Jupyter home menu and selecting "Open with" and then selecting "Editor". 
+
+```{r open-data-w-editor-01, echo = FALSE, fig.cap = "Opening data files with an editor in Jupyter", fig.retina = 2, out.width="100%"}
+image_read("img/open_data_w_editor_01.png") %>% 
+  image_crop("3632x2000")
+```
+
+```{r open-data-w-editor-02, echo = FALSE, fig.cap = "A data file as viewed in an editor in Jupyter", fig.retina = 2, out.width="100%"}
+image_read("img/open_data_w_editor_02.png") %>% 
+  image_crop("3632x2000")
+```
+
+If you do not specify to open the data file with an editor, then Jupyter will 
+render a nice table for you and you will not be able to see the column
+delimiters, and therefore you will not know which function to use, nor
+which arguments to use and values to specify for them. 
+
+This is also demonstrated in the video below:
 
 <iframe width="840" height="473" src="https://www.youtube.com/embed/6orO4YMAyeQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
@@ -257,11 +291,11 @@ canlang_data
 
 If the `.xlsx` file has multiple sheets, you have to use the `sheet` argument to specify the sheet number or name. You can also specify cell ranges using the `range` argument. This functionality is useful when a single sheet contains multiple tables (a sad thing that happens to many Excel spreadsheets).
 
-As with plain text files, you should always explore the data file before importing it into R. Exploring the data beforehand helps you decide which arguments you need to to load the data into R successfully. If you do not have the Excel program on your computer, you can use other free programs to preview the file. Examples include Google Sheets and Libre Office. 
+As with plain text files, you should always explore the data file before importing it into R. Exploring the data beforehand helps you decide which arguments you need to to load the data into R successfully. If you do not have the Excel program on your computer, you can use other programs to preview the file. Examples include Google Sheets and Libre Office. 
 
 ## Reading data from a database
 
-Another very common form of data storage to be read into R for data analysis is the relational database. There are many relational database management systems, such as
+Another very common form of data storage is the relational database. There are many relational database management systems, such as
 [SQLite](https://www.sqlite.org/index.html), [MySQL](https://www.mysql.com/), [PostgreSQL](https://www.postgresql.org/), [Oracle](https://www.oracle.com/ca-en/index.html), and many more. These different relational database management systems each have their own advantages and limitations. Almost all employ SQL (*structured query language*) to pull data from the database. Thankfully, you don't need to know SQL
 to analyze data from a database; 
 several packages have been written 
@@ -330,11 +364,13 @@ tail(aboriginal_lang_db)
 ```
 ## Error: tail() is not supported by sql sources
 ```
-Additionally, some operations will not work to extract columns or single values from the reference given by the `tbl` function. Thus, once you have finished your data wrangling of the `tbl` database reference object, it is advisable to bring it into your local machine's memory using `collect` as a data frame. Warning: Usually, databases are very big! Reading the object into your local machine may give an error or take a lot of time to run so be careful if you plan to do this! 
+Additionally, some operations will not work to extract columns or single values from the reference given by the `tbl` function. Thus, once you have finished your data wrangling of the `tbl` database reference object, it is advisable to bring it into your local machine's memory using `collect` as a data frame. 
+
+> Warning: Usually, databases are very big! Reading the object into your local machine may give an error or take a lot of time to run so be careful if you plan to do this! 
  
 #### Reading data from a PostgreSQL database 
 
-PostgreSQL (also called Postgres) is a very popular free and open-source option for relational database software. Unlike SQLite, PostgreSQL uses 
+PostgreSQL (also called Postgres) is a very popular and open-source option for relational database software. Unlike SQLite, PostgreSQL uses 
 a client–server database engine, as it was designed to be used and accessed on a network. This means that you have to provide more 
 information to R when connecting to Postgres databases. The additional information that you need to include when you call the `dbConnect` 
 function is listed below:
@@ -446,7 +482,7 @@ We see the lowest rating given to a movie is 1, indicating that it must have bee
 
 **Why should we bother with databases at all?**
 
-Opening a database stored in a .db file involved a lot more effort than just opening a .csv, .tsv, or any of the other plaintext or Excel formats. It was a bit of a pain to use a database in that setting since we had to use `dbplyr` to translate `tidyverse`-like commands (`filter`, `select`, `head`, etc.) into SQL commands that the database understands. Not all `tidyverse` commands can currently be translated with SQLite databases. For example, we can compute a mean with an SQLite database but can't easily compute a median. So you might be wondering why should we use databases at all? 
+Opening a database stored in a `.db` file involved a lot more effort than just opening a `.csv`, `.tsv`, or any of the other plain text or Excel formats. It was a bit of a pain to use a database in that setting since we had to use `dbplyr` to translate `tidyverse`-like commands (`filter`, `select`, `head`, etc.) into SQL commands that the database understands. Not all `tidyverse` commands can currently be translated with SQLite databases. For example, we can compute a mean with an SQLite database but can't easily compute a median. So you might be wondering why should we use databases at all? 
 
 Databases are beneficial in a large-scale setting:
 
@@ -454,7 +490,7 @@ Databases are beneficial in a large-scale setting:
 - they allow multiple users to access them simultaneously and remotely without conflicts and errors
 - they provide mechanisms for ensuring data integrity and validating input
 - they provide security to keep data safe
-For example, [there are billions of Google searches conducted daily](https://www.internetlivestats.com/google-search-statistics/). Can you imagine if Google stored all of the data from those queries in a single .csv file!? Chaos would ensue! 
+For example, [there are billions of Google searches conducted daily](https://www.internetlivestats.com/google-search-statistics/). Can you imagine if Google stored all of the data from those queries in a single `.csv file`!? Chaos would ensue! 
 
 
 ## Writing data from R to a `.csv` file
@@ -572,10 +608,6 @@ Now that we have our CSS selectors we can use `rvest` R package to scrape our de
 library(rvest)
 ```
 
-> **`library(rvest)` gives error...**
->
-> If you get an error about R not being able to find the package (e.g., `Error in library(rvest) : there is no package called ‘rvest’`) this is likely because it was not installed. To install the `rvest` package, run the following command once inside R (and then delete that line of code): `install.packages("rvest")`.
-
 Next, we tell R what page we want to scrape by providing the webpage's URL in quotations to the function `read_html`:
 
 ```{r 01-specify-page}
@@ -583,7 +615,7 @@ page <- read_html("https://en.wikipedia.org/wiki/Canada")
 ```
 
 
-Then we send the page object to the `html_nodes` function. We also provide that function with the CSS selectors we obtained from the selectorgadget tool. These should be surrounded by quotations. The `html_nodes` function select nodes from the HTML document using CSS selectors. nodes are the HTML tag pairs as well as the content between the tags. For our CSS selector `td:nth-child(5)` and example node that would be selected would be: `<td style="text-align:left;background:#f0f0f0;"><a href="/wiki/London,_Ontario" title="London, Ontario">London</a></td>`
+Then we send the page object to the `html_nodes` function. We also provide that function with the CSS selectors we obtained from the selectorgadget tool. These should be surrounded by quotations. The `html_nodes` function select nodes from the HTML document using CSS selectors. Nodes are the HTML tag pairs as well as the content between the tags. For our CSS selector `td:nth-child(5)` and example node that would be selected would be: `<td style="text-align:left;background:#f0f0f0;"><a href="/wiki/London,_Ontario" title="London, Ontario">London</a></td>`
 
 ```{r 01-select-nodes}
 population_nodes <- html_nodes(page, "td:nth-child(5) , td:nth-child(7) , .infobox:nth-child(122) td:nth-child(1) , .infobox td:nth-child(3)")
