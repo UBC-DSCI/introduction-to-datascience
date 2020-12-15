@@ -14,18 +14,18 @@ By the end of the chapter, students will be able to:
 * Describe a case where clustering is appropriate, and what insight it might extract from the data.
 * Explain the K-means clustering algorithm.
 * Interpret the output of a K-means analysis.
-* Perform K-means clustering in R using `kmeans`.
-* Visualize the output of K-means clustering in R using pair-wise scatter plots.
 * Identify when it is necessary to scale variables before clustering and do this using R.
+* Perform K-means clustering in R using `kmeans`.
 * Use the elbow method to choose the number of clusters for K-means.
+* Visualize the output of K-means clustering in R using coloured scatter plots.
 * Describe advantages, limitations and assumptions of the K-means clustering algorithm.
 
 ## Clustering
 Clustering is a data analysis task involving separating a data set into
 subgroups of related data. For example, we might use clustering to separate a
-dataset of documents into groups that correspond to topics, a dataset of human
+data set of documents into groups that correspond to topics, a data set of human
 genetic information into groups that correspond to ancestral subpopulations, or
-a dataset of online customers into groups that correspond to purchasing
+a data set of online customers into groups that correspond to purchasing
 behaviours.  Once the data are separated we can, for example, use the subgroups
 to generate new questions about the data and follow up with a predictive
 modelling exercise. In this course, clustering will be used only for exploratory
@@ -60,8 +60,9 @@ courses.
 
 **An illustrative example** 
 
-Suppose we have customer data with two variables measuring
-customer loyalty and satisfaction, and we want to learn whether there are distinct "types"
+Here we will present an illustrative example using a simulated data set. Suppose 
+we have customer data with two variables measuring customer loyalty and 
+satisfaction, and we want to learn whether there are distinct "types"
 of customer. Understanding this might help us come up with better products or
 promotions to improve our business in a data-driven way.
 
@@ -73,7 +74,7 @@ marketing_data <- data[,1:2]
 ```
 
 ```{r 10-clustering}
-head(marketing_data)
+marketing_data
 ```
 
 ```{r 10-toy-example-plot, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Modified from http://www.segmentationstudyguide.com/using-cluster-analysis-for-market-segmentation/"}
@@ -450,7 +451,7 @@ algorithm uses a random initialization of assignments, we need to set the random
 seed to make the clustering reproducible.
 
 ```{r 10-kmeans}
-set.seed(1234)
+set.seed(12345)
 marketing_clust <- kmeans(marketing_data, centers = 3)
 marketing_clust
 ```
@@ -474,7 +475,9 @@ Now that we have this data frame, we can easily plot the data (i.e., cluster ass
 
 ```{r 10-plot-clusters-2, fig.height = 4, fig.width = 4.35}
 
-cluster_plot <- ggplot(clustered_data, aes(x = csat, y = loyalty, colour = .cluster), size=2) +
+cluster_plot <- ggplot(clustered_data, 
+                       aes(x = csat, y = loyalty, colour = .cluster), 
+                       size=2) +
   geom_point() +
   labs(x = 'Customer satisfaction', y = 'Loyalty', colour = 'Cluster')
 cluster_plot
@@ -492,22 +495,62 @@ glance(marketing_clust)
 
 To calculate the total WSSD for a variety of Ks, we will
 create a data frame with a column named `k` with rows containing the numbers of clusters
-we want to run K-means with (here, 1 to 9). Then we use `map` to apply the `kmeans` function to each
-K. We also use `map` to then apply `glance` to each of the clusterings.
-This results in a complex data frame with
-3 columns, one for K, one for the models, and one for the model statistics
-(output of `glance`, which is a data frame):
+we want to run K-means with (here, 1 to 9). 
 
-```{r 10-choose-k, fig.height = 4, fig.width = 4.35}
+```{r 10-choose-k-part1}
+marketing_clust_ks <- tibble(k = 1:9) 
+marketing_clust_ks
+```
+
+Then we use `map` to apply the `kmeans` function to each
+K. When we do this, we need to use `map` a little bit differently than we have
+before. This is because we need to iterate over `k`, which is the second 
+argument to the `kmeans` function. In the past we have been iterating over the
+first argument to a map function, and that is the default, so we could easily 
+write `map(data_frame, function_name)`. This won't work here, as we need to 
+provide our data frame as the first argument to the `kmeans` function.
+
+To make this work we will need to use what is called an anonymous function with 
+map. An anonymous function is a function that we write ourselves, and that has
+no name associated with it. To do this we will write our map statement like 
+this:
+
+```
+map(k, function(ks) kmeans(marketing_data, ks))
+```
+
+What the above `map` call does is for each value in the thing we are iterating 
+over (here `k`), it passes it to whatever we name inside of `function()`, here 
+`ks`. And then that value is passed into that same name in the code that follows 
+`function()` and it is executed. 
+
+Below we execute this `map` call inside of a `mutate` function in our 
+`marketing_clust_ks` data frame and get a list column that contains a K-means
+clustering object for each value of K we had:
+
+```{r 10-choose-k-part2}
+marketing_clust_ks <- tibble(k = 1:9) %>%
+  mutate(marketing_clusts = map(k, function(ks) kmeans(marketing_data, ks)))
+marketing_clust_ks
+```
+
+
+Next, we use `map` again to then apply `glance` to each of the K-means
+clustering objects to get the clustering statistics (including WSSD). The output
+of glance is a data frame, and so we get another list column. This results in a 
+complex data frame with 3 columns, one for K, one for the 
+K-means clustering objects, and one for the clustering statistics:
+
+```{r 10-choose-k-part3}
 marketing_clust_ks <- tibble(k = 1:9) %>%
   mutate(marketing_clusts = map(k, ~kmeans(marketing_data, .x)),
          glanced = map(marketing_clusts, glance)) 
 head(marketing_clust_ks)
 ```
 
-We now extract the total WSSD from the `glanced` column. Given that each item in
-this column is a data frame, we will need to use the `unnest` function to
-unpack the data frames. 
+Finally we extract the total WSSD from the `glanced` column. Given that each 
+item in this column is a data frame, we will need to use the `unnest` function 
+to unpack the data frames into simpler column data types. 
 
 ```{r 10-get-total-within-sumsqs}
 clustering_statistics <- marketing_clust_ks %>%
@@ -533,9 +576,10 @@ elbow_plot
 It looks like 3 clusters is the right choice for this data.
 But why is there a "bump" in the total WSSD plot here? Shouldn't total WSSD always
 decrease as we add more clusters? Technically yes, but remember:  K-means can 
-get "stuck" in a bad solution. Unfortunately, for K = 6 we had an unlucky initialization
+get "stuck" in a bad solution. Unfortunately, for K = 5 we had an unlucky initialization
 and found a bad clustering! We can help prevent finding a bad clustering by trying a 
 few different random initializations via the `nstart` argument (here we use 10 restarts). 
+
 ```{r 10-choose-k-nstart, fig.height = 4, fig.width = 4.35}
 marketing_clust_ks <- tibble(k = 1:9) %>%
   mutate(marketing_clusts = map(k, ~kmeans(marketing_data, nstart = 10, .x)),
