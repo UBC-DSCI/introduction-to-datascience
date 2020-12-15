@@ -80,7 +80,7 @@ marketing_data <- data[,1:2]
 marketing_data
 ```
 
-```{r 10-toy-example-plot, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Simulated data of customer loyalty versus satisfaction. Example derived from @custexample"}
+```{r 10-toy-example-plot, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Simulated data of customer loyalty versus satisfaction. Example derived from @custexample."}
 base <- ggplot(data, aes(y = loyalty, x = csat)) +
   geom_point() +
   xlab("Customer satisfaction") +
@@ -287,7 +287,7 @@ K-means, unlike the classification and regression models we studied in previous 
 For example, if we were unlucky and initialized K-means with the following labels:
 <center>
 ```{r 10-toy-kmeans-bad-init, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Random initialization of labels."}
-set.seed(7)
+set.seed(1)
 marketing_data["label"] = factor(sample(1:3, nrow(marketing_data), replace=T))
 
 plt_lbl <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
@@ -395,7 +395,7 @@ p1 <- ggplot(assignments, aes(csat, loyalty)) +
 p1
 ```
 
-If we set K less than 3, then the clustering merges separate groups of data; this causes a large causing a large
+If we set K less than 3, then the clustering merges separate groups of data; this causes a large 
 total WSSD, since the cluster center (denoted by an "x") is not close to any of the data in the cluster. On 
 the other hand, if we set K greater than 3, the clustering subdivides subgroups of data; this does indeed still 
 decrease the total WSSD, but by only a *diminishing amount*. If we plot the total WSSD versus the number of 
@@ -416,31 +416,27 @@ p2
 ```
 </center>
 
-## Requirements for data pre-processing with K-means
+## Data pre-processing for K-means
 
-Similar to k-nearest neighbours classification and regression, K-means 
-clustering uses a distance metric to decide which points are more similar to 
-each other. In K-means similar points typically end up in the same cluster, thus 
-things that can affect how close in distance K-means thinks the points are will
-have a large impact on which cluster data points end up being assigned to.
-Without scaling, any variables that have a large scale will have a much larger 
+Similar to K-nearest neighbours classification and regression, K-means 
+clustering uses straight-line distance to decide which points are similar to 
+each other. Therefore, the *scale* of each of the variables in the data
+will influence which cluster data points end up being assigned to.
+Variables that have a large scale will have a much larger 
 effect on deciding cluster assignment than variables with a small scale. 
-To address this problem, we typically standardize our data before clustering.
-Remember from chapter 6, that standardized data is when all variables in a data 
-set have a mean (center) of 0 and a standard deviation (scale) of 1. 
-
-In this chapter, the data we are using are already on the same scale. However, 
-if this is not the case for your data (and it is often not), you can use the 
-`scale` function in R to do this. We show an example of how to use this function 
+To address this problem, we typically standardize our data before clustering,
+which ensures that each variable has a mean of 0 and standard deviation of 1.
+The `scale` function in R can be used to do this. 
+We show an example of how to use this function 
 below using the data in this chapter:
 
-```{r get-unscaled-data, echo = FALSE, message = FALSE, warning = FALSE}
+```{r 09-get-unscaled-data, echo = FALSE, message = FALSE, warning = FALSE}
 unscaled_data <- read_csv('data/marketing.csv') %>%
 	mutate(cluster=as_factor(cluster)) %>% 
   select(loyalty, csat)
 ```
 
-```{r}
+```{r 09-mapdf-scale-data}
 scaled_data <- map_df(unscaled_data, scale)
 scaled_data
 ```
