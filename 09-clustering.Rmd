@@ -430,13 +430,13 @@ The `scale` function in R can be used to do this.
 We show an example of how to use this function 
 below using the data in this chapter:
 
-```{r 09-get-unscaled-data, echo = FALSE, message = FALSE, warning = FALSE}
+```{r 10-get-unscaled-data, echo = FALSE, message = FALSE, warning = FALSE}
 unscaled_data <- read_csv('data/marketing.csv') %>%
 	mutate(cluster=as_factor(cluster)) %>% 
   select(loyalty, csat)
 ```
 
-```{r 09-mapdf-scale-data}
+```{r 10-mapdf-scale-data}
 scaled_data <- map_df(unscaled_data, scale)
 scaled_data
 ```
@@ -444,7 +444,7 @@ scaled_data
 ## K-means in R
 
 To peform K-means clustering in R, we use the `kmeans` function. It takes at
-least two arguments, the data frame containing the data you wish to cluster,
+least two arguments: the data frame containing the data you wish to cluster,
 and K, the number of clusters (here we choose K = 3). Note that since the K-means
 algorithm uses a random initialization of assignments, we need to set the random
 seed to make the clustering reproducible.
@@ -455,12 +455,11 @@ marketing_clust <- kmeans(marketing_data, centers = 3)
 marketing_clust
 ```
 
-As you can see above, the clustering object returned has a lot of information
-about our analysis that we need to explore. Let's take a look at it now. To do
-this, we will call in help from the `broom` package so that we get the model
-output back in a tidy data format. Let's first start by getting the cluster
+As you can see above, the clustering object returned by `kmeans` has a lot of information
+To obtain this information in a tidy format, we will call in help 
+from the `broom` package. Let's first start by getting the cluster
 identification for each point and plotting that on the scatter plot. To do that
-we use the augment function. Augment takes in the model and the original data
+we use the `augment` function, which takes in the model and the original data
 frame, and returns a data frame with the data and the cluster assignments for
 each point:
 
@@ -481,19 +480,18 @@ cluster_plot <- ggplot(clustered_data,
 cluster_plot
 ```
 
-As mentioned above, we need to choose a K to perform K-means clustering by finding
+As mentioned above, we also need to select K by finding
 where the "elbow" occurs in the plot of total WSSD versus number of clusters. 
-We can get at the total WSSD (`tot.withinss`) from our
-clustering using `broom`'s `glance` function (it gives model-level statistics).
-For example:
+We can obtain the total WSSD (`tot.withinss`) from our
+clustering using `broom`'s `glance` function. For example:
 
 ```{r 10-glance}
 glance(marketing_clust)
 ```
 
 To calculate the total WSSD for a variety of Ks, we will
-create a data frame with a column named `k` with rows containing the numbers of clusters
-we want to run K-means with (here, 1 to 9). 
+create a data frame with a column named `k` with rows containing
+each value of K we want to run K-means with (here, 1 to 9). 
 
 ```{r 10-choose-k-part1}
 marketing_clust_ks <- tibble(k = 1:9) 
@@ -501,28 +499,29 @@ marketing_clust_ks
 ```
 
 Then we use `map` to apply the `kmeans` function to each
-K. When we do this, we need to use `map` a little bit differently than we have
-before. This is because we need to iterate over `k`, which is the second 
-argument to the `kmeans` function. In the past we have been iterating over the
-first argument to a map function, and that is the default, so we could easily 
-write `map(data_frame, function_name)`. This won't work here, as we need to 
+K. However, we need to use `map` a little bit differently than we have
+before. This is because we need to iterate over `k`, which is the *second argument* 
+to the `kmeans` function. In the past, we have used `map` only to iterate over values of the
+*first argument* of a function. Since that is the default, we could simply 
+write `map(data_frame, function_name)`. This won't work here; we need to 
 provide our data frame as the first argument to the `kmeans` function.
 
-To make this work we will need to use what is called an anonymous function with 
-map. An anonymous function is a function that we write ourselves, and that has
-no name associated with it. To do this we will write our map statement like 
-this:
+The solution is to create something called an *anonymous function*. 
+An anonymous function is a function that has no name,
+unlike other functions you've seen so far (`kmeans`, `select`, etc). 
+To do this we will write our map statement like this:
 
 ```
-map(k, function(ks) kmeans(marketing_data, ks))
+map(marketing_clust_ks, function(k) kmeans(marketing_data, k))
 ```
 
-What the above `map` call does is for each value in the thing we are iterating 
-over (here `k`), it passes it to whatever we name inside of `function()`, here 
-`ks`. And then that value is passed into that same name in the code that follows 
-`function()` and it is executed. 
+The anonymous function in the above call is `function(k) kmeans(marketing_data, k)`.
+This function takes a single argument (`k`) and evaluates `kmeans(marketing_data, k)`.
+Since `k` is the *first* (and only) argument to the function, we can use `map` just
+like we did before! The rest of the call above does just that -- it passes each row of
+`marketing_clust_ks` to our anonymous function.
 
-Below we execute this `map` call inside of a `mutate` function in our 
+Below, we execute this `map` call inside of a `mutate` call on the 
 `marketing_clust_ks` data frame and get a list column that contains a K-means
 clustering object for each value of K we had:
 
@@ -532,8 +531,7 @@ marketing_clust_ks <- tibble(k = 1:9) %>%
 marketing_clust_ks
 ```
 
-
-Next, we use `map` again to then apply `glance` to each of the K-means
+Next, we use `map` again to apply `glance` to each of the K-means
 clustering objects to get the clustering statistics (including WSSD). The output
 of glance is a data frame, and so we get another list column. This results in a 
 complex data frame with 3 columns, one for K, one for the 
@@ -600,7 +598,6 @@ elbow_plot
 ## Additional resources
 
 For more about clustering and K-means, refer to pages 385-390 and 404-405 
-of [Introduction to Statistical Learning with Applications in R](http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf) [-@james2013introduction] by Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani, as well
-as the companion video linked to below:
+of [Introduction to Statistical Learning with Applications in R](http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf) [-@james2013introduction]. We have also linked a helpful companion video below:
 
 <iframe width="840" height="473" src="https://www.youtube.com/embed/aIybuNt9ps4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
