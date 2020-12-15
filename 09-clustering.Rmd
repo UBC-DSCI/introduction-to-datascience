@@ -1,5 +1,9 @@
 # Clustering {#clustering}
 
+```{r 09-clustering, echo = FALSE, message = FALSE, warning = FALSE}
+knitr::opts_chunk$set(warning = FALSE)
+```
+
 ## Overview 
 As part of exploratory data analysis, it is often helpful to see if there are
 meaningful subgroups (or *clusters*) in the data; this grouping can be used to
@@ -61,7 +65,7 @@ courses.
 **An illustrative example** 
 
 Here we will present an illustrative example using a simulated data set. Suppose 
-we have customer data with two variables measuring customer loyalty and 
+we have data with two variables measuring customer loyalty and 
 satisfaction, and we want to learn whether there are distinct "types"
 of customer. Understanding this might help us come up with better products or
 promotions to improve our business in a data-driven way.
@@ -77,7 +81,7 @@ marketing_data <- data[,1:2]
 marketing_data
 ```
 
-```{r 10-toy-example-plot, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Modified from http://www.segmentationstudyguide.com/using-cluster-analysis-for-market-segmentation/"}
+```{r 10-toy-example-plot, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Simulated data of customer loyalty versus satisfaction. Example derived from @custexample"}
 base <- ggplot(data, aes(y = loyalty, x = csat)) +
   geom_point() +
   xlab("Customer satisfaction") +
@@ -206,9 +210,9 @@ sum of WSSDs over all the clusters, i.e. the *total WSSD*:
 These two steps are repeated until the cluster assignments no longer change.
 For example, in the customer data example from earlier, our initialization might look like this:
 <center>
-```{r 10-toy-kmeans-init, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Random initialization of labels."}
+```{r 10-toy-kmeans-init, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Random initialization of labels."}
 library(gridExtra)
-set.seed(16)
+set.seed(14)
 marketing_data["label"] = factor(sample(1:3, nrow(marketing_data), replace=T))
 
 plt_lbl <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
@@ -222,13 +226,13 @@ print(plt_lbl)
 ```
 </center>
 
-And the first three iterations of K-means would look like (each row corresponds to an iteration,
+And the first four iterations of K-means would look like (each row corresponds to an iteration,
 where the left column depicts the center update, 
 and the right column depicts the reassignment of data to clusters): 
 <center>
 **Center Update**  &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp;**Label Update**
 ```{r 10-toy-kmeans-iter, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 8}
-for (i in 1:3){
+for (i in 1:4){
     #compute centers
     centers <- marketing_data %>% group_by(label) %>% summarize_all(funs(mean))
     nclus = nrow(centers)
@@ -269,7 +273,7 @@ for (i in 1:3){
 </center>
 
 Note that at this point we can terminate the algorithm, since none of the assignments changed
-in the third iteration; both the centers and labels will remain the same from this point onward.
+in the fourth iteration; both the centers and labels will remain the same from this point onward.
 
 > Is K-means *guaranteed* to stop at some point, or could it iterate forever? As it turns out,
 > the answer is thankfully that K-means is guaranteed to stop after *some* number of iterations. For the interested reader, the
@@ -451,7 +455,7 @@ algorithm uses a random initialization of assignments, we need to set the random
 seed to make the clustering reproducible.
 
 ```{r 10-kmeans}
-set.seed(12345)
+set.seed(1234)
 marketing_clust <- kmeans(marketing_data, centers = 3)
 marketing_clust
 ```
@@ -466,9 +470,8 @@ frame, and returns a data frame with the data and the cluster assignments for
 each point:
 
 ```{r 10-plot-clusters-1}
-
 clustered_data <- augment(marketing_clust, marketing_data)
-head(clustered_data)
+clustered_data
 ```
 
 Now that we have this data frame, we can easily plot the data (i.e., cluster assignments of each point):
@@ -545,7 +548,7 @@ K-means clustering objects, and one for the clustering statistics:
 marketing_clust_ks <- tibble(k = 1:9) %>%
   mutate(marketing_clusts = map(k, ~kmeans(marketing_data, .x)),
          glanced = map(marketing_clusts, glance)) 
-head(marketing_clust_ks)
+marketing_clust_ks
 ```
 
 Finally we extract the total WSSD from the `glanced` column. Given that each 
@@ -556,7 +559,7 @@ to unpack the data frames into simpler column data types.
 clustering_statistics <- marketing_clust_ks %>%
   unnest(glanced)
 
-head(clustering_statistics)
+clustering_statistics
 ```
 
 Now that we have `tot.withinss` and `k` as columns in a data frame, we can make a line plot 
@@ -576,7 +579,7 @@ elbow_plot
 It looks like 3 clusters is the right choice for this data.
 But why is there a "bump" in the total WSSD plot here? Shouldn't total WSSD always
 decrease as we add more clusters? Technically yes, but remember:  K-means can 
-get "stuck" in a bad solution. Unfortunately, for K = 5 we had an unlucky initialization
+get "stuck" in a bad solution. Unfortunately, for K = 6 we had an unlucky initialization
 and found a bad clustering! We can help prevent finding a bad clustering by trying a 
 few different random initializations via the `nstart` argument (here we use 10 restarts). 
 
@@ -602,7 +605,7 @@ elbow_plot
 ## Additional resources
 
 For more about clustering and K-means, refer to pages 385-390 and 404-405 
-of [Introduction to Statistical Learning with Applications in R](http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf) by Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani, as well
+of [Introduction to Statistical Learning with Applications in R](http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf) [-@james2013introduction] by Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani, as well
 as the companion video linked to below:
 
 <iframe width="840" height="473" src="https://www.youtube.com/embed/aIybuNt9ps4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
