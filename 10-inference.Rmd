@@ -1,14 +1,14 @@
 # Introduction to Statistical Inference {#inference}
 
 ```{r 11-setup, include= F}
-library(tidyverse) 
+library(tidyverse)
 require(grid) #  grid.bezier()
 
 max_count <- function(dist) {
   max(ggplot_build(dist)$data[[1]]$count)
 }
 
-max_x <- function(dist){ 
+max_x <- function(dist) {
   max(ggplot_build(dist)$data[[1]]$xmax)
 }
 
@@ -88,8 +88,8 @@ Let's start with an illustrative (and tasty!) example. Timbits are
 bite-sized doughnuts sold at Tim Hortons, a popular Canadian-based fast-food restaurant
 chain founded in Hamilton, Ontario, Canada. 
 
-```{r 11-timbits-picture, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Timbits. Source: wikimedia.org", fig.retina = 2, out.width = "50%"}
-knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Timbits2.jpg/1600px-Timbits2.jpg")
+```{r 11-timbits-picture, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "A box of Timbits", fig.retina = 2, out.width = "30%"}
+knitr::include_graphics("img/timbits.jpg")
 ```
 
 
@@ -102,14 +102,16 @@ inferential concepts. Below we have a `tibble()` called `virtual_box` with a Tim
 ```{r 11-example-proportions, echo = FALSE, message = FALSE, warning = FALSE}
 library(gridExtra)
 set.seed(1234)
-virtual_box <- tibble(timbit_id = seq(1, 10000, by = 1),
-                     flavour = factor(rbinom(10000, 1, 0.63),
-                     labels = c("old fashioned", "chocolate")))
-
+virtual_box <- tibble(
+  timbit_id = seq(1, 10000, by = 1),
+  flavour = factor(rbinom(10000, 1, 0.63),
+    labels = c("old fashioned", "chocolate")
+  )
+)
 ```
 
 ```{r 11-example-proportions1}
-library(tidyverse) 
+library(tidyverse)
 library(infer)
 virtual_box
 ```
@@ -118,10 +120,12 @@ From our simulated box, we can see that the proportion of chocolate Timbits is
 0.63. This value, 0.63, is the *population parameter*. Note that this parameter value is usually unknown in real data analysis problems.
 
 ```{r 11-example-proportions2, echo = TRUE, message = FALSE, warning = FALSE}
-virtual_box %>% 
-    group_by(flavour) %>% 
-    summarize(n = n(),
-             proportion = n() / 10000)
+virtual_box %>%
+  group_by(flavour) %>%
+  summarize(
+    n = n(),
+    proportion = n() / 10000
+  )
 ```
 
 What would happen if we were to buy a box of 40 randomly-selected Timbits and count the number of chocolate Timbits (*i.e.,* take a random sample of size 40 from our Timbits population)? Let's use R to simulate this using our `virtual_box` population. We can do this using the `rep_sample_n` function from the `infer` package. The arguments
@@ -130,9 +134,10 @@ of `rep_sample_n` are (1) the data frame (or tibble) to sample from, and (2) the
 ```{r 11-example-proportions3, echo = TRUE, message = FALSE, warning = FALSE}
 set.seed(1)
 samples_1 <- rep_sample_n(tbl = virtual_box, size = 40)
-choc_sample_1 <- summarize(samples_1, 
-                           n = sum(flavour == "chocolate"),
-                           prop = sum(flavour == "chocolate") / 40)
+choc_sample_1 <- summarize(samples_1,
+  n = sum(flavour == "chocolate"),
+  prop = sum(flavour == "chocolate") / 40
+)
 choc_sample_1
 ```
 Here we see that the proportion of chocolate Timbits in this random sample is
@@ -146,8 +151,10 @@ again and see what happens.
 ```{r 11-example-proportions4, echo = TRUE, message = FALSE, warning = FALSE}
 set.seed(2)
 samples_2 <- rep_sample_n(virtual_box, size = 40)
-choc_sample_2 <- summarize(samples_2, n = sum(flavour == "chocolate"),
-                                        prop = sum(flavour == "chocolate") / 40)
+choc_sample_2 <- summarize(samples_2,
+  n = sum(flavour == "chocolate"),
+  prop = sum(flavour == "chocolate") / 40
+)
 choc_sample_2
 ```
 
@@ -179,17 +186,17 @@ Notice the column `replicate` is indicating the replicate, or sample, with which
 Timbit belongs. Since we took 15,000 samples of size 40, there are 15,000 replicates.
 Now that we have taken 15,000 samples, to create a sampling distribution of sample proportions for samples of size 40, we need to calculate the proportion of chocolate Timbits for each sample, $\hat{p}_\text{chocolate}$:
 ```{r 11-example-proportions6, echo = TRUE, message = FALSE, warning = FALSE}
-sample_estimates <- samples %>% 
-    group_by(replicate) %>% 
-    summarise(sample_proportion = sum(flavour == "chocolate") / 40)
+sample_estimates <- samples %>%
+  group_by(replicate) %>%
+  summarise(sample_proportion = sum(flavour == "chocolate") / 40)
 head(sample_estimates)
 tail(sample_estimates)
 ```
 Now that we have calculated the proportion of chocolate Timbits for each sample, $\hat{p}_\text{chocolate}$, we can visualize the sampling distribution of sample proportions for samples of size 40:
 ```{r 11-example-proportions7, echo = TRUE, message = FALSE, warning = FALSE,fig.cap = "Sampling distribution of the sample proportion for sample size 40", out.width = "60%"}
-sampling_distribution <-  ggplot(sample_estimates, aes(x = sample_proportion)) +
-    geom_histogram(fill="dodgerblue3", color="lightgrey", bins = 12) +
-    xlab("Sample proportions") 
+sampling_distribution <- ggplot(sample_estimates, aes(x = sample_proportion)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey", bins = 12) +
+  xlab("Sample proportions")
 sampling_distribution
 ```
 
@@ -200,7 +207,7 @@ about `r round(max(sample_estimates$sample_proportion), 1)`. In fact, we can cal
 the mean of the sample proportions. 
 
 ```{r 11-example-proportions8, echo = TRUE, message = FALSE, warning = FALSE}
-sample_estimates %>% 
+sample_estimates %>%
   summarise(mean = mean(sample_proportion))
 ```
 We notice that the sample proportions are centred around the population proportion value, `r round(mean(sample_estimates$sample_proportion), 2)`! In general, the mean of the distribution of $\hat{p}$ should be equal to $p$, which is good because that means the sample proportion is neither an overestimate nor an underestimate of the population proportion.
@@ -221,20 +228,20 @@ Our data contains an ID number, neighbourhood,
 type of room, the number of people the rental accommodates, number of bathrooms, bedrooms, beds, and the price per night.
 
 ```{r 11-example-means1, echo = FALSE, message = FALSE, warning = FALSE}
-airbnb <- read_csv("data/listings.csv") %>% 
-  select(id, neighbourhood = neighbourhood_cleansed, room_type, accommodates, bathrooms = bathrooms_text, bedrooms, beds,  price) %>% 
-  mutate(price = as.numeric(str_remove(price, "[$]"))) %>% 
+airbnb <- read_csv("data/listings.csv") %>%
+  select(id, neighbourhood = neighbourhood_cleansed, room_type, accommodates, bathrooms = bathrooms_text, bedrooms, beds, price) %>%
+  mutate(price = as.numeric(str_remove(price, "[$]"))) %>%
   na.omit()
-airbnb <- airbnb %>% 
+airbnb <- airbnb %>%
   mutate(id = 1:nrow(airbnb))
 head(airbnb)
 ```
 
 We can visualize the population distribution of the price per night with a histogram. 
 ```{r 11-example-means2, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Population distribution of price per night ($) for all Airbnb listings in Vancouver, Canada", out.width = "60%"}
-population_distribution <-  ggplot(airbnb, aes(x = price)) +
-    geom_histogram(fill="dodgerblue3", color="lightgrey") +
-    xlab("Price per night ($)") 
+population_distribution <- ggplot(airbnb, aes(x = price)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  xlab("Price per night ($)")
 population_distribution
 ```
 We see that the distribution has one peak and is skewed&mdash;most of the listings
@@ -243,8 +250,8 @@ than that, creating a long tail on the histogram's right side.
 
 We can also calculate the population mean, the average price per night for all the Airbnb listings. 
 ```{r 11-example-means-popmean, echo = TRUE, message = FALSE, warning = FALSE}
-population_parameters <- airbnb %>% 
-    summarize(pop_mean = mean(price))
+population_parameters <- airbnb %>%
+  summarize(pop_mean = mean(price))
 population_parameters
 ```
 The price per night of all Airbnb rentals in Vancouver, BC is \$`r round(population_parameters$pop_mean,2)`, on average. This value is our population parameter since we are calculating it using the population data. 
@@ -256,15 +263,15 @@ distribution of observations in the sample,
 and calculate the mean of our sample. This number is a **point estimate** for the mean of the full population.
 
 ```{r 11-example-means3, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Distribution of price per night ($) for sample of 40 Airbnb listings", out.width = "60%"}
-sample_1 <- airbnb %>% 
-    rep_sample_n(40)
+sample_1 <- airbnb %>%
+  rep_sample_n(40)
 head(sample_1)
-sample_distribution <- ggplot(sample_1, aes(price)) + 
-    geom_histogram(fill="dodgerblue3", color="lightgrey") +
-    xlab("Price per night ($)") 
+sample_distribution <- ggplot(sample_1, aes(price)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  xlab("Price per night ($)")
 sample_distribution
-estimates <- sample_1 %>% 
-    summarize(sample_mean = mean(price))
+estimates <- sample_1 %>%
+  summarize(sample_mean = mean(price))
 estimates
 ```
 Recall that the population mean 
@@ -285,14 +292,14 @@ for this variation. In this case, we'll use 15,000 samples of size 40.
 samples <- rep_sample_n(airbnb, size = 40, reps = 15000)
 head(samples)
 
-sample_estimates <- samples %>% 
-    group_by(replicate) %>% 
-    summarise(sample_mean = mean(price))
+sample_estimates <- samples %>%
+  group_by(replicate) %>%
+  summarise(sample_mean = mean(price))
 head(sample_estimates)
 
-sampling_distribution_40 <-  ggplot(sample_estimates, aes(x = sample_mean)) +
-    geom_histogram(fill="dodgerblue3", color="lightgrey") + 
-    xlab("Sample mean price per night ($)") 
+sampling_distribution_40 <- ggplot(sample_estimates, aes(x = sample_mean)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  xlab("Sample mean price per night ($)")
 sampling_distribution_40
 ```
 
@@ -309,7 +316,7 @@ distribution, distribution of the sample, and the sampling distribution on one
 plot to compare them.
 <!---
 ```{r 11-example-means4.5}
-sample_estimates %>% 
+sample_estimates %>%
   summarise(mean_of_sample_means = mean(sample_mean))
 ```
 Notice that the mean of the sample means is \$`r round(mean(sample_estimates$sample_mean),2)`. Recall that the population mean
@@ -317,15 +324,17 @@ was \$`r round(mean(airbnb$price),2)`.
 -->
 
 ```{r 11-example-means5, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of population distribution, sample distribution and sampling distribution", out.width = "70%"}
-grid.arrange(population_distribution + 
-               ggtitle("Population") + 
-               xlim(min(airbnb$price), 600),
-             sample_distribution + 
-               ggtitle("Sample (n = 40)") + 
-               xlim(min(airbnb$price), 600), 
-             sampling_distribution_40 + 
-               ggtitle("Sampling distribution of the mean for samples of size 40") + 
-               xlim(min(airbnb$price), 600), nrow = 3)
+grid.arrange(population_distribution +
+  ggtitle("Population") +
+  xlim(min(airbnb$price), 600),
+sample_distribution +
+  ggtitle("Sample (n = 40)") +
+  xlim(min(airbnb$price), 600),
+sampling_distribution_40 +
+  ggtitle("Sampling distribution of the mean for samples of size 40") +
+  xlim(min(airbnb$price), 600),
+nrow = 3
+)
 ```
 
 Given that there is quite a bit of variation in the sampling distribution of the sample mean&mdash;i.e., 
@@ -335,87 +344,98 @@ we will take many samples of size 20, 50, 100, and 500, and plot the sampling di
 below. 
 
 ```{r 11-example-means6, echo = FALSE, message = FALSE, warning = FALSE}
-## Sampling n = 20, 50, 100, 500 
-sample_estimates_20 <- rep_sample_n(airbnb, size = 20, reps = 15000) %>% 
-    group_by(replicate) %>% 
-    summarise(sample_mean = mean(price))
+## Sampling n = 20, 50, 100, 500
+sample_estimates_20 <- rep_sample_n(airbnb, size = 20, reps = 15000) %>%
+  group_by(replicate) %>%
+  summarise(sample_mean = mean(price))
 
-sample_estimates_50 <- rep_sample_n(airbnb, size = 50, reps = 15000) %>% 
-    group_by(replicate) %>% 
-    summarise(sample_mean = mean(price))
+sample_estimates_50 <- rep_sample_n(airbnb, size = 50, reps = 15000) %>%
+  group_by(replicate) %>%
+  summarise(sample_mean = mean(price))
 
-sample_estimates_100 <- rep_sample_n(airbnb, size = 100, reps = 15000) %>% 
-    group_by(replicate) %>% 
-    summarise(sample_mean = mean(price))
+sample_estimates_100 <- rep_sample_n(airbnb, size = 100, reps = 15000) %>%
+  group_by(replicate) %>%
+  summarise(sample_mean = mean(price))
 
-sample_estimates_500 <- rep_sample_n(airbnb, size = 500, reps = 15000) %>% 
-    group_by(replicate) %>% 
-    summarise(sample_mean = mean(price))
+sample_estimates_500 <- rep_sample_n(airbnb, size = 500, reps = 15000) %>%
+  group_by(replicate) %>%
+  summarise(sample_mean = mean(price))
 
-## Sampling distribution n = 20 
-sampling_distribution_20 <-  ggplot(sample_estimates_20, aes(x = sample_mean)) +
-    geom_histogram(fill="dodgerblue3", color="lightgrey") +
-    xlab("Sample mean price per night($)") +
-    ggtitle("n = 20") 
+## Sampling distribution n = 20
+sampling_distribution_20 <- ggplot(sample_estimates_20, aes(x = sample_mean)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  xlab("Sample mean price per night($)") +
+  ggtitle("n = 20")
 
-## Sampling distribution n = 50 
-sampling_distribution_50 <-  ggplot(sample_estimates_50, aes(x = sample_mean)) +
-    geom_histogram(fill="dodgerblue3", color="lightgrey") +
-    xlab("Sample mean price per night($)") +
-    ggtitle("n = 50") + xlim(min_x(sampling_distribution_20), max_x(sampling_distribution_20))
+## Sampling distribution n = 50
+sampling_distribution_50 <- ggplot(sample_estimates_50, aes(x = sample_mean)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  xlab("Sample mean price per night($)") +
+  ggtitle("n = 50") +
+  xlim(min_x(sampling_distribution_20), max_x(sampling_distribution_20))
 
-## Sampling distribution n = 100 
-sampling_distribution_100 <-  ggplot(sample_estimates_100, aes(x = sample_mean)) +
-    geom_histogram(fill="dodgerblue3", color="lightgrey") +
-    xlab("Sample mean price per night ($)") +
-    ggtitle("n = 100") + xlim(min_x(sampling_distribution_20), max_x(sampling_distribution_20))
+## Sampling distribution n = 100
+sampling_distribution_100 <- ggplot(sample_estimates_100, aes(x = sample_mean)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  xlab("Sample mean price per night ($)") +
+  ggtitle("n = 100") +
+  xlim(min_x(sampling_distribution_20), max_x(sampling_distribution_20))
 
-## Sampling distribution n = 500 
-sampling_distribution_500 <-  ggplot(sample_estimates_500, aes(x = sample_mean)) +
-    geom_histogram(fill="dodgerblue3", color="lightgrey") +
-    xlab("Sample mean price per night ($)") +
-    ggtitle("n = 500") + xlim(min_x(sampling_distribution_20), max_x(sampling_distribution_20))
-
+## Sampling distribution n = 500
+sampling_distribution_500 <- ggplot(sample_estimates_500, aes(x = sample_mean)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  xlab("Sample mean price per night ($)") +
+  ggtitle("n = 500") +
+  xlim(min_x(sampling_distribution_20), max_x(sampling_distribution_20))
 ```
 
 ```{r 11-example-means7,  echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of sampling distributions"}
-annotated_sampling_dist_20 <- sampling_distribution_20 + 
-    geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red") +
-    xlim(min_x(sampling_distribution_20), max_x(sampling_distribution_20)) + 
-    ggtitle("n = 20") + 
-    annotate("text", x = max_x(sampling_distribution_20), y= max_count(sampling_distribution_20), hjust = 1, vjust = 1,
-             label = paste("mean = ", round(mean(sample_estimates$sample_mean), 1)))
+annotated_sampling_dist_20 <- sampling_distribution_20 +
+  geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red") +
+  xlim(min_x(sampling_distribution_20), max_x(sampling_distribution_20)) +
+  ggtitle("n = 20") +
+  annotate("text",
+    x = max_x(sampling_distribution_20), y = max_count(sampling_distribution_20), hjust = 1, vjust = 1,
+    label = paste("mean = ", round(mean(sample_estimates$sample_mean), 1))
+  )
 #+
 #    annotate("text", x =  max_x(sampling_distribution_20), y = max_count(sampling_distribution_20), hjust = 1, vjust = 3,
 #               label = paste("sd = ", round(sd(sample_estimates$sample_mean), 1)))
 
-annotated_sampling_dist_50 <- sampling_distribution_50 + 
-    geom_vline(xintercept = mean(sample_estimates_50$sample_mean), col = "red") +
-    ## x limits set the same as n = 20 graph, y is this graph 
-    annotate("text", x = max_x(sampling_distribution_20), y= max_count(sampling_distribution_50), hjust = 1, vjust = 1,
-             label = paste("mean = ", round(mean(sample_estimates_50$sample_mean), 1))) #+
-   # annotate("text", x =  max_x(sampling_distribution_20), y = max_count(sampling_distribution_50), hjust = 1, vjust = 3,
+annotated_sampling_dist_50 <- sampling_distribution_50 +
+  geom_vline(xintercept = mean(sample_estimates_50$sample_mean), col = "red") +
+  ## x limits set the same as n = 20 graph, y is this graph
+  annotate("text",
+    x = max_x(sampling_distribution_20), y = max_count(sampling_distribution_50), hjust = 1, vjust = 1,
+    label = paste("mean = ", round(mean(sample_estimates_50$sample_mean), 1))
+  ) #+
+# annotate("text", x =  max_x(sampling_distribution_20), y = max_count(sampling_distribution_50), hjust = 1, vjust = 3,
 #                 label = paste("sd = ", round(sd(sample_estimates_50$sample_mean), 1)))
 
-annotated_sampling_dist_100 <- sampling_distribution_100 + 
-    geom_vline(xintercept = mean(sample_estimates_100$sample_mean), col = "red") +
-    annotate("text", x =  max_x(sampling_distribution_20), y = max_count(sampling_distribution_100), hjust = 1, vjust = 1,
-             label = paste("mean = ", round(mean(sample_estimates_100$sample_mean), 1)))#+
+annotated_sampling_dist_100 <- sampling_distribution_100 +
+  geom_vline(xintercept = mean(sample_estimates_100$sample_mean), col = "red") +
+  annotate("text",
+    x = max_x(sampling_distribution_20), y = max_count(sampling_distribution_100), hjust = 1, vjust = 1,
+    label = paste("mean = ", round(mean(sample_estimates_100$sample_mean), 1))
+  ) #+
 #    annotate("text", x =  max_x(sampling_distribution_20), y = max_count(sampling_distribution_100), hjust = 1, vjust = 3,
 #               label = paste("sd = ", round(sd(sample_estimates_100$sample_mean), 1)))
 
-annotated_sampling_dist_500 <- sampling_distribution_500 + 
-    geom_vline(xintercept = mean(sample_estimates_500$sample_mean), col = "red") +
-    annotate("text", x =  max_x(sampling_distribution_20), y = max_count(sampling_distribution_500), hjust = 1, vjust = 1,
-             label = paste("mean = ", round(mean(sample_estimates_500$sample_mean), 1)))#+
+annotated_sampling_dist_500 <- sampling_distribution_500 +
+  geom_vline(xintercept = mean(sample_estimates_500$sample_mean), col = "red") +
+  annotate("text",
+    x = max_x(sampling_distribution_20), y = max_count(sampling_distribution_500), hjust = 1, vjust = 1,
+    label = paste("mean = ", round(mean(sample_estimates_500$sample_mean), 1))
+  ) #+
 #    annotate("text", x =  max_x(sampling_distribution_20), y = max_count(sampling_distribution_500), hjust = 1, vjust = 3,
 #               label = paste("sd = ", round(sd(sample_estimates_500$sample_mean), 1)))
 
-grid.arrange(annotated_sampling_dist_20, 
-             annotated_sampling_dist_50, 
-             annotated_sampling_dist_100,  
-             annotated_sampling_dist_500,  
-             nrow = 2, ncol = 2) 
+grid.arrange(annotated_sampling_dist_20,
+  annotated_sampling_dist_50,
+  annotated_sampling_dist_100,
+  annotated_sampling_dist_500,
+  nrow = 2, ncol = 2
+)
 ```
 
 Based on the visualization, two points about the sample mean become clear.
@@ -459,46 +479,52 @@ Here is the key idea. First, if you take a big enough sample, it *looks like* th
 
 ```{r 11-example-bootstrapping0, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of samples of different sizes from the population"}
 
-sample_10 <- airbnb %>% 
-    rep_sample_n(10)
-sample_distribution_10 <- ggplot(sample_10, aes(price)) + 
-    geom_histogram(fill="dodgerblue3", color="lightgrey") +
-    xlab("Price per night ($)") + ggtitle("n = 10")
+sample_10 <- airbnb %>%
+  rep_sample_n(10)
+sample_distribution_10 <- ggplot(sample_10, aes(price)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  xlab("Price per night ($)") +
+  ggtitle("n = 10")
 
-sample_20 <- airbnb %>% 
-    rep_sample_n(20)
-sample_distribution_20 <- ggplot(sample_20, aes(price)) + 
-    geom_histogram(fill="dodgerblue3", color="lightgrey") +
-    xlab("Price per night ($)") + ggtitle("n = 20")
-sample_50 <- airbnb %>% 
-    rep_sample_n(50)
-sample_distribution_50 <- ggplot(sample_50, aes(price)) + 
-    geom_histogram(fill="dodgerblue3", color="lightgrey") +
-    xlab("Price per night ($)") + ggtitle("n = 50")
-sample_100 <- airbnb %>% 
-    rep_sample_n(100)
-sample_distribution_100 <- ggplot(sample_100, aes(price)) + 
-    geom_histogram(fill="dodgerblue3", color="lightgrey") +
-    xlab("Price per night ($)") + ggtitle("n = 100")
+sample_20 <- airbnb %>%
+  rep_sample_n(20)
+sample_distribution_20 <- ggplot(sample_20, aes(price)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  xlab("Price per night ($)") +
+  ggtitle("n = 20")
+sample_50 <- airbnb %>%
+  rep_sample_n(50)
+sample_distribution_50 <- ggplot(sample_50, aes(price)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  xlab("Price per night ($)") +
+  ggtitle("n = 50")
+sample_100 <- airbnb %>%
+  rep_sample_n(100)
+sample_distribution_100 <- ggplot(sample_100, aes(price)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  xlab("Price per night ($)") +
+  ggtitle("n = 100")
 
-sample_200 <- airbnb %>% 
-    rep_sample_n(200)
-sample_distribution_200 <- ggplot(sample_200, aes(price)) + 
-    geom_histogram(fill="dodgerblue3", color="lightgrey") +
-    xlab("Price per night ($)") + ggtitle("n = 200")
+sample_200 <- airbnb %>%
+  rep_sample_n(200)
+sample_distribution_200 <- ggplot(sample_200, aes(price)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  xlab("Price per night ($)") +
+  ggtitle("n = 200")
 
-grid.arrange(sample_distribution_10 + xlim(min(airbnb$price), 600), 
-             sample_distribution_20+ xlim(min(airbnb$price), 600),
-             sample_distribution_50+ xlim(min(airbnb$price), 600), 
-             sample_distribution_100+ xlim(min(airbnb$price), 600),
-             sample_distribution_200+ xlim(min(airbnb$price), 600),
-             population_distribution + ggtitle("Population distribution") + xlim(min(airbnb$price), 600),
-             ncol = 2)
-             #widths = c(2, 3),
-            # layout_matrix =  rbind(c(1, 2),
-                                 #   c(1, 3),
-                                  #  c(1, 4),
-                                  #  c(1, 5)))
+grid.arrange(sample_distribution_10 + xlim(min(airbnb$price), 600),
+  sample_distribution_20 + xlim(min(airbnb$price), 600),
+  sample_distribution_50 + xlim(min(airbnb$price), 600),
+  sample_distribution_100 + xlim(min(airbnb$price), 600),
+  sample_distribution_200 + xlim(min(airbnb$price), 600),
+  population_distribution + ggtitle("Population distribution") + xlim(min(airbnb$price), 600),
+  ncol = 2
+)
+# widths = c(2, 3),
+# layout_matrix =  rbind(c(1, 2),
+#   c(1, 3),
+#  c(1, 4),
+#  c(1, 5)))
 ```
 
 In the previous section, we took many samples of the same size *from our population* to get
@@ -522,8 +548,8 @@ For a sample of size $n$, the process we will go through is as follows:
 6. Repeat steps (1) - (5) many times to create a distribution of point estimates (the bootstrap distribution)
 7. Calculate the plausible range of values around our observed point estimate
 
-```{r 11-intro-bootstrap-image, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Overview of the bootstrap process", fig.retina = 2, out.width="60%"}
-knitr::include_graphics("img/intro-bootstrap.svg")
+```{r 11-intro-bootstrap-image, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Overview of the bootstrap process", fig.retina = 2, out.width="880"}
+knitr::include_graphics("img/intro-bootstrap.jpeg")
 ```
 ### Bootstrapping in R 
 Let's continue working with our Airbnb data. Once again,  let's say we are interested in estimating the population mean price per night of all Airbnb listings in
@@ -534,20 +560,20 @@ To simulate doing this in R, we will use `rep_sample_n` to take a random sample 
 After we have our sample, we will visualize it's distribution and calculate our point estimate, the sample mean.
 
 ```{r 11-bootstrapping1, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Histogram of price per night ($) for one sample of size 40", out.width = "60%"}
-one_sample <- airbnb %>% 
-    rep_sample_n(40) %>% 
-    ungroup() %>% # ungroup the data frame 
-    select(price) # drop the replicate column 
+one_sample <- airbnb %>%
+  rep_sample_n(40) %>%
+  ungroup() %>% # ungroup the data frame
+  select(price) # drop the replicate column
 head(one_sample)
-one_sample_dist <- ggplot(one_sample, aes(price)) + 
-    geom_histogram(fill="dodgerblue3", color="lightgrey") +
-    xlab("Price per night ($)") 
+one_sample_dist <- ggplot(one_sample, aes(price)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  xlab("Price per night ($)")
 one_sample_dist
 ```
 
 ```{r 11-bootstrapping2, echo = TRUE, message = FALSE, warning = FALSE}
-one_sample_estimates <- one_sample %>% 
-    summarise(sample_mean = mean(price))
+one_sample_estimates <- one_sample %>%
+  summarise(sample_mean = mean(price))
 one_sample_estimates
 ```
 
@@ -564,11 +590,11 @@ argument for `replace` from its default value of `FALSE` to `TRUE`.
 
 ```{r 11-bootstrapping3, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Bootstrap distribution", out.width = "60%"}
 boot1 <- one_sample %>%
-    rep_sample_n(size = 40, replace = TRUE, reps = 1)
+  rep_sample_n(size = 40, replace = TRUE, reps = 1)
 head(boot1)
-boot1_dist <- ggplot(boot1, aes(price)) + 
-    geom_histogram(fill="dodgerblue3", color="lightgrey") +
-    xlab("Price per night ($)") 
+boot1_dist <- ggplot(boot1, aes(price)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  xlab("Price per night ($)")
 
 boot1_dist
 
@@ -591,39 +617,39 @@ this is often the best we can do.
 
 ```{r 11-bootstrapping4, echo = TRUE, message = FALSE, warning = FALSE}
 boot15000 <- one_sample %>%
-    rep_sample_n(size = 40, replace = TRUE, reps = 15000)
+  rep_sample_n(size = 40, replace = TRUE, reps = 15000)
 head(boot15000)
 tail(boot15000)
 ```
 
 Let's take a look at histograms of the first six replicates of our bootstrap samples.
 ```{r 11-bootstrapping-six-bootstrap-samples, echo = TRUE, message = FALSE, warning = FALSE}
-six_bootstrap_samples <- boot15000 %>% 
+six_bootstrap_samples <- boot15000 %>%
   filter(replicate <= 6)
 ggplot(six_bootstrap_samples, aes(price)) +
-  geom_histogram(fill="dodgerblue3", color="lightgrey") + 
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   xlab("Price per night ($)") +
-  facet_wrap(~replicate) 
+  facet_wrap(~replicate)
 ```
 
 We see in the graph above how the bootstrap samples differ. We can also calculate the sample mean for each of these six replicates. 
 ```{r 11-bootstrapping-six-bootstrap-samples-means, echo = TRUE, message = FALSE, warning = FALSE}
-six_bootstrap_samples %>% 
-  group_by(replicate) %>% 
+six_bootstrap_samples %>%
+  group_by(replicate) %>%
   summarize(mean = mean(price))
 ```
 
 We can see that the bootstrap sample distributions and the sample means are different. This is because we are sampling with replacement. We will now calculate point estimates for our 15,000 bootstrap samples and generate a bootstrap distribution of our point estimates. The bootstrap distribution suggests how we might expect our point estimate to behave if we took another sample.
 
 ```{r 11-bootstrapping5, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Distribution of the bootstrap sample means"}
-boot15000_means <- boot15000 %>% 
-  group_by(replicate) %>% 
+boot15000_means <- boot15000 %>%
+  group_by(replicate) %>%
   summarize(mean = mean(price))
 head(boot15000_means)
 tail(boot15000_means)
-boot_est_dist <-  ggplot(boot15000_means, aes(x = mean)) +
-    geom_histogram(fill="dodgerblue3", color="lightgrey") +
-    xlab("Sample mean price per night ($)") 
+boot_est_dist <- ggplot(boot15000_means, aes(x = mean)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  xlab("Sample mean price per night ($)")
 ```
 
 Let's compare our bootstrap distribution with the true sampling distribution (taking many samples from the population). 
@@ -632,27 +658,32 @@ Let's compare our bootstrap distribution with the true sampling distribution (ta
 
 samples <- rep_sample_n(airbnb, size = 40, reps = 15000)
 
-sample_estimates <- samples %>% 
-    group_by(replicate) %>% 
-    summarise(sample_mean = mean(price))
+sample_estimates <- samples %>%
+  group_by(replicate) %>%
+  summarise(sample_mean = mean(price))
 
-sampling_dist <-  ggplot(sample_estimates, aes(x = sample_mean)) +
-    geom_histogram(fill="dodgerblue3", color="lightgrey") +
-    xlab("Sample mean price per night ($)")
+sampling_dist <- ggplot(sample_estimates, aes(x = sample_mean)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  xlab("Sample mean price per night ($)")
 
 sampling_dist <- sampling_dist +
-  annotate("text", x = max_x(sampling_dist), max_count(sampling_dist), hjust = 1, vjust =1,
-           label = paste("mean = ", round(mean(sample_estimates$sample_mean), 1))) + 
+  annotate("text",
+    x = max_x(sampling_dist), max_count(sampling_dist), hjust = 1, vjust = 1,
+    label = paste("mean = ", round(mean(sample_estimates$sample_mean), 1))
+  ) +
   geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red")
 
-annotated_boot_est_dist <- boot_est_dist + 
-  annotate("text", x = max_x(boot_est_dist), max_count(boot_est_dist), hjust = 1, vjust =1,
-           label = paste("mean = ", round(mean(boot15000_means$mean), 1))) + 
+annotated_boot_est_dist <- boot_est_dist +
+  annotate("text",
+    x = max_x(boot_est_dist), max_count(boot_est_dist), hjust = 1, vjust = 1,
+    label = paste("mean = ", round(mean(boot15000_means$mean), 1))
+  ) +
   geom_vline(xintercept = mean(boot15000_means$mean), col = "red")
 
-grid.arrange(sampling_dist + xlim(min_x(sampling_dist), max_x(sampling_dist)) + ggtitle("Sampling distribution"), 
-             annotated_boot_est_dist + xlim(min_x(sampling_dist), max_x(boot_est_dist)) + ggtitle("Bootstrap distribution"),
-             ncol = 2)
+grid.arrange(sampling_dist + xlim(min_x(sampling_dist), max_x(sampling_dist)) + ggtitle("Sampling distribution"),
+  annotated_boot_est_dist + xlim(min_x(sampling_dist), max_x(boot_est_dist)) + ggtitle("Bootstrap distribution"),
+  ncol = 2
+)
 ```
 
 There are two essential points that we can take away from these plots. First, the shape and spread of the true sampling distribution and the bootstrap distribution are similar; the bootstrap distribution lets us get a sense of the point estimate's variability. The second important point is that the means of these two distributions are different. The sampling distribution is centred at \$`r round(mean(airbnb$price),2)`, the population mean value. However, the bootstrap distribution is centred at the original sample's mean price per night, \$`r round(mean(boot15000_means$mean), 2)`. Because we are resampling from the original sample repeatedly, we see that the bootstrap distribution is centred at the original sample's mean value (unlike the sampling distribution of the sample mean, which is centred at the population parameter value). 
@@ -661,120 +692,147 @@ The idea here is that we can use this distribution of bootstrap sample means to 
 
 ```{r 11-bootstrapping7, echo = F, message = FALSE, warning = FALSE, fig.cap = "Summary of bootstrapping process"}
 pop_dist <- population_distribution + ggtitle("Population") + xlab("Price") +
-  theme(axis.ticks.x = element_blank(),
-        axis.text.x = element_blank(), 
-        axis.title.y =element_blank(), 
-        axis.ticks.y = element_blank(),
-        axis.text.y = element_blank())
+  theme(
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_blank()
+  )
 
-sam_dist <- one_sample_dist + ggtitle("Sample")+ xlab("Price") +
-  theme(axis.ticks.x = element_blank(),
-        axis.text.x = element_blank(), 
-        axis.title.y =element_blank(), 
-        axis.ticks.y = element_blank(),
-        axis.text.y = element_blank())
+sam_dist <- one_sample_dist + ggtitle("Sample") + xlab("Price") +
+  theme(
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_blank()
+  )
 set.seed(2)
 boot2 <- one_sample %>%
-    rep_sample_n(size = 40, replace = TRUE, reps = 1)
+  rep_sample_n(size = 40, replace = TRUE, reps = 1)
 
 set.seed(3)
 boot3 <- one_sample %>%
-    rep_sample_n(size = 40, replace = TRUE, reps = 1)
+  rep_sample_n(size = 40, replace = TRUE, reps = 1)
 
-boot1_dist <- boot1_dist + ggtitle("Samples with Replacement") + 
-  theme(axis.title.x = element_blank(), 
-        axis.ticks.x = element_blank(),
-        axis.text.x = element_blank(), 
-        axis.title.y =element_blank(), 
-        axis.ticks.y = element_blank(),
-        axis.text.y = element_blank())
-        
-boot2_dist <- ggplot(boot2, aes(price)) + 
-    geom_histogram(fill="dodgerblue3", color="lightgrey") + 
-  theme(axis.title.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.text.x = element_blank(), 
-        axis.title.y =element_blank(), 
-        axis.ticks.y = element_blank(),
-        axis.text.y = element_blank())
+boot1_dist <- boot1_dist + ggtitle("Samples with Replacement") +
+  theme(
+    axis.title.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_blank()
+  )
 
-boot3_dist <- ggplot(boot3, aes(price)) + 
-    geom_histogram(fill="dodgerblue3", color="lightgrey") + xlab("") +
-  theme(axis.ticks.x = element_blank(),
-        axis.text.x = element_blank(), 
-        axis.title.y =element_blank(), 
-        axis.ticks.y = element_blank(),
-        axis.text.y = element_blank()) 
+boot2_dist <- ggplot(boot2, aes(price)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  theme(
+    axis.title.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_blank()
+  )
 
-bootstrap_dist <- boot_est_dist+ ggtitle("Bootstrap \nDistribution") + xlab("Sample means") + 
-    theme(axis.ticks.x = element_blank(),
-        axis.text.x = element_blank(), 
-        axis.title.y =element_blank(), 
-        axis.ticks.y = element_blank(),
-        axis.text.y = element_blank()) 
+boot3_dist <- ggplot(boot3, aes(price)) +
+  geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
+  xlab("") +
+  theme(
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_blank()
+  )
 
-mygb = function(x,y) {
-  grid.bezier(x=x, y=y, gp=gpar(fill="black"), 
-              arrow=arrow(type="closed", length=unit(2,"mm")))}
+bootstrap_dist <- boot_est_dist + ggtitle("Bootstrap \nDistribution") + xlab("Sample means") +
+  theme(
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.title.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_blank()
+  )
 
-grid.arrange(pop_dist, 
-             sam_dist, 
-             boot1_dist, 
-             boot2_dist, 
-             boot3_dist,
-             bootstrap_dist,
+mygb <- function(x, y) {
+  grid.bezier(
+    x = x, y = y, gp = gpar(fill = "black"),
+    arrow = arrow(type = "closed", length = unit(2, "mm"))
+  )
+}
+
+grid.arrange(pop_dist,
+  sam_dist,
+  boot1_dist,
+  boot2_dist,
+  boot3_dist,
+  bootstrap_dist,
   widths = c(1, 1, 1, 1, 1),
-  layout_matrix = rbind(c(1, NA, 3, NA, 6),
-                        c(1, 2, 4, NA, 6),
-                        c(NA, NA, 5, NA, NA)
-))
+  layout_matrix = rbind(
+    c(1, NA, 3, NA, 6),
+    c(1, 2, 4, NA, 6),
+    c(NA, NA, 5, NA, NA)
+  )
+)
 
-grid.text(paste("mean =", round(mean(boot1$price)), sep = " "), x = unit(0.7, "npc"), 
-          y = unit(.8, "npc"),gp = gpar(fontsize=12))
-grid.text(paste("mean =", round(mean(boot2$price)), sep = " "), x = unit(0.7, "npc"), 
-          y = unit(.5, "npc"),gp = gpar(fontsize=12))
-grid.text(paste("mean =", round(mean(boot3$price)), sep = " "), x = unit(0.7, "npc"), 
-          y = unit(.2, "npc"),gp = gpar(fontsize=12))
-# arrows: pop to sample 
-mygb(x=c(0.15,0.3,0.3,0.3), y=c(0.8,0.8,0.65,0.65))
+grid.text(paste("mean =", round(mean(boot1$price)), sep = " "),
+  x = unit(0.7, "npc"),
+  y = unit(.8, "npc"), gp = gpar(fontsize = 12)
+)
+grid.text(paste("mean =", round(mean(boot2$price)), sep = " "),
+  x = unit(0.7, "npc"),
+  y = unit(.5, "npc"), gp = gpar(fontsize = 12)
+)
+grid.text(paste("mean =", round(mean(boot3$price)), sep = " "),
+  x = unit(0.7, "npc"),
+  y = unit(.2, "npc"), gp = gpar(fontsize = 12)
+)
+# arrows: pop to sample
+mygb(x = c(0.15, 0.3, 0.3, 0.3), y = c(0.8, 0.8, 0.65, 0.65))
 
 # arrows: sample to resamples
-mygb(x=c(0.35,0.35,0.42,0.42), y=c(0.55,0.55,0.8,0.8))
-mygb(x=c(0.35,0.35,0.42,0.42), y=c(0.5,0.5,0.5,0.5))
-mygb(x=c(0.35,0.35,0.42,0.42), y=c(0.45,0.45,0.2,0.2))
-mygb(x=c(0.35,0.35,0.42,0.42), y=c(0.4,0.4,0.03,0.03))
+mygb(x = c(0.35, 0.35, 0.42, 0.42), y = c(0.55, 0.55, 0.8, 0.8))
+mygb(x = c(0.35, 0.35, 0.42, 0.42), y = c(0.5, 0.5, 0.5, 0.5))
+mygb(x = c(0.35, 0.35, 0.42, 0.42), y = c(0.45, 0.45, 0.2, 0.2))
+mygb(x = c(0.35, 0.35, 0.42, 0.42), y = c(0.4, 0.4, 0.03, 0.03))
 
 # arrows: resamples to statistics
-mygb(x=c(0.57,0.57,0.62,0.62), y=c(0.8,0.8,0.8,0.8))
-mygb(x=c(0.57,0.57,0.62,0.62), y=c(0.5,0.5,0.5,0.5))
-mygb(x=c(0.57,0.57,0.62,0.62), y=c(0.2,0.2,0.2,0.2))
-mygb(x=c(0.57,0.57,0.62,0.62), y=c(0.02,0.02,0.02,0.02))
+mygb(x = c(0.57, 0.57, 0.62, 0.62), y = c(0.8, 0.8, 0.8, 0.8))
+mygb(x = c(0.57, 0.57, 0.62, 0.62), y = c(0.5, 0.5, 0.5, 0.5))
+mygb(x = c(0.57, 0.57, 0.62, 0.62), y = c(0.2, 0.2, 0.2, 0.2))
+mygb(x = c(0.57, 0.57, 0.62, 0.62), y = c(0.02, 0.02, 0.02, 0.02))
 
 # arrows: statistics to boot
-mygb(x=c(0.77,0.77,0.83,0.83), y=c(0.8,0.8,0.7,0.7))
-mygb(x=c(0.77,0.77,0.83,0.83), y=c(0.5,0.5,0.6,0.6))
-mygb(x=c(0.77,0.77,0.83,0.83), y=c(0.2,0.2,0.4,0.4))
-mygb(x=c(0.77,0.77,0.85,0.85), y=c(0.02,0.02,0.33,0.33))
+mygb(x = c(0.77, 0.77, 0.83, 0.83), y = c(0.8, 0.8, 0.7, 0.7))
+mygb(x = c(0.77, 0.77, 0.83, 0.83), y = c(0.5, 0.5, 0.6, 0.6))
+mygb(x = c(0.77, 0.77, 0.83, 0.83), y = c(0.2, 0.2, 0.4, 0.4))
+mygb(x = c(0.77, 0.77, 0.85, 0.85), y = c(0.02, 0.02, 0.33, 0.33))
 
-# many resamples 
-grid.text("many resamples...", x = unit(0.487, "npc"), 
-            y = unit(0.02, "npc"), gp = gpar(fontsize=10))
-  
-# arrow to many more means 
-grid.text("many means...", x = unit(0.7, "npc"), 
-            y = unit(0.02, "npc"),gp = gpar(fontsize=10))
- # grid.text(".", x = unit(0.45, "npc"), 
- #           y = unit(0.06, "npc"),gp = gpar(fontsize=15))
- # grid.text(".", x = unit(0.45, "npc"), 
- #           y = unit(0.025, "npc"),gp = gpar(fontsize=15))
- # 
- # grid.text(".", x = unit(0.7, "npc"), 
- #           y = unit(0.14, "npc"),gp = gpar(fontsize=15))
- # grid.text(".", x = unit(0.7, "npc"), 
- #           y = unit(0.16, "npc"),gp = gpar(fontsize=15))
- # grid.text(".", x = unit(0.7, "npc"), 
- #           y = unit(0.18, "npc"),gp = gpar(fontsize=15))
+# many resamples
+grid.text("many resamples...",
+  x = unit(0.487, "npc"),
+  y = unit(0.02, "npc"), gp = gpar(fontsize = 10)
+)
 
+# arrow to many more means
+grid.text("many means...",
+  x = unit(0.7, "npc"),
+  y = unit(0.02, "npc"), gp = gpar(fontsize = 10)
+)
+# grid.text(".", x = unit(0.45, "npc"),
+#           y = unit(0.06, "npc"),gp = gpar(fontsize=15))
+# grid.text(".", x = unit(0.45, "npc"),
+#           y = unit(0.025, "npc"),gp = gpar(fontsize=15))
+#
+# grid.text(".", x = unit(0.7, "npc"),
+#           y = unit(0.14, "npc"),gp = gpar(fontsize=15))
+# grid.text(".", x = unit(0.7, "npc"),
+#           y = unit(0.16, "npc"),gp = gpar(fontsize=15))
+# grid.text(".", x = unit(0.7, "npc"),
+#           y = unit(0.18, "npc"),gp = gpar(fontsize=15))
 ```
 
 ### Using the bootstrap to calculate a plausible range  
@@ -790,22 +848,26 @@ To calculate our 95\% percentile bootstrap confidence interval, we will do the f
 To do this in R, we can use the `quantile()` function:
 
 ```{r 11-bootstrapping8, echo = T, message = FALSE, warning = FALSE}
-bounds <- boot15000_means %>% 
-    select(mean) %>% 
-    pull() %>% 
-    quantile(c(0.025, 0.975))
+bounds <- boot15000_means %>%
+  select(mean) %>%
+  pull() %>%
+  quantile(c(0.025, 0.975))
 bounds
 ```
 
 Our interval, \$`r round(bounds[1],2) ` to \$`r round(bounds[2],2)`, captures the middle 95\% of the sample mean prices in the bootstrap distribution. We can visualize the interval on our distribution in the picture below. 
 
 ```{r 11-bootstrapping9, echo = F, message = FALSE, warning = FALSE, fig.cap = "Distribution of the bootstrap sample means with percentile lower and upper bounds", out.width = "70%"}
-boot_est_dist + 
-  geom_vline(xintercept = bounds, col = "#E69F00", size = 2, linetype = 2) + 
-  annotate("text", x = bounds[1], max_count(boot_est_dist), hjust = 0.5, vjust =2,
-           label = paste("2.5th percentile =", round(bounds[1], 2))) + 
-    annotate("text", x = bounds[2], max_count(boot_est_dist), hjust = 0.5, vjust =2,
-           label = paste("97.5th percentile =", round(bounds[2], 2)))
+boot_est_dist +
+  geom_vline(xintercept = bounds, col = "#E69F00", size = 2, linetype = 2) +
+  annotate("text",
+    x = bounds[1], max_count(boot_est_dist), hjust = 0.5, vjust = 2,
+    label = paste("2.5th percentile =", round(bounds[1], 2))
+  ) +
+  annotate("text",
+    x = bounds[2], max_count(boot_est_dist), hjust = 0.5, vjust = 2,
+    label = paste("97.5th percentile =", round(bounds[2], 2))
+  )
 ```
 
 To finish our estimation of the population parameter, we would report the point estimate and our confidence interval's lower and upper bounds. Here the sample mean price-per-night of 40 Airbnb listings was \$`r round(mean(sample_1$price),2)`, and we are 95\% "confident" that the true population mean price-per-night for all Airbnb listings in Vancouver is between \$(`r round(bounds[1],2)`, `r round(bounds[2],2)`).
@@ -816,7 +878,7 @@ practice, we would not know whether our interval captured the population paramet
 
 This chapter is only the beginning of the journey into statistical inference. We can extend the concepts learned here to do much more than report point estimates and confidence intervals, such as hypothesis testing for differences between populations, tests for associations between variables, and so much more! We have just scratched the surface of statistical inference; however, the material presented here will serve as the foundation for more advanced statistical techniques you may learn about in the future!
 
-## Additional readings
+## Additional resources
 
 For more about statistical inference and bootstrapping, refer to 
 

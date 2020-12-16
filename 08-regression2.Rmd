@@ -40,7 +40,7 @@ in purchasing with an advertised list price of
 To answer this question using simple linear regression, we use the data we have
 to draw the straight line of best fit through our existing data points:
 
-```{r 08-lin-reg1, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5}
+```{r 08-lin-reg1, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square footage) with line of best fit for subset of the Sacramento housing data set"}
 library(tidyverse)
 library(gridExtra)
 library(caret)
@@ -53,8 +53,8 @@ small_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
   geom_point() +
   xlab("House size (square footage)") +
   ylab("Price (USD)") +
-  scale_y_continuous(labels=dollar_format()) +
-  geom_smooth(method = "lm", se = FALSE) 
+  scale_y_continuous(labels = dollar_format()) +
+  geom_smooth(method = "lm", se = FALSE)
 small_plot
 ```
 
@@ -71,14 +71,14 @@ $\beta_0$ and $\beta_1$ that *parametrize* (correspond to) the line of best fit.
 Once we have the coefficients, we can use the equation above to evaluate the predicted price given the value we
 have for the predictor/explanatory variable&mdash;here 2,000 square feet. 
 
-```{r 08-lin-reg2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5}
+```{r 08-lin-reg2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square footage) with line of best fit and predicted price for a 2000 square foot home represented as a red dot"}
 small_model <- lm(price ~ sqft, data = small_sacramento)
 prediction <- predict(small_model, data.frame(sqft = 2000))
 
-small_plot + 
+small_plot +
   geom_vline(xintercept = 2000, linetype = "dotted") +
   geom_point(aes(x = 2000, y = prediction[[1]], color = "red", size = 2.5)) +
-  theme(legend.position="none")
+  theme(legend.position = "none")
 
 print(prediction[[1]])
 ```
@@ -90,12 +90,12 @@ exactly does simple linear regression choose the line of best fit? Many
 different lines could be drawn through the data points. We show some examples
 below:
 
-```{r 08-several-lines, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5}
+```{r 08-several-lines, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5,  fig.cap = "Scatter plot of price (USD) versus house size (square footage) with many possible lines that could be drawn through the data points"}
 
-small_plot + 
+small_plot +
   geom_abline(intercept = -64542.23, slope = 190, color = "green") +
   geom_abline(intercept = -6900, slope = 175, color = "purple") +
-  geom_abline(intercept = -64542.23, slope = 160, color = "red") 
+  geom_abline(intercept = -64542.23, slope = 160, color = "red")
 ```
 
 Simple linear regression chooses the straight line of best fit by choosing
@@ -105,13 +105,11 @@ line. What exactly do we mean by the vertical distance between the predicted
 values (which fall along the line of best fit) and the observed data points?
 We illustrate these distances in the plot below with a red line:
 
-```{r 08-verticalDistToMin,  echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5}
-small_sacramento <- small_sacramento %>% 
+```{r 08-verticalDistToMin,  echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square footage) with the vertical distances between the predicted values and the observed data points"}
+small_sacramento <- small_sacramento %>%
   mutate(predicted = predict(small_model))
 small_plot +
-  geom_segment(data = small_sacramento, aes(xend = sqft, yend = predicted), colour = "red") 
-
-
+  geom_segment(data = small_sacramento, aes(xend = sqft, yend = predicted), colour = "red")
 ```
 
 To assess the predictive accuracy of a simple linear regression model,
@@ -150,15 +148,15 @@ Now that we have our training data, we will create the model specification
 and recipe, and fit our simple linear regression model:
 ```{r 08-fitLM, fig.height = 4, fig.width = 5}
 lm_spec <- linear_reg() %>%
-            set_engine("lm") %>%
-            set_mode("regression")
+  set_engine("lm") %>%
+  set_mode("regression")
 
-lm_recipe <- recipe(price ~ sqft, data = sacramento_train) 
+lm_recipe <- recipe(price ~ sqft, data = sacramento_train)
 
 lm_fit <- workflow() %>%
-            add_recipe(lm_recipe) %>%
-            add_model(lm_spec) %>%
-            fit(data = sacramento_train)
+  add_recipe(lm_recipe) %>%
+  add_model(lm_spec) %>%
+  fit(data = sacramento_train)
 lm_fit
 ```
 Our coefficients are 
@@ -172,9 +170,9 @@ every extra square foot increases the cost of the house by \$`r format(round(pul
 
 ```{r 08-assessFinal}
 lm_test_results <- lm_fit %>%
-                predict(sacramento_test) %>%
-                bind_cols(sacramento_test) %>%
-                metrics(truth = price, estimate = .pred)
+  predict(sacramento_test) %>%
+  bind_cols(sacramento_test) %>%
+  metrics(truth = price, estimate = .pred)
 lm_test_results
 ```
 
@@ -196,14 +194,14 @@ plausible range to this line that we are not interested in at this point, so to
 avoid plotting it, we provide the argument `se = FALSE` in our call to
 `geom_smooth`.
 
-```{r 08-lm-predict-all, fig.height = 4, fig.width = 5, warning = FALSE, message = FALSE}
+```{r 08-lm-predict-all, fig.height = 4, fig.width = 5, warning = FALSE, message = FALSE, fig.cap = "Scatter plot of price (USD) versus house size (square footage) with line of best fit for complete Sacramento housing data set"}
 
 lm_plot_final <- ggplot(sacramento_train, aes(x = sqft, y = price)) +
-    geom_point(alpha = 0.4) +
-    xlab("House size (square footage)") +
-    ylab("Price (USD)") +
-    scale_y_continuous(labels = dollar_format())  +
-    geom_smooth(method = "lm", se = FALSE) 
+  geom_point(alpha = 0.4) +
+  xlab("House size (square footage)") +
+  ylab("Price (USD)") +
+  scale_y_continuous(labels = dollar_format()) +
+  geom_smooth(method = "lm", se = FALSE)
 lm_plot_final
 ```
 
@@ -226,50 +224,51 @@ simple linear regression model predictions for the Sacramento real estate data
 (predicting price from house size) and the "best" K-NN regression model
 obtained from the same problem:
 
-```{r 08-compareRegression, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 4, fig.width = 10}
+```{r 08-compareRegression, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 4, fig.width = 10, fig.cap = "Comparison of simple linear regression and K-NN regression"}
 set.seed(1234)
 sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 30) %>%
-            set_engine("kknn") %>%
-            set_mode("regression")
+  set_engine("kknn") %>%
+  set_mode("regression")
 
 sacr_wkflw <- workflow() %>%
-           add_recipe(sacr_recipe) %>%
-           add_model(sacr_spec)
+  add_recipe(sacr_recipe) %>%
+  add_model(sacr_spec)
 
 sacr_fit <- sacr_wkflw %>%
-   fit(data = sacramento_train)
+  fit(data = sacramento_train)
 
 sacr_preds <- sacr_fit %>%
-   predict(sacramento_train) %>%
-   bind_cols(sacramento_train)
+  predict(sacramento_train) %>%
+  bind_cols(sacramento_train)
 
 sacr_rmse <- sacr_preds %>%
-              metrics(truth = price, estimate = .pred) %>%
-              filter(.metric == 'rmse') %>%
-              pull(.estimate) %>%
-              round(2)
+  metrics(truth = price, estimate = .pred) %>%
+  filter(.metric == "rmse") %>%
+  pull(.estimate) %>%
+  round(2)
 
 sacr_rmspe <- sacr_fit %>%
-                predict(sacramento_test) %>%
-                bind_cols(sacramento_test) %>%
-                metrics(truth = price, estimate = .pred) %>%
-                filter(.metric == 'rmse') %>% 
-		pull(.estimate) %>% round()
+  predict(sacramento_test) %>%
+  bind_cols(sacramento_test) %>%
+  metrics(truth = price, estimate = .pred) %>%
+  filter(.metric == "rmse") %>%
+  pull(.estimate) %>%
+  round()
 
 
 knn_plot_final <- ggplot(sacr_preds, aes(x = sqft, y = price)) +
-            geom_point(alpha = 0.4) +
-            xlab("House size (square footage)") +
-            ylab("Price (USD)") +
-            scale_y_continuous(labels = dollar_format())  +
-            geom_line(data = sacr_preds, aes(x = sqft, y = .pred), color = "blue") +
-            ggtitle("K-NN regression") +
-            annotate("text", x = 3500, y = 100000, label = paste("RMSPE =", sacr_rmspe))
+  geom_point(alpha = 0.4) +
+  xlab("House size (square footage)") +
+  ylab("Price (USD)") +
+  scale_y_continuous(labels = dollar_format()) +
+  geom_line(data = sacr_preds, aes(x = sqft, y = .pred), color = "blue") +
+  ggtitle("K-NN regression") +
+  annotate("text", x = 3500, y = 100000, label = paste("RMSPE =", sacr_rmspe))
 
-lm_rmspe <- lm_test_results %>% 
-		filter(.metric == 'rmse') %>% 
-		pull(.estimate) %>%
-                round()
+lm_rmspe <- lm_test_results %>%
+  filter(.metric == "rmse") %>%
+  pull(.estimate) %>%
+  round()
 
 lm_plot_final <- lm_plot_final +
   annotate("text", x = 3500, y = 100000, label = paste("RMSPE =", lm_rmspe)) +
@@ -339,15 +338,15 @@ trying to predict. We will start by changing the formula in the recipe to
 include both the `sqft` and `beds` variables as predictors:
 
 ```{r 08-lm-mult-test-train-split}
-lm_recipe <- recipe(price ~ sqft + beds, data = sacramento_train) 
+lm_recipe <- recipe(price ~ sqft + beds, data = sacramento_train)
 ```
 
 Now we can build our workflow and fit the model:
 ```{r 08-fitlm}
 lm_fit <- workflow() %>%
-            add_recipe(lm_recipe) %>%
-            add_model(lm_spec) %>%
-            fit(data = sacramento_train)
+  add_recipe(lm_recipe) %>%
+  add_model(lm_spec) %>%
+  fit(data = sacramento_train)
 lm_fit
 ```
 
@@ -355,38 +354,44 @@ And finally, we predict on the test data set to assess how well our model does:
 
 ```{r 08-assessFinal-multi}
 lm_mult_test_results <- lm_fit %>%
-                predict(sacramento_test) %>%
-                bind_cols(sacramento_test) %>%
-                metrics(truth = price, estimate = .pred)
+  predict(sacramento_test) %>%
+  bind_cols(sacramento_test) %>%
+  metrics(truth = price, estimate = .pred)
 lm_mult_test_results
 ```
 
 In the case of two predictors, our linear regression creates a *plane* of best fit, shown below:
 
-```{r 08-3DlinReg, echo = FALSE, message = FALSE, warning = FALSE}
+```{r 08-3DlinReg, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Simple linear regression model’s predictions represented as a plane overlaid on top of the data using three predictors (price, house size, and the number of bedrooms)"}
 library(plotly)
 xvals <- seq(from = min(sacramento_train$sqft), to = max(sacramento_train$sqft), length = 50)
 yvals <- seq(from = min(sacramento_train$beds), to = max(sacramento_train$beds), length = 50)
 
 zvals <- lm_fit %>%
-                predict(crossing(xvals, yvals) %>% mutate(sqft = xvals, beds = yvals)) %>%
-                pull(.pred)
+  predict(crossing(xvals, yvals) %>% mutate(sqft = xvals, beds = yvals)) %>%
+  pull(.pred)
 
-zvalsm <- matrix(zvals, nrow=length(xvals))
+zvalsm <- matrix(zvals, nrow = length(xvals))
 
-plot_ly() %>% 
-  add_markers(data = sacramento_train,
-        x = ~sqft, 
-        y = ~beds,
-        z = ~price, 
-        marker = list(size = 5, opacity = 0.4, color = "red")) %>% 
-   layout(scene = list(xaxis = list(title = 'House size (square feet)'), 
-                     zaxis = list(title = 'Price (USD)'),
-                     yaxis = list(title = 'Number of bedrooms'))) %>%
-  add_surface(x = ~xvals, 
-              y = ~yvals,
-              z = ~zvalsm,
-              colorbar=list(title='Price (USD)')) 
+plot_ly() %>%
+  add_markers(
+    data = sacramento_train,
+    x = ~sqft,
+    y = ~beds,
+    z = ~price,
+    marker = list(size = 5, opacity = 0.4, color = "red")
+  ) %>%
+  layout(scene = list(
+    xaxis = list(title = "House size (square feet)"),
+    zaxis = list(title = "Price (USD)"),
+    yaxis = list(title = "Number of bedrooms")
+  )) %>%
+  add_surface(
+    x = ~xvals,
+    y = ~yvals,
+    z = ~zvalsm,
+    colorbar = list(title = "Price (USD)")
+  )
 ```
 We see that the predictions from linear regression with two predictors form a
 flat plane. This is the hallmark of linear regression, and differs from the 
@@ -411,9 +416,9 @@ where:
 Finally, we can fill in the values for $\beta_0$, $\beta_1$ and $\beta_2$ from the model output above
 to create the equation of the plane of best fit to the data: 
 ```{r 08-lm-multi-get-coeffs-hidden, echo = FALSE}
-icept <- format(round(coeffs %>% filter(term == '(Intercept)') %>% pull(estimate)), scientific = FALSE)
-sqftc <- format(round(coeffs %>% filter(term == 'sqft') %>% pull(estimate)), scientific = FALSE)
-bedsc <- format(round(coeffs %>% filter(term == 'beds') %>% pull(estimate)), scientific = FALSE)
+icept <- format(round(coeffs %>% filter(term == "(Intercept)") %>% pull(estimate)), scientific = FALSE)
+sqftc <- format(round(coeffs %>% filter(term == "sqft") %>% pull(estimate)), scientific = FALSE)
+bedsc <- format(round(coeffs %>% filter(term == "beds") %>% pull(estimate)), scientific = FALSE)
 ```
 
 $$\text{house price} = `r icept` + `r sqftc`\cdot (\text{house size})  `r bedsc` \cdot (\text{number of bedrooms})$$
@@ -470,7 +475,7 @@ quantifying how big each of these effects are, and assessing how accurately we
 can estimate each of these effects. This side of regression is the topic of
 many follow-on statistics courses and beyond the scope of this course.
 
-## Additional readings/resources
+## Additional resources
 - Pages 59-71 of [Introduction to Statistical Learning](http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf) with Applications in R by Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani
 - Pages 104 - 109 of [An Introduction to Statistical Learning with Applications in R](https://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf) by Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani
 - [The `caret` Package](https://topepo.github.io/caret/index.html)
