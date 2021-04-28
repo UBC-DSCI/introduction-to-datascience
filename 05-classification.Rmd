@@ -1,8 +1,8 @@
-```{r 05-setup, include=FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE)
-```
-
 # Classification I: training & predicting {#classification}
+
+```{r 05-setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = TRUE)
+```
 
 ## Overview 
 Up until this point, we have focused solely on descriptive and exploratory
@@ -86,9 +86,9 @@ guide patient treatment.
 
 Our first step is to load, wrangle, and explore the data using visualizations
 in order to better understand the data we are working with.  We start by
-loading the necessary libraries for our analysis. Below you'll see (in addition
-to the usual `tidyverse`) a new library: `forcats`. 
-The `forcats` library enables us to easily
+loading the necessary packages for our analysis. Below you'll see (in addition
+to the usual `tidyverse`) a new package: `forcats`. 
+The `forcats` package enables us to easily
 manipulate factors in R; factors are a special categorical type of variable in
 R that are often used for class label data. 
 
@@ -100,11 +100,11 @@ library(forcats)
 
 In this case, the file containing the breast cancer data set is a simple `.csv`
 file with headers. We'll use the `read_csv` function with no additional
-arguments, and then the `head` function to inspect its contents:
+arguments, and then inspect its contents:
 
 ```{r 05-read-data}
 cancer <- read_csv("data/wdbc.csv")
-head(cancer)
+cancer
 ```
 
 **Variable descriptions**
@@ -140,7 +140,7 @@ total set of variables per image in this data set are:
 knitr::include_graphics("img/malignant_cancer.png")
 ```
 
-Below we use `glimpse` to preview the data frame. This function is similar to `head`, but can be easier to read when we have a lot of columns:
+Below we use `glimpse` to preview the data frame. This function can make it easier to inspect the data when we have a lot of columns:
 
 ```{r 05-glimpse}
 glimpse(cancer)
@@ -151,7 +151,7 @@ We can see from the summary of the data above that `Class` is of type character
 categorical statistical variable, we will convert it to factor using the
 function `as_factor`.
 
-```{r 05-class, echo = TRUE}
+```{r 05-class}
 cancer <- cancer %>%
   mutate(Class = as_factor(Class))
 glimpse(cancer)
@@ -166,7 +166,7 @@ a *vector* argument, while the `select` function outputs a *data frame*;
 so we use the `pull` function, which converts a single
 column of a data frame into a vector.
 
-```{r 05-levels, echo = TRUE}
+```{r 05-levels}
 cancer %>%
   select(Class) %>%
   pull() %>% # turns a data frame into a vector
@@ -352,14 +352,6 @@ perim_concav + geom_point(aes(x = new_point[1], y = new_point[2]),
 ```
 </center>
 
-
-
-```{r 05-knn-6, echo = FALSE}
-# neighbours %>%
-#  select(ID, attrs, Class) %>%
-#  slice(1:3)
-```
-
 Here we chose the $K=3$ nearest observations, but there is nothing special
 about $K=3$. We could have used $K=4, 5$ or more (though we may want to choose
 an odd number to avoid ties). We will discuss more about choosing $K$ in the
@@ -405,7 +397,7 @@ cancer %>%
   select(ID, Perimeter, Concavity, Class) %>%
   mutate(dist_from_new = sqrt((Perimeter - new_obs_Perimeter)^2 + (Concavity - new_obs_Concavity)^2)) %>%
   arrange(dist_from_new) %>%
-  head(n = 5)
+  slice(1:5) # subset the first 5 rows
 ```
 
 From this, we see that 3 of the 5 nearest neighbours to our new observation are
@@ -526,7 +518,7 @@ predictor variables and class label and store it as a new dataset named `cancer_
 ```{r 05-tidymodels-2}
 cancer_train <- cancer %>%
   select(Class, Perimeter, Concavity)
-head(cancer_train)
+cancer_train
 ```
 
 Next, we create a *model specification* for K-nearest neighbours classification
@@ -621,7 +613,7 @@ variables:
 unscaled_cancer <- read_csv("data/unscaled_wdbc.csv") %>%
   mutate(Class = as_factor(Class)) %>%
   select(Class, Area, Smoothness)
-head(unscaled_cancer)
+unscaled_cancer
 ```
 
 Looking at the unscaled / uncentered data above, you can see that the difference
@@ -668,7 +660,7 @@ on the recipes home page.
 We finally use the `bake` function to apply the recipe.
 ```{r 05-scaling-4}
 scaled_cancer <- bake(uc_recipe, unscaled_cancer)
-head(scaled_cancer)
+scaled_cancer
 ```
 
 Now let's generate the two scatter plots, one for `unscaled_cancer` and one for

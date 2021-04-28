@@ -32,6 +32,13 @@ of how we can use and manipulate these objects.
 
 Let's first start by defining what a data frame is exactly. From a data perspective, it is a rectangle where the rows are the observations:
 
+```{r 02-setup, include=FALSE}
+devtools::install_github("ttimbers/canlang")
+library(tidyverse)
+library(canlang)
+write_csv(region_lang, "data/region_lang.csv")
+```
+
 ```{r 02-obs, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Rows are observations in a data frame", fig.retina = 2, out.width = "650"}
 knitr::include_graphics("img/obs.jpeg")
 ```
@@ -81,7 +88,7 @@ different characteristics associated/linked in one object. This is similar to a 
 knitr::include_graphics("img/dataframe.jpeg")
 ```
 
-The functions from the `tidyverse` library that we are using often give us a 
+The functions from the `tidyverse` package that we are using often give us a 
 special class of data frame, called a tibble. Tibbles have some additional 
 features and benefits over the built-in data frame object. These include 
 ability to add grouping (and other useful) attributes, as well as more
@@ -122,7 +129,7 @@ knitr::include_graphics("img/tidy_data.jpeg")
 
 ### Why is tidy data important in R?
 
-First, one of R's most popular plotting tool sets, the `ggplot2` library (which is one of the libraries that the `tidyverse` library loads), expects the data to be in a tidy format. Second, most statistical analysis functions also expect data in a tidy format. Given that both of these tasks are central in almost all data analysis projects, it is well worth spending the time to get your data into a tidy format upfront. Luckily there are many well-designed `tidyverse` data cleaning/wrangling tools to help you easily tidy your data. Let's explore them now!
+First, one of R's most popular plotting tool sets, the `ggplot2` package (which is one of the packages that the `tidyverse` package loads), expects the data to be in a tidy format. Second, most statistical analysis functions also expect data in a tidy format. Given that both of these tasks are central in almost all data analysis projects, it is well worth spending the time to get your data into a tidy format upfront. Luckily there are many well-designed `tidyverse` data cleaning/wrangling tools to help you easily tidy your data. Let's explore them now!
 
 ### Going from wide to long (or tidy!) using `pivot_longer`
 
@@ -281,8 +288,8 @@ official_langs <- filter(lang_no_delimiter, category == "Official languages")
 
 ggplot(official_langs, aes(x = region, y = most_at_work, fill = language)) +
   geom_bar(stat = "identity") +
-  scale_color_manual(values = c("deepskyblue2","firebrick1")) +
-  xlab("Region") + 
+  scale_color_manual(values = c("deepskyblue2", "firebrick1")) +
+  xlab("Region") +
   scale_y_continuous(
     name = "Number of Canadians reporting their primary language at home",
     labels = scales::comma
@@ -459,18 +466,23 @@ as discussed above. However, this becomes inconvenient when you have many column
 transformation for each summary statistic you want to calculate.
 
 In cases like this, where you want to apply the same data transformation to all columns, it is more efficient to use `purrr`'s `map` function to 
-apply it to each column. For example, let's find the maximum value of each column of the `mtcars` data frame (a built-in 
-data set that comes with R) by using `map` with the `max` function. First, let's peek at the data to familiarize ourselves with it:
-
+apply it to each column. For example, let's find the maximum value of each column of the complete `region_lang` data frame by using `map` with the `max` function. First, let’s peak at the data to familiarize ourselves with it:
 ```{r 02-preview-data}
-head(mtcars)
+region_lang <- read_csv("data/region_lang.csv")
+region_lang
 ```
+Next, we will select only the numeric columns of the data frame:
 
+```{r 02-numeric-data}
+region_lang_numeric <- region_lang %>%
+  select(mother_tongue:lang_known)
+region_lang_numeric
+```
 Next, we use `map` to apply the `max` function to each column. `map` takes two arguments, an object (a vector, data frame or list) that you want 
-to apply the function to, and the function that you would like to apply. Here our arguments will be `mtcars` and `max`:
+to apply the function to, and the function that you would like to apply. Here our arguments will be `region_lang_numeric` and `max`:
 
 ```{r 02-map}
-max_of_columns <- map(mtcars, max)
+max_of_columns <- map(region_lang_numeric, max)
 max_of_columns
 ```
 
@@ -497,23 +509,35 @@ the mapping operation:
 | `map_chr()` | character vector |
 | `map_df()` | data frame |
 
-Let's get the column maximum's again, but this time use the `map_df` function to return the output as a data frame:
+Let's get the columns' maximums again, but this time use the `map_df` function to return the output as a data frame:
 
 ```{r 02-map-df-example}
-max_of_columns <- map_df(mtcars, max)
+max_of_columns <- map_df(region_lang_numeric, max)
 max_of_columns
 ```
 
 Which `map_*` function you choose depends on what you want to do with the output; you don't always have to pick `map_df`!
 
-What if you need to add other arguments to the functions you want to map? For example, what if there were NA values in our columns that we wanted to know the maximum of? Well, then we also need to add the argument `na.rm  = TRUE` to the `max` function so that we get a more useful value than NA returned (remember that is what happens with many of the built-in R statistical functions when NA's are present...). What we need to do in that case is add these additional
-arguments to the end of our call to to `map` and they will be passed to the 
-function that we are mapping. An example of this is shown below:
+What if you need to add other arguments to the functions you want to map? For example, what if there were NA values in our columns that we wanted to know the maximum of? 
 
-```{r}
-map_df(mtcars, max, na.rm  = TRUE)
+```{r 02-making-NAs, include = F}
+region_with_nas <- region_lang_numeric %>%
+  add_row(mother_tongue = 5, most_at_home = 5, most_at_work = NA, lang_known = NA) %>%
+  arrange(!is.na(lang_known), lang_known) %>%
+  write_csv("data/region_lang_with_nas.csv")
 ```
 
+```{r 02-read-in-na}
+region_with_nas <- read_csv("data/region_lang_with_nas.csv")
+region_with_nas
+map_df(region_with_nas, max)
+```
+Notice `map_df()` returns `NA` for the `most_at_work` and `lang_known` variables since those columns contained NAs in the data frame. Thus, we also need to add the argument `na.rm  = TRUE` to the `max` function so that we get a more useful value than `NA` returned (remember that is what happens with many of the built-in R statistical functions when NA's are present...). What we need to do in that case is add these additional arguments to the end of our call to to `map` and they will be passed to the function that we are mapping. An example of this is shown below:
+
+```{r}
+map_df(region_with_nas, max, na.rm = TRUE)
+```
+Now `map_df()` returns the maximum count for each column ignoring the NAs in the data set! 
 
 The `map_*` functions are generally quite useful for solving problems involving iteration/repetition. Additionally, their use is not limited to columns 
 of a data frame; `map_*` functions can be used to apply functions to elements of a vector or list, and even to lists of data frames, or nested data frames.
