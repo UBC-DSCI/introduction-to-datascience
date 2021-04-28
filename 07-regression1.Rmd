@@ -31,55 +31,34 @@ By the end of the chapter, students will be able to:
 
 ## Regression 
 
-In many situations, we want to make predictions based on the current situation
-as well as past experiences. For instance, a doctor may want to diagnose a
-patient as either diseased or healthy based on their symptoms and the doctor’s
-past experience with patients; an email provider might want to tag a given
-email as “spam” or “not spam” depending on past email text data; or an online
-store may want to predict whether an order is fraudulent or not.
-
-These tasks are all examples of classification, i.e., predicting a categorical
-class (sometimes called a label) for an observation given its other
-quantitative variables (sometimes called features). Generally, a classifier
-assigns an observation (e.g. a new patient) to a class (e.g. diseased or
-healthy) on the basis of how similar it is to other observations for which we
-know the class (e.g. previous patients with known diseases and symptoms). These
-observations with known classes that we use as a basis for prediction are
-called a training set. We call them a “training set” because we use these
-observations to train, or teach, our classifier so that we can use it to make
-predictions on new data that we have not seen previously.
-
-There are many possible classification algorithms that we could use to predict
-a categorical class/label for an observation. In addition, there are many
-variations on the basic classification problem, e.g., binary classification
-where only two classes are involved (e.g. disease or healthy patient), or
-multiclass classification, which involves assigning an object to one of several
-classes (e.g., private, public, or not for-profit organization). Here we will
-focus on the simple, widely used K-nearest neighbours algorithm for the binary
-classification problem. Other examples you may encounter in future courses
-include decision trees, support vector machines (SVMs), logistic regression,
-and neural networks.
-
-
-%%%%%%%
-
 Regression, like classification, is a predictive problem setting where we want
-to use past information to predict future observations.  But in the case of
-regression, the goal is to predict numerical values instead of class labels.
+to use past information to predict future observations. But in the case of
+regression, the goal is to predict *numerical* values instead of *categorical* values. 
 For example, we could try to use the number of hours a person spends on
-exercise each week to predict whether they would qualify for the annual Boston
-marathon (*classification*) or to predict their race time itself
-(*regression*).  As another example, we could try to use the size of a house to
-predict whether it sold for more than \$500,000 (*classification*) or to
-predict its sale price itself (*regression*). We will use K-nearest neighbours
-to explore this question in the rest of this chapter, using a real estate data
-set from Sacremento, California.
+exercise each week to predict their race time in the annual Boston marathon. As 
+another example, we could try to use the size of a house to
+predict its sale price. Both of these response variables---race time and sale price---are 
+numerical, and so predicting them given past data is considered a regression problem.
 
-## Sacremento real estate example
+> You can tell whether a variable is numerical or categorical---and therefore whether you
+> need to perform regression or classification---by taking two observations A and B from your
+> data, and asking the question "is response variable A *more* than response variable B?"
+> If the variable is categorical, the question will make no sense ("is blue more than red?",
+> or "is benign more than malignant?"). If the variable is numerical, it will make sense
+> ("is 1.5 hours more than 2.25 hours?", or "is \$500,000 more than \$400,000?").
 
-Let's start by loading the packages we need and doing some preliminary
-exploratory analysis. The Sacramento real estate data set we will study in this chapter
-was [originally reported in the Sacramento Bee](https://support.spatialkey.com/spatialkey-sample-csv-data/),
+Many of the concepts from classification map over to the setting of regression. For example, 
+a regression model predicts a new observation's response variable based on the response variables
+for similar observations in the dataset of past observations; when building a regression model,
+we first split the data into training and test sets, in order to ensure that we assess the performance
+of our method on observations not seen during training; and we can use cross-validation to evaluate difference
+choices of model parameters (e.g., K in a K-nearest neighbours model). The major difference
+is that we are now predicting numerical variables instead of categorical variables.
+
+## Exploring a labelled data set
+
+In this chapter and the next, we will study the Sacramento real estate data set.
+This data set was [originally reported in the Sacramento Bee](https://support.spatialkey.com/spatialkey-sample-csv-data/),
 but we have provided it with this repository as a stable source for the data.
 
 ```{r 07-load, message = FALSE}
@@ -91,8 +70,14 @@ sacramento <- read_csv("data/sacramento.csv")
 sacramento
 ```
 
-The purpose of this exercise is to understand whether we can we use house size
-to predict house sale price in the Sacramento, CA area. The columns in this
+We first need to formulate a precise question that
+we want to answer. In this example, our question is predictive:
+can we use the size of a house in the Sacramento, CA area to predict
+its sale price? A rigorous, quantitative answer to this question might help
+a realtor advise a client as to whether the price of a particular listing 
+is fair, or perhaps how to set the price of a new listing.
+
+The scientific question guides our initial exploration: the columns in the
 data that we are interested in are `sqft` (house size, in livable square feet)
 and `price` (house price, in US dollars (USD).  The first step is to visualize
 the data as a scatter plot where we place the predictor/explanatory variable
