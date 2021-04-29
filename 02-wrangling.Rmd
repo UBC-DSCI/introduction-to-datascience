@@ -304,6 +304,92 @@ From this visualization, we can see that in Calgary, Edmonton, Toronto and Vanco
 
 Is there only one shape for tidy data for a given data set? Not necessarily! It depends on the statistical question you are asking and what the variables are for that question. For tidy data, each variable should be its own column. So, just as it's essential to match your statistical question with the appropriate data analysis tool (classification, clustering, hypothesis testing, etc.). It's important to match your statistical question with the appropriate variables and ensure they are represented as individual columns to make the data tidy.
 
+
+
+## Creating subsets of data frames with `select` & `filter`
+
+Now, we are going to learn how to obtain subsets of data from a data frame in R using two other `tidyverse` functions: `select` and `filter`. 
+The `select` function allows you to create a subset of the columns of a data frame, while the `filter` function allows you to obtain a subset of the rows with specific values.
+
+Before we start using `select` and `filter`, let's take a look at the language data collected in the 2016 Canadian census again to familiarize ourselves with it. 
+We will do this by printing the data we loaded earlier in the chapter to the screen. 
+
+```{r print_data_again}
+can_lang
+```
+
+
+In this data frame there are 214 rows rows (corresponding to the 214 languages recorded on the 2016 Canadian census)
+and 6 columns: 
+
+1. `category`: Higher level language category (describing whether the language is an Official Canadian language, an Aboriginal language, or a Non-Official and Non-Aboriginal language).
+2. `language`: Language queried about on the Canadian Census.
+3. `mother_tongue`: Total count of Canadians from the Census who reported the language as their mother tongue. Mother tongue is generally defined as the language someone was exposed to since birth.
+4. `most_at_home`: Total count of Canadians from the Census who reported the language as spoken most often at home.
+5. `most_at_work`: Total count of Canadians from the Census who reported the language as used most often at work for the population.
+6. `lang_known`: Total count of Canadians from the Census who reported knowledge of language for the population in private households.
+
+Now let's use `select` to extract the language column from this data frame. To do this, we need to provide the `select` function with two arguments. The first argument is the 
+name of the data frame object, which in this example is `can_lang`. The second argument is the column name that we want to select, here `language`. After passing these two arguments,
+the  `select` function returns a single column (the `language` column that we asked for) as a data frame.
+
+
+```{r}
+language_column <- select(can_lang, language)
+language_column
+```
+
+
+### Using `select` to extract multiple columns
+
+We can also use `select` to obtain a subset of the data frame with multiple columns. Again, the first argument is the name of the data frame. 
+Then we list all the columns we want as arguments separated by commas. Here we create a subset of three columns: language, mother tongue, and language spoken most often at home.
+
+```{r}
+three_columns <- select(can_lang, language, mother_tongue, most_at_home)
+three_columns
+```
+
+
+### Using `select` to extract a range of columns
+
+We can also use `select` to obtain a subset of the data frame constructed from a range of columns. To do this we use the colon (`:`) operator to denote the range. 
+For example, to get all the columns in the data frame from `language` to `most_at_home` we pass `language:most_at_home` as the second argument to the `select` function.
+
+```{r}
+column_range <- select(can_lang, language:most_at_home)
+column_range
+```
+
+### Using `filter` to extract a single row
+
+We can use the `filter` function to obtain the subset of rows with desired values from a data frame. Again, our first argument is the name of the data frame object, `can_lang`. 
+The second argument is a logical statement to use when filtering the rows. Here, for example, we'll say that we are interested in rows where the language is Mandarin. To make 
+this comparison, we use the *equivalency operator* `==` to compare the values of the `language` column with the value `"Mandarin"`. Similar to when we loaded the data file and put quotes around the filename, 
+here we need to put quotes around `"Mandarin"` to tell R that this is a character value and not one of the special words that make up R programming language, nor one of the names 
+we have given to data frames in the code we have already written.
+
+With these arguments, `filter` returns a data frame that has all the columns of the input data frame but only the rows we asked for in our logical filter statement. 
+
+```{r}
+mandarin <- filter(can_lang, language == "Mandarin")
+mandarin
+```
+
+### Using `filter` to extract rows with values above a threshold
+
+
+If we are interested in finding information about the languages who have a higher number of people who primarily speak it at home compared to Mandarin---which is reported to have 462890 people speaking it as the primary language they speak in their home---then we can create a filter 
+to obtain rows where the value of `most_at_home` is greater than 462890.
+In this case, we see that `filter` returns a data frame with 2 rows; this indicates that there are two languages that are spoken more often at
+home compared to Mandarin.
+
+```{r}
+spoke_often_at_home <- filter(can_lang, most_at_home > 462890)
+spoke_often_at_home
+```
+
+
 ## Combining functions using the pipe operator, `%>%`:
 
 In R, we often have to call multiple functions in a sequence to process a data frame. The basic ways of doing this can become quickly unreadable if there are many steps. For example, suppose we need to perform three operations on
