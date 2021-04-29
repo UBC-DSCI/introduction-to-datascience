@@ -533,8 +533,10 @@ web server provides into something you can see, you can collect
 that data programmatically---in the form of **h**yper**t**ext **m**arkup **l**anguage (HTML) code---and
 process it to extract useful information.
 
-This subsection will show you the basics of both web scraping---using 
-the [`rvest` R package](https://github.com/hadley/rvest)---and using APIs.
+This subsection will show you the basics of both web scraping
+with the [`rvest` R package](https://github.com/hadley/rvest)
+and using the [`rtweet` R package](https://github.com/ropensci/rtweet)
+to access the [Twitter](www.twitter.com) API.
 
 ### Web scraping
 
@@ -660,8 +662,8 @@ R if we are using more than one CSS selector.
 
 **STOP! Are you allowed to scrape that website?**
 
-**BEFORE** scraping data from the web, you should always check whether or not
-you are **ALLOWED** to scrape it! There are two documents that are important
+Before scraping data from the web, you should always check whether or not
+you are *allowed* to scrape it! There are two documents that are important
 for this: the `robots.txt` file and the Terms of Service
 document. Let's take a look at Craigslist's Terms of Service document:
 
@@ -754,7 +756,7 @@ into a more useful format for data analysis using R.
 
 ### Using an API
 
-Rather than posting raw data at a URL for you to download, many data-focused websites these days
+Rather than posting a data file at a URL for you to download, many websites these days
 provide an API that must be accessed through a programming language like R. The benefit of this
 is that data owners have much more control over the data they provide to users. However, unlike
 web scraping, there is no consistent way to access an API across websites. Every website typically
@@ -762,12 +764,24 @@ has its own API designed specially for its own use-case. Therefore we will just 
 of accessing data through an API in this book, with the hope that it gives you enough of a basic
 idea that you can learn how to use another API if needed.
 
-In particular, in this book we will show you how to use an API that obtains data 
-from [Twitter](www.twitter.com). One nice feature of this particular API is that you don't need 
-a special *token* to access it; you simply need to 
+In particular, in this book we will show you the basics of how to use
+the [rtweet](https://github.com/ropensci/rtweet) package in R
+to access data from the [Twitter](www.twitter.com) API. One nice feature of this particular 
+API is that you don't need  a special *token* to access it; you simply need to 
 make an account with them. Your access to the data will then be authenticated and controlled through
 your account username and password. If you have a Twitter account already (or are willing to make one), you can follow
-along with the examples that we show here safely. But before we go on...
+along with the examples that we show here. To get started, load the `rtweet` package:
+```r
+library(rtweet)
+```
+This package provides an extensive set of functions to search Twitter for tweets, users, their friends, and more. 
+Let's construct a small dataset of the last 400 tweets from the Tidyverse account. A few of the most recent tweets
+are shown below.
+
+
+```{r 01-tidyverse-twitter, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "The Tidyverse Twitter feed. [Source](https://twitter.com/tidyverse?lang=en)", fig.retina = 2, out.width="800"}
+knitr::include_graphics("img/tidyverse_twitter.png")
+```
 
 **STOP! Think about your API usage carefully!**
 
@@ -780,42 +794,63 @@ it unable to talk to anyone else. Most servers have mechanisms to revoke your ac
 careful, but you should try to prevent issues from happening in the first place by being extra careful
 with how you write and run your code. You should also keep in mind that when a website owner
 grants you API access, they also usually specify a limit (or *quota*) of how much data you can ask for.
-Be careful not to overrun your quota! 
+Be careful not to overrun your quota! In this example, we should take a look at
+ [the Twitter website](https://developer.twitter.com/en/docs/twitter-api/rate-limits) to see what limits
+we should abide by when using the API. 
 
-OK, back to the Twitter example. [ROpenSci](https://ropensci.org/) has created an API
-called [rtweet](https://github.com/ropensci/rtweet) that lets you access data from Twitter using R.
-Before getting started, make sure you review the access quotas that can be 
-found [on the Twitter website](https://developer.twitter.com/en/docs/twitter-api/rate-limits).
-We first load the `rtweet` package,
-```
-library(rtweet)
-```
-
-The first time you call a function a web page will pop up asking for your username and password.
-`rtweet` requires quite extensive access to your account, so make sure you are comfortable with
-that level of access before signing on.
-
-(TODO)
-
+After checking the website, it seems like asking for 400 tweets one time is acceptable.
+So we can use the `get_timelines` function to ask for the last 400 tweets from the Tidyverse account.
 ```r
-tmls <- get_timelines(c("cnn", "BBCWorld", "foxnews"), n = 3200)
+rt <- get_timelines('tidyverse', n=400)
 ```
 
-```r
-cnn_fds <- get_friends("cnn")
+When you call the `get_timelines` for the first time (or any other `rtweet` function that accesses the API), 
+you will see a browser pop-up that looks something like this:
+```{r 01-tidyverse-authorize, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "The rtweet authorization prompt.", fig.retina = 2, out.width="800"}
+knitr::include_graphics("img/authorize_question.png")
 ```
 
-```r
-usrs <- search_users("#rstats", n = 1000)
-```
+This is the `rtweet` package asking you to provide your own Twitter account's login information.
+When `rtweet` talks to the Twitter API, it uses your account information to authenticate requests;
+Twitter then can keep track of how much data you're asking for, and how frequently you're asking.
+If you want to follow along with this example using your own Twitter account, you should read
+over the list of permissions you are granting `rtweet` *very carefully* and make sure you are comfortable
+with it. Note that `rtweet` can be used to manage most aspects of your account (make posts, add friends, etc.),
+which is why `rtweet` asks for such extensive permissions.
+If you decide to allow `rtweet` to talk to the Twitter API using your account information, then 
+input your username and password and hit "Sign In." Twitter will probably send you an email to say
+that there was an unusual login attempt on your account, and in that case you will have to take
+the one-time code they send you and provide that to the `rtweet` login page too. 
 
-```r
-rt <- search_tweets("#rstats", n = 10000, include_rts = FALSE)
-```
+> Every API has its own way to authenticate users when they try to access data. Many APIs require you to
+> sign up to receive a *token*, which is a secret password that you input into the R package (like `rtweet`) 
+> that you are using to access the API. 
 
+With the authentication setup out of the way, let's run the `get_timelines` function again to actually access
+the API and take a look at what was returned:
 ```r
-rt <- stream_tweets("", timeout = 60)
+rt <- get_timelines('tidyverse', n=400)
+rt
 ```
+```{r 01-reading-hidden-load-tweets, echo = FALSE, message = FALSE, warning = FALSE}
+rt <- read_csv("data/tweets.csv")
+rt
+```
+The data has quite a few variables! Let's reduce this down to a few variables of interest: `created_at`, `text`, `is_retweet`, and `retweet_screen_name`.
+```{r 01-select-tweets, message = FALSE, warning = FALSE}
+rt <- rt %>% select(created_at, text, is_retweet, retweet_screen_name)
+rt
+```
+If you look back up at the image of the Tidyverse twitter page, you will
+recognize the text of the most recent few tweets in the above dataframe.  In
+other words, we have successfully created a small dataset using the Twitter
+API---neat! From this point onward, the `rt` dataframe is stored on your
+machine, and you can play with it to your heart's content; you can use
+`write_csv` to save it to a file, `read_csv` to read it into R again later, and
+so on. If you decide that you want to ask the Twitter API for more data 
+(see [the `rtweet` page](https://github.com/ropensci/rtweet)
+for more examples of what is possible), just be mindful as usual about how much
+data you are requesting and how frequently you are making requests. 
 
 ## Additional resources
 - [Data import chapter](https://r4ds.had.co.nz/data-import.html) from [R for Data Science](https://r4ds.had.co.nz/) by Garrett Grolemund & Hadley Wickham
