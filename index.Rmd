@@ -81,11 +81,12 @@ By the end of the chapter, students will be able to:
 - use the help and documentation tools in R
 - match the names of the following functions from the `tidyverse` package to their documentation descriptions: 
     - `read_csv` 
-    - `mutate`
+    - `select`
+    - `filter`
     - `ggplot`
     - `aes`
 
-## Loading a spreadsheet-like dataset
+## Loading a spreadsheet-like data set
 
 Often, the first step in data analysis is to load a data set into R. When we bring spreadsheet-like (think Microsoft Excel tables) data, generally shaped like a rectangle, into R, it is represented as a *data frame* object. In figure \@ref(fig:img-spreadsheet-vs-dataframe), we can see an R data frame is very similar to a spreadsheet where the rows are the collected observations, and the columns are the variables. 
 
@@ -131,7 +132,7 @@ read_csv("data/can_lang.csv")
 > We use the `read_csv` function from the `tidyverse` instead of the base R function `read.csv` because it's faster, and it creates a nicer variant of the base R data frame called a *tibble*. 
 > This has several benefits that we'll discuss in further detail later in the course.
 
-## Assigning value to a data frame
+## Giving a data frame a name
 
 When we loaded the language data collected in the 2016 Canadian census in R above using `read_csv`, we did not give this data frame a name. Therefore the data was just printed on the screen, and we cannot do anything else with it. That isn't very useful; we would like to give a name to the data frame that `read_csv` outputs to use later for analysis and visualization. 
 
@@ -150,23 +151,71 @@ Wait a minute! Nothing happened this time! Or at least it looks like that. But a
 can_lang
 ```
 
-## Exploring data with visualizations
-Creating effective data visualizations is an essential piece to any data analysis. For the remainder of Chapter 1, we will learn how to use
-functions from the `tidyverse` to make visualizations that let us explore relationships in data. Before we start creating visualizations, we should take a closer look at the language data collected in the 2016 Canadian census to familiarize ourselves with it.
+
+
+## Creating subsets of data frames with `select` & `filter`
+
+Now, we are going to learn how to obtain subsets of data from a data frame in R using two other `tidyverse` functions: `select` and `filter`. 
+The `select` function allows you to create a subset of the columns of a data frame, while the `filter` function allows you to obtain a subset of the rows with specific values.
+
+Before we start using `select` and `filter`, let's take a look at the language data collected in the 2016 Canadian census again to familiarize ourselves with it. 
 
 > **A note about the *data* in data science!** 
 > Data science cannot be done without a deep understanding of the data and problem domain. In this book, we have simplified the data sets used in our examples to concentrate on concepts. In real life, we cannot and should not do data science without a domain expert. Alternatively, it is common to practice data science in your domain of expertise! Remember that when we work with data, it is essential to think about *how* the data were collected, which affects the conclusions we can draw. If your data are biased, then your results will be biased!
+We will do this by printing the data we loaded earlier in the chapter to the screen. 
 
-In this data frame, there are 214 rows (corresponding to the 214 languages recorded on the 2016 Canadian census) and six columns: 
+```{r print_data_again}
+can_lang
+```
+
+
+In this data frame there are 214 rows rows (corresponding to the 214 languages recorded on the 2016 Canadian census)
+and 6 columns: 
 
 1. `category`: Higher level language category (describing whether the language is an Official Canadian language, an Aboriginal language, or a Non-Official and Non-Aboriginal language).
 2. `language`: Language queried about on the Canadian Census.
 3. `mother_tongue`: Total count of Canadians from the Census who reported the language as their mother tongue. Mother tongue is generally defined as the language someone was exposed to since birth.
 4. `most_at_home`: Total count of Canadians from the Census who reported the language as spoken most often at home.
 5. `most_at_work`: Total count of Canadians from the Census who reported the language as used most often at work for the population.
-6. `lang_known`: Total count of Canadians from the Census who reported knowledge of the language for the population in private households.
+6. `lang_known`: Total count of Canadians from the Census who reported knowledge of language for the population in private households.
 
-We will now develop a visualization of the language data collected in the 2016 Canadian census we've been working with that will help us understand two potential relationships in the data. First, we will explore the relationship between the number of people who speak a language as their mother tongue and the number who speak that language as their primary language spoken at home. Then we will see whether there is a pattern in the strength of this relationship in the higher-level language categories (Official languages, Aboriginal languages, or non-official and non-Aboriginal languages). These are examples of exploratory data analysis questions because we are looking for relationships and patterns within the data set we have but are not trying to generalize what we find beyond this data set.  
+Now let's use `select` to extract the language column from this data frame. To do this, we need to provide the `select` function with two arguments. The first argument is the 
+name of the data frame object, which in this example is `can_lang`. The second argument is the column name that we want to select, here `language`. After passing these two arguments,
+the  `select` function returns a single column (the `language` column that we asked for) as a data frame.
+
+
+```{r}
+language_column <- select(can_lang, language)
+language_column
+```
+
+
+### Using `filter` to extract a single row
+
+We can use the `filter` function to obtain the subset of rows with desired values from a data frame. Again, our first argument is the name of the data frame object, `can_lang`. 
+The second argument is a logical statement to use when filtering the rows. Here, for example, we'll say that we are interested in rows where the language is Mandarin. To make this comparison, we use the *equivalency operator* `==` to compare the values of the `language` column with the value `"Mandarin"`. Similar to when we loaded the data file and put quotes around the filename, here we need to put quotes around `"Mandarin"` to tell R that this is a character value and not one of the special words that make up R programming language, nor one of the names 
+we have given to data frames in the code we have already written.
+
+With these arguments, `filter` returns a data frame that has all the columns of the input data frame but only the rows we asked for in our logical filter statement. 
+
+```{r}
+spanish <- filter(can_lang, language == "Spanish")
+spanish
+```
+
+### Using `filter` to extract rows with values above or below a threshold
+
+
+If we are interested in finding information about the languages who have a higher number of people who primarily speak it at home compared to Mandarin---which is reported to have 462890 people speaking it as the primary language they speak in their home---then we can create a filter to obtain rows where the value of `most_at_home` is greater than 462890. In this case, we see that `filter` returns a data frame with 2 rows; this indicates that there are two languages that are spoken more often at home compared to Mandarin.
+
+```{r}
+spoke_often_at_home <- filter(can_lang, most_at_home > 263505)
+spoke_often_at_home
+```
+
+
+## Exploring data with visualizations
+Creating effective data visualizations is an essential piece to any data analysis. For the remainder of Chapter 1, we will learn how to use functions from the `tidyverse` package to make visualizations that let us explore relationships in data. We will develop a visualization of the language data collected in the 2016 Canadian census we've been working with that will help us understand two potential relationships in the data. First, we will explore the relationship between the number of people who speak a language as their mother tongue and the number who speak that language as their primary language spoken at home. Then we will see whether there is a pattern in the strength of this relationship in the higher-level language categories (Official languages, Aboriginal languages, or non-official and non-Aboriginal languages). These are examples of exploratory data analysis questions because we are looking for relationships and patterns within the data set we have but are not trying to generalize what we find beyond this data set.  
 
 ### Using `ggplot` to create a scatter plot
 
@@ -192,6 +241,11 @@ ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
   geom_point()
 ``` 
 
+```{r}
+ggplot(spoke_often_at_home, aes(x = language, y = most_at_home)) +
+  geom_bar(stat = "identity")
+```
+
 > **In case you have used R before and are curious:** 
 > There are a small number of situations in which you can have a single R expression span multiple lines. 
 > Here, the `+` symbol at the end of the first line tells R that the expression isn't done yet and to
@@ -210,6 +264,11 @@ ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
   geom_point() +
   xlab("Language spoken most at home (number of Canadian residents)") +
   ylab("Mother tongue (number of Canadian residents)")
+
+ggplot(spoke_often_at_home, aes(x = language, y = most_at_home)) +
+  geom_bar(stat = "identity") + 
+   xlab("Language") + 
+   ylab("Number of Canadians reporting their primary language at home")
 ```
 
 In figure \@ref(fig:mother-tongue-vs-most-at-home-labs), most of the 214 observations in this data set are bunched up in the lower left-hand side of this visualization because many people in Canada speak the two official languages (English and French). Thus to answer our question, we will need to adjust the scale of the x and y axes so that they are on a log scale.
@@ -223,6 +282,13 @@ ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
   ylab("Mother tongue (number of Canadian residents)") +
   scale_x_log10(labels = scales::comma) +
   scale_y_log10(labels = scales::comma)
+
+ggplot(spoke_often_at_home, aes(x = language, y = most_at_home)) +
+  geom_bar(stat = "identity") + 
+   xlab("Language") +  
+   scale_y_continuous(name = "Number of Canadians reporting their primary language at home",
+                      labels = scales::comma
+)
 ```
 
 From figure \@ref(fig:mother-tongue-vs-most-at-home-scale), we see that for the 214 languages in this data set, as the number of people who have a language as their mother tongue increases, so does the number of people who speak that language at home. When we see 
@@ -230,78 +296,6 @@ two variables do this, we call this a *positive relationship*. Because the point
 points would fit the pattern we observe quite well, we say that it's linear.
 
 Learning how to describe data visualizations is a very useful skill. We will provide descriptions for you in this course (as we did above) until we get to Chapter 4, which focuses on data visualization. Then, we will explicitly teach you how to do this yourself and not over-state or over-interpret the results from a visualization.
-
-### Changing the units
-
-```{r changing_the_units, include = FALSE}
-english_mother_tongue <- can_lang %>%
-  filter(language == "English") %>%
-  pull(mother_tongue)
-census_popn <- 35151728
-```
-
-Suppose from the data we find that `r format(english_mother_tongue, scientific = FALSE, big.mark = ",")` 
-people reported that their mother tongue was English in the 2016 Canadian census. What does this number mean to us? To understand this number, we need context. In particular, how many people were in Canada when this data was collected? From the 2016 Canadian 
-census profile, the population was reported to be 
-`r format(census_popn, scientific = FALSE, big.mark = ",")` people. The number of people who report that English is their mother tongue is much more meaningful when we report it in this context. We can even go a step further and transform this count to a relative frequency or proportion to represent this as a single meaningful number in our data visualizations. We can do this by dividing the number of people reporting a given language as their mother tongue by the number of people who live in Canada. For example, the proportion of people who reported that their mother tongue was English in the 2016 Canadian census was `r format(round(english_mother_tongue/census_popn, 2), scientific = FALSE, big.mark = ",")`.
-
-
-We can use the `mutate` function in R to calculate the proportion for all of the languages in the 2016 Canadian census data set. `mutate` is useful for creating new columns in a data frame or transforming existing columns. Its general syntax is: 
-
-```{r img-mutate, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the mutate function", out.width="1100", fig.retina = 2}
-knitr::include_graphics("img/function_mutate.jpeg")
-```
-
-Below we use `mutate` to calculate the proportion of people reporting a given language as their mother tongue for all the languages in the `can_lang` data set as shown in figure \@ref(fig:img-mutate):
-```{r}
-can_lang <- mutate(can_lang, mother_tongue = mother_tongue / 35151728)
-```
-
-Let's also do this for the counts of the number of people who report that they speak a given language most often at home:
-
-```{r}
-can_lang <- mutate(can_lang, most_at_home = most_at_home / 35151728)
-can_lang
-```
-
-Finally, let's visualize the data now that we have represented it as proportions (and change our axis labels to reflect this change in units!):
-
-```{r mother-tongue-vs-most-at-home-scale-props, fig.width=5.75, fig.height=5, warning=FALSE, fig.cap = "Scatter plot of proportion of Canadians reporting a language as their mother tongue vs the primary language at home"}
-ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
-  geom_point() +
-  xlab("Language spoken most at home (proportion of Canadian residents)") +
-  ylab("Mother tongue (proportion of Canadian residents)") +
-  scale_x_log10(labels = scales::comma) +
-  scale_y_log10(labels = scales::comma)
-```
-
-The visualization in figure \@ref(fig:mother-tongue-vs-most-at-home-scale-props) helps us with our first question exploring the relationship between the number of people who speak a language as their mother tongue and the number who speak that language as their primary language spoken at home. We can now clearly see that most Canadians reported English as their mother tongue and the language they speak most often at home. Changing the units to include this context increases our understanding and allows us to better interpret the numbers in our data set.
-
-
-### Coloring points by group
-Now we'll move onto the second part of our exploratory data analysis question: when considering the relationship between the number of people who have a language as their mother tongue and the number of people who speak that language at home, is there a pattern in the strength of this relationship in the higher-level language categories (Official languages, Aboriginal languages, or non-official and non-Aboriginal languages)? One common way to explore this is to colour the data points by their category. For example, given that we have the higher-level language category for each language recorded in the 2016 Canadian census, we can colour the points in our previous 
-scatter plot to represent each language's higher-level language category.
-
-To do this, we modify our scatter plot code above. Specifically, we will add an argument to the `aes` function, specifying that the points should be coloured by the `category` column:
-
-```{r scatter-colour-by-category, fig.width=7.75, fig.height=4, warning=FALSE,  fig.cap = "Scatter plot of proportion of Canadians reporting a language as their mother tongue vs the primary language at home coloured by language category"}
-ggplot(can_lang, aes(x = most_at_home, y = mother_tongue, color = category)) +
-  geom_point() +
-  xlab("Language spoken most at home (proportion of Canadian residents)") +
-  ylab("Mother tongue (proportion of Canadian residents)") +
-  scale_x_log10(labels = scales::comma) +
-  scale_y_log10(labels = scales::comma)
-```
-
-What do we see when considering the second part of our exploratory question? Do we see a difference in the pattern of the relationship between the number of people who speak a language as their mother tongue and the number of people who speak a language as their primary spoken language at home between higher-level language categories? Probably not!
-
-For each higher-level language category, there appears to be a positive relationship between the number of people who speak a language as their mother tongue and the number of people who speak a language as their primary spoken language at home. This relationship looks similar, regardless of the category. 
-
-Does this mean that this relationship is positive for all languages in the world? Can we use this data visualization on its own to predict how many people have a given language as their mother tongue if we know how many people speak it as their primary language at home?
-
-The answer to both these questions is "no." However, with this exploratory data analysis, we can create new hypotheses, ideas,
-and questions (like the ones at the beginning of this paragraph). Answering those questions would likely involve gathering additional data and doing more complex analyses, which we will 
-see more of later in this course.  
 
 ### Putting it all together
 
