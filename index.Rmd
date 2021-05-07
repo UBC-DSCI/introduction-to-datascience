@@ -199,8 +199,8 @@ we have given to data frames in the code we have already written.
 With these arguments, `filter` returns a data frame that has all the columns of the input data frame but only the rows we asked for in our logical filter statement. 
 
 ```{r}
-spanish <- filter(can_lang, language == "Spanish")
-spanish
+mandarin <- filter(can_lang, language == "Mandarin")
+mandarin
 ```
 
 ### Using `filter` to extract rows with values above or below a threshold
@@ -209,40 +209,38 @@ spanish
 If we are interested in finding information about the languages who have a higher number of people who primarily speak it at home compared to Mandarin---which is reported to have 462890 people speaking it as the primary language they speak in their home---then we can create a filter to obtain rows where the value of `most_at_home` is greater than 462890. In this case, we see that `filter` returns a data frame with 2 rows; this indicates that there are two languages that are spoken more often at home compared to Mandarin.
 
 ```{r}
-spoke_often_at_home <- filter(can_lang, most_at_home > 263505)
+spoke_often_at_home <- filter(can_lang, most_at_home > 462890)
 spoke_often_at_home
 ```
 
 
 ## Exploring data with visualizations
-Creating effective data visualizations is an essential piece to any data analysis. For the remainder of Chapter 1, we will learn how to use functions from the `tidyverse` package to make visualizations that let us explore relationships in data. We will develop a visualization of the language data collected in the 2016 Canadian census we've been working with that will help us understand two potential relationships in the data. First, we will explore the relationship between the number of people who speak a language as their mother tongue and the number who speak that language as their primary language spoken at home. Then we will see whether there is a pattern in the strength of this relationship in the higher-level language categories (Official languages, Aboriginal languages, or non-official and non-Aboriginal languages). These are examples of exploratory data analysis questions because we are looking for relationships and patterns within the data set we have but are not trying to generalize what we find beyond this data set.  
+Creating effective data visualizations is an essential piece to any data analysis. For the remainder of Chapter 1, we will learn how to use functions from the `tidyverse` package to make visualizations that let us explore relationships in data. We will develop a visualization of the language data collected in the 2016 Canadian census we've been working with that will help us understand potential relationships in the data. We will explore what are the top five languages people report speaking as their primary language spoken at home. This is an example of an exploratory data analysis question because we are looking at patterns within the data set we have but are not trying to generalize what we find beyond this data set.  
 
-### Using `ggplot` to create a scatter plot
+### Using `ggplot` to create a bar plot
 
-
-Looking again at our data set below, we can immediately see that the three columns we are interested in visualizing---mother tongue (`mother_tongue`), language spoken most at home (`most_at_home`), and higher-level language category (`category`)---are all in separate columns. In addition, there is a single row (or observation) for each language. The data are, therefore, in what we call a *tidy data* format. 
-Tidy data is a fundamental concept and will be a significant focus in the remainder of this course: many of the functions from `tidyverse` require tidy data, including the `ggplot` function that we will use shortly for our visualization. We will formally introduce this concept in chapter 3.
+Looking again at our data set below, we can immediately see that each variable--- higher-level language category (`category`), language (`language`), mother tongue (`mother_tongue`), language spoken most at home (`most_at_home`), etc. ---are all in separate columns. In addition, there is a single row (or observation) for each language. The data are, therefore, in what we call a *tidy data* format. Tidy data is a fundamental concept and will be a significant focus in the remainder of this course: many of the functions from `tidyverse` require tidy data, including the `ggplot` function that we will use shortly for our visualization. We will formally introduce this concept in chapter 3.
 
 
 ```{r}
 can_lang
 ```
 
-We will begin with a scatter plot of the `mother_tongue` and `most_at_home` columns from our data frame.
-To create a scatter plot of these two variables using the `ggplot` function, we would the following: 
+Before we create the plot, we first need to determine what five languages people report speaking as their primary language spoken at home. We will use the `slice_max()` function, where we specify the data frame, the number of rows, and the variable to order by.
+```{r}
+can_lang_top <- slice_max(can_lang, n = 5, order_by = most_at_home)
+can_lang_top
+```
+We will begin with a bar plot of the `most_at_home` column from our data frame. To create a bar plot of these two variables using the `ggplot` function, we would the following: 
 
 ```{r img-ggplot, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Creating a scatter plot with the ggplot function", out.width="1100", fig.retina = 2}
 knitr::include_graphics("img/function_ggplot.jpeg")
 ```
 
-Below we create a scatter plot using the `ggplot` function as shown in figure \@ref(fig:img-ggplot):
-```{r mother-tongue-vs-most-at-home, fig.width=5.75, fig.height=5, warning=FALSE, fig.cap = "Scatter plot of number of Canadians reporting a language as their mother tongue vs the primary language at home"}
-ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
-  geom_point()
-``` 
+Below we create a bar plot using the `ggplot` function as shown in figure \@ref(fig:img-ggplot):
 
-```{r}
-ggplot(spoke_often_at_home, aes(x = language, y = most_at_home)) +
+```{r bar-most-at-home, fig.width=5.75, fig.height=5, warning=FALSE, fig.cap = "Bar plot of number of Canadians reporting a language as their primary language at home"}
+ggplot(can_lang_top, aes(x = language, y = most_at_home)) +
   geom_bar(stat = "identity")
 ```
 
