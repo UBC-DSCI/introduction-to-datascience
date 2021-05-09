@@ -8,7 +8,8 @@ This chapter will be centred around tools for cleaning and wrangling data that m
 By the end of the chapter, students will be able to:
 
 * define the term "tidy data"
-* discuss the advantages and disadvantages from storing data in a tidy data format
+* discuss the advantages and disadvantages of storing data in a tidy data format
+* contrast the basic data types and structures in R
 * recall and use the following tidyverse functions and operators for their intended data wrangling tasks:
     - `select`
     - `filter`
@@ -28,7 +29,7 @@ At this point, we know how to load data into R from various file formats. Once l
 
 ### What is a data frame?
 
-Let's first start by defining what a data frame is exactly. From a data perspective, it is a rectangle where the rows are the observations:
+Let's first start by defining what a *data frame* is exactly. From a data perspective, it is a rectangle where the rows are the observations:
 
 ```{r 02-setup, include=FALSE}
 devtools::install_github("ttimbers/canlang")
@@ -48,7 +49,7 @@ and the columns are the variables:
 knitr::include_graphics("img/vars.jpeg")
 ```
 
-From a computer programming perspective, in R, a data frame is a special subtype of a list object whose elements (columns) are *vectors*. For example, the data frame below has 3 elements that are vectors whose names are `state`, `year` and `population`.
+From a computer programming perspective, in R, a data frame is a special subtype of a list object whose elements (columns) are *vectors*. For example, the data frame below has three vectors whose names are `state`, `year` and `population`.
 
 ```{r 02-vectors, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Data frame with 3 vectors", fig.retina = 2, out.width = "650"}
 knitr::include_graphics("img/vectors.jpeg")
@@ -56,7 +57,7 @@ knitr::include_graphics("img/vectors.jpeg")
 
 ### What is a vector?
 
-In R, **vectors** are objects that can contain one or more elements. The vector elements are ordered, and they must all be of the same *data type*. R has a number of different basic data types as shown in table \@ref(tab:datatype-table).
+In R, **vectors** are objects that can contain one or more elements. The vector elements are ordered, and they must all be of the same *data type*. R has several different basic data types, as shown in table \@ref(tab:datatype-table).
 
 In the vector shown below, the elements are of numeric type:
 
@@ -97,19 +98,9 @@ different characteristics associated/linked in one object. This is similar to a 
 knitr::include_graphics("img/dataframe.jpeg")
 ```
 
-The functions from the `tidyverse` package that we are using often give us a 
-special class of data frame, called a tibble. Tibbles have some additional 
-features and benefits over the built-in data frame object. These include 
-ability to add grouping (and other useful) attributes, as well as more
-predictable type preservation when subsetting. Because tibble is just a data 
-frame with some added features, we will collectively refer to both built-in R
-data frames and tibbles as data frames in this book.
+The functions from the `tidyverse` package that we are using often give us a special class of data frame called a tibble. Tibbles have some additional features and benefits over the built-in data frame object. These include the ability to add grouping (and other useful) attributes and more predictable type preservation when subsetting. Because a tibble is just a data frame with some added features, we will collectively refer to both built-in R data frames and tibbles as data frames in this book.
 
-> You can use the function `class` on a data object to assess whether a data 
-frame is a built in R data frame or a tibble. If the data object is a date frame
-`class` will return `"data.frame"`, whereas if the data object is a tibble it 
-will return `"tbl_df" "tbl" "data.frame"`. You can easily convert built in R 
-data frames to tibbles using the `tidyverse` `as_tibble` function.
+> You can use the function `class` on a data object to assess whether a data frame is a built-in R data frame or a tibble. If the data object is a data frame `class` will return `"data.frame"`, whereas if the data object is a tibble it  will return `"tbl_df" "tbl" "data.frame"`. You can easily convert built-in R  data frames to tibbles using the `tidyverse` `as_tibble` function.
 
 Vectors, data frames and lists are basic types of *data structures* in R, which we summarize in table \@ref(tab:datastructure-table).
 
@@ -125,7 +116,8 @@ Table: (\#tab:datastructure-table) Basic data structures in R
 
 ## Tidy Data
 
-There are many ways a spreadsheet-like data set can be organized. This chapter will focus on the *tidy data* format of organization, and how to make your raw (and likely messy) data tidy. We want to tidy our data because a variety of tools we would like to use in R are designed to work most effectively (and efficiently) with tidy data. 
+There are many ways a spreadsheet-like data set can be organized. This chapter will focus on the *tidy data* format of organization and how to make your raw (and likely messy) data tidy. We want to tidy our data because various tools we would like to use in R are designed to work most effectively (and efficiently) with tidy data. 
+
 
 ### What is tidy data?
 
@@ -150,11 +142,11 @@ knitr::include_graphics("img/tidy_data.jpeg")
 
 ### Why is tidy data important in R?
 
-First, one of R's most popular plotting tool sets, the `ggplot2` package (which is one of the packages that the `tidyverse` package loads), expects the data to be in a tidy format. Second, most statistical analysis functions also expect data in a tidy format. Given that both of these tasks are central in almost all data analysis projects, it is well worth spending the time to get your data into a tidy format upfront. Luckily there are many well-designed `tidyverse` data cleaning/wrangling tools to help you easily tidy your data. Let's explore them now!
+First, one of R's most popular plotting toolsets, the `ggplot2` package (which is one of the packages that the `tidyverse` package loads), expects the data to be in a tidy format. Second, most statistical analysis functions also expect data in a tidy format. Given that both of these tasks are central in almost all data analysis projects, it is well worth spending the time to get your data into a tidy format upfront. Luckily there are many well-designed `tidyverse` data cleaning/wrangling tools to help you easily tidy your data. Let's explore them now!
 
 ### Going from wide to long (or tidy!) using `pivot_longer`
 
-One common thing that often has to be done to get data into a tidy format is to combine columns that are really part of the same variable but currently stored in separate columns. Data is often stored in a wider, not tidy, format because this format is often more intuitive for human readability and understanding, and humans create data sets. We can use the function `pivot_longer`, which combines columns, thus making the data frame longer and narrower. 
+One common thing that often has to be done to get data into a tidy format is to combine columns that are really part of the same variable but currently stored in separate columns. Data is often stored in a wider, not tidy, format because this format is usually more intuitive for human readability and understanding, and humans create data sets. We can use the function `pivot_longer`, which combines columns, making the data frame longer and narrower. 
 
 To learn how to use `pivot_longer`, we will work with a data set called [`region_lang`](https://ttimbers.github.io/canlang/), containing data retrieved from the 2016 Canadian census. For each census metropolitan area, this data set includes counts of how many Canadians cited each language as their mother tongue, the language spoken most often at home/work and which language they know. 
 
@@ -167,7 +159,8 @@ lang_wide
 ```
 
 
-What is wrong with our untidy format above? From a data analysis perspective, this format is not ideal because, in this format, the outcome of the variable *region* (Toronto, Montreal, Vancouver, Calgary and Edmonton) is stored as column names. Thus it is not easily accessible for the data analysis functions we will want to apply to our data set. Additionally, the values of the *mother tongue* variable are spread across multiple columns. This will prevent us from doing any desired visualization or statistical tasks until we somehow combine them into one column. For instance, suppose we want to know which languages had the highest number of Canadians reporting it as their mother tongue among all five regions? This question would be very difficult to answer with the data in its current format. It would be much easier to answer if we tidy our data first. 
+
+What is wrong with our untidy format above? From a data analysis perspective, this format is not ideal because, in this format, the outcome of the variable *region* (Toronto, Montreal, Vancouver, Calgary and Edmonton) is stored as column names. Thus it is not easily accessible for the data analysis functions we will want to apply to our data set. Additionally, the values of the *mother tongue* variable are spread across multiple columns, which will prevent us from doing any desired visualization or statistical tasks until we combine them into one column. For instance, suppose we want to know which languages had the highest number of Canadians reporting it as their mother tongue among all five regions? This question would be tough to answer with the data in its current format. It would be much easier to answer if we tidy our data first. 
 
 To accomplish this data transformation, we will use the `tidyverse` function `pivot_longer`. To use `pivot_longer` we need to specify the:
 
@@ -179,8 +172,7 @@ To accomplish this data transformation, we will use the `tidyverse` function `pi
 
 4. `values_to`: the name of a new column that will be created, whose values will come from the *values of the columns* we want to combine 
 
-For the above example, we use `pivot_longer` to combine the Toronto, Montreal, Vancouver, Calgary and Edmonton columns into a single column called `region`, and create a column called `mother_tongue` that contains the count of how many Canadians report each language as their mother tongue for each metropolitan area. We use a colon `:` between Toronto and Edmonton tells R to select all the columns in between Toronto and Edmonton: 
-
+For the above example, we use `pivot_longer` to combine the Toronto, Montreal, Vancouver, Calgary and Edmonton columns into a single column called `region`, and create a column called `mother_tongue` that contains the count of how many Canadians report each language as their mother tongue for each metropolitan area. We use a colon `:` between Toronto, and Edmonton tells R to select all the columns in between Toronto and Edmonton: 
 ```{r}
 lang_mother_tidy <- pivot_longer(lang_wide,
   cols = Toronto:Edmonton,
@@ -196,7 +188,7 @@ lang_mother_tidy
 > *to read clearly. When doing this, it is important to end the line with a comma `,` so that R*
 > *knows the function should continue to the next line.*
 
-The data above is now tidy because all 3 criteria for tidy data have now been met:
+The data above is now tidy because all three criteria for tidy data have now been met:
 
 1. All the variables (`category`, `language`, `region` and ``mother_tongue``) are now their own columns in the data frame. 
 2. Each observation, i.e., each `category`, `language`, `region`, and count of Canadians where that language is the mother tongue, are in a single row.
@@ -212,11 +204,11 @@ lang_long <- read_csv("data/region_lang_top5_cities_long.csv")
 lang_long
 ```
 
-What is wrong with this format above? In this example, each observation should be a language in a region. However, in the messy data set above, each observation is split across multiple two rows - one where the count for `most_at_home` is recorded and one where the count for `most_at_work` is recorded. Suppose we wanted to visualize the relationship between the number of Canadians reporting their primary language at home and at work. It would be difficult to do that with the data in its current format. To fix this, we will use `pivot_wider`, and we need to specify the:
+What is wrong with this format above? In this example, each observation should be a language in a region. However, in the messy data set above, each observation is split across multiple two rows. One where the count for `most_at_home` is recorded and the other where the count for `most_at_work` is recorded. Suppose we wanted to visualize the relationship between the number of Canadians reporting their primary language at home and work. It would be difficult to do that with the data in its current format. To fix this, we will use `pivot_wider`, and we need to specify the:
 
 1. `data`: the data set
 
-2. `names_from`: the name of a the column from which to take the variable names
+2. `names_from`: the name of the column from which to take the variable names
 
 3. `values_from`: the name of the column from which to take the values
 
@@ -238,7 +230,7 @@ You might notice that we have the same number of columns in our tidy data set as
 
 ### Using `separate` to deal with multiple delimiters
 
-Data are also not considered tidy when multiple values are stored in the same cell, as discussed above. In addition to the previous untidiness we addressed in the earlier versions of this data set, the one we show below is even messier: 
+Data are also not considered tidy when multiple values are stored in the same cell, as discussed above. In addition to the previous untidiness, we addressed in the earlier versions of this data set, the one we show below is even messier: 
 
 the `Toronto`, `Montreal`, `Vancouver`, `Calgary` and `Edmonton` columns contain the number of Canadians reporting their primary language at home and work in one column separated by the delimiter "/". The column names are the values of a variable, AND each value does not have its own cell! To make this messy data tidy, we'll have to fix both of these issues.
 
@@ -277,9 +269,9 @@ lang_no_delimiter <- separate(lang_messy_longer,
 lang_no_delimiter
 ```
 
-You might notice in the table above the word `<chr>` appears beneath each of the column names. The word under the column name indicates the data type of each column. Here all of our variables are "character" data types. Recall, a character data type is a letter or a number. In the previous example, `most_at_home` and `most_at_work`  were `<dbl>` (double) (you can verify this by looking at the tables in the previous sections), which is a numeric data type. This change is due to the delimiter "/" when we read in this messy data set. R read the columns in as character types, and it stayed that way after we separated the columns. 
+You might notice in the table above the word `<chr>` appears beneath each of the column names. The word under the column name indicates the data type of each column. Here all of our variables are "character" data types. Recall, a character data type is a letter or a number surrounded by quotes. In the previous example, `most_at_home` and `most_at_work`  were `<dbl>` (double) (you can verify this by looking at the tables in the previous sections), which is a numeric data type. This change is due to the delimiter "/" when we read in this messy data set. R read the columns in as character types, and it stayed that way after we separated the columns. 
 
-Here it makes sense for `region`, `category`, and `language` to be stored as a character type. However, if we want to apply any functions that treat the `most_at_home` and `most_at_work` columns as a number (e.g. finding the maximum of the column), it won't be possible to do if the variable is stored as a `character`. R has a variety of data types, but here we will use the function `mutate` to convert these two columns to an "numeric" data type. `mutate` is a function that will allow us to create a new variable in our data set. We specify the data set in the first argument, and in the proceeding arguments, we specify the function we want to apply (`as.numeric`) to which columns (`most_at_home`, `most_at_work`). Then we give the mutated variable a new name. Here we are naming the columns the same names ("most_at_home", "most_at_work"), but you can call these mutated variables anything you'd like. 
+Here it makes sense for `region`, `category`, and `language` to be stored as a character type. However, if we want to apply any functions that treat the `most_at_home` and `most_at_work` columns as a number (e.g. finding the maximum of the column), it won't be possible to do if the variable is stored as a `character`. R has a variety of data types, but here we will use the function `mutate` to convert these two columns to a "numeric" data type. `mutate` is a function that will allow us to create a new variable in our data set. We specify the data set in the first argument, and in the proceeding arguments, we specify the function we want to apply (`as.numeric`) to which columns (`most_at_home`, `most_at_work`). Then we give the mutated variable a new name. Here we are naming the columns the same names ("most_at_home", "most_at_work"), but you can call these mutated variables anything you'd like. 
 
 ```{r}
 lang_no_delimiter <- mutate(lang_no_delimiter,
@@ -329,7 +321,7 @@ Is there only one shape for tidy data for a given data set? Not necessarily! It 
 
 ## More ways to create subsets of data frames with `select` & `filter`
 
-In chapter 1, we learned about two `tidyverse` functions: `select` and `filter` to select a single column and filter a single row from a data frame. We will now learn more ways we can use these functions. Recall, the `select` function creates a subset of the *columns* of a data frame, while the `filter` creates a subset of the *rows* with specific values.
+Chapter 1 discussed two `tidyverse` functions: `select` and `filter` to select a single column and filter rows from a data frame. We will now learn more ways we can use these functions. Recall, the `select` function creates a subset of the *columns* of a data frame, while the `filter` subsets *rows* with specific values.
 
 ### Using `select` to extract multiple columns
 
@@ -343,7 +335,7 @@ three_columns
 
 ### Using `select` to extract a range of columns
 
-We can also use `select` to obtain a subset of the data frame constructed from a range of columns. To do this we use the colon (`:`) operator to denote the range. For example, to get all the columns in the `can_lang` data frame from `language` to `most_at_home` we pass `language:most_at_home` as the second argument to the `select` function.
+We can also use `select` to obtain a subset of the data frame constructed from a range of columns. To do this, we use the colon (`:`) operator to denote the range. For example, to get all the columns in the `can_lang` data frame from `language` to `most_at_home` we pass `language:most_at_home` as the second argument to the `select` function.
 
 ```{r}
 column_range <- select(can_lang, language:most_at_home)
@@ -352,7 +344,7 @@ column_range
 
 ### Using `filter` to extract a single row
 
-Recall we can use the `filter` function to obtain the subset of rows with desired values from a data frame. Again, our first argument is the name of the data frame object, `can_lang`. The second argument is a logical statement to use when filtering the rows. Here, for example, we'll say that we are interested in rows where the language is Mandarin. We use the *equivalency operator* (`==`) to compare the values of the `language` column with the value `"Mandarin"`. With these arguments, `filter` returns a data frame that has all the columns of the input data frame but only the rows we asked for in our logical filter statement. 
+Recall we can use the `filter` function to obtain the subset of rows with desired values from a data frame. Again, our first argument is the name of the data frame object, `can_lang`. The second argument is a logical statement to use when filtering the rows. Here, for example, we'll say that we are interested in rows where the language is Mandarin. We use the *equivalency operator* (`==`) to compare the values of the `language` column with the value `"Mandarin"`. With these arguments, `filter` returns a data frame with all the columns of the input data frame but only the rows we asked for in our logical filter statement. 
 
 ```{r}
 mandarin <- filter(can_lang, language == "Mandarin")
@@ -361,13 +353,13 @@ mandarin
 
 
 ```{r changing_the_units, include = FALSE}
-mandarin_mother_tongue <- mandarin %>% 
+mandarin_mother_tongue <- mandarin %>%
   pull(mother_tongue)
 census_popn <- 35151728
 ```
 ### Using `filter` to extract rows with values above or below a threshold
 
-If we are interested in finding information about the languages who have a higher number of people who primarily speak it as their mother tongue compared to Mandarin---which is reported to have `r format(mandarin_mother_tongue, scientific = FALSE, big.mark = ",")` people speaking it as their mother tongue---then we can create a filter to obtain rows where the value of `mother_tongue` is greater than `r format(mandarin_mother_tongue, scientific = FALSE, big.mark = ",")`. In this case, we see that `filter` returns a data frame with 2 rows; this indicates that there are two languages that are spoken more often as their mother tongue compared to Mandarin.
+If we are interested in finding the languages with higher numbers of people who speak it as their mother tongue than Mandarin---which is  `r format(mandarin_mother_tongue, scientific = FALSE, big.mark = ",")` people ---then we can create a filter to obtain rows where the value of `mother_tongue` is greater than `r format(mandarin_mother_tongue, scientific = FALSE, big.mark = ",")`. In this case, we see that `filter` returns a data frame with two rows; this indicates that two languages are spoken more often as their mother tongue compared to Mandarin.
 
 ```{r}
 spoke_often_at_home <- filter(can_lang, mother_tongue > 592040)
@@ -375,9 +367,7 @@ spoke_often_at_home
 ```
 
 
-
 ### Using `mutate` to add columns or overwrite existing columns
-
 
 We found that `r format(mandarin_mother_tongue, scientific = FALSE, big.mark = ",")` 
 people reported that their mother tongue was Mandarin in the 2016 Canadian census. What does this number mean to us? To understand this number, we need context. In particular, how many people were in Canada when this data was collected? From the 2016 Canadian census profile, the population was reported to be `r format(census_popn, scientific = FALSE, big.mark = ",")` people. The number of people who report that Mandarin is their mother tongue is much more meaningful when we report it in this context. We can even go a step further and transform this count to a relative frequency or proportion. We can do this by dividing the number of people reporting a given language as their mother tongue by the number of people who live in Canada. For example, the proportion of people who reported that their mother tongue was Mandarin in the 2016 Canadian census was `r format(round(mandarin_mother_tongue/census_popn, 2), scientific = FALSE, big.mark = ",")`.
@@ -394,7 +384,7 @@ Below we use `mutate` to calculate the proportion of people reporting a given la
 mutated_can_lang <- mutate(can_lang, mother_tongue_proportion = mother_tongue / 35151728)
 ```
 
-Here we used a new data frame name (`mutated_can_lang`) and column name (`mother_tongue_proportion`) to create a new data frame and a new column. But we could have used the current data frame name and column name, which would have written over our original data frame and column.
+Here we used a new data frame name (`mutated_can_lang`) and column name (`mother_tongue_proportion`) to create a new data frame and a new column. But we could have used the existing data frame name (`can_lang`) and column name (`mother_tongue`), which would have written over our original data frame and column.
 
 
 ## Combining functions using the pipe operator, `%>%`:
