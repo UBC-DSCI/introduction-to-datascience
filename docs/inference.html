@@ -26,7 +26,7 @@
 <meta name="author" content="Melissa Lee" />
 
 
-<meta name="date" content="2021-04-29" />
+<meta name="date" content="2021-05-10" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -281,7 +281,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="8.1" data-path="regression1.html"><a href="regression1.html#overview-6"><i class="fa fa-check"></i><b>8.1</b> Overview</a></li>
 <li class="chapter" data-level="8.2" data-path="regression1.html"><a href="regression1.html#chapter-learning-objectives-7"><i class="fa fa-check"></i><b>8.2</b> Chapter learning objectives</a></li>
 <li class="chapter" data-level="8.3" data-path="regression1.html"><a href="regression1.html#regression"><i class="fa fa-check"></i><b>8.3</b> Regression</a></li>
-<li class="chapter" data-level="8.4" data-path="regression1.html"><a href="regression1.html#sacremento-real-estate-example"><i class="fa fa-check"></i><b>8.4</b> Sacremento real estate example</a></li>
+<li class="chapter" data-level="8.4" data-path="regression1.html"><a href="regression1.html#exploring-a-labelled-data-set-1"><i class="fa fa-check"></i><b>8.4</b> Exploring a labelled data set</a></li>
 <li class="chapter" data-level="8.5" data-path="regression1.html"><a href="regression1.html#k-nearest-neighbours-regression"><i class="fa fa-check"></i><b>8.5</b> K-nearest neighbours regression</a></li>
 <li class="chapter" data-level="8.6" data-path="regression1.html"><a href="regression1.html#training-evaluating-and-tuning-the-model"><i class="fa fa-check"></i><b>8.6</b> Training, evaluating, and tuning the model</a></li>
 <li class="chapter" data-level="8.7" data-path="regression1.html"><a href="regression1.html#underfitting-and-overfitting"><i class="fa fa-check"></i><b>8.7</b> Underfitting and overfitting</a></li>
@@ -519,19 +519,24 @@ called a <strong>sampling distribution</strong>. The sampling distribution will 
 how much we would expect our sample proportions from this population to vary
 for samples of size 40. Below we again use the <code>rep_sample_n</code> to take samples
 of size 40 from our population of Timbits, but we set the <code>reps</code> argument
-to specify the number of samples to take, here 15,000. We will use the function <code>head()</code> to see the first few rows and <code>tail()</code> to see the last few rows of our <code>samples</code> data frame.</p>
+to specify the number of samples to take, here 15,000. We will use the function <code>tail()</code> to see the last few rows of our <code>samples</code> data frame.</p>
 <div class="sourceCode" id="cb308"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb308-1"><a href="inference.html#cb308-1"></a>samples &lt;-<span class="st"> </span><span class="kw">rep_sample_n</span>(virtual_box, <span class="dt">size =</span> <span class="dv">40</span>, <span class="dt">reps =</span> <span class="dv">15000</span>)</span>
-<span id="cb308-2"><a href="inference.html#cb308-2"></a><span class="kw">head</span>(samples)</span></code></pre></div>
-<pre><code>## # A tibble: 6 x 3
-## # Groups:   replicate [1]
-##   replicate timbit_id flavour      
-##       &lt;int&gt;     &lt;dbl&gt; &lt;fct&gt;        
-## 1         1      9054 chocolate    
-## 2         1      4322 old fashioned
-## 3         1      1685 chocolate    
-## 4         1      3958 chocolate    
-## 5         1      2765 old fashioned
-## 6         1       358 old fashioned</code></pre>
+<span id="cb308-2"><a href="inference.html#cb308-2"></a>samples</span></code></pre></div>
+<pre><code>## # A tibble: 600,000 x 3
+## # Groups:   replicate [15,000]
+##    replicate timbit_id flavour      
+##        &lt;int&gt;     &lt;dbl&gt; &lt;fct&gt;        
+##  1         1      9054 chocolate    
+##  2         1      4322 old fashioned
+##  3         1      1685 chocolate    
+##  4         1      3958 chocolate    
+##  5         1      2765 old fashioned
+##  6         1       358 old fashioned
+##  7         1      2495 chocolate    
+##  8         1      7724 chocolate    
+##  9         1      4764 chocolate    
+## 10         1      6596 chocolate    
+## # … with 599,990 more rows</code></pre>
 <div class="sourceCode" id="cb310"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb310-1"><a href="inference.html#cb310-1"></a><span class="kw">tail</span>(samples)</span></code></pre></div>
 <pre><code>## # A tibble: 6 x 3
 ## # Groups:   replicate [1]
@@ -549,16 +554,21 @@ Now that we have taken 15,000 samples, to create a sampling distribution of samp
 <div class="sourceCode" id="cb312"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb312-1"><a href="inference.html#cb312-1"></a>sample_estimates &lt;-<span class="st"> </span>samples <span class="op">%&gt;%</span></span>
 <span id="cb312-2"><a href="inference.html#cb312-2"></a><span class="st">  </span><span class="kw">group_by</span>(replicate) <span class="op">%&gt;%</span></span>
 <span id="cb312-3"><a href="inference.html#cb312-3"></a><span class="st">  </span><span class="kw">summarise</span>(<span class="dt">sample_proportion =</span> <span class="kw">sum</span>(flavour <span class="op">==</span><span class="st"> &quot;chocolate&quot;</span>) <span class="op">/</span><span class="st"> </span><span class="dv">40</span>)</span>
-<span id="cb312-4"><a href="inference.html#cb312-4"></a><span class="kw">head</span>(sample_estimates)</span></code></pre></div>
-<pre><code>## # A tibble: 6 x 2
-##   replicate sample_proportion
-##       &lt;int&gt;             &lt;dbl&gt;
-## 1         1             0.625
-## 2         2             0.675
-## 3         3             0.7  
-## 4         4             0.675
-## 5         5             0.45 
-## 6         6             0.425</code></pre>
+<span id="cb312-4"><a href="inference.html#cb312-4"></a>sample_estimates</span></code></pre></div>
+<pre><code>## # A tibble: 15,000 x 2
+##    replicate sample_proportion
+##        &lt;int&gt;             &lt;dbl&gt;
+##  1         1             0.625
+##  2         2             0.675
+##  3         3             0.7  
+##  4         4             0.675
+##  5         5             0.45 
+##  6         6             0.425
+##  7         7             0.7  
+##  8         8             0.6  
+##  9         9             0.65 
+## 10        10             0.675
+## # … with 14,990 more rows</code></pre>
 <div class="sourceCode" id="cb314"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb314-1"><a href="inference.html#cb314-1"></a><span class="kw">tail</span>(sample_estimates)</span></code></pre></div>
 <pre><code>## # A tibble: 6 x 2
 ##   replicate sample_proportion
@@ -642,18 +652,22 @@ distribution of observations in the sample,
 and calculate the mean of our sample. This number is a <strong>point estimate</strong> for the mean of the full population.</p>
 <div class="sourceCode" id="cb323"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb323-1"><a href="inference.html#cb323-1"></a>sample_<span class="dv">1</span> &lt;-<span class="st"> </span>airbnb <span class="op">%&gt;%</span></span>
 <span id="cb323-2"><a href="inference.html#cb323-2"></a><span class="st">  </span><span class="kw">rep_sample_n</span>(<span class="dv">40</span>)</span>
-<span id="cb323-3"><a href="inference.html#cb323-3"></a><span class="kw">head</span>(sample_<span class="dv">1</span>)</span></code></pre></div>
-<pre><code>## # A tibble: 6 x 9
+<span id="cb323-3"><a href="inference.html#cb323-3"></a>sample_<span class="dv">1</span></span></code></pre></div>
+<pre><code>## # A tibble: 40 x 9
 ## # Groups:   replicate [1]
-##   replicate    id neighbourhood room_type accommodates bathrooms bedrooms  beds
-##       &lt;int&gt; &lt;int&gt; &lt;chr&gt;         &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;        &lt;dbl&gt; &lt;dbl&gt;
-## 1         1   436 Kensington-C… Entire h…            7 2 baths          3     6
-## 2         1  2794 Riley Park    Entire h…            3 1 bath           1     1
-## 3         1  4423 Mount Pleasa… Entire h…            6 1 bath           3     3
-## 4         1   853 Kensington-C… Private …            2 1 shared…        1     1
-## 5         1  1545 Kensington-C… Entire h…            4 1 bath           2     4
-## 6         1  2505 Oakridge      Private …            2 1 privat…        1     1
-## # … with 1 more variable: price &lt;dbl&gt;</code></pre>
+##    replicate    id neighbourhood room_type accommodates bathrooms bedrooms  beds
+##        &lt;int&gt; &lt;int&gt; &lt;chr&gt;         &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;        &lt;dbl&gt; &lt;dbl&gt;
+##  1         1   436 Kensington-C… Entire h…            7 2 baths          3     6
+##  2         1  2794 Riley Park    Entire h…            3 1 bath           1     1
+##  3         1  4423 Mount Pleasa… Entire h…            6 1 bath           3     3
+##  4         1   853 Kensington-C… Private …            2 1 shared…        1     1
+##  5         1  1545 Kensington-C… Entire h…            4 1 bath           2     4
+##  6         1  2505 Oakridge      Private …            2 1 privat…        1     1
+##  7         1   694 Grandview-Wo… Entire h…            6 2 baths          2     2
+##  8         1   211 West End      Private …            2 1 privat…        1     1
+##  9         1  2133 Downtown      Entire h…            3 1 bath           2     2
+## 10         1  2973 Downtown      Entire h…            3 1 bath           1     2
+## # … with 30 more rows, and 1 more variable: price &lt;dbl&gt;</code></pre>
 <div class="sourceCode" id="cb325"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb325-1"><a href="inference.html#cb325-1"></a>sample_distribution &lt;-<span class="st"> </span><span class="kw">ggplot</span>(sample_<span class="dv">1</span>, <span class="kw">aes</span>(price)) <span class="op">+</span></span>
 <span id="cb325-2"><a href="inference.html#cb325-2"></a><span class="st">  </span><span class="kw">geom_histogram</span>(<span class="dt">fill =</span> <span class="st">&quot;dodgerblue3&quot;</span>, <span class="dt">color =</span> <span class="st">&quot;lightgrey&quot;</span>) <span class="op">+</span></span>
 <span id="cb325-3"><a href="inference.html#cb325-3"></a><span class="st">  </span><span class="kw">xlab</span>(<span class="st">&quot;Price per night ($)&quot;</span>)</span>
@@ -684,31 +698,40 @@ How much does our estimate vary across different samples of size 40 in this exam
 we can take many samples and plot the <strong>sampling distribution</strong> of sample means for samples of size 40 to get a sense
 for this variation. In this case, we’ll use 15,000 samples of size 40.</p>
 <div class="sourceCode" id="cb328"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb328-1"><a href="inference.html#cb328-1"></a>samples &lt;-<span class="st"> </span><span class="kw">rep_sample_n</span>(airbnb, <span class="dt">size =</span> <span class="dv">40</span>, <span class="dt">reps =</span> <span class="dv">15000</span>)</span>
-<span id="cb328-2"><a href="inference.html#cb328-2"></a><span class="kw">head</span>(samples)</span></code></pre></div>
-<pre><code>## # A tibble: 6 x 9
-## # Groups:   replicate [1]
-##   replicate    id neighbourhood room_type accommodates bathrooms bedrooms  beds
-##       &lt;int&gt; &lt;int&gt; &lt;chr&gt;         &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;        &lt;dbl&gt; &lt;dbl&gt;
-## 1         1  3101 West End      Entire h…            5 2 baths          2     2
-## 2         1   281 Renfrew-Coll… Private …            2 1 shared…        1     1
-## 3         1  3343 Oakridge      Entire h…            4 1 bath           1     2
-## 4         1  3394 Mount Pleasa… Entire h…            6 1 bath           2     2
-## 5         1  3339 Downtown Eas… Entire h…            4 1 bath           1     2
-## 6         1  1908 Riley Park    Entire h…            3 1 bath           2     3
-## # … with 1 more variable: price &lt;dbl&gt;</code></pre>
+<span id="cb328-2"><a href="inference.html#cb328-2"></a>samples</span></code></pre></div>
+<pre><code>## # A tibble: 600,000 x 9
+## # Groups:   replicate [15,000]
+##    replicate    id neighbourhood room_type accommodates bathrooms bedrooms  beds
+##        &lt;int&gt; &lt;int&gt; &lt;chr&gt;         &lt;chr&gt;            &lt;dbl&gt; &lt;chr&gt;        &lt;dbl&gt; &lt;dbl&gt;
+##  1         1  3101 West End      Entire h…            5 2 baths          2     2
+##  2         1   281 Renfrew-Coll… Private …            2 1 shared…        1     1
+##  3         1  3343 Oakridge      Entire h…            4 1 bath           1     2
+##  4         1  3394 Mount Pleasa… Entire h…            6 1 bath           2     2
+##  5         1  3339 Downtown Eas… Entire h…            4 1 bath           1     2
+##  6         1  1908 Riley Park    Entire h…            3 1 bath           2     3
+##  7         1  4234 Victoria-Fra… Entire h…            8 2 baths          4     4
+##  8         1  1810 Kitsilano     Entire h…            6 1 bath           2     4
+##  9         1  2397 Downtown      Entire h…            4 2 baths          2     2
+## 10         1   665 Kerrisdale    Entire h…            3 1 bath           1     1
+## # … with 599,990 more rows, and 1 more variable: price &lt;dbl&gt;</code></pre>
 <div class="sourceCode" id="cb330"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb330-1"><a href="inference.html#cb330-1"></a>sample_estimates &lt;-<span class="st"> </span>samples <span class="op">%&gt;%</span></span>
 <span id="cb330-2"><a href="inference.html#cb330-2"></a><span class="st">  </span><span class="kw">group_by</span>(replicate) <span class="op">%&gt;%</span></span>
 <span id="cb330-3"><a href="inference.html#cb330-3"></a><span class="st">  </span><span class="kw">summarise</span>(<span class="dt">sample_mean =</span> <span class="kw">mean</span>(price))</span>
-<span id="cb330-4"><a href="inference.html#cb330-4"></a><span class="kw">head</span>(sample_estimates)</span></code></pre></div>
-<pre><code>## # A tibble: 6 x 2
-##   replicate sample_mean
-##       &lt;int&gt;       &lt;dbl&gt;
-## 1         1        136.
-## 2         2        145.
-## 3         3        111.
-## 4         4        173.
-## 5         5        131.
-## 6         6        174.</code></pre>
+<span id="cb330-4"><a href="inference.html#cb330-4"></a>sample_estimates</span></code></pre></div>
+<pre><code>## # A tibble: 15,000 x 2
+##    replicate sample_mean
+##        &lt;int&gt;       &lt;dbl&gt;
+##  1         1        136.
+##  2         2        145.
+##  3         3        111.
+##  4         4        173.
+##  5         5        131.
+##  6         6        174.
+##  7         7        147.
+##  8         8        158.
+##  9         9        203.
+## 10        10        150.
+## # … with 14,990 more rows</code></pre>
 <div class="sourceCode" id="cb332"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb332-1"><a href="inference.html#cb332-1"></a>sampling_distribution_<span class="dv">40</span> &lt;-<span class="st"> </span><span class="kw">ggplot</span>(sample_estimates, <span class="kw">aes</span>(<span class="dt">x =</span> sample_mean)) <span class="op">+</span></span>
 <span id="cb332-2"><a href="inference.html#cb332-2"></a><span class="st">  </span><span class="kw">geom_histogram</span>(<span class="dt">fill =</span> <span class="st">&quot;dodgerblue3&quot;</span>, <span class="dt">color =</span> <span class="st">&quot;lightgrey&quot;</span>) <span class="op">+</span></span>
 <span id="cb332-3"><a href="inference.html#cb332-3"></a><span class="st">  </span><span class="kw">xlab</span>(<span class="st">&quot;Sample mean price per night ($)&quot;</span>)</span>
@@ -844,16 +867,21 @@ Vancouver, Canada using a single sample we collected of size 40.</p>
 <span id="cb333-2"><a href="inference.html#cb333-2"></a><span class="st">  </span><span class="kw">rep_sample_n</span>(<span class="dv">40</span>) <span class="op">%&gt;%</span></span>
 <span id="cb333-3"><a href="inference.html#cb333-3"></a><span class="st">  </span><span class="kw">ungroup</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="co"># ungroup the data frame</span></span>
 <span id="cb333-4"><a href="inference.html#cb333-4"></a><span class="st">  </span><span class="kw">select</span>(price) <span class="co"># drop the replicate column</span></span>
-<span id="cb333-5"><a href="inference.html#cb333-5"></a><span class="kw">head</span>(one_sample)</span></code></pre></div>
-<pre><code>## # A tibble: 6 x 1
-##   price
-##   &lt;dbl&gt;
-## 1   250
-## 2   106
-## 3   150
-## 4   357
-## 5    50
-## 6   110</code></pre>
+<span id="cb333-5"><a href="inference.html#cb333-5"></a>one_sample</span></code></pre></div>
+<pre><code>## # A tibble: 40 x 1
+##    price
+##    &lt;dbl&gt;
+##  1   250
+##  2   106
+##  3   150
+##  4   357
+##  5    50
+##  6   110
+##  7    40
+##  8    35
+##  9   176
+## 10   128
+## # … with 30 more rows</code></pre>
 <div class="sourceCode" id="cb335"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb335-1"><a href="inference.html#cb335-1"></a>one_sample_dist &lt;-<span class="st"> </span><span class="kw">ggplot</span>(one_sample, <span class="kw">aes</span>(price)) <span class="op">+</span></span>
 <span id="cb335-2"><a href="inference.html#cb335-2"></a><span class="st">  </span><span class="kw">geom_histogram</span>(<span class="dt">fill =</span> <span class="st">&quot;dodgerblue3&quot;</span>, <span class="dt">color =</span> <span class="st">&quot;lightgrey&quot;</span>) <span class="op">+</span></span>
 <span id="cb335-3"><a href="inference.html#cb335-3"></a><span class="st">  </span><span class="kw">xlab</span>(<span class="st">&quot;Price per night ($)&quot;</span>)</span>
@@ -882,17 +910,22 @@ sampling distribution. Since we want to sample with replacement, we change the
 argument for <code>replace</code> from its default value of <code>FALSE</code> to <code>TRUE</code>.</p>
 <div class="sourceCode" id="cb338"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb338-1"><a href="inference.html#cb338-1"></a>boot1 &lt;-<span class="st"> </span>one_sample <span class="op">%&gt;%</span></span>
 <span id="cb338-2"><a href="inference.html#cb338-2"></a><span class="st">  </span><span class="kw">rep_sample_n</span>(<span class="dt">size =</span> <span class="dv">40</span>, <span class="dt">replace =</span> <span class="ot">TRUE</span>, <span class="dt">reps =</span> <span class="dv">1</span>)</span>
-<span id="cb338-3"><a href="inference.html#cb338-3"></a><span class="kw">head</span>(boot1)</span></code></pre></div>
-<pre><code>## # A tibble: 6 x 2
+<span id="cb338-3"><a href="inference.html#cb338-3"></a>boot1</span></code></pre></div>
+<pre><code>## # A tibble: 40 x 2
 ## # Groups:   replicate [1]
-##   replicate price
-##       &lt;int&gt; &lt;dbl&gt;
-## 1         1  201 
-## 2         1  199 
-## 3         1  127.
-## 4         1   85 
-## 5         1  169 
-## 6         1   60</code></pre>
+##    replicate price
+##        &lt;int&gt; &lt;dbl&gt;
+##  1         1  201 
+##  2         1  199 
+##  3         1  127.
+##  4         1   85 
+##  5         1  169 
+##  6         1   60 
+##  7         1  250 
+##  8         1  250 
+##  9         1   60 
+## 10         1   35 
+## # … with 30 more rows</code></pre>
 <div class="sourceCode" id="cb340"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb340-1"><a href="inference.html#cb340-1"></a>boot1_dist &lt;-<span class="st"> </span><span class="kw">ggplot</span>(boot1, <span class="kw">aes</span>(price)) <span class="op">+</span></span>
 <span id="cb340-2"><a href="inference.html#cb340-2"></a><span class="st">  </span><span class="kw">geom_histogram</span>(<span class="dt">fill =</span> <span class="st">&quot;dodgerblue3&quot;</span>, <span class="dt">color =</span> <span class="st">&quot;lightgrey&quot;</span>) <span class="op">+</span></span>
 <span id="cb340-3"><a href="inference.html#cb340-3"></a><span class="st">  </span><span class="kw">xlab</span>(<span class="st">&quot;Price per night ($)&quot;</span>)</span>
@@ -923,17 +956,22 @@ our original population; but since we do not have access to the population itsel
 this is often the best we can do.</p>
 <div class="sourceCode" id="cb343"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb343-1"><a href="inference.html#cb343-1"></a>boot15000 &lt;-<span class="st"> </span>one_sample <span class="op">%&gt;%</span></span>
 <span id="cb343-2"><a href="inference.html#cb343-2"></a><span class="st">  </span><span class="kw">rep_sample_n</span>(<span class="dt">size =</span> <span class="dv">40</span>, <span class="dt">replace =</span> <span class="ot">TRUE</span>, <span class="dt">reps =</span> <span class="dv">15000</span>)</span>
-<span id="cb343-3"><a href="inference.html#cb343-3"></a><span class="kw">head</span>(boot15000)</span></code></pre></div>
-<pre><code>## # A tibble: 6 x 2
-## # Groups:   replicate [1]
-##   replicate price
-##       &lt;int&gt; &lt;dbl&gt;
-## 1         1   200
-## 2         1   176
-## 3         1   105
-## 4         1   105
-## 5         1   105
-## 6         1   132</code></pre>
+<span id="cb343-3"><a href="inference.html#cb343-3"></a>boot15000</span></code></pre></div>
+<pre><code>## # A tibble: 600,000 x 2
+## # Groups:   replicate [15,000]
+##    replicate price
+##        &lt;int&gt; &lt;dbl&gt;
+##  1         1  200 
+##  2         1  176 
+##  3         1  105 
+##  4         1  105 
+##  5         1  105 
+##  6         1  132 
+##  7         1  225 
+##  8         1  127.
+##  9         1  250 
+## 10         1  199 
+## # … with 599,990 more rows</code></pre>
 <div class="sourceCode" id="cb345"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb345-1"><a href="inference.html#cb345-1"></a><span class="kw">tail</span>(boot15000)</span></code></pre></div>
 <pre><code>## # A tibble: 6 x 2
 ## # Groups:   replicate [1]
@@ -970,16 +1008,21 @@ this is often the best we can do.</p>
 <div class="sourceCode" id="cb350"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb350-1"><a href="inference.html#cb350-1"></a>boot15000_means &lt;-<span class="st"> </span>boot15000 <span class="op">%&gt;%</span></span>
 <span id="cb350-2"><a href="inference.html#cb350-2"></a><span class="st">  </span><span class="kw">group_by</span>(replicate) <span class="op">%&gt;%</span></span>
 <span id="cb350-3"><a href="inference.html#cb350-3"></a><span class="st">  </span><span class="kw">summarize</span>(<span class="dt">mean =</span> <span class="kw">mean</span>(price))</span>
-<span id="cb350-4"><a href="inference.html#cb350-4"></a><span class="kw">head</span>(boot15000_means)</span></code></pre></div>
-<pre><code>## # A tibble: 6 x 2
-##   replicate  mean
-##       &lt;int&gt; &lt;dbl&gt;
-## 1         1  154.
-## 2         2  162.
-## 3         3  151.
-## 4         4  163.
-## 5         5  158.
-## 6         6  156.</code></pre>
+<span id="cb350-4"><a href="inference.html#cb350-4"></a>boot15000_means</span></code></pre></div>
+<pre><code>## # A tibble: 15,000 x 2
+##    replicate  mean
+##        &lt;int&gt; &lt;dbl&gt;
+##  1         1  154.
+##  2         2  162.
+##  3         3  151.
+##  4         4  163.
+##  5         5  158.
+##  6         6  156.
+##  7         7  166.
+##  8         8  170.
+##  9         9  165.
+## 10        10  174.
+## # … with 14,990 more rows</code></pre>
 <div class="sourceCode" id="cb352"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb352-1"><a href="inference.html#cb352-1"></a><span class="kw">tail</span>(boot15000_means)</span></code></pre></div>
 <pre><code>## # A tibble: 6 x 2
 ##   replicate  mean
@@ -1043,8 +1086,8 @@ practice, we would not know whether our interval captured the population paramet
 <div id="additional-resources-7" class="section level2">
 <h2><span class="header-section-number">11.6</span> Additional resources</h2>
 <ul>
-<li>Chapters 7 to 10 of <a href="https://moderndive.com/">Modern Dive</a> provide a great next step in learning about inference. In particular, Chapters 7 and 8 cover sampling and bootstrapping using <code>tidyverse</code> and <code>infer</code> in a slightly more in-depth manner to the present chapter. Chapters 9 and 10 take the next step beyond the scope of the present chapter, and begin to provide some of the initial mathematical underpinnings of inference, as well as more advanced applications of the concept of inference in testing hypotheses and performing regression. This material provides a great starting point for getting more into the technical side of statistics.</li>
-<li>Chapters 4 to 7 of <a href="https://www.openintro.org/">OpenIntro Statistics - Fourth Edition</a> provide a good next step after Modern Dive. Although it is still certainly an introductory text, things get a bit more mathematical here. Depending on your background, you may actually want to start going through Chapters 1 to 3 first, where you will learn some very important basic concepts in probability theory. Although it may seem like a diversion, probability theory is <em>the language of statistics</em>; if you have a solid grasp of probability, more advanced statistics will come naturally to you!</li>
+<li>Chapters 7 to 10 of <a href="https://moderndive.com/">Modern Dive</a> provide a great next step in learning about inference. In particular, Chapters 7 and 8 cover sampling and bootstrapping using <code>tidyverse</code> and <code>infer</code> in a slightly more in-depth manner than the present chapter. Chapters 9 and 10 take the next step beyond the scope of this chapter and begin to provide some of the initial mathematical underpinnings of inference and more advanced applications of the concept of inference in testing hypotheses and performing regression. This material offers a great starting point for getting more into the technical side of statistics.</li>
+<li>Chapters 4 to 7 of <a href="https://www.openintro.org/">OpenIntro Statistics - Fourth Edition</a> provide a good next step after Modern Dive. Although it is still certainly an introductory text, things get a bit more mathematical here. Depending on your background, you may actually want to start going through Chapters 1 to 3 first, where you will learn some fundamental concepts in probability theory. Although it may seem like a diversion, probability theory is <em>the language of statistics</em>; if you have a solid grasp of probability, more advanced statistics will come naturally to you!</li>
 </ul>
 
 </div>

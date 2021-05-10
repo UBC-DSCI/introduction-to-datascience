@@ -1,11 +1,22 @@
 # Regression I: K-nearest neighbours {#regression1}
 
 ## Overview 
-This chapter will provide an introduction to regression through K-nearest
-neighbours (K-NN) in a predictive context, focusing primarily on the case where
-there is a single predictor and single response variable of interest. The
-chapter concludes with an example of K-nearest neighbours regression with
-multiple predictors.
+
+This chapter continues our foray into answering predictive questions.
+Here we will focus on *regression*, which is the process of predicting
+*numerical* response variables.
+This is unlike the past two chapters, which focused on predicting categorical
+variables via classification. However, regression does have many similarities
+to classification: for example, just as in the case of classification,
+we will split our data into training, validation, and test sets, we will 
+use `tidymodels` workflows, we will use a K-nearest neighbours 
+approach to make predictions, and we will use cross-validation to choose K.
+Because of how similar these procedures are, make sure to read Chapters
+6 and 7 before reading this one---we will move a little bit faster here with the
+concepts that have already been covered.
+This chapter will primarily focus on the case where there is a single predictor and single
+response variable of interest, but the end of the chapter shows how to perform
+*multivariate regression*, i.e., regression with more than one predictor variable.
 
 ## Chapter learning objectives 
 By the end of the chapter, students will be able to:
@@ -17,27 +28,43 @@ By the end of the chapter, students will be able to:
 * Execute cross-validation in R to choose the number of neighbours.
 * Evaluate K-NN regression prediction accuracy in R using a test data set and an appropriate metric (*e.g.*, root means square prediction error).
 * In the context of K-NN regression, compare and contrast goodness of fit and prediction properties (namely RMSE vs RMSPE).
-* Describe advantages and disadvantages of the K-nearest neighbour regression approach.
+* Describe the advantages and disadvantages of the K-nearest neighbour regression approach.
 
 ## Regression 
+
 Regression, like classification, is a predictive problem setting where we want
-to use past information to predict future observations.  But in the case of
-regression, the goal is to predict numerical values instead of class labels.
+to use past information to predict future observations. But in the case of
+regression, the goal is to predict *numerical* values instead of *categorical* values. 
 For example, we could try to use the number of hours a person spends on
-exercise each week to predict whether they would qualify for the annual Boston
-marathon (*classification*) or to predict their race time itself
-(*regression*).  As another example, we could try to use the size of a house to
-predict whether it sold for more than \$500,000 (*classification*) or to
-predict its sale price itself (*regression*). We will use K-nearest neighbours
-to explore this question in the rest of this chapter, using a real estate data
-set from Sacremento, California.
+exercise each week to predict their race time in the annual Boston marathon. As 
+another example, we could try to use the size of a house to
+predict its sale price. Both of these response variables---race time and sale price---are 
+numerical, and so predicting them given past data is considered a regression problem.
 
-## Sacremento real estate example
+> You can usually tell whether a variable is numerical or categorical---and therefore whether you
+> need to perform regression or classification---by taking two response variables X and Y from your
+> data, and asking the question "is response variable X *more* than response variable Y?"
+> If the variable is categorical, the question will make no sense ("is blue more than red?",
+> or "is benign more than malignant?"). If the variable is numerical, it will make sense
+> ("is 1.5 hours more than 2.25 hours?", or "is \$500,000 more than \$400,000?").
+> Be careful when applying this heuristic, though: sometimes a categorical variables will be encoded as
+> numbers in your data (e.g. "1" represents "benign", and "0" represents "malignant"). In these cases
+> you have to ask the question about the *meaning* of the labels ("benign" and "malignant"), not their values ("1" and "0"). 
 
-Let's start by loading the packages we need and doing some preliminary
-exploratory analysis. The Sacramento real estate data set we will study in this chapter
-was [originally reported in the Sacramento Bee](https://support.spatialkey.com/spatialkey-sample-csv-data/),
-but we have provided it with this repository as a stable source for the data.
+Many of the concepts from classification map over to the setting of regression. For example, 
+a regression model predicts a new observation's response variable based on the response variables
+for similar observations in the data set of past observations; when building a regression model,
+we first split the data into training and test sets, in order to ensure that we assess the performance
+of our method on observations not seen during training; and we can use cross-validation to evaluate different
+choices of model parameters (e.g., K in a K-nearest neighbours model). The major difference
+is that we are now predicting numerical variables instead of categorical variables.
+
+## Exploring a labelled data set
+
+In this chapter and the next, we will study the Sacramento real estate data
+set. This data set contains 932 real estate transactions in Sacramento,
+California from a five day 
+period [originally reported in the Sacramento Bee newspaper](https://support.spatialkey.com/spatialkey-sample-csv-data/).
 
 ```{r 07-load, message = FALSE}
 library(tidyverse)
@@ -48,10 +75,16 @@ sacramento <- read_csv("data/sacramento.csv")
 sacramento
 ```
 
-The purpose of this exercise is to understand whether we can we use house size
-to predict house sale price in the Sacramento, CA area. The columns in this
+We first need to formulate a precise question that
+we want to answer. In this example, our question is predictive:
+can we use the size of a house in the Sacramento, CA area to predict
+its sale price? A rigorous, quantitative answer to this question might help
+a realtor advise a client as to whether the price of a particular listing 
+is fair, or perhaps how to set the price of a new listing.
+
+The scientific question guides our initial exploration: the columns in the
 data that we are interested in are `sqft` (house size, in livable square feet)
-and `price` (house price, in US dollars (USD).  The first step is to visualize
+and `price` (house price, in US dollars (USD)).  The first step is to visualize
 the data as a scatter plot where we place the predictor/explanatory variable
 (house size) on the x-axis, and we place the target/response variable that we
 want to predict (price) on the y-axis:
@@ -68,7 +101,10 @@ eda
 Based on the visualization above, we can see that in Sacramento, CA, as the
 size of a house increases, so does its sale price. Thus, we can reason that we
 may be able to use the size of a not-yet-sold house (for which we don't know
-the sale price) to predict its final sale price.
+the sale price) to predict its final sale price. Note that we do not suggest here
+that a larger house size *causes* a higher sale price; just that house price
+tends to increase with house size, and that we may be able to use the latter to 
+predict the former.
 
 ## K-nearest neighbours regression
 
