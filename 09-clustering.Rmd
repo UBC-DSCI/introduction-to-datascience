@@ -25,8 +25,7 @@ By the end of the chapter, students will be able to:
 
 ## Clustering
 Clustering is a data analysis task involving separating a data set into
-subgroups of related data. For example, we might use clustering to separate a
-data set of documents into groups that correspond to topics, a data set of human
+subgroups of related data. For example, we might use clustering to separate a data set of documents into groups that correspond to topics, a data set of human
 genetic information into groups that correspond to ancestral subpopulations, or
 a data set of online customers into groups that correspond to purchasing
 behaviours.  Once the data are separated we can, for example, use the subgroups
@@ -71,23 +70,24 @@ promotions to improve our business in a data-driven way.
 
 ```{r 10-toy-example-data, echo = FALSE, message = FALSE, warning = FALSE}
 library(tidyverse)
-data <- read_csv('data/marketing.csv') %>%
-	 mutate(cluster=as_factor(cluster))
-marketing_data <- data[,1:2]
+
+data <- read_csv("data/toy_penguins.csv") %>% 
+  mutate(cluster=as_factor(cluster))
+penguin_data <- data %>% select(flipper_length_mm, bill_length_mm)
+penguin_data <- penguin_data %>% 
+  map_df(scale)
+
 ```
 
 ```{r 10-clustering}
-marketing_data
+penguin_data
 ```
 
 ```{r 10-toy-example-plot, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Simulated data of customer loyalty versus satisfaction. Example derived from @custexample."}
-base <- ggplot(data, aes(y = loyalty, x = csat)) +
+base <- ggplot(data, aes(x = flipper_length_mm, y = bill_length_mm)) +
   geom_point() +
-  xlab("Customer satisfaction") +
-  ylab("Loyalty") +
-  xlim(c(0, 10)) +
-  ylim(c(0, 10))
-
+  xlab("Flipper Length (mm)") +
+  ylab("Bill Length (mm)") 
 base
 ```
 
@@ -102,12 +102,10 @@ selecting the number of clusters. This procedure will separate the data into
 the following groups denoted by colour:
 
 ```{r 10-toy-example-clustering, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 5}
-ggplot(data, aes(y = loyalty, x = csat, color = cluster)) +
+ggplot(data, aes(y = bill_length_mm, x = flipper_length_mm, colour = cluster)) +
   geom_point() +
-  xlab("Customer satisfaction") +
-  ylab("Loyalty") +
-  xlim(c(0, 10)) +
-  ylim(c(0, 10))
+  xlab("Flipper Length (mm)") +
+  ylab("Bill Length (mm)") 
 ```
 
 What are the labels for these groups? Unfortunately, we don't have any. K-means,
@@ -135,7 +133,8 @@ library(tidyverse)
 #clus1 <- tibble(loyalty = c(7, 7.5, 8, 7, 8),
 #               csat = c(1, 1, 2, 2, 3),
 #               )
-clus1 <- head(marketing_data, 5)
+clus1 <- head(penguin_data)
+
 #clus1_center <- clus1 %>% summarize(csat = mean(csat), loyalty = mean(loyalty))
 ```
 
@@ -159,11 +158,11 @@ are 5 data points. These are shown with their cluster center
 
 ```{r 10-toy-example-clus1-center, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Cluster 1 from the toy example, with center highlighted."}
 base <- ggplot(clus1) +
-  geom_point(aes(y = loyalty, x = csat)) +
-  labs(x = "Customer satisfaction", y = "Loyalty") +
-  xlim(c(0, 4)) +
-  ylim(c(6, 9)) +
-  geom_point(aes(y = mean(loyalty), x = mean(csat), colour="red", size=2.5)) +
+  geom_point(aes(y = bill_length_mm, x = flipper_length_mm)) +
+  labs(x = "Flipper Length (mm)", y = "Bill Length (mm)") +
+  xlim(c(min(clus1$flipper_length_mm) - 2, max(clus1$flipper_length_mm) + 2)) +
+  ylim(c(min(clus1$bill_length_mm) - 1, max(clus1$bill_length_mm) + 1)) +
+  geom_point(aes(y = mean(bill_length_mm), x = mean(flipper_length_mm), colour="red", size=2.5)) +
   theme(legend.position = "none")
 base
 ```
@@ -178,18 +177,18 @@ These distances are denoted by lines for the first cluster of the customer satis
 
 ```{r 10-toy-example-clus1-dists, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Cluster 1 from the toy example, with distances to the center highlighted."}
 base <- ggplot(clus1) +
-  geom_point(aes(y = loyalty, x = csat)) +
-  labs(x = "Customer satisfaction", y = "Loyalty") +
-  xlim(c(0, 4)) +
-  ylim(c(6, 9)) +
+  geom_point(aes(y = bill_length_mm, x = flipper_length_mm)) +
+  labs(x = "Flipper Length (mm)", y = "Bill Length (mm)") +
+#  xlim(c(0, 4)) +
+#  ylim(c(6, 9)) +
   theme(legend.position = "none")
 
-mn <- clus1 %>% summarize(csat = mean(csat), loyalty=mean(loyalty))
-for (i in 1:5) {
-  base <- base + geom_segment(x = unlist(mn[1, "csat"]), y = unlist(mn[1, "loyalty"]),
-                           xend = unlist(clus1[i, "csat"]), yend = unlist(clus1[i, "loyalty"]))
+mn <- clus1 %>% summarize(flipper_length_mm = mean(flipper_length_mm), bill_length_mm=mean(bill_length_mm))
+for (i in 1:6) {
+  base <- base + geom_segment(x = unlist(mn[1, "flipper_length_mm"]), y = unlist(mn[1, "Bill Length (mm)"]),
+                           xend = unlist(clus1[i, "flipper_length_mm"]), yend = unlist(clus1[i, "Bill Length (mm)"]))
 }
-base <- base + geom_point(aes(y = mean(loyalty), x = mean(csat), colour="red", size=2.5)) 
+base <- base + geom_point(aes(y = mean(bill_length_mm), x = mean(flipper_length_mm), colour="red", size=2.5)) 
 base
 ```
 
@@ -212,14 +211,14 @@ For example, in the customer data example from earlier, our initialization might
 ```{r 10-toy-kmeans-init, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Random initialization of labels."}
 library(gridExtra)
 set.seed(14)
-marketing_data["label"] = factor(sample(1:3, nrow(marketing_data), replace=T))
+penguin_data["label"] = factor(sample(1:3, nrow(penguin_data), replace=T))
 
-plt_lbl <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
+plt_lbl <- ggplot(penguin_data, aes(y = bill_length_mm, x = flipper_length_mm, colour=label)) +
     geom_point(size=2) +
-    xlab("Customer satisfaction") +
-    ylab("Loyalty") +
-    xlim(c(0, 10)) +
-    ylim(c(0, 10)) + 
+    xlab("Flipper Length (mm)") +
+    ylab("Bill Length (mm)") +
+   # xlim(c(0, 10)) +
+   # ylim(c(0, 10)) + 
     theme(legend.position = "none")
 print(plt_lbl)
 ```
@@ -233,34 +232,34 @@ and the right column depicts the reassignment of data to clusters):
 ```{r 10-toy-kmeans-iter, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 8}
 for (i in 1:4){
     #compute centers
-    centers <- marketing_data %>% group_by(label) %>% summarize_all(funs(mean))
+    centers <- penguin_data %>% group_by(label) %>% summarize_all(funs(mean))
     nclus = nrow(centers)
     #replot with centers
-    plt_ctr <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
+    plt_ctr <- ggplot(penguin_data, aes(y = bill_length_mm, x = flipper_length_mm, colour=label)) +
         geom_point(size=2) +
-        xlab("Customer satisfaction") +
-        ylab("Loyalty") +
-        xlim(c(0, 10)) +
-        ylim(c(0, 10)) + 
+        xlab("Flipper Length (mm)") +
+        ylab("Bill Length (mm)") +
+        #xlim(c(0, 10)) +
+        #ylim(c(0, 10)) + 
         theme(legend.position = "none") +
-        geom_point(data = centers, aes(y = loyalty, x = csat, fill = label), size=5, shape = 21, stroke = 2, colour = "black") 
+        geom_point(data = centers, aes(y = bill_length_mm, x = flipper_length_mm, fill = label), size=5, shape = 21, stroke = 2, colour = "black") 
     
     #reassign labels
-    dists <- rbind(centers, marketing_data) %>% 
-           select("csat", "loyalty") %>%
+    dists <- rbind(centers, penguin_data) %>% 
+           select("flipper_length_mm", "Bill Length (mm)") %>%
            dist() %>%
            as.matrix()
     dists <- as_tibble(dists[-(1:nclus),1:nclus])
-    marketing_data <- marketing_data %>% mutate(label = apply(dists, 1, function(x) names(x)[which.min(x)]))
+    penguin_data <- penguin_data %>% mutate(label = apply(dists, 1, function(x) names(x)[which.min(x)]))
     
-    plt_lbl <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
+    plt_lbl <- ggplot(penguin_data, aes(y = bill_length_mm, x = flipper_length_mm, colour=label)) +
         geom_point(size = 2) +
-        xlab("Customer satisfaction") +
-        ylab("Loyalty") +
-        xlim(c(0, 10)) +
-        ylim(c(0, 10)) + 
+        xlab("Flipper Length (mm)") +
+        ylab("Bill Length (mm)") +
+       # xlim(c(0, 10)) +
+       # ylim(c(0, 10)) + 
         theme(legend.position = "none") +
-        geom_point(data = centers, aes(y = loyalty, x = csat, fill = label), size=5, shape = 21, stroke = 2, colour = "black") 
+        geom_point(data = centers, aes(y = bill_length_mm, x = flipper_length_mm, fill = label), size=5, shape = 21, stroke = 2, colour = "black") 
     
     #to generate the animated version, get rid of grid.arrange and use the below two lines
     #set the figure width to 4.35 too
@@ -288,14 +287,14 @@ For example, if we were unlucky and initialized K-means with the following label
 <center>
 ```{r 10-toy-kmeans-bad-init, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Random initialization of labels."}
 set.seed(9)
-marketing_data["label"] = factor(sample(1:3, nrow(marketing_data), replace=T))
+penguin_data["label"] = factor(sample(1:3, nrow(penguin_data), replace=T))
 
-plt_lbl <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
+plt_lbl <- ggplot(penguin_data, aes(y = bill_length_mm, x = flipper_length_mm, colour=label)) +
     geom_point(size = 2) +
-    xlab("Customer satisfaction") +
-    ylab("Loyalty") +
-    xlim(c(0, 10)) +
-    ylim(c(0, 10)) + 
+    xlab("Flipper Length (mm)") +
+    ylab("Bill Length (mm)") +
+  #  xlim(c(0, 10)) +
+  #  ylim(c(0, 10)) + 
     theme(legend.position = "none")
 print(plt_lbl)
 ```
@@ -307,34 +306,34 @@ Then the iterations of K-means would look like:
 ```{r 10-toy-kmeans-bad-iter, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 8}
 for (i in 1:5){
     #compute centers
-    centers <- marketing_data %>% group_by(label) %>% summarize_all(funs(mean))
+    centers <- penguin_data %>% group_by(label) %>% summarize_all(funs(mean))
     nclus = nrow(centers)
     #replot with centers
-    plt_ctr <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
+    plt_ctr <- ggplot(penguin_data, aes(y = bill_length_mm, x = flipper_length_mm, colour=label)) +
         geom_point(size = 2) +
-        xlab("Customer satisfaction") +
-        ylab("Loyalty") +
-        xlim(c(0, 10)) +
-        ylim(c(0, 10)) + 
+        xlab("Flipper Length (mm)") +
+        ylab("Bill Length (mm)") +
+       # xlim(c(0, 10)) +
+        #ylim(c(0, 10)) + 
         theme(legend.position = "none") +
-        geom_point(data = centers, aes(y = loyalty, x = csat, fill = label), size=5, shape = 21, stroke = 2, colour = "black") 
+        geom_point(data = centers, aes(y = bill_length_mm, x = flipper_length_mm, fill = label), size=5, shape = 21, stroke = 2, colour = "black") 
     
     #reassign labels
-    dists <- rbind(centers, marketing_data) %>% 
-           select("csat", "loyalty") %>%
+    dists <- rbind(centers, penguin_data) %>% 
+           select("flipper_length_mm", "Bill Length (mm)") %>%
            dist() %>%
            as.matrix()
     dists <- as_tibble(dists[-(1:nclus),1:nclus])
-    marketing_data <- marketing_data %>% mutate(label = apply(dists, 1, function(x) names(x)[which.min(x)]))
+    penguin_data <- penguin_data %>% mutate(label = apply(dists, 1, function(x) names(x)[which.min(x)]))
     
-    plt_lbl <- ggplot(marketing_data, aes(y = loyalty, x = csat, colour=label)) +
+    plt_lbl <- ggplot(penguin_data, aes(y = bill_length_mm, x = flipper_length_mm, colour=label)) +
         geom_point(size = 2) +
-        xlab("Customer satisfaction") +
-        ylab("Loyalty") +
-        xlim(c(0, 10)) +
-        ylim(c(0, 10)) + 
+        xlab("Flipper Length (mm)") +
+        ylab("Bill Length (mm)") +
+        #xlim(c(0, 10)) +
+        #ylim(c(0, 10)) + 
         theme(legend.position = "none") +
-        geom_point(data = centers, aes(y = loyalty, x = csat, fill = label), size=5, shape = 21, stroke = 2, colour = "black") 
+        geom_point(data = centers, aes(y = bill_length_mm, x = flipper_length_mm, fill = label), size=5, shape = 21, stroke = 2, colour = "black") 
     
     #print(plt_ctr)
     #print(plt_lbl)
@@ -355,7 +354,7 @@ cross-validation with some measure of model prediction error.
 Further, if K is chosen too small, then multiple clusters get grouped together;
 if K is too large, then clusters get subdivided. In both cases, we will potentially miss
 interesting structure in the data. For example, take a look below at the K-means
-clustering of our customer satisfaction and loyalty data for a number of clusters
+clustering of our customer satisfaction and bill_length_mm data for a number of clusters
 ranging from 1 to 9.
 
 ```{r 10-toy-kmeans-vary-k, echo = FALSE, warning = FALSE, fig.height = 10, fig.width = 12, fig.cap = "Clustering of the customer data for # clusters ranging from 1 to 9."}
@@ -363,10 +362,10 @@ library(broom)
 set.seed(3)
 kclusts <- tibble(k = 1:9) %>%
   mutate(
-    kclust = map(k, ~kmeans(marketing_data[-3], .x)),
+    kclust = map(k, ~kmeans(penguin_data[-3], .x)),
     tidied = map(kclust, tidy),
     glanced = map(kclust, glance),
-    augmented = map(kclust, augment, marketing_data[-3])
+    augmented = map(kclust, augment, penguin_data[-3])
   )
 
 clusters <- kclusts %>%
@@ -385,12 +384,12 @@ clusters$k <- factor(clusters$k)
 levels(clusters$k) <- c("1 Cluster", "2 Clusters", "3 Clusters", "4 Clusters", "5 Clusters", "6 Clusters", "7 Clusters", "8 Clusters", "9 Clusters") 
 
 
-p1 <- ggplot(assignments, aes(csat, loyalty)) +
+p1 <- ggplot(assignments, aes(flipper_length_mm, bill_length_mm)) +
   geom_point(aes(color = .cluster, size = 3)) + 
   facet_wrap(~ k) +
-  labs(x = 'Customer satisfaction', y = 'Loyalty', colour = 'Cluster') +
+  labs(x = 'Customer satisfaction', y = 'bill_length_mm', colour = 'Cluster') +
   theme(text = element_text(size=20), legend.position = "none") +
-  geom_point(data = clusters %>% mutate(csat = x2, loyalty = x1), aes(fill = cluster), colour = "black", size = 5, shape = 21, stroke = 2)
+  geom_point(data = clusters %>% mutate(flipper_length_mm = x2, bill_length_mm = x1), aes(fill = cluster), colour = "black", size = 5, shape = 21, stroke = 2)
 
 p1
 ```
@@ -431,9 +430,9 @@ We show an example of how to use this function
 below using the data in this chapter:
 
 ```{r 10-get-unscaled-data, echo = FALSE, message = FALSE, warning = FALSE}
-unscaled_data <- read_csv('data/marketing.csv') %>%
+unscaled_data <- read_csv('data/toy_penguins.csv') %>%
 	mutate(cluster=as_factor(cluster)) %>% 
-  select(loyalty, csat)
+  select(bill_length_mm, flipper_length_mm)
 ```
 
 ```{r 10-mapdf-scale-data}
@@ -451,7 +450,7 @@ seed to make the clustering reproducible.
 
 ```{r 10-kmeans}
 set.seed(1234)
-marketing_clust <- kmeans(marketing_data, centers = 3)
+marketing_clust <- kmeans(penguin_data, centers = 3)
 marketing_clust
 ```
 
@@ -465,7 +464,7 @@ frame, and returns a data frame with the data and the cluster assignments for
 each point:
 
 ```{r 10-plot-clusters-1}
-clustered_data <- augment(marketing_clust, marketing_data)
+clustered_data <- augment(marketing_clust, penguin_data)
 clustered_data
 ```
 
@@ -475,10 +474,10 @@ of the cluster assignments for each point:
 ```{r 10-plot-clusters-2, fig.height = 4, fig.width = 4.35}
 
 cluster_plot <- ggplot(clustered_data, 
-                       aes(x = csat, y = loyalty, colour = .cluster), 
+                       aes(x = flipper_length_mm, y = bill_length_mm, colour = .cluster), 
                        size=2) +
   geom_point() +
-  labs(x = 'Customer satisfaction', y = 'Loyalty', colour = 'Cluster')
+  labs(x = 'Customer satisfaction', y = 'bill_length_mm', colour = 'Cluster')
 cluster_plot
 ```
 
@@ -514,11 +513,11 @@ unlike other functions you've seen so far (`kmeans`, `select`, etc).
 To do this we will write our map statement like this:
 
 ```
-map(marketing_clust_ks, function(k) kmeans(marketing_data, k))
+map(marketing_clust_ks, function(k) kmeans(penguin_data, k))
 ```
 
-The anonymous function in the above call is `function(k) kmeans(marketing_data, k)`.
-This function takes a single argument (`k`) and evaluates `kmeans(marketing_data, k)`.
+The anonymous function in the above call is `function(k) kmeans(penguin_data, k)`.
+This function takes a single argument (`k`) and evaluates `kmeans(penguin_data, k)`.
 Since `k` is the *first* (and only) argument to the function, we can use `map` just
 like we did before! The rest of the call above does just that -- it passes each row of
 `marketing_clust_ks` to our anonymous function.
@@ -529,7 +528,7 @@ clustering object for each value of K we had:
 
 ```{r 10-choose-k-part2}
 marketing_clust_ks <- tibble(k = 1:9) %>%
-  mutate(marketing_clusts = map(k, function(ks) kmeans(marketing_data, ks)))
+  mutate(marketing_clusts = map(k, function(ks) kmeans(penguin_data, ks)))
 marketing_clust_ks
 ```
 
@@ -541,7 +540,7 @@ K-means clustering objects, and one for the clustering statistics:
 
 ```{r 10-choose-k-part3}
 marketing_clust_ks <- tibble(k = 1:9) %>%
-  mutate(marketing_clusts = map(k, ~kmeans(marketing_data, .x)),
+  mutate(marketing_clusts = map(k, ~kmeans(penguin_data, .x)),
          glanced = map(marketing_clusts, glance)) 
 marketing_clust_ks
 ```
@@ -580,7 +579,7 @@ few different random initializations via the `nstart` argument (here we use 10 r
 
 ```{r 10-choose-k-nstart, fig.height = 4, fig.width = 4.35}
 marketing_clust_ks <- tibble(k = 1:9) %>%
-  mutate(marketing_clusts = map(k, ~kmeans(marketing_data, nstart = 10, .x)),
+  mutate(marketing_clusts = map(k, ~kmeans(penguin_data, nstart = 10, .x)),
          glanced = map(marketing_clusts, glance)) 
 
 clustering_statistics <- marketing_clust_ks %>%
