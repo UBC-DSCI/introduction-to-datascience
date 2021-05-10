@@ -2,19 +2,21 @@
 #remotes::install_github("allisonhorst/palmerpenguins")
 library(tidyverse)
 library(palmerpenguins)
+library(tidymodels)
 data(package = 'palmerpenguins')
-set.seed(11200) 
+set.seed(12345) # 83, 4, 211, 2111
+#11200, 235, 333, 444,
+
+penguins <- na.omit(penguins)
 
 penguins_no_species <- penguins %>% 
-  select(-species) %>% 
-  na.omit()
+  select(-species) 
 
-toy_penguins <- penguins %>%
+split <- initial_split(penguins, prop = 0.05, strata = species)
+
+toy_penguins <- training(split) %>% 
   mutate(cluster=as_factor(as.numeric(species))) %>% 
-  select(-species) %>% 
-  na.omit() %>%  
-  sample_n(20)
-
+  select(-species) 
 
 ggplot(toy_penguins, aes(y = bill_length_mm, x = flipper_length_mm, colour = cluster)) +
   geom_point() +
