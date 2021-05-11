@@ -1,6 +1,8 @@
 # Introduction to Statistical Inference {#inference}
 
 ```{r 11-setup, include= F}
+knitr::opts_chunk$set(warning = FALSE)
+library(gridExtra)
 library(tidyverse)
 require(grid) #  grid.bezier()
 
@@ -83,116 +85,105 @@ The population consists of all studio apartment rentals in Vancouver, and the po
 ## Sampling distributions
 
 ### Sampling distributions for proportions
+Airbnb is an online marketplace for arranging places to stay. We will look at an example using data from [Inside Airbnb](http://insideAirbnb.com/). The data set, `airbnb`, contains  listings for Vancouver, Canada, in September 2020. Our data contains an ID number, neighbourhood, type of room, the number of people the rental accommodates, number of bathrooms, bedrooms, beds, and the price per night. 
 
-Let's start with an illustrative (and tasty!) example. Timbits are 
-bite-sized doughnuts sold at Tim Hortons, a popular Canadian-based fast-food restaurant
-chain founded in Hamilton, Ontario, Canada. 
-
-```{r 11-timbits-picture, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "A box of Timbits", fig.retina = 2, out.width = "30%"}
-knitr::include_graphics("img/timbits.jpg")
+```{r 11-example-means1, echo = FALSE, message = FALSE, warning = FALSE}
+airbnb <- read_csv("data/listings.csv") %>%
+  select(id, neighbourhood = neighbourhood_cleansed, room_type, accommodates, bathrooms = bathrooms_text, bedrooms, beds, price) %>%
+  mutate(price = as.numeric(str_remove(price, "[$]"))) %>%
+  na.omit()
+airbnb <- airbnb %>%
+  mutate(id = 1:nrow(airbnb))
+head(airbnb)
 ```
 
-
-Suppose we wanted to estimate the true proportion of chocolate doughnuts at Tim
-Hortons restaurants. Now, of course, we (the authors!) do not have access to the true population.
-So for this chapter, we created a fictitious box of 10,000 Timbits with two flavours&mdash;old-fashioned 
-and chocolate&mdash;as our population, and use this to illustrate
-inferential concepts. Below we have a `tibble()` called `virtual_box` with a Timbit ID and flavour as our columns. We have also loaded our necessary packages: `tidyverse` and the `infer` package, which we will need to perform sampling later in the chapter.  
-
-```{r 11-example-proportions, echo = FALSE, message = FALSE, warning = FALSE}
-library(gridExtra)
-set.seed(1234)
-virtual_box <- tibble(
-  timbit_id = seq(1, 10000, by = 1),
-  flavour = factor(rbinom(10000, 1, 0.63),
-    labels = c("old fashioned", "chocolate")
-  )
-)
-```
-
-```{r 11-example-proportions1}
-library(tidyverse)
-library(infer)
-virtual_box
-```
-
-From our simulated box, we can see that the proportion of chocolate Timbits is
-0.63. This value, 0.63, is the *population parameter*. Note that this parameter value is usually unknown in real data analysis problems.
+Suppose the city of Vancouver wants to know how many homes and apartments are being entirely rented out as short-term rentals on Airbnb (rather than just as private or shared rooms). Therefore they may want to estimate the true proportion of all Airbnb listings where the type of place is listed as entire home or apartment. Now, of course, usually we do not have access to the true population, but here let's imagine (for learning purposes) that our data set represents the population of all Airbnb rental listings in Vancouver, Canada. We can find the proportion of listings where `room_type == "Entire home/apt"`.
 
 ```{r 11-example-proportions2, echo = TRUE, message = FALSE, warning = FALSE}
-virtual_box %>%
-  group_by(flavour) %>%
+library(tidyverse)
+library(infer)
+
+airbnb %>%
   summarize(
-    n = n(),
-    proportion = n() / 10000
+    n =  sum(room_type == "Entire home/apt"),
+    proportion = sum(room_type == "Entire home/apt") / nrow(airbnb)
   )
 ```
 
-What would happen if we were to buy a box of 40 randomly-selected Timbits and count the number of chocolate Timbits (*i.e.,* take a random sample of size 40 from our Timbits population)? Let's use R to simulate this using our `virtual_box` population. We can do this using the `rep_sample_n` function from the `infer` package. The arguments
-of `rep_sample_n` are (1) the data frame (or tibble) to sample from, and (2) the size of the sample to take.
+```{r 11-population-parameter, echo = F}
+population_proportion <- airbnb %>%
+  summarize(
+    n =  sum(room_type == "Entire home/apt"),
+    proportion = sum(room_type == "Entire home/apt") / nrow(airbnb)
+  ) %>% 
+  pull()
+```
+From our data, we can see that the proportion of `Entire home/apt` listings in the data set is `r round(population_proportion,2)`. This value, `r round(population_proportion,2)`, is the *population parameter*. Remember this parameter value is usually unknown in real data analysis problems.
+
+What would happen if we were to randomly-select 40 listings and count the number of entire home/apartment listings (*i.e.,* take a random sample of size 40 from our population)? Let's use R to simulate this using our `airbnb` population. We can do this using the `rep_sample_n` function from the `infer` package. The arguments of `rep_sample_n` are (1) the data frame (or tibble) to sample from, and (2) the size of the sample to take.
 
 ```{r 11-example-proportions3, echo = TRUE, message = FALSE, warning = FALSE}
 set.seed(1)
-samples_1 <- rep_sample_n(tbl = virtual_box, size = 40)
-choc_sample_1 <- summarize(samples_1,
-  n = sum(flavour == "chocolate"),
-  prop = sum(flavour == "chocolate") / 40
+samples_1 <- rep_sample_n(tbl = airbnb, size = 40)
+airbnb_sample_1 <- summarize(samples_1,
+  n = sum(room_type == "Entire home/apt"),
+  prop = sum(room_type == "Entire home/apt") / 40
 )
-choc_sample_1
+airbnb_sample_1
 ```
-Here we see that the proportion of chocolate Timbits in this random sample is
-`r round(choc_sample_1$prop,2)`. This value is our estimate &mdash; our best guess of our population parameter using this sample. Given that it is a single
+Here we see that the proportion of entire home/apartment listings in this random sample is
+`r round(airbnb_sample_1$prop,2)`. This value is our estimate &mdash; our best guess of our population parameter using this sample. Given that it is a single
 value that we are estimating, we often refer to it as a **point estimate**.
 
-Now imagine we took another random sample of 40 Timbits from the population. Do you
+Now imagine we took another random sample of 40 listings from the population. Do you
 think we would get the same proportion? Let's try sampling from the population
 again and see what happens. 
 
 ```{r 11-example-proportions4, echo = TRUE, message = FALSE, warning = FALSE}
-set.seed(2)
-samples_2 <- rep_sample_n(virtual_box, size = 40)
-choc_sample_2 <- summarize(samples_2,
-  n = sum(flavour == "chocolate"),
-  prop = sum(flavour == "chocolate") / 40
+set.seed(123)
+samples_2 <- rep_sample_n(airbnb, size = 40)
+airbnb_sample_2 <- summarize(samples_2,
+  n = sum(room_type == "Entire home/apt"),
+  prop = sum(room_type == "Entire home/apt") / 40
 )
-choc_sample_2
+airbnb_sample_2
 ```
 
 Notice that we get a different value for our estimate this time. The
-proportion of chocolate Timbits in this sample is `r round(choc_sample_2$prop, 2)`. 
+proportion of entire home/apartment listings in this sample is `r round(airbnb_sample_2$prop, 2)`. 
 If we were to do this again, another random sample could also give a
 different result. Estimates vary from sample to sample 
 due to **sampling variability**. 
 
 But just how much should we expect the estimates of our random
 samples to vary? In order to understand this, we will simulate taking more samples
-of size 40 from our population of Timbits, and calculate the 
-proportion of chocolate Timbits in each sample. We can then
+of size 40 from our population of listings, and calculate the 
+proportion of entire home/apartment listings in each sample. We can then
 visualize the distribution of sample proportions we calculate. The distribution
 of the estimate for all possible samples of a given size (which we commonly refer to as $n$) from a population is
 called a **sampling distribution**. The sampling distribution will help us see
 how much we would expect our sample proportions from this population to vary
 for samples of size 40. Below we again use the `rep_sample_n` to take samples
-of size 40 from our population of Timbits, but we set the `reps` argument
-to specify the number of samples to take, here 15,000. We will use the function `tail()` to see the last few rows of our `samples` data frame.
+of size 40 from our population of Airbnb listings, but we set the `reps` argument
+to specify the number of samples to take, here 20,000. We will use the function `tail()` to see the last few rows of our `samples` data frame.
 
 ```{r 11-example-proportions5, echo = TRUE, message = FALSE, warning = FALSE}
-samples <- rep_sample_n(virtual_box, size = 40, reps = 15000)
+samples <- rep_sample_n(airbnb, size = 40, reps = 20000)
 samples
 tail(samples)
 ```
 
 Notice the column `replicate` is indicating the replicate, or sample, with which each
-Timbit belongs. Since we took 15,000 samples of size 40, there are 15,000 replicates.
-Now that we have taken 15,000 samples, to create a sampling distribution of sample proportions for samples of size 40, we need to calculate the proportion of chocolate Timbits for each sample, $\hat{p}_\text{chocolate}$:
+listing belongs. Since we took 20,000 samples of size 40, there are 20,000 replicates.
+Now that we have taken 20,000 samples, to create a sampling distribution of sample proportions for samples of size 40, we need to calculate the proportion of entire home/apartment listings for each sample, $\hat{p}_\text{entire home/apartment}$:
 ```{r 11-example-proportions6, echo = TRUE, message = FALSE, warning = FALSE}
 sample_estimates <- samples %>%
   group_by(replicate) %>%
-  summarise(sample_proportion = sum(flavour == "chocolate") / 40)
+  summarise(sample_proportion = sum(room_type == "Entire home/apt") / 40)
 sample_estimates
 tail(sample_estimates)
 ```
-Now that we have calculated the proportion of chocolate Timbits for each sample, $\hat{p}_\text{chocolate}$, we can visualize the sampling distribution of sample proportions for samples of size 40:
+Now that we have calculated the proportion of entire home/apartment listings for each sample, $\hat{p}_\text{entire home/apartment}$, we can visualize the sampling distribution of sample proportions for samples of size 40:
 ```{r 11-example-proportions7, echo = TRUE, message = FALSE, warning = FALSE,fig.cap = "Sampling distribution of the sample proportion for sample size 40", out.width = "60%"}
 sampling_distribution <- ggplot(sample_estimates, aes(x = sample_proportion)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey", bins = 12) +
@@ -219,23 +210,8 @@ So what can we learn from this sampling distribution? This distribution tells us
 
 ### Sampling distributions for means 
 
-In the previous section, our variable of interest&mdash;Timbit flavour&mdash;was
-*categorical*, and the population parameter of interest was the proportion of chocolate
-Timbits. As mentioned in the introduction to this chapter, there are many choices of population parameter for each type of observed variable. What if we wanted to infer something about a population of *quantitative* variables instead? For instance, a traveller visiting Vancouver, BC may wish to know about the prices of staying somewhere using Airbnb, an online marketplace for arranging places to stay. Particularly, they might be interested in estimating the population mean price per night of Airbnb listings in Vancouver, BC. This section will study the case where we are interested in the population mean of a quantitative variable.
-
-We will look at an example using data from [Inside Airbnb](http://insideAirbnb.com/). The data set contains Airbnb listings for Vancouver, Canada, in September 2020. Let's imagine (for learning purposes) that our data set represents the population of all Airbnb rental listings in Vancouver, and we are interested in the population mean price per night.
-Our data contains an ID number, neighbourhood,
-type of room, the number of people the rental accommodates, number of bathrooms, bedrooms, beds, and the price per night.
-
-```{r 11-example-means1, echo = FALSE, message = FALSE, warning = FALSE}
-airbnb <- read_csv("data/listings.csv") %>%
-  select(id, neighbourhood = neighbourhood_cleansed, room_type, accommodates, bathrooms = bathrooms_text, bedrooms, beds, price) %>%
-  mutate(price = as.numeric(str_remove(price, "[$]"))) %>%
-  na.omit()
-airbnb <- airbnb %>%
-  mutate(id = 1:nrow(airbnb))
-head(airbnb)
-```
+In the previous section, our variable of interest&mdash; `room_type` &mdash;was
+*categorical*, and the population parameter of interest was the proportion of listings where the room type was "entire home/apt". As mentioned in the introduction to this chapter, there are many choices of population parameter for each type of observed variable. What if we wanted to infer something about a population of *quantitative* variables instead? For instance, a traveller visiting Vancouver, BC may wish to know about the prices of staying somewhere using Airbnb. Particularly, they might be interested in estimating the population mean price per night of Airbnb listings in Vancouver, BC. This section will study the case where we are interested in the population mean of a quantitative variable.
 
 We can visualize the population distribution of the price per night with a histogram. 
 ```{r 11-example-means2, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Population distribution of price per night ($) for all Airbnb listings in Vancouver, Canada", out.width = "60%"}
@@ -286,10 +262,10 @@ we took another random sample from the population, then the value of our estimat
 So then did we just get lucky with our point estimate above?
 How much does our estimate vary across different samples of size 40 in this example? Again, since we have access to the population,
 we can take many samples and plot the **sampling distribution** of sample means for samples of size 40 to get a sense
-for this variation. In this case, we'll use 15,000 samples of size 40.
+for this variation. In this case, we'll use 20,000 samples of size 40.
 
 ```{r 11-example-means4, echo = TRUE, message = FALSE, warning = FALSE, fig.cap= "Sampling distribution of the sample means for sample size of 40",out.width = "60%"}
-samples <- rep_sample_n(airbnb, size = 40, reps = 15000)
+samples <- rep_sample_n(airbnb, size = 40, reps = 20000)
 samples
 
 sample_estimates <- samples %>%
