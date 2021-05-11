@@ -517,29 +517,50 @@ grid.arrange(grobs = plots)
 ```
 </center>
 
-### Predictor selection
+## Predictor variable selection
 
-So if we can use more than two predictor variables in K-nearest neighbour classification,
-shouldn't we always just use *all* of our variables? Unfortunately, K-nearest neighbours
-does not necessarily the perf more variables it is not quite that simple.
+Another very important part of tuning your classifier is to choose which variables from your
+data will be treated as predictor variables. You can choose anything from using a single predictor variable
+to using every variable in your data; the K-nearest neighbours algorithm is able to run with
+any number of predictors. However, it is **not** the case that "more predictors" always implies 
+"better predictions!"
 
+Let's take a look at an example where K-nearest neighbours works worse with more predictors.
 
-We were quite fortunate in our initial exploration to find two variables (perimeter and concavity)
-that, together, seem to separate benign and malignant observations into two distinct regions.
-But what should we do if we cannot immediately find such a nice collection of variables?
-Well, sometimes it is just a fact that the variables in the data do not have enough of 
-a relationship with the response variable to provide accurate predictions. For example,
-in the breast cancer image data, if the only available predictor was "patient's favourite icecream flavour",
-we likely would have little hope of using that variable to predict the response 
-(barring any future incredible scientific discoveries about the relationship between icecream preference
-and cancer diagnosis). In cases like these, the only option is to go and measure more useful variables.
+**todo example**
 
-There are, however, a wide variety of cases where the predictor variables *do* have a 
-meaningful relationship with the response variable, but that relationship is not obvious
-if you just plot the variables directly. In these cases, you will need to use some of the wrangling
-tools from previous chapters to manipulate the variables into a useful form, which is sometimes
-known as *feature engineering*.
+So then if we can't just throw in the kitchen sink, how do we choose which
+variables to use as predictors?  This is a very difficult question to answer in
+general, and there are a number of methods that have been developed that apply
+in particular cases of interest; see the additional resources at the end of
+this chapter to find out where you can learn more about variable selection.
+Here we will discuss *best subset selection,* which works when you have a small
+number of total predictors and you just want to remove irrelevant variables (to
+avoid the problem in the example above).
 
+The method is straightforward: if you have $m$ predictors, you create a
+separate model for every possible subset of predictors, tune each one to find a
+good setting of the model parameter (e.g., the number of neighbours $K$) using
+cross-validation, and finally pick the subset of predictors that gives you the
+highest estimated prediction accuracy.  
+
+**todo example**
+
+Note that this is a very, very
+computationally expensive process. If we have $m=2$ predictors---let's call
+them A and B---then we have 3 models to try: A alone, B alone, and finally A
+and B together. If we have $m=3$ predictors---A, B, and C---then we have 7
+models to try: A, B, C, AB, BC, AC, and ABC. When we get to $m=10$ predictors
+we have over *one thousand* models to train, and at $m=20$ predictors we have
+over *one million* models to train! If you have more than about 10 predictors,
+which is certainly not uncommon in modern data analysis problems,
+you should first use your scientific understanding of the data analysis setting
+to choose the 10 or so predictors that you think are most meaningful.
+
+> Remember: since the choice of which variables to include as predictors is part of tuning your
+> classifier, you *cannot use your test data* for this process! You should instead use 
+> cross-validation to decide which combination of predictor variables is likely to result in
+> the highest classification accuracy on unseen test data.
 
 
 ## Splitting data
@@ -596,4 +617,4 @@ The overall workflow for performing K-nearest neighbour classification using `ti
 
 ## Additional resources
 - The [`tidymodels` website](https://tidymodels.org/packages) is an excellent reference for more details on, and advanced usage of, the functions and packages in the past two chapters. Aside from that, it also has a [nice beginner's tutorial](https://www.tidymodels.org/start/) and [an extensive list of more advanced examples](https://www.tidymodels.org/learn/) that you can use to continue learning beyond the scope of this book. It's worth noting that the `tidymodels` package does a lot more than just classification, and so the examples on the website similarly go beyond classification as well. In the next two chapters, you'll learn about another kind of predictive modelling setting, so it might be worth visiting the website only after reading through those chapters.
-- [An Introduction to Statistical Learning](https://www.statlearning.com/) [-@james2013introduction] provides a great next stop in the process of learning about classification. Chapter 4 discusses additional basic techniques for classification that we do not cover, such as logistic regression, linear discriminant analysis, and naive Bayes. Chapter 5 goes into much more detail about cross-validation. Chapters 8 and 9 cover decision trees and support vector machines, two very popular but more advanced classification methods. Note that while this book is still a very accessible introductory text, it requires a bit more mathematical background than we require.
+- [An Introduction to Statistical Learning](https://www.statlearning.com/) [-@james2013introduction] provides a great next stop in the process of learning about classification. Chapter 4 discusses additional basic techniques for classification that we do not cover, such as logistic regression, linear discriminant analysis, and naive Bayes. Chapter 5 goes into much more detail about cross-validation. Chapters 8 and 9 cover decision trees and support vector machines, two very popular but more advanced classification methods. Finally, Chapter 6 covers a number of methods for selecting predictor variables. Note that while this book is still a very accessible introductory text, it requires a bit more mathematical background than we require.
