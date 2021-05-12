@@ -339,27 +339,6 @@ which obviously does not match reality. On the other hand, the trend of increasi
 house size corresponding to increasing house price probably continues for large houses, 
 so the "flat" extrapolation of K-NN likely does not match reality. 
 
-## Predictor design
-
-We were quite fortunate in our initial exploration to find a predictor variable (house size)
-that seems to have a meaningful and nearly linear relationship with our response variable (sale price).
-But what should we do if we cannot immediately find such a nice variable?
-Well, sometimes it is just a fact that the variables in the data do not have enough of 
-a relationship with the response variable to provide accurate predictions. For example,
-if the only available predictor was "the current house owner's favourite icecream flavour",
-we likely would have little hope of using that variable to predict the house's sale price
-(barring any future remarkable scientific discoveries about the relationship between 
-the housing market and homeowner icecream preferences). In cases like these, 
-the only option is to go and measure more useful variables.
-
-There are, however, a wide variety of cases where the predictor variables *do* have a 
-meaningful relationship with the response variable, but that relationship is not obvious
-if you just plot the variables directly. In these cases, you will need to use some of the wrangling
-tools from previous chapters to manipulate the variables into a useful form, which is sometimes
-known as *feature engineering*.
-
-
-
 ## Multivariate linear regression
 
 As in K-NN classification and K-NN regression, we can move beyond the simple
@@ -474,7 +453,7 @@ get our test error.
 lm_mult_test_results
 ```
 
-We get that the RMSPE for the multivariate linear regression model 
+We obtain an RMSPE for the multivariate linear regression model 
 of `r format(lm_mult_test_results %>% filter(.metric == 'rmse') %>% pull(.estimate), scientific = FALSE)`. This prediction error
 is less than the prediction error for the multivariate K-NN regression model,
 indicating that we should likely choose linear regression for predictions of
@@ -490,15 +469,78 @@ As mentioned earlier, this is not always the case: sometimes including more
 predictors can negatively impact the prediction performance on unseen 
 test data (here we compare test errors purely for the purposes of teaching).
 
+## Designing new predictors
+
+We were quite fortunate in our initial exploration to find a predictor variable (house size)
+that seems to have a meaningful and nearly linear relationship with our response variable (sale price).
+But what should we do if we cannot immediately find such a nice variable?
+Well, sometimes it is just a fact that the variables in the data do not have enough of 
+a relationship with the response variable to provide useful predictions. For example,
+if the only available predictor was "the current house owner's favourite icecream flavour",
+we likely would have little hope of using that variable to predict the house's sale price
+(barring any future remarkable scientific discoveries about the relationship between 
+the housing market and homeowner icecream preferences). In cases like these, 
+the only option is to obtain measurements of more useful variables.
+
+There are, however, a wide variety of cases where the predictor variables do have a 
+meaningful relationship with the response variable, but that relationship does not fit
+the assumptions of the regression method you have chosen. For example, a dataframe `df`
+with two variables---`x` and `y`---with a nonlinear relationship between the two variables
+will not be correctly captured by simple linear regression:
+<center>
+```{r 08-predictor-design, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Example of a dataset with a nonlinear relationship between the predictor and the response"}
+set.seed(1)
+df = tibble(x = sample(10000, 100, replace=TRUE)/10000)
+df <- df %>% mutate(y = x^3 + 0.2*sample(10000, 100, replace=TRUE)/10000 - 0.1)
+curve_plt <- ggplot(df, aes(x = x, y = y)) +
+  geom_point() +
+  xlab("x") +
+  ylab("y") +
+  geom_smooth(method = "lm", se = FALSE)
+curve_plt
+```
+</center>
+Instead of trying to predict the response `y` using a linear regression on `x`,
+we might have some scientific background about our problem to suggest that `y`
+should be a cubic function of `x`. So before performing regression,
+we might *create a new predictor variable* `z` using the `mutate` function:
+```{r 08-predictor-design-3, message = FALSE, warning = FALSE}
+df <- df %>%
+        mutate(z = x^3)
+```
+Then we can perform linear regression for `y` using the predictor variable `z`:
+<center>
+```{r 08-predictor-design-2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Relationship between the transformed predictor and the response"}
+curve_plt2 <- ggplot(df, aes(x = z, y = y)) +
+  geom_point() +
+  xlab("z") +
+  ylab("y") +
+  geom_smooth(method = "lm", se = FALSE)
+curve_plt2
+```
+</center>
+In this case, you can see that the transformed predictor `z` helps the 
+linear regression model make more accurate predictions. The process of
+transforming predictors (and potentially combining multiple predictors in the process)
+is known as *feature engineering*. In real data analysis
+problems, you will need to rely on
+a deep understanding of the problem---as well as the wrangling tools 
+from previous chapters---to engineer useful new features that improve
+predictive performance. 
+
+> Note that feature engineering
+> is *part of tuning your model*, and as such you must not use your test data
+> to evaluate the quality of the features you produce. You are free to use
+> cross-validation, though!
 
 ## The other side of regression
 
 So far in this textbook we have used regression only in the context of
-prediction. However, regression is also a powerful method to understand and/or
-describe the relationship between a quantitative response variable and
-one or more explanatory variables. Extending the case we have been working with
-in this chapter (where we are interested in house price as the outcome/response
-variable), we might also be interested in describing the
+prediction. However, regression can also be seen as a method to understand and
+quantify the effects of individual variables on a response / outcome of interest.
+In the housing example from this chapter, beyond just using past data
+to predict future sale prices, 
+we might also be interested in describing the
 individual effects of house size and the number of bedrooms on house price,
 quantifying how big each of these effects are, and assessing how accurately we
 can estimate each of these effects. This side of regression is the topic of
