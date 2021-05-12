@@ -74,7 +74,7 @@ variables---penguin bill and flipper length, both in mm---to determine whether
 there are distinct types of penguins in our data.
 Understanding this might help us with species discovery and classification in a data-driven
 way.
-```{r 09-penguins, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Gentoo penguin. [@penguinsimage]", fig.retina = 2}
+```{r 09-penguins, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 3, fig.width = 4, fig.cap = "Gentoo penguin. [@penguinsimage]", fig.retina = 2}
 knitr::include_graphics("https://upload.wikimedia.org/wikipedia/commons/0/00/Brown_Bluff-2016-Tabarin_Peninsula%E2%80%93Gentoo_penguin_%28Pygoscelis_papua%29_03.jpg")
 ```
 
@@ -115,7 +115,8 @@ the following groups denoted by colour:
 ggplot(data, aes(y = bill_length_scaled, x = flipper_length_scaled, colour = cluster)) +
   geom_point() +
   xlab("Flipper Length (scaled)") +
-  ylab("Bill Length (scaled)")
+  ylab("Bill Length (scaled)") + 
+  scale_color_manual(values= c("forestgreen", "darkorange", "dodgerblue"))
 ```
 
 What are the labels for these groups? Unfortunately, we don't have any. K-means,
@@ -125,9 +126,9 @@ where we can easily visualize the clusters on a scatter plot, we can give
 human-made labels to the groups using their positions on
 the plot:
 
-- small flipper length and small bill length (<font color="#F8766D">pink cluster</font>), 
-- small flipper length and large bill length (<font color="#00BA38">green cluster</font>).
-- and large flipper length and large bill  length (<font color="#619CFF">blue cluster</font>).
+- small flipper length and small bill length (<font color="forestgreen">green cluster</font>), 
+- small flipper length and large bill length (<font color="darkorange">orange cluster</font>).
+- and large flipper length and large bill  length (<font color="dodgerblue">blue cluster</font>).
 
 Once we have made these determinations, we can use them to inform our species
 classifications or ask further questions about our data. For example, we might
@@ -182,7 +183,8 @@ base <- ggplot(clus1) +
     max(clus1$bill_length_scaled) + 0.25 * sd(clus1$bill_length_scaled)
   )) +
   geom_point(aes(y = mean(bill_length_scaled), x = mean(flipper_length_scaled), colour = "red", size = 2.5)) +
-  theme(legend.position = "none")
+  theme(legend.position = "none") + 
+  scale_color_manual(values= c("forestgreen", "darkorange", "dodgerblue"))
 base
 ```
 
@@ -198,7 +200,8 @@ These distances are denoted by lines in Figure \@ref(fig:10-toy-example-clus1-di
 base <- ggplot(clus1) +
   geom_point(aes(y = bill_length_scaled, x = flipper_length_scaled)) +
   labs(x = "Flipper Length (scaled)", y = "Bill Length (scaled)") +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +   scale_color_manual(values= c("forestgreen", "darkorange", "dodgerblue"))
+
 
 mn <- clus1 %>% summarize(flipper_length_scaled = mean(flipper_length_scaled), bill_length_scaled = mean(bill_length_scaled))
 for (i in 1:nrow(clus1)) {
@@ -237,7 +240,8 @@ plt_lbl <- ggplot(penguin_data, aes(y = bill_length_scaled, x = flipper_length_s
   ylab("Bill Length (scaled)") +
   # xlim(c(0, 10)) +
   # ylim(c(0, 10)) +
-  theme(legend.position = "none")
+  theme(legend.position = "none") + 
+  scale_colour_manual(values= c("forestgreen", "darkorange", "dodgerblue"))
 print(plt_lbl)
 ```
 </center>
@@ -335,8 +339,6 @@ for (i in 1:5) {
     geom_point(size = 2) +
     xlab("Flipper Length (scaled)") +
     ylab("Bill Length (scaled)") +
-    # xlim(c(0, 10)) +
-    # ylim(c(0, 10)) +
     theme(legend.position = "none") +
     geom_point(data = centers, aes(y = bill_length_scaled, x = flipper_length_scaled, fill = label), size = 5, shape = 21, stroke = 2, colour = "black")
 
@@ -352,8 +354,6 @@ for (i in 1:5) {
     geom_point(size = 2) +
     xlab("Flipper Length (scaled)") +
     ylab("Bill Length (scaled)") +
-    # xlim(c(0, 10)) +
-    # ylim(c(0, 10)) +
     theme(legend.position = "none") +
     geom_point(data = centers, aes(y = bill_length_scaled, x = flipper_length_scaled, fill = label), size = 5, shape = 21, stroke = 2, colour = "black")
 
@@ -382,6 +382,7 @@ ranging from 1 to 9.
 ```{r 10-toy-kmeans-vary-k, echo = FALSE, warning = FALSE, fig.height = 10, fig.width = 12, fig.cap = "Clustering of the penguin data for # clusters ranging from 1 to 9."}
 library(broom)
 set.seed(3)
+
 kclusts <- tibble(k = 1:9) %>%
   mutate(
     kclust = map(k, ~ kmeans(penguin_data[-3], .x)),
@@ -405,13 +406,12 @@ levels(assignments$k) <- c("1 Cluster", "2 Clusters", "3 Clusters", "4 Clusters"
 clusters$k <- factor(clusters$k)
 levels(clusters$k) <- c("1 Cluster", "2 Clusters", "3 Clusters", "4 Clusters", "5 Clusters", "6 Clusters", "7 Clusters", "8 Clusters", "9 Clusters")
 
-
 p1 <- ggplot(assignments, aes(flipper_length_scaled, bill_length_scaled)) +
   geom_point(aes(color = .cluster, size = 3)) +
   facet_wrap(~k) +
   labs(x = "Flipper Length (scaled)", y = "Bill Length (scaled)", colour = "Cluster") +
   theme(text = element_text(size = 20), legend.position = "none") +
-  geom_point(data = clusters %>% mutate(flipper_length_scaled = x2, bill_length_scaled = x1), aes(fill = cluster), colour = "black", size = 5, shape = 21, stroke = 2)
+  geom_point(data = clusters %>% mutate(flipper_length_scaled = x1, bill_length_scaled = x2), aes(fill = cluster), colour = "black", size = 5, shape = 21, stroke = 2)
 
 p1
 ```
