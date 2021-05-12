@@ -519,49 +519,242 @@ grid.arrange(grobs = plots)
 
 ## Predictor variable selection
 
-Another very important part of tuning your classifier is to choose which variables from your
-data will be treated as predictor variables. You can choose anything from using a single predictor variable
-to using every variable in your data; the K-nearest neighbours algorithm is able to run with
-any number of predictors. However, it is **not** the case that "more predictors" always implies 
-"better predictions!"
+> This section is not required reading for the remainder of the textbook.
 
-Let's take a look at an example where K-nearest neighbours works worse with more predictors.
+Another potentially important part of tuning your classifier is to choose which
+variables from your data will be treated as predictor variables. Based
+on your initial exploratory analysis, you can choose
+anything from using a single predictor variable to using every variable in your
+data; the K-nearest neighbours algorithm accepts any number of
+predictors. However, it is **not** the case that using more predictors always
+yields better predictions! In fact, including irrelevant predictors can
+actually negatively affect classifier performance.
 
-**todo example**
+Let's take a look at an example where K-nearest neighbours performs
+worse when given more predictors to work with. Here we have modified
+the breast cancer data to include the variables `Smoothness` and `Concavity`,
+as well as 500 irrelevant variables
+named `Irrelevant1` to `Irrelevant500`, which
+we generated ourselves using a random number generator.
+You will see from the scatter plot below with two example
+variables `Irrelevant1`, `Irrelevant2` that
+these irrelevant variables have no meaningful relationship
+with the `Class` response variable.
+<center>
+```{r 06-irrelevant-loaddata, echo = FALSE, warning = FALSE, fig.cap = "A scatter showing two of the synthetic variables that were added to the data", fig.retina = 2, out.width = "600"}
+cancer_irrelevant <- read_csv("data/wdbc_irrelevant.csv") %>%
+                mutate(Class = as_factor(Class))
+
+plot_irrelev <- cancer_irrelevant %>%
+  ggplot(aes(x = Irrelevant1, y = Irrelevant2, color = Class)) +
+  geom_point(alpha = 0.5) +
+  labs(color = "Diagnosis") +
+  scale_color_manual(labels = c("Malignant", "Benign"), values = cbPalette)
+
+plot_irrelev
+```
+</center>
+
+Next, we build a sequence of K-NN classifiers that include both `Smoothness` and `Concavity` as predictor variables,
+but also increasingly many irrelevant variables. Each model is tuned via 5-fold cross-validation.
+We show the plot of estimated accuracy versus the number of irrelevant predictors below.
+<center>
+```{r 06-performance-irrelevant-features, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "600", fig.cap = "Effect of inclusion of irrelevant predictors"}
+set.seed(1)
+# get accuracies after including k irrelevant features
+ks <- c(0, 5, 10, 20, 50, 100, 200, 500)
+accs <- list()
+for (i in 1:length(ks)) {
+  knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = tune()) %>%
+     set_engine("kknn") %>%
+     set_mode("classification")
+
+  cancer_irrelevant_subset <- cancer_irrelevant %>% select(1:(3+ks[[i]]))
+
+  cancer_vfold <- vfold_cv(cancer_irrelevant_subset, v = 5, strata = Class)
+
+  cancer_recipe <- recipe(Class ~ ., data = cancer_irrelevant_subset) %>%
+      step_scale(all_predictors()) %>%
+      step_center(all_predictors())
+
+  
+  accs[[i]] <- workflow() %>%
+    add_recipe(cancer_recipe) %>%
+    add_model(knn_spec) %>%
+    tune_grid(resamples = cancer_vfold, grid = 10) %>%
+    collect_metrics() %>%
+    filter(.metric == "accuracy") %>%
+    summarize(mx = max(mean)) %>%
+    select(mx)
+  accs[[i]] <- accs[[i]]$mx
+}
+accs <- accs %>% unlist()
+
+# get accuracy if we always just guess the most frequent label
+base_acc <- cancer_irrelevant %>%
+                group_by(Class) %>%
+                summarize(n = n()) %>%
+                mutate(frac = n/sum(n)) %>%
+                summarize(mx = max(frac)) %>%
+                select(mx)
+base_acc <- base_acc$mx %>% unlist()
+
+# plot
+res <- tibble(ks = ks, accs = accs)
+res <- res %>% mutate(base_acc = base_acc)
+plt_irrelevant_accuracies <- res %>%
+  ggplot() +
+  geom_line(mapping = aes(x=ks, y=accs, linetype="Tuned K-NN")) +
+  geom_hline(data=res, mapping=aes(yintercept=base_acc, linetype="Always Predict Benign (63%)")) +
+  labs(x = "Number of Irrelevant Predictors", y = "Model Accuracy Estimate") + 
+  scale_linetype_manual(name="Method", values = c("dashed", "solid"))
+
+plt_irrelevant_accuracies
+```
+</center>
+
+Wow! Once we add sufficiently many irrelevant predictor variables, our classifier
+does not do much better than just always guessing "benign", 
+ the most common class label in the data (63% of observations are benign).
 
 So then if we can't just throw in the kitchen sink, how do we choose which
 variables to use as predictors?  This is a very difficult question to answer in
 general, and there are a number of methods that have been developed that apply
 in particular cases of interest; see the additional resources at the end of
 this chapter to find out where you can learn more about variable selection.
-Here we will discuss *best subset selection,* which works when you have a small
-number of total predictors and you just want to remove irrelevant variables (to
-avoid the problem in the example above).
+Here we will discuss *best subset selection,* which is applicable to any 
+classification method (K-NN or otherwise), and works when you have a small
+number of total variables from which you want to keep only the relevant ones (to
+avoid the problem in the example above). Best subset selection works 
+as follows. If you have $m$ predictors, you: 
 
-The method is straightforward: if you have $m$ predictors, you create a
-separate model for every possible subset of predictors, tune each one to find a
-good setting of the model parameter (e.g., the number of neighbours $K$) using
-cross-validation, and finally pick the subset of predictors that gives you the
-highest estimated prediction accuracy.  
+1. create a separate model for every possible subset of predictors,
+2. tune each one using cross validation, and 
+3. finally pick the subset of predictors that gives you the highest estimated prediction accuracy.  
 
-**todo example**
-
-Note that this is a very, very
-computationally expensive process. If we have $m=2$ predictors---let's call
-them A and B---then we have 3 models to try: A alone, B alone, and finally A
+Note that best subset selection becomes very slow when you have even a moderate
+number of predictors to choose from. This is because the number of possible predictor subsets
+grows very quickly with the number of predictors. For example, if we have $m=2$ predictors---let's call
+them A and B---then we have 3 variable sets to try: A alone, B alone, and finally A
 and B together. If we have $m=3$ predictors---A, B, and C---then we have 7
-models to try: A, B, C, AB, BC, AC, and ABC. When we get to $m=10$ predictors
-we have over *one thousand* models to train, and at $m=20$ predictors we have
+to try: A, B, C, AB, BC, AC, and ABC. In general, the number of models
+we have to train for $m$ predictors is $2^m-1$; in other words, when we 
+get to $m=10$ predictors we have over *one thousand* models to train, and 
+at $m=20$ predictors we have
 over *one million* models to train! If you have more than about 10 predictors,
-which is certainly not uncommon in modern data analysis problems,
-you should first use your scientific understanding of the data analysis setting
-to choose the 10 or so predictors that you think are most meaningful.
+you should first use your scientific understanding of the data
+to choose the 10 or so predictors that you think are most meaningful, and then
+run best subset selection within those 10. Alternatively, you can use a different
+predictor variable selection method; see the additional resources at the end
+of this chapter. 
 
-> Remember: since the choice of which variables to include as predictors is part of tuning your
-> classifier, you *cannot use your test data* for this process! You should instead use 
-> cross-validation to decide which combination of predictor variables is likely to result in
-> the highest classification accuracy on unseen test data.
+We now turn to implementing best subset selection in R.
+Unfortunately there is no built-in way to do this using the `tidymodels` framework,
+so we will have to code it ourselves. First we will use the `select` function
+to extract the "total" set of predictors that we are willing to work with. 
+Here we select `Smoothness`, `Concavity`, `Symmetry`, and `Area`
+as potential predictors, and the `Class` variable as the response.
+```{r 06-best-subset, warning = FALSE}
+cancer_subset <- cancer_train %>% select(Class, Smoothness, Concavity, Symmetry, Area)
+```
 
+Next we will use the `combn` function to collect all possible subsets
+of predictors. As an example to see how this function works, 
+below we will create a vector `names` of column 
+names corresponding to predictors, and then use the `combn`
+to list all 6 possible combinations of size 2.
+```{r 06-best-subset-2, warning = FALSE}
+names <- colnames(cancer_subset %>% select(-Class))
+
+combn(names, 2, simplify=FALSE)
+```
+We combine this with the `paste` function (which concatenates strings
+separated by spaces) to create a model formula for each combination.
+The `collapse` argument tells `paste` what to put between the items in the list;
+to make a formula, we need to put a `+` symbol between each variable.
+For example, if we try this with the first combination
+of `Smoothness` and `Concavity` above, we obtain the formula
+`Class ~ Smoothness + Concavity` as expected:
+```{r}
+example_comb <- combn(names, 2, simplify=FALSE)[[1]]
+example_formula <- paste("Class", "~", paste(example_comb, collapse="+"))
+example_formula
+```
+
+Finally, in order to search over the subsets of predictors of *all* sizes,
+we will need to iterate over the possible sizes from 1 to 4.
+If you recall the end of the wrangling chapter, we mentioned
+that sometimes one needs more flexible forms of iteration than what 
+we have used earlier, and in these cases one typically resorts to
+[a for loop](https://r4ds.had.co.nz/iteration.html#iteration).
+This is one of those cases! Here we will use two for loops:
+one over the possible sizes of the predictor subset
+(where you see `for (i in 1:length(names))` below)
+and another over the subsets of each size (where you see `for (j in 1:length(combs))` below).
+For each subset, we construct a model formula,
+pass it into a `recipe`, build a `workflow` that tunes
+a K-NN classifier using 5-fold cross-validation, 
+and finally records the estimated accuracy.
+
+```{r 06-best-subset-3, warning = FALSE}
+set.seed(1)
+
+# create an empty tibble to store the results
+accuracies <- tibble(size = integer(), index = integer(), model_string = character(), accuracy = numeric())
+
+# create a model specification
+knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = tune()) %>%
+     set_engine("kknn") %>%
+     set_mode("classification")
+
+# create a 5-fold cross-validation object
+cancer_vfold <- vfold_cv(cancer_subset, v = 5, strata = Class)
+
+# for every size from 1 to length(names)
+for (i in 1:length(names)) {
+    # get all combinations of predictors of size i
+    combs <- combn(names, i, simplify=FALSE)
+    
+    # for every combination of predictors of size i
+    for (j in 1:length(combs)) {
+        # create a model string for this combination of predictors
+        model_string <- paste("Class", "~", paste(combs[[j]], collapse="+"))
+
+        # create a recipe from the model string
+        cancer_recipe <- recipe(as.formula(model_string), data = cancer_subset) %>%
+            step_scale(all_predictors()) %>%
+            step_center(all_predictors())
+
+  
+        # tune the K-NN classifier with these predictors, and collect the accuracy for the best K
+        acc <- workflow() %>%
+          add_recipe(cancer_recipe) %>%
+          add_model(knn_spec) %>%
+          tune_grid(resamples = cancer_vfold, grid = 10) %>%
+          collect_metrics() %>%
+          filter(.metric == "accuracy") %>%
+          summarize(mx = max(mean))
+        acc <- acc$mx %>% unlist()
+
+        # add this result to the dataframe
+        accuracies <- accuracies %>% add_row(size = i, index = j, model_string = model_string, accuracy = acc)
+    }
+}
+
+accuracies
+```
+The maximum accuracy estimate is obtained for the formula
+`Class ~ Concavity + Symmetry + Area`, so the best subset selection 
+method would result in a model with these three predictors. Note,
+however, that the model with all 4 predictors, as well as the 
+model `Class ~ Smoothness + Concavity + Area` are reasonable
+alternatives that provide a similar estimated accuracy.
+
+> Remember: since the choice of which variables to include as predictors is
+> part of tuning your classifier, you *cannot use your test data* for this
+> process! You should instead use cross-validation to decide which combination
+> of predictor variables is likely to result in the highest classification
+> accuracy on unseen test data.
 
 ## Splitting data
 
