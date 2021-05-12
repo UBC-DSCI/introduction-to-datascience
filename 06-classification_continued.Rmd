@@ -517,6 +517,58 @@ grid.arrange(grobs = plots)
 ```
 </center>
 
+## Splitting data
+
+**Shuffling:** When we split the data into train, test, and validation sets, we
+make the assumption that there is no order to our originally collected data
+set. However, if we think that there might be some order to the original data
+set, then we can randomly shuffle the data before splitting it. The `tidymodels`
+function `initial_split` and `vfold_cv` functions do this for us. 
+
+**Stratification:** If the data are imbalanced, we also need to be extra
+careful about splitting the data to ensure that enough of each class ends up in
+each of the train, validation, and test partitions. The `strata` argument
+in the `initial_split` and `vfold_cv` functions handles this for us too. 
+
+## Summary
+
+Classification algorithms use one or more quantitative variables to predict the
+value of a third, categorical variable. The K-nearest neighbour algorithm in
+particular does this by first finding the K points in the training data nearest
+to the new observation, and then returning the majority class vote from those
+training observations. We can evaluate a classifier by splitting the data
+randomly into a training and test data set, using the training set to build the
+classifier, and using the test set to estimate its accuracy. To tune the
+classifier (e.g., select the K in K-nearest neighbours), we maximize accuracy
+estimates from cross-validation.
+
+```{r 06-overview, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Overview of K-nn classification", fig.retina = 2, out.width = "660"}
+knitr::include_graphics("img/train-test-overview.jpeg")
+```
+
+The overall workflow for performing K-nearest neighbour classification using `tidymodels` is as follows:
+
+1. Use the `initial_split` function to split the data into a training and test set. Set the `strata` argument to the target variable. Put the test set aside for now.
+2. Use the `vfold_cv` function to split up the training data for cross validation.
+3. Create a `recipe` that specifies the target and predictor variables, as well as preprocessing steps for all variables. Pass the training data as the `data` argument of the recipe.
+4. Create a `nearest_neighbors` model specification, with `neighbors = tune()`.
+5. Add the recipe and model specification to a `workflow()`, and use the `tune_grid` function on the train/validation splits to estimate the classifier accuracy for a range of $K$ values.
+6. Pick a value of $K$ that yields a high accuracy estimate that doesn't change much if you change $K$ to a nearby value.
+7. Make a new model specification for the best parameter value, and retrain the classifier using the `fit` function.
+8. Evaluate the estimated accuracy of the classifier on the test set using the `predict` function.
+
+**Strengths:**
+
+1. Simple, intuitive algorithm
+2. Few assumptions about what the data must look like 
+3. Works for binary (two-class) and multi-class (> 2 classes) classification problems
+
+**Weaknesses:**
+
+1. As the training data gets larger, K-nearest neighbours becomes very slow
+2. May not perform well with a large number of predictors
+3. Does not perform well when classes are imbalanced (when many more observations are in one of the classes compared to the others)
+
 ## Predictor variable selection
 
 > This section is not required reading for the remainder of the textbook.
@@ -756,57 +808,7 @@ alternatives that provide a similar estimated accuracy.
 > of predictor variables is likely to result in the highest classification
 > accuracy on unseen test data.
 
-## Splitting data
 
-**Shuffling:** When we split the data into train, test, and validation sets, we
-make the assumption that there is no order to our originally collected data
-set. However, if we think that there might be some order to the original data
-set, then we can randomly shuffle the data before splitting it. The `tidymodels`
-function `initial_split` and `vfold_cv` functions do this for us. 
-
-**Stratification:** If the data are imbalanced, we also need to be extra
-careful about splitting the data to ensure that enough of each class ends up in
-each of the train, validation, and test partitions. The `strata` argument
-in the `initial_split` and `vfold_cv` functions handles this for us too. 
-
-## Summary
-
-Classification algorithms use one or more quantitative variables to predict the
-value of a third, categorical variable. The K-nearest neighbour algorithm in
-particular does this by first finding the K points in the training data nearest
-to the new observation, and then returning the majority class vote from those
-training observations. We can evaluate a classifier by splitting the data
-randomly into a training and test data set, using the training set to build the
-classifier, and using the test set to estimate its accuracy. To tune the
-classifier (e.g., select the K in K-nearest neighbours), we maximize accuracy
-estimates from cross-validation.
-
-```{r 06-overview, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Overview of K-nn classification", fig.retina = 2, out.width = "660"}
-knitr::include_graphics("img/train-test-overview.jpeg")
-```
-
-The overall workflow for performing K-nearest neighbour classification using `tidymodels` is as follows:
-
-1. Use the `initial_split` function to split the data into a training and test set. Set the `strata` argument to the target variable. Put the test set aside for now.
-2. Use the `vfold_cv` function to split up the training data for cross validation.
-3. Create a `recipe` that specifies the target and predictor variables, as well as preprocessing steps for all variables. Pass the training data as the `data` argument of the recipe.
-4. Create a `nearest_neighbors` model specification, with `neighbors = tune()`.
-5. Add the recipe and model specification to a `workflow()`, and use the `tune_grid` function on the train/validation splits to estimate the classifier accuracy for a range of $K$ values.
-6. Pick a value of $K$ that yields a high accuracy estimate that doesn't change much if you change $K$ to a nearby value.
-7. Make a new model specification for the best parameter value, and retrain the classifier using the `fit` function.
-8. Evaluate the estimated accuracy of the classifier on the test set using the `predict` function.
-
-**Strengths:**
-
-1. Simple, intuitive algorithm
-2. Few assumptions about what the data must look like 
-3. Works for binary (two-class) and multi-class (> 2 classes) classification problems
-
-**Weaknesses:**
-
-1. As the training data gets larger, K-nearest neighbours becomes very slow
-2. May not perform well with a large number of predictors
-3. Does not perform well when classes are imbalanced (when many more observations are in one of the classes compared to the others)
 
 ## Additional resources
 - The [`tidymodels` website](https://tidymodels.org/packages) is an excellent reference for more details on, and advanced usage of, the functions and packages in the past two chapters. Aside from that, it also has a [nice beginner's tutorial](https://www.tidymodels.org/start/) and [an extensive list of more advanced examples](https://www.tidymodels.org/learn/) that you can use to continue learning beyond the scope of this book. It's worth noting that the `tidymodels` package does a lot more than just classification, and so the examples on the website similarly go beyond classification as well. In the next two chapters, you'll learn about another kind of predictive modelling setting, so it might be worth visiting the website only after reading through those chapters.
