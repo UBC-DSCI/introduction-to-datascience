@@ -4,8 +4,7 @@ library(tidyverse)
 library(palmerpenguins)
 library(tidymodels)
 data(package = 'palmerpenguins')
-set.seed(12345) # 83, 4, 211, 2111
-#11200, 235, 333, 444,
+set.seed(12345) 
 
 penguins <- na.omit(penguins)
 
