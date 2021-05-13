@@ -2,6 +2,17 @@
 
 ```{r 09-clustering, echo = FALSE, message = FALSE, warning = FALSE}
 knitr::opts_chunk$set(warning = FALSE)
+library(RColorBrewer)
+# colour blind friendly colours:
+#cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+#library(plotrix)
+#sapply(cbbPalette, color.id) # to convert hex colour to colours with names 
+
+# set the colours in the graphs, some graphs with the code shown to students are hard coded 
+cbbPalette <- c(brewer.pal(9, "Paired"))
+cbpalette <- c("darkorange3", "dodgerblue3", "goldenrod1")
+
 ```
 
 ## Overview 
@@ -89,7 +100,8 @@ data <- read_csv("data/toy_penguins.csv") %>%
 penguin_data <- data %>% select(flipper_length_scaled, bill_length_scaled)
 ```
 
-```{r 10-clustering}
+```{r 10-clustering, warning = F, message=F}
+library(tidyverse)
 penguin_data
 ```
 
@@ -111,12 +123,12 @@ and often very effective clustering method, combined with the *elbow method* for
 selecting the number of clusters. This procedure will separate the data into 
 the following groups denoted by colour:
 
-```{r 10-toy-example-clustering, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 5}
+```{r 10-toy-example-clustering, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Subset data of penguin scaled bill length versus flipper length with coloured groups"}
 ggplot(data, aes(y = bill_length_scaled, x = flipper_length_scaled, colour = cluster)) +
   geom_point() +
   xlab("Flipper Length (scaled)") +
   ylab("Bill Length (scaled)") + 
-  scale_color_manual(values= c("forestgreen", "darkorange", "dodgerblue"))
+  scale_color_manual(values= c("darkorange3", "dodgerblue3", "goldenrod1"))
 ```
 
 What are the labels for these groups? Unfortunately, we don't have any. K-means,
@@ -126,9 +138,9 @@ where we can easily visualize the clusters on a scatter plot, we can give
 human-made labels to the groups using their positions on
 the plot:
 
-- small flipper length and small bill length (<font color="forestgreen">green cluster</font>), 
-- small flipper length and large bill length (<font color="darkorange">orange cluster</font>).
-- and large flipper length and large bill  length (<font color="dodgerblue">blue cluster</font>).
+- small flipper length and small bill length (<font color="#D55E00">orange cluster</font>), 
+- small flipper length and large bill length (<font color="#0072B2">blue cluster</font>).
+- and large flipper length and large bill  length (<font color="#F0E442">yellow cluster</font>).
 
 Once we have made these determinations, we can use them to inform our species
 classifications or ask further questions about our data. For example, we might
@@ -172,7 +184,7 @@ in Figure \@ref(fig:10-toy-example-clus1-center).
 
 ```{r 10-toy-example-clus1-center, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Cluster 1 from the toy example, with center highlighted."}
 base <- ggplot(clus1) +
-  geom_point(aes(y = bill_length_scaled, x = flipper_length_scaled)) +
+  geom_point(aes(y = bill_length_scaled, x = flipper_length_scaled),  col = "dodgerblue3") +
   labs(x = "Flipper Length (scaled)", y = "Bill Length (scaled)") +
   xlim(c(
     min(clus1$flipper_length_scaled) - 0.25 * sd(clus1$flipper_length_scaled),
@@ -183,8 +195,7 @@ base <- ggplot(clus1) +
     max(clus1$bill_length_scaled) + 0.25 * sd(clus1$bill_length_scaled)
   )) +
   geom_point(aes(y = mean(bill_length_scaled), x = mean(flipper_length_scaled), colour = "red", size = 2.5)) +
-  theme(legend.position = "none") + 
-  scale_color_manual(values= c("forestgreen", "darkorange", "dodgerblue"))
+  theme(legend.position = "none") 
 base
 ```
 
@@ -192,16 +203,17 @@ The second step in computing the WSSD is to add up the squared distance between 
 We use the straight-line / Euclidean distance formula that we learned about in the classification chapter.
 In the `r nrow(clus1)`-observation cluster example above, we would compute the WSSD $S^2$ via
 
-$$S^2 = \left((x_1 - \mu_x)^2 + (y_1 - \mu_y)^2\right) + \left((x_2 - \mu_x)^2 + (y_2 - \mu_y)^2\right) +\left((x_3 - \mu_x)^2 + (y_3 - \mu_y)^2\right) \left((x_4 - \mu_x)^2 + (y_4 - \mu_y)^2\right).$$
+\begin{align*}
+S^2 = \left((x_1 - \mu_x)^2 + (y_1 - \mu_y)^2\right) + \left((x_2 - \mu_x)^2 + (y_2 - \mu_y)^2\right) + \\ \left((x_3 - \mu_x)^2 + (y_3 - \mu_y)^2\right)  +  \left((x_4 - \mu_x)^2 + (y_4 - \mu_y)^2\right).
+\end{align*}
 
 These distances are denoted by lines in Figure \@ref(fig:10-toy-example-clus1-dists) for the first cluster of the penguin data example. 
 
 ```{r 10-toy-example-clus1-dists, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Cluster 1 from the toy example, with distances to the center highlighted."}
 base <- ggplot(clus1) +
-  geom_point(aes(y = bill_length_scaled, x = flipper_length_scaled)) +
+  geom_point(aes(y = bill_length_scaled, x = flipper_length_scaled),col = "dodgerblue3") +
   labs(x = "Flipper Length (scaled)", y = "Bill Length (scaled)") +
-  theme(legend.position = "none") +   scale_color_manual(values= c("forestgreen", "darkorange", "dodgerblue"))
-
+  theme(legend.position = "none") 
 
 mn <- clus1 %>% summarize(flipper_length_scaled = mean(flipper_length_scaled), bill_length_scaled = mean(bill_length_scaled))
 for (i in 1:nrow(clus1)) {
@@ -238,10 +250,8 @@ plt_lbl <- ggplot(penguin_data, aes(y = bill_length_scaled, x = flipper_length_s
   geom_point(size = 2) +
   xlab("Flipper Length (scaled)") +
   ylab("Bill Length (scaled)") +
-  # xlim(c(0, 10)) +
-  # ylim(c(0, 10)) +
   theme(legend.position = "none") + 
-  scale_colour_manual(values= c("forestgreen", "darkorange", "dodgerblue"))
+  scale_color_manual(values= cbpalette)
 print(plt_lbl)
 ```
 </center>
@@ -263,10 +273,9 @@ for (i in 1:4) {
     geom_point(size = 2) +
     xlab("Flipper Length (scaled)") +
     ylab("Bill Length (scaled)") +
-    # xlim(c(0, 10)) +
-    # ylim(c(0, 10)) +
     theme(legend.position = "none") +
-    geom_point(data = centers, aes(y = bill_length_scaled, x = flipper_length_scaled, fill = label), size = 5, shape = 21, stroke = 2, colour = "black")
+    scale_color_manual(values= cbpalette) + 
+    geom_point(data = centers, aes(y = bill_length_scaled, x = flipper_length_scaled, fill = label), size = 5, shape = 21, stroke = 2, colour = "black", fill = cbpalette)
 
   # reassign labels
   dists <- rbind(centers, penguin_data) %>%
@@ -280,10 +289,10 @@ for (i in 1:4) {
     geom_point(size = 2) +
     xlab("Flipper Length (scaled)") +
     ylab("Bill Length (scaled)") +
-    # xlim(c(0, 10)) +
-    # ylim(c(0, 10)) +
     theme(legend.position = "none") +
-    geom_point(data = centers, aes(y = bill_length_scaled, x = flipper_length_scaled, fill = label), size = 5, shape = 21, stroke = 2, colour = "black")
+    scale_color_manual(values= cbpalette) + 
+
+    geom_point(data = centers, aes(y = bill_length_scaled, x = flipper_length_scaled, fill = label), size = 5, shape = 21, stroke = 2, colour = "black", fill = cbpalette) 
 
   # to generate the animated version, get rid of grid.arrange and use the below two lines
   # set the figure width to 4.35 too
@@ -309,7 +318,7 @@ in the fourth iteration; both the centers and labels will remain the same from t
 Unlike the classification and regression models we studied in previous chapters, K-means can get "stuck" in a bad solution.
 For example, if we were unlucky and initialized K-means with the following labels:
 <center>
-```{r 10-toy-kmeans-bad-init, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Random initialization of labels."}
+```{r 10-toy-kmeans-bad-init, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Random initialization of labels."}
 set.seed(10)
 penguin_data["label"] <- factor(sample(1:3, nrow(penguin_data), replace = T))
 
@@ -317,8 +326,7 @@ plt_lbl <- ggplot(penguin_data, aes(y = bill_length_scaled, x = flipper_length_s
   geom_point(size = 2) +
   xlab("Flipper Length (scaled)") +
   ylab("Bill Length (scaled)") +
-  #  xlim(c(0, 10)) +
-  #  ylim(c(0, 10)) +
+  scale_color_manual(values= cbpalette) +
   theme(legend.position = "none")
 print(plt_lbl)
 ```
@@ -340,7 +348,8 @@ for (i in 1:5) {
     xlab("Flipper Length (scaled)") +
     ylab("Bill Length (scaled)") +
     theme(legend.position = "none") +
-    geom_point(data = centers, aes(y = bill_length_scaled, x = flipper_length_scaled, fill = label), size = 5, shape = 21, stroke = 2, colour = "black")
+    scale_color_manual(values= cbpalette) + 
+    geom_point(data = centers, aes(y = bill_length_scaled, x = flipper_length_scaled, fill = label), size = 5, shape = 21, stroke = 2, colour = "black", fill = cbpalette)
 
   # reassign labels
   dists <- rbind(centers, penguin_data) %>%
@@ -355,7 +364,8 @@ for (i in 1:5) {
     xlab("Flipper Length (scaled)") +
     ylab("Bill Length (scaled)") +
     theme(legend.position = "none") +
-    geom_point(data = centers, aes(y = bill_length_scaled, x = flipper_length_scaled, fill = label), size = 5, shape = 21, stroke = 2, colour = "black")
+    scale_color_manual(values= cbpalette) +
+    geom_point(data = centers, aes(y = bill_length_scaled, x = flipper_length_scaled, fill = label), size = 5, shape = 21, stroke = 2, colour = "black", fill = cbpalette)
 
   # print(plt_ctr)
   # print(plt_lbl)
@@ -408,10 +418,10 @@ levels(clusters$k) <- c("1 Cluster", "2 Clusters", "3 Clusters", "4 Clusters", "
 
 p1 <- ggplot(assignments, aes(flipper_length_scaled, bill_length_scaled)) +
   geom_point(aes(color = .cluster, size = 3)) +
-  facet_wrap(~k) +
+  facet_wrap(~k) +   scale_colour_manual(values = cbbPalette) +
   labs(x = "Flipper Length (scaled)", y = "Bill Length (scaled)", colour = "Cluster") +
   theme(text = element_text(size = 20), legend.position = "none") +
-  geom_point(data = clusters %>% mutate(flipper_length_scaled = x1, bill_length_scaled = x2), aes(fill = cluster), colour = "black", size = 5, shape = 21, stroke = 2)
+  geom_point(data = clusters %>% mutate(flipper_length_scaled = x1, bill_length_scaled = x2), aes(fill = cluster), colour = "black", size = 5, shape = 21, stroke = 2) + scale_fill_manual(values = cbbPalette)
 
 p1
 ```
@@ -494,13 +504,12 @@ Now that we have this information in a tidy data frame, we can make a visualizat
 of the cluster assignments for each point:
 
 ```{r 10-plot-clusters-2, fig.height = 4, fig.width = 4.35}
-
 cluster_plot <- ggplot(clustered_data,
   aes(x = flipper_length_mm, y = bill_length_mm, colour = .cluster),
-  size = 2
-) +
+  size = 2) +
   geom_point() +
-  labs(x = "Flipper Length (scaled)", y = "Bill Length (scaled)", colour = "Cluster")
+  labs(x = "Flipper Length (scaled)", y = "Bill Length (scaled)", colour = "Cluster") + 
+  scale_color_manual(values = c("dodgerblue3","darkorange3",  "goldenrod1"))
 cluster_plot
 ```
 
@@ -535,7 +544,7 @@ An anonymous function is a function that has no name,
 unlike other functions you've seen so far (`kmeans`, `select`, etc). 
 To do this we will write our map statement like this:
 
-```
+```{r, eval = FALSE}
 map(penguin_clust_ks, function(k) kmeans(scaled_data, k))
 ```
 
@@ -602,7 +611,7 @@ get "stuck" in a bad solution. Unfortunately, for K = 8 we had an unlucky initia
 and found a bad clustering! We can help prevent finding a bad clustering by trying a 
 few different random initializations via the `nstart` argument (here we use 10 restarts). 
 
-```{r 10-choose-k-nstart, fig.height = 4, fig.width = 4.35}
+```{r 10-choose-k-nstart, fig.height = 4, fig.width = 4.35, message= F, warning = F}
 penguin_clust_ks <- tibble(k = 1:9) %>%
   mutate(
     penguin_clusts = map(k, ~ kmeans(scaled_data, nstart = 10, .x)),
