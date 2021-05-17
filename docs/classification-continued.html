@@ -26,7 +26,7 @@
 <meta name="author" content="Melissa Lee" />
 
 
-<meta name="date" content="2021-05-10" />
+<meta name="date" content="2021-05-17" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -177,10 +177,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="2.6.2" data-path="reading.html"><a href="reading.html#interacting-with-a-database"><i class="fa fa-check"></i><b>2.6.2</b> Interacting with a database</a></li>
 </ul></li>
 <li class="chapter" data-level="2.7" data-path="reading.html"><a href="reading.html#writing-data-from-r-to-a-.csv-file"><i class="fa fa-check"></i><b>2.7</b> Writing data from R to a <code>.csv</code> file</a></li>
-<li class="chapter" data-level="2.8" data-path="reading.html"><a href="reading.html#scraping-data-off-the-web-using-r"><i class="fa fa-check"></i><b>2.8</b> Scraping data off the web using R</a><ul>
-<li class="chapter" data-level="2.8.1" data-path="reading.html"><a href="reading.html#html-and-css-selectors"><i class="fa fa-check"></i><b>2.8.1</b> HTML and CSS selectors</a></li>
-<li class="chapter" data-level="2.8.2" data-path="reading.html"><a href="reading.html#are-you-allowed-to-scrape-that-website"><i class="fa fa-check"></i><b>2.8.2</b> Are you allowed to scrape that website?</a></li>
-<li class="chapter" data-level="2.8.3" data-path="reading.html"><a href="reading.html#using-rvest"><i class="fa fa-check"></i><b>2.8.3</b> Using <code>rvest</code></a></li>
+<li class="chapter" data-level="2.8" data-path="reading.html"><a href="reading.html#obtaining-data-from-the-web"><i class="fa fa-check"></i><b>2.8</b> Obtaining data from the web</a><ul>
+<li class="chapter" data-level="2.8.1" data-path="reading.html"><a href="reading.html#web-scraping"><i class="fa fa-check"></i><b>2.8.1</b> Web scraping</a></li>
+<li class="chapter" data-level="2.8.2" data-path="reading.html"><a href="reading.html#using-an-api"><i class="fa fa-check"></i><b>2.8.2</b> Using an API</a></li>
 </ul></li>
 <li class="chapter" data-level="2.9" data-path="reading.html"><a href="reading.html#additional-resources"><i class="fa fa-check"></i><b>2.9</b> Additional resources</a></li>
 </ul></li>
@@ -435,26 +434,26 @@ classification, but also to assess how well our classification worked. Let’s
 start by loading the necessary libraries, reading in the breast cancer data
 from the previous chapter, and making a quick scatter plot visualization of
 tumour cell concavity versus smoothness coloured by diagnosis.</p>
-<div class="sourceCode" id="cb205"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb205-1"><a href="classification-continued.html#cb205-1"></a><span class="co"># load packages</span></span>
-<span id="cb205-2"><a href="classification-continued.html#cb205-2"></a><span class="kw">library</span>(tidyverse)</span>
-<span id="cb205-3"><a href="classification-continued.html#cb205-3"></a><span class="kw">library</span>(tidymodels)</span>
-<span id="cb205-4"><a href="classification-continued.html#cb205-4"></a></span>
-<span id="cb205-5"><a href="classification-continued.html#cb205-5"></a><span class="co"># load data</span></span>
-<span id="cb205-6"><a href="classification-continued.html#cb205-6"></a>cancer &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/unscaled_wdbc.csv&quot;</span>) <span class="op">%&gt;%</span></span>
-<span id="cb205-7"><a href="classification-continued.html#cb205-7"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Class =</span> <span class="kw">as_factor</span>(Class)) <span class="co"># convert the character Class variable to the factor datatype</span></span>
-<span id="cb205-8"><a href="classification-continued.html#cb205-8"></a></span>
-<span id="cb205-9"><a href="classification-continued.html#cb205-9"></a><span class="co"># colour palette</span></span>
-<span id="cb205-10"><a href="classification-continued.html#cb205-10"></a>cbPalette &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;#E69F00&quot;</span>, <span class="st">&quot;#56B4E9&quot;</span>, <span class="st">&quot;#009E73&quot;</span>, <span class="st">&quot;#F0E442&quot;</span>, <span class="st">&quot;#0072B2&quot;</span>, <span class="st">&quot;#D55E00&quot;</span>, <span class="st">&quot;#CC79A7&quot;</span>, <span class="st">&quot;#999999&quot;</span>)</span>
-<span id="cb205-11"><a href="classification-continued.html#cb205-11"></a></span>
-<span id="cb205-12"><a href="classification-continued.html#cb205-12"></a><span class="co"># create scatter plot of tumour cell concavity versus smoothness,</span></span>
-<span id="cb205-13"><a href="classification-continued.html#cb205-13"></a><span class="co"># labelling the points be diagnosis class</span></span>
-<span id="cb205-14"><a href="classification-continued.html#cb205-14"></a>perim_concav &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span></span>
-<span id="cb205-15"><a href="classification-continued.html#cb205-15"></a><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> Smoothness, <span class="dt">y =</span> Concavity, <span class="dt">color =</span> Class)) <span class="op">+</span></span>
-<span id="cb205-16"><a href="classification-continued.html#cb205-16"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
-<span id="cb205-17"><a href="classification-continued.html#cb205-17"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">color =</span> <span class="st">&quot;Diagnosis&quot;</span>) <span class="op">+</span></span>
-<span id="cb205-18"><a href="classification-continued.html#cb205-18"></a><span class="st">  </span><span class="kw">scale_color_manual</span>(<span class="dt">labels =</span> <span class="kw">c</span>(<span class="st">&quot;Malignant&quot;</span>, <span class="st">&quot;Benign&quot;</span>), <span class="dt">values =</span> cbPalette)</span>
-<span id="cb205-19"><a href="classification-continued.html#cb205-19"></a></span>
-<span id="cb205-20"><a href="classification-continued.html#cb205-20"></a>perim_concav</span></code></pre></div>
+<div class="sourceCode" id="cb213"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb213-1"><a href="classification-continued.html#cb213-1"></a><span class="co"># load packages</span></span>
+<span id="cb213-2"><a href="classification-continued.html#cb213-2"></a><span class="kw">library</span>(tidyverse)</span>
+<span id="cb213-3"><a href="classification-continued.html#cb213-3"></a><span class="kw">library</span>(tidymodels)</span>
+<span id="cb213-4"><a href="classification-continued.html#cb213-4"></a></span>
+<span id="cb213-5"><a href="classification-continued.html#cb213-5"></a><span class="co"># load data</span></span>
+<span id="cb213-6"><a href="classification-continued.html#cb213-6"></a>cancer &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/unscaled_wdbc.csv&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb213-7"><a href="classification-continued.html#cb213-7"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">Class =</span> <span class="kw">as_factor</span>(Class)) <span class="co"># convert the character Class variable to the factor datatype</span></span>
+<span id="cb213-8"><a href="classification-continued.html#cb213-8"></a></span>
+<span id="cb213-9"><a href="classification-continued.html#cb213-9"></a><span class="co"># colour palette</span></span>
+<span id="cb213-10"><a href="classification-continued.html#cb213-10"></a>cbPalette &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;#E69F00&quot;</span>, <span class="st">&quot;#56B4E9&quot;</span>, <span class="st">&quot;#009E73&quot;</span>, <span class="st">&quot;#F0E442&quot;</span>, <span class="st">&quot;#0072B2&quot;</span>, <span class="st">&quot;#D55E00&quot;</span>, <span class="st">&quot;#CC79A7&quot;</span>, <span class="st">&quot;#999999&quot;</span>)</span>
+<span id="cb213-11"><a href="classification-continued.html#cb213-11"></a></span>
+<span id="cb213-12"><a href="classification-continued.html#cb213-12"></a><span class="co"># create scatter plot of tumour cell concavity versus smoothness,</span></span>
+<span id="cb213-13"><a href="classification-continued.html#cb213-13"></a><span class="co"># labelling the points be diagnosis class</span></span>
+<span id="cb213-14"><a href="classification-continued.html#cb213-14"></a>perim_concav &lt;-<span class="st"> </span>cancer <span class="op">%&gt;%</span></span>
+<span id="cb213-15"><a href="classification-continued.html#cb213-15"></a><span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> Smoothness, <span class="dt">y =</span> Concavity, <span class="dt">color =</span> Class)) <span class="op">+</span></span>
+<span id="cb213-16"><a href="classification-continued.html#cb213-16"></a><span class="st">  </span><span class="kw">geom_point</span>(<span class="dt">alpha =</span> <span class="fl">0.5</span>) <span class="op">+</span></span>
+<span id="cb213-17"><a href="classification-continued.html#cb213-17"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">color =</span> <span class="st">&quot;Diagnosis&quot;</span>) <span class="op">+</span></span>
+<span id="cb213-18"><a href="classification-continued.html#cb213-18"></a><span class="st">  </span><span class="kw">scale_color_manual</span>(<span class="dt">labels =</span> <span class="kw">c</span>(<span class="st">&quot;Malignant&quot;</span>, <span class="st">&quot;Benign&quot;</span>), <span class="dt">values =</span> cbPalette)</span>
+<span id="cb213-19"><a href="classification-continued.html#cb213-19"></a></span>
+<span id="cb213-20"><a href="classification-continued.html#cb213-20"></a>perim_concav</span></code></pre></div>
 <div class="figure"><span id="fig:06-precode"></span>
 <img src="_main_files/figure-html/06-precode-1.png" alt="Scatterplot of tumour cell concavity versus smoothness coloured by diagnosis label" width="480" />
 <p class="caption">
@@ -471,16 +470,16 @@ training data set) and getting an accurate evaluation of its performance (by
 using a larger test data set). Here, we will use 75% of the data for training,
 and 25% for testing. To do this we will use the <code>initial_split</code> function,
 specifying that <code>prop = 0.75</code> and the target variable is <code>Class</code>:</p>
-<div class="sourceCode" id="cb206"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb206-1"><a href="classification-continued.html#cb206-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
-<span id="cb206-2"><a href="classification-continued.html#cb206-2"></a>cancer_split &lt;-<span class="st"> </span><span class="kw">initial_split</span>(cancer, <span class="dt">prop =</span> <span class="fl">0.75</span>, <span class="dt">strata =</span> Class)</span>
-<span id="cb206-3"><a href="classification-continued.html#cb206-3"></a>cancer_train &lt;-<span class="st"> </span><span class="kw">training</span>(cancer_split)</span>
-<span id="cb206-4"><a href="classification-continued.html#cb206-4"></a>cancer_test &lt;-<span class="st"> </span><span class="kw">testing</span>(cancer_split)</span></code></pre></div>
+<div class="sourceCode" id="cb214"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb214-1"><a href="classification-continued.html#cb214-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb214-2"><a href="classification-continued.html#cb214-2"></a>cancer_split &lt;-<span class="st"> </span><span class="kw">initial_split</span>(cancer, <span class="dt">prop =</span> <span class="fl">0.75</span>, <span class="dt">strata =</span> Class)</span>
+<span id="cb214-3"><a href="classification-continued.html#cb214-3"></a>cancer_train &lt;-<span class="st"> </span><span class="kw">training</span>(cancer_split)</span>
+<span id="cb214-4"><a href="classification-continued.html#cb214-4"></a>cancer_test &lt;-<span class="st"> </span><span class="kw">testing</span>(cancer_split)</span></code></pre></div>
 <blockquote>
 <p>Note: You will see in the code above that we use the <code>set.seed</code> function again, as discussed in the previous chapter. In this case it is because
 <code>initial_split</code> uses random sampling to choose which rows will be in the training set. Since we want our code to be reproducible
 and generate the same train/test split each time it is run, we use <code>set.seed</code>.</p>
 </blockquote>
-<div class="sourceCode" id="cb207"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb207-1"><a href="classification-continued.html#cb207-1"></a><span class="kw">glimpse</span>(cancer_train)</span></code></pre></div>
+<div class="sourceCode" id="cb215"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb215-1"><a href="classification-continued.html#cb215-1"></a><span class="kw">glimpse</span>(cancer_train)</span></code></pre></div>
 <pre><code>## Rows: 427
 ## Columns: 12
 ## $ ID                &lt;dbl&gt; 842302, 842517, 84300903, 84348301, 84358402, 84378…
@@ -495,7 +494,7 @@ and generate the same train/test split each time it is run, we use <code>set.see
 ## $ Concave_Points    &lt;dbl&gt; 0.14710, 0.07017, 0.12790, 0.10520, 0.10430, 0.0808…
 ## $ Symmetry          &lt;dbl&gt; 0.2419, 0.1812, 0.2069, 0.2597, 0.1809, 0.2087, 0.1…
 ## $ Fractal_Dimension &lt;dbl&gt; 0.07871, 0.05667, 0.05999, 0.09744, 0.05883, 0.0761…</code></pre>
-<div class="sourceCode" id="cb209"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb209-1"><a href="classification-continued.html#cb209-1"></a><span class="kw">glimpse</span>(cancer_test)</span></code></pre></div>
+<div class="sourceCode" id="cb217"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb217-1"><a href="classification-continued.html#cb217-1"></a><span class="kw">glimpse</span>(cancer_test)</span></code></pre></div>
 <pre><code>## Rows: 142
 ## Columns: 12
 ## $ ID                &lt;dbl&gt; 844981, 84799002, 848406, 849014, 8510426, 8511133,…
@@ -524,26 +523,26 @@ training and test data sets.</p>
 <p>Fortunately, the <code>recipe</code> framework from <code>tidymodels</code> makes it simple to handle
 this properly. Below we construct and prepare the recipe using only the training
 data (due to <code>data = cancer_train</code> in the first line).</p>
-<div class="sourceCode" id="cb211"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb211-1"><a href="classification-continued.html#cb211-1"></a>cancer_recipe &lt;-<span class="st"> </span><span class="kw">recipe</span>(Class <span class="op">~</span><span class="st"> </span>Smoothness <span class="op">+</span><span class="st"> </span>Concavity, <span class="dt">data =</span> cancer_train) <span class="op">%&gt;%</span></span>
-<span id="cb211-2"><a href="classification-continued.html#cb211-2"></a><span class="st">  </span><span class="kw">step_scale</span>(<span class="kw">all_predictors</span>()) <span class="op">%&gt;%</span></span>
-<span id="cb211-3"><a href="classification-continued.html#cb211-3"></a><span class="st">  </span><span class="kw">step_center</span>(<span class="kw">all_predictors</span>())</span></code></pre></div>
+<div class="sourceCode" id="cb219"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb219-1"><a href="classification-continued.html#cb219-1"></a>cancer_recipe &lt;-<span class="st"> </span><span class="kw">recipe</span>(Class <span class="op">~</span><span class="st"> </span>Smoothness <span class="op">+</span><span class="st"> </span>Concavity, <span class="dt">data =</span> cancer_train) <span class="op">%&gt;%</span></span>
+<span id="cb219-2"><a href="classification-continued.html#cb219-2"></a><span class="st">  </span><span class="kw">step_scale</span>(<span class="kw">all_predictors</span>()) <span class="op">%&gt;%</span></span>
+<span id="cb219-3"><a href="classification-continued.html#cb219-3"></a><span class="st">  </span><span class="kw">step_center</span>(<span class="kw">all_predictors</span>())</span></code></pre></div>
 <p><strong>3. Train the classifier</strong></p>
 <p>Now that we have split our original data set into training and test sets, we
 can create our K-nearest neighbour classifier with only the training set using
 the technique we learned in the previous chapter. For now, we will just choose
 the number <span class="math inline">\(K\)</span> of neighbours to be 3, and use concavity and smoothness as the
 predictors.</p>
-<div class="sourceCode" id="cb212"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb212-1"><a href="classification-continued.html#cb212-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
-<span id="cb212-2"><a href="classification-continued.html#cb212-2"></a>knn_spec &lt;-<span class="st"> </span><span class="kw">nearest_neighbor</span>(<span class="dt">weight_func =</span> <span class="st">&quot;rectangular&quot;</span>, <span class="dt">neighbors =</span> <span class="dv">3</span>) <span class="op">%&gt;%</span></span>
-<span id="cb212-3"><a href="classification-continued.html#cb212-3"></a><span class="st">  </span><span class="kw">set_engine</span>(<span class="st">&quot;kknn&quot;</span>) <span class="op">%&gt;%</span></span>
-<span id="cb212-4"><a href="classification-continued.html#cb212-4"></a><span class="st">  </span><span class="kw">set_mode</span>(<span class="st">&quot;classification&quot;</span>)</span>
-<span id="cb212-5"><a href="classification-continued.html#cb212-5"></a></span>
-<span id="cb212-6"><a href="classification-continued.html#cb212-6"></a>knn_fit &lt;-<span class="st"> </span><span class="kw">workflow</span>() <span class="op">%&gt;%</span></span>
-<span id="cb212-7"><a href="classification-continued.html#cb212-7"></a><span class="st">  </span><span class="kw">add_recipe</span>(cancer_recipe) <span class="op">%&gt;%</span></span>
-<span id="cb212-8"><a href="classification-continued.html#cb212-8"></a><span class="st">  </span><span class="kw">add_model</span>(knn_spec) <span class="op">%&gt;%</span></span>
-<span id="cb212-9"><a href="classification-continued.html#cb212-9"></a><span class="st">  </span><span class="kw">fit</span>(<span class="dt">data =</span> cancer_train)</span>
-<span id="cb212-10"><a href="classification-continued.html#cb212-10"></a></span>
-<span id="cb212-11"><a href="classification-continued.html#cb212-11"></a>knn_fit</span></code></pre></div>
+<div class="sourceCode" id="cb220"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb220-1"><a href="classification-continued.html#cb220-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb220-2"><a href="classification-continued.html#cb220-2"></a>knn_spec &lt;-<span class="st"> </span><span class="kw">nearest_neighbor</span>(<span class="dt">weight_func =</span> <span class="st">&quot;rectangular&quot;</span>, <span class="dt">neighbors =</span> <span class="dv">3</span>) <span class="op">%&gt;%</span></span>
+<span id="cb220-3"><a href="classification-continued.html#cb220-3"></a><span class="st">  </span><span class="kw">set_engine</span>(<span class="st">&quot;kknn&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb220-4"><a href="classification-continued.html#cb220-4"></a><span class="st">  </span><span class="kw">set_mode</span>(<span class="st">&quot;classification&quot;</span>)</span>
+<span id="cb220-5"><a href="classification-continued.html#cb220-5"></a></span>
+<span id="cb220-6"><a href="classification-continued.html#cb220-6"></a>knn_fit &lt;-<span class="st"> </span><span class="kw">workflow</span>() <span class="op">%&gt;%</span></span>
+<span id="cb220-7"><a href="classification-continued.html#cb220-7"></a><span class="st">  </span><span class="kw">add_recipe</span>(cancer_recipe) <span class="op">%&gt;%</span></span>
+<span id="cb220-8"><a href="classification-continued.html#cb220-8"></a><span class="st">  </span><span class="kw">add_model</span>(knn_spec) <span class="op">%&gt;%</span></span>
+<span id="cb220-9"><a href="classification-continued.html#cb220-9"></a><span class="st">  </span><span class="kw">fit</span>(<span class="dt">data =</span> cancer_train)</span>
+<span id="cb220-10"><a href="classification-continued.html#cb220-10"></a></span>
+<span id="cb220-11"><a href="classification-continued.html#cb220-11"></a>knn_fit</span></code></pre></div>
 <pre><code>## ══ Workflow [trained] ══════════════════════════════════════════════════════════
 ## Preprocessor: Recipe
 ## Model: nearest_neighbor()
@@ -577,9 +576,9 @@ column of predictions to the original test data, creating the
 <code>cancer_test_predictions</code> data frame. The <code>Class</code> variable contains the true
 diagnoses, while the <code>.pred_class</code> contains the predicted diagnoses from the
 model.</p>
-<div class="sourceCode" id="cb214"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb214-1"><a href="classification-continued.html#cb214-1"></a>cancer_test_predictions &lt;-<span class="st"> </span><span class="kw">predict</span>(knn_fit, cancer_test) <span class="op">%&gt;%</span></span>
-<span id="cb214-2"><a href="classification-continued.html#cb214-2"></a><span class="st">  </span><span class="kw">bind_cols</span>(cancer_test)</span>
-<span id="cb214-3"><a href="classification-continued.html#cb214-3"></a>cancer_test_predictions</span></code></pre></div>
+<div class="sourceCode" id="cb222"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb222-1"><a href="classification-continued.html#cb222-1"></a>cancer_test_predictions &lt;-<span class="st"> </span><span class="kw">predict</span>(knn_fit, cancer_test) <span class="op">%&gt;%</span></span>
+<span id="cb222-2"><a href="classification-continued.html#cb222-2"></a><span class="st">  </span><span class="kw">bind_cols</span>(cancer_test)</span>
+<span id="cb222-3"><a href="classification-continued.html#cb222-3"></a>cancer_test_predictions</span></code></pre></div>
 <pre><code>## # A tibble: 142 x 13
 ##    .pred_class     ID Class Radius Texture Perimeter  Area Smoothness
 ##    &lt;fct&gt;        &lt;dbl&gt; &lt;fct&gt;  &lt;dbl&gt;   &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;      &lt;dbl&gt;
@@ -600,8 +599,8 @@ model.</p>
 <p>Finally we can assess our classifier’s accuracy. To do this we use the <code>metrics</code> function
 from <code>tidymodels</code> to get the statistics about the quality of our model, specifying
 the <code>truth</code> and <code>estimate</code> arguments:</p>
-<div class="sourceCode" id="cb216"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb216-1"><a href="classification-continued.html#cb216-1"></a>cancer_test_predictions <span class="op">%&gt;%</span></span>
-<span id="cb216-2"><a href="classification-continued.html#cb216-2"></a><span class="st">  </span><span class="kw">metrics</span>(<span class="dt">truth =</span> Class, <span class="dt">estimate =</span> .pred_class)</span></code></pre></div>
+<div class="sourceCode" id="cb224"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb224-1"><a href="classification-continued.html#cb224-1"></a>cancer_test_predictions <span class="op">%&gt;%</span></span>
+<span id="cb224-2"><a href="classification-continued.html#cb224-2"></a><span class="st">  </span><span class="kw">metrics</span>(<span class="dt">truth =</span> Class, <span class="dt">estimate =</span> .pred_class)</span></code></pre></div>
 <pre><code>## # A tibble: 2 x 3
 ##   .metric  .estimator .estimate
 ##   &lt;chr&gt;    &lt;chr&gt;          &lt;dbl&gt;
@@ -610,8 +609,8 @@ the <code>truth</code> and <code>estimate</code> arguments:</p>
 <p>This shows that the accuracy of the classifier on the test data was 88%.
 We can also look at the <em>confusion matrix</em> for the classifier, which shows
 the table of predicted labels and correct labels, using the <code>conf_mat</code> function:</p>
-<div class="sourceCode" id="cb218"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb218-1"><a href="classification-continued.html#cb218-1"></a>cancer_test_predictions <span class="op">%&gt;%</span></span>
-<span id="cb218-2"><a href="classification-continued.html#cb218-2"></a><span class="st">  </span><span class="kw">conf_mat</span>(<span class="dt">truth =</span> Class, <span class="dt">estimate =</span> .pred_class)</span></code></pre></div>
+<div class="sourceCode" id="cb226"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb226-1"><a href="classification-continued.html#cb226-1"></a>cancer_test_predictions <span class="op">%&gt;%</span></span>
+<span id="cb226-2"><a href="classification-continued.html#cb226-2"></a><span class="st">  </span><span class="kw">conf_mat</span>(<span class="dt">truth =</span> Class, <span class="dt">estimate =</span> .pred_class)</span></code></pre></div>
 <pre><code>##           Truth
 ## Prediction  M  B
 ##          M 43  7
@@ -657,39 +656,39 @@ end up with multiple classifiers, each with their own accuracy evaluated on diff
 values in the <code>set.seed</code> function to generate five different train / validation
 splits of our overall training data, train five different K-nearest neighbour
 models, and evaluate their accuracy.</p>
-<div class="sourceCode" id="cb220"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb220-1"><a href="classification-continued.html#cb220-1"></a>accuracies &lt;-<span class="st"> </span><span class="kw">c</span>()</span>
-<span id="cb220-2"><a href="classification-continued.html#cb220-2"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="dv">5</span>) {</span>
-<span id="cb220-3"><a href="classification-continued.html#cb220-3"></a>  <span class="kw">set.seed</span>(i) <span class="co"># makes the random selection of rows reproducible</span></span>
-<span id="cb220-4"><a href="classification-continued.html#cb220-4"></a></span>
-<span id="cb220-5"><a href="classification-continued.html#cb220-5"></a>  <span class="co"># create the 25/75 split of the training data into training and validation</span></span>
-<span id="cb220-6"><a href="classification-continued.html#cb220-6"></a>  cancer_split &lt;-<span class="st"> </span><span class="kw">initial_split</span>(cancer_train, <span class="dt">prop =</span> <span class="fl">0.75</span>, <span class="dt">strata =</span> Class)</span>
-<span id="cb220-7"><a href="classification-continued.html#cb220-7"></a>  cancer_subtrain &lt;-<span class="st"> </span><span class="kw">training</span>(cancer_split)</span>
-<span id="cb220-8"><a href="classification-continued.html#cb220-8"></a>  cancer_validation &lt;-<span class="st"> </span><span class="kw">testing</span>(cancer_split)</span>
-<span id="cb220-9"><a href="classification-continued.html#cb220-9"></a></span>
-<span id="cb220-10"><a href="classification-continued.html#cb220-10"></a>  <span class="co"># recreate the standardization recipe from before (since it must be based on the training data)</span></span>
-<span id="cb220-11"><a href="classification-continued.html#cb220-11"></a>  cancer_recipe &lt;-<span class="st"> </span><span class="kw">recipe</span>(Class <span class="op">~</span><span class="st"> </span>Smoothness <span class="op">+</span><span class="st"> </span>Concavity, <span class="dt">data =</span> cancer_subtrain) <span class="op">%&gt;%</span></span>
-<span id="cb220-12"><a href="classification-continued.html#cb220-12"></a><span class="st">    </span><span class="kw">step_scale</span>(<span class="kw">all_predictors</span>()) <span class="op">%&gt;%</span></span>
-<span id="cb220-13"><a href="classification-continued.html#cb220-13"></a><span class="st">    </span><span class="kw">step_center</span>(<span class="kw">all_predictors</span>())</span>
-<span id="cb220-14"><a href="classification-continued.html#cb220-14"></a></span>
-<span id="cb220-15"><a href="classification-continued.html#cb220-15"></a>  <span class="co"># fit the knn model (we can reuse the old knn_spec model from before)</span></span>
-<span id="cb220-16"><a href="classification-continued.html#cb220-16"></a>  knn_fit &lt;-<span class="st"> </span><span class="kw">workflow</span>() <span class="op">%&gt;%</span></span>
-<span id="cb220-17"><a href="classification-continued.html#cb220-17"></a><span class="st">    </span><span class="kw">add_recipe</span>(cancer_recipe) <span class="op">%&gt;%</span></span>
-<span id="cb220-18"><a href="classification-continued.html#cb220-18"></a><span class="st">    </span><span class="kw">add_model</span>(knn_spec) <span class="op">%&gt;%</span></span>
-<span id="cb220-19"><a href="classification-continued.html#cb220-19"></a><span class="st">    </span><span class="kw">fit</span>(<span class="dt">data =</span> cancer_subtrain)</span>
-<span id="cb220-20"><a href="classification-continued.html#cb220-20"></a></span>
-<span id="cb220-21"><a href="classification-continued.html#cb220-21"></a>  <span class="co"># get predictions on the validation data</span></span>
-<span id="cb220-22"><a href="classification-continued.html#cb220-22"></a>  validation_predicted &lt;-<span class="st"> </span><span class="kw">predict</span>(knn_fit, cancer_validation) <span class="op">%&gt;%</span></span>
-<span id="cb220-23"><a href="classification-continued.html#cb220-23"></a><span class="st">    </span><span class="kw">bind_cols</span>(cancer_validation)</span>
-<span id="cb220-24"><a href="classification-continued.html#cb220-24"></a></span>
-<span id="cb220-25"><a href="classification-continued.html#cb220-25"></a>  <span class="co"># compute the accuracy</span></span>
-<span id="cb220-26"><a href="classification-continued.html#cb220-26"></a>  acc &lt;-<span class="st"> </span>validation_predicted <span class="op">%&gt;%</span></span>
-<span id="cb220-27"><a href="classification-continued.html#cb220-27"></a><span class="st">    </span><span class="kw">metrics</span>(<span class="dt">truth =</span> Class, <span class="dt">estimate =</span> .pred_class) <span class="op">%&gt;%</span></span>
-<span id="cb220-28"><a href="classification-continued.html#cb220-28"></a><span class="st">    </span><span class="kw">filter</span>(.metric <span class="op">==</span><span class="st"> &quot;accuracy&quot;</span>) <span class="op">%&gt;%</span></span>
-<span id="cb220-29"><a href="classification-continued.html#cb220-29"></a><span class="st">    </span><span class="kw">select</span>(.estimate) <span class="op">%&gt;%</span></span>
-<span id="cb220-30"><a href="classification-continued.html#cb220-30"></a><span class="st">    </span><span class="kw">pull</span>()</span>
-<span id="cb220-31"><a href="classification-continued.html#cb220-31"></a>  accuracies &lt;-<span class="st"> </span><span class="kw">append</span>(accuracies, acc)</span>
-<span id="cb220-32"><a href="classification-continued.html#cb220-32"></a>}</span>
-<span id="cb220-33"><a href="classification-continued.html#cb220-33"></a>accuracies</span></code></pre></div>
+<div class="sourceCode" id="cb228"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb228-1"><a href="classification-continued.html#cb228-1"></a>accuracies &lt;-<span class="st"> </span><span class="kw">c</span>()</span>
+<span id="cb228-2"><a href="classification-continued.html#cb228-2"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="dv">5</span>) {</span>
+<span id="cb228-3"><a href="classification-continued.html#cb228-3"></a>  <span class="kw">set.seed</span>(i) <span class="co"># makes the random selection of rows reproducible</span></span>
+<span id="cb228-4"><a href="classification-continued.html#cb228-4"></a></span>
+<span id="cb228-5"><a href="classification-continued.html#cb228-5"></a>  <span class="co"># create the 25/75 split of the training data into training and validation</span></span>
+<span id="cb228-6"><a href="classification-continued.html#cb228-6"></a>  cancer_split &lt;-<span class="st"> </span><span class="kw">initial_split</span>(cancer_train, <span class="dt">prop =</span> <span class="fl">0.75</span>, <span class="dt">strata =</span> Class)</span>
+<span id="cb228-7"><a href="classification-continued.html#cb228-7"></a>  cancer_subtrain &lt;-<span class="st"> </span><span class="kw">training</span>(cancer_split)</span>
+<span id="cb228-8"><a href="classification-continued.html#cb228-8"></a>  cancer_validation &lt;-<span class="st"> </span><span class="kw">testing</span>(cancer_split)</span>
+<span id="cb228-9"><a href="classification-continued.html#cb228-9"></a></span>
+<span id="cb228-10"><a href="classification-continued.html#cb228-10"></a>  <span class="co"># recreate the standardization recipe from before (since it must be based on the training data)</span></span>
+<span id="cb228-11"><a href="classification-continued.html#cb228-11"></a>  cancer_recipe &lt;-<span class="st"> </span><span class="kw">recipe</span>(Class <span class="op">~</span><span class="st"> </span>Smoothness <span class="op">+</span><span class="st"> </span>Concavity, <span class="dt">data =</span> cancer_subtrain) <span class="op">%&gt;%</span></span>
+<span id="cb228-12"><a href="classification-continued.html#cb228-12"></a><span class="st">    </span><span class="kw">step_scale</span>(<span class="kw">all_predictors</span>()) <span class="op">%&gt;%</span></span>
+<span id="cb228-13"><a href="classification-continued.html#cb228-13"></a><span class="st">    </span><span class="kw">step_center</span>(<span class="kw">all_predictors</span>())</span>
+<span id="cb228-14"><a href="classification-continued.html#cb228-14"></a></span>
+<span id="cb228-15"><a href="classification-continued.html#cb228-15"></a>  <span class="co"># fit the knn model (we can reuse the old knn_spec model from before)</span></span>
+<span id="cb228-16"><a href="classification-continued.html#cb228-16"></a>  knn_fit &lt;-<span class="st"> </span><span class="kw">workflow</span>() <span class="op">%&gt;%</span></span>
+<span id="cb228-17"><a href="classification-continued.html#cb228-17"></a><span class="st">    </span><span class="kw">add_recipe</span>(cancer_recipe) <span class="op">%&gt;%</span></span>
+<span id="cb228-18"><a href="classification-continued.html#cb228-18"></a><span class="st">    </span><span class="kw">add_model</span>(knn_spec) <span class="op">%&gt;%</span></span>
+<span id="cb228-19"><a href="classification-continued.html#cb228-19"></a><span class="st">    </span><span class="kw">fit</span>(<span class="dt">data =</span> cancer_subtrain)</span>
+<span id="cb228-20"><a href="classification-continued.html#cb228-20"></a></span>
+<span id="cb228-21"><a href="classification-continued.html#cb228-21"></a>  <span class="co"># get predictions on the validation data</span></span>
+<span id="cb228-22"><a href="classification-continued.html#cb228-22"></a>  validation_predicted &lt;-<span class="st"> </span><span class="kw">predict</span>(knn_fit, cancer_validation) <span class="op">%&gt;%</span></span>
+<span id="cb228-23"><a href="classification-continued.html#cb228-23"></a><span class="st">    </span><span class="kw">bind_cols</span>(cancer_validation)</span>
+<span id="cb228-24"><a href="classification-continued.html#cb228-24"></a></span>
+<span id="cb228-25"><a href="classification-continued.html#cb228-25"></a>  <span class="co"># compute the accuracy</span></span>
+<span id="cb228-26"><a href="classification-continued.html#cb228-26"></a>  acc &lt;-<span class="st"> </span>validation_predicted <span class="op">%&gt;%</span></span>
+<span id="cb228-27"><a href="classification-continued.html#cb228-27"></a><span class="st">    </span><span class="kw">metrics</span>(<span class="dt">truth =</span> Class, <span class="dt">estimate =</span> .pred_class) <span class="op">%&gt;%</span></span>
+<span id="cb228-28"><a href="classification-continued.html#cb228-28"></a><span class="st">    </span><span class="kw">filter</span>(.metric <span class="op">==</span><span class="st"> &quot;accuracy&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb228-29"><a href="classification-continued.html#cb228-29"></a><span class="st">    </span><span class="kw">select</span>(.estimate) <span class="op">%&gt;%</span></span>
+<span id="cb228-30"><a href="classification-continued.html#cb228-30"></a><span class="st">    </span><span class="kw">pull</span>()</span>
+<span id="cb228-31"><a href="classification-continued.html#cb228-31"></a>  accuracies &lt;-<span class="st"> </span><span class="kw">append</span>(accuracies, acc)</span>
+<span id="cb228-32"><a href="classification-continued.html#cb228-32"></a>}</span>
+<span id="cb228-33"><a href="classification-continued.html#cb228-33"></a>accuracies</span></code></pre></div>
 <pre><code>## [1] 0.9150943 0.8679245 0.8490566 0.8962264 0.9150943</code></pre>
 <p>With five different shuffles of the data, we get five different values for
 accuracy. None of these is necessarily “more correct” than any other; they’re
@@ -716,8 +715,8 @@ resulting in 5 different choices for the <strong>validation set</strong>; we cal
 <em>5-fold</em> cross-validation. To do 5-fold cross-validation in R with <code>tidymodels</code>, we
 use another function: <code>vfold_cv</code>. This function splits our training data into
 <code>v</code> folds automatically:</p>
-<div class="sourceCode" id="cb222"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb222-1"><a href="classification-continued.html#cb222-1"></a>cancer_vfold &lt;-<span class="st"> </span><span class="kw">vfold_cv</span>(cancer_train, <span class="dt">v =</span> <span class="dv">5</span>, <span class="dt">strata =</span> Class)</span>
-<span id="cb222-2"><a href="classification-continued.html#cb222-2"></a>cancer_vfold</span></code></pre></div>
+<div class="sourceCode" id="cb230"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb230-1"><a href="classification-continued.html#cb230-1"></a>cancer_vfold &lt;-<span class="st"> </span><span class="kw">vfold_cv</span>(cancer_train, <span class="dt">v =</span> <span class="dv">5</span>, <span class="dt">strata =</span> Class)</span>
+<span id="cb230-2"><a href="classification-continued.html#cb230-2"></a>cancer_vfold</span></code></pre></div>
 <pre><code>## #  5-fold cross-validation using stratification 
 ## # A tibble: 5 x 2
 ##   splits           id   
@@ -734,20 +733,20 @@ train/validation split.</p>
 <p><strong>Note:</strong> we set the seed when we call <code>train</code> not only because of the potential for ties, but also because we are doing
 cross-validation. Cross-validation uses a random process to select how to partition the training data.</p>
 </blockquote>
-<div class="sourceCode" id="cb224"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb224-1"><a href="classification-continued.html#cb224-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
-<span id="cb224-2"><a href="classification-continued.html#cb224-2"></a></span>
-<span id="cb224-3"><a href="classification-continued.html#cb224-3"></a><span class="co"># recreate the standardization recipe from before (since it must be based on the training data)</span></span>
-<span id="cb224-4"><a href="classification-continued.html#cb224-4"></a>cancer_recipe &lt;-<span class="st"> </span><span class="kw">recipe</span>(Class <span class="op">~</span><span class="st"> </span>Smoothness <span class="op">+</span><span class="st"> </span>Concavity, <span class="dt">data =</span> cancer_train) <span class="op">%&gt;%</span></span>
-<span id="cb224-5"><a href="classification-continued.html#cb224-5"></a><span class="st">  </span><span class="kw">step_scale</span>(<span class="kw">all_predictors</span>()) <span class="op">%&gt;%</span></span>
-<span id="cb224-6"><a href="classification-continued.html#cb224-6"></a><span class="st">  </span><span class="kw">step_center</span>(<span class="kw">all_predictors</span>())</span>
-<span id="cb224-7"><a href="classification-continued.html#cb224-7"></a></span>
-<span id="cb224-8"><a href="classification-continued.html#cb224-8"></a><span class="co"># fit the knn model (we can reuse the old knn_spec model from before)</span></span>
-<span id="cb224-9"><a href="classification-continued.html#cb224-9"></a>knn_fit &lt;-<span class="st"> </span><span class="kw">workflow</span>() <span class="op">%&gt;%</span></span>
-<span id="cb224-10"><a href="classification-continued.html#cb224-10"></a><span class="st">  </span><span class="kw">add_recipe</span>(cancer_recipe) <span class="op">%&gt;%</span></span>
-<span id="cb224-11"><a href="classification-continued.html#cb224-11"></a><span class="st">  </span><span class="kw">add_model</span>(knn_spec) <span class="op">%&gt;%</span></span>
-<span id="cb224-12"><a href="classification-continued.html#cb224-12"></a><span class="st">  </span><span class="kw">fit_resamples</span>(<span class="dt">resamples =</span> cancer_vfold)</span>
-<span id="cb224-13"><a href="classification-continued.html#cb224-13"></a></span>
-<span id="cb224-14"><a href="classification-continued.html#cb224-14"></a>knn_fit</span></code></pre></div>
+<div class="sourceCode" id="cb232"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb232-1"><a href="classification-continued.html#cb232-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb232-2"><a href="classification-continued.html#cb232-2"></a></span>
+<span id="cb232-3"><a href="classification-continued.html#cb232-3"></a><span class="co"># recreate the standardization recipe from before (since it must be based on the training data)</span></span>
+<span id="cb232-4"><a href="classification-continued.html#cb232-4"></a>cancer_recipe &lt;-<span class="st"> </span><span class="kw">recipe</span>(Class <span class="op">~</span><span class="st"> </span>Smoothness <span class="op">+</span><span class="st"> </span>Concavity, <span class="dt">data =</span> cancer_train) <span class="op">%&gt;%</span></span>
+<span id="cb232-5"><a href="classification-continued.html#cb232-5"></a><span class="st">  </span><span class="kw">step_scale</span>(<span class="kw">all_predictors</span>()) <span class="op">%&gt;%</span></span>
+<span id="cb232-6"><a href="classification-continued.html#cb232-6"></a><span class="st">  </span><span class="kw">step_center</span>(<span class="kw">all_predictors</span>())</span>
+<span id="cb232-7"><a href="classification-continued.html#cb232-7"></a></span>
+<span id="cb232-8"><a href="classification-continued.html#cb232-8"></a><span class="co"># fit the knn model (we can reuse the old knn_spec model from before)</span></span>
+<span id="cb232-9"><a href="classification-continued.html#cb232-9"></a>knn_fit &lt;-<span class="st"> </span><span class="kw">workflow</span>() <span class="op">%&gt;%</span></span>
+<span id="cb232-10"><a href="classification-continued.html#cb232-10"></a><span class="st">  </span><span class="kw">add_recipe</span>(cancer_recipe) <span class="op">%&gt;%</span></span>
+<span id="cb232-11"><a href="classification-continued.html#cb232-11"></a><span class="st">  </span><span class="kw">add_model</span>(knn_spec) <span class="op">%&gt;%</span></span>
+<span id="cb232-12"><a href="classification-continued.html#cb232-12"></a><span class="st">  </span><span class="kw">fit_resamples</span>(<span class="dt">resamples =</span> cancer_vfold)</span>
+<span id="cb232-13"><a href="classification-continued.html#cb232-13"></a></span>
+<span id="cb232-14"><a href="classification-continued.html#cb232-14"></a>knn_fit</span></code></pre></div>
 <pre><code>## #  5-fold cross-validation using stratification 
 ## # A tibble: 5 x 4
 ##   splits           id    .metrics         .notes          
@@ -765,7 +764,7 @@ the <code>collect_metrics</code> function gives you) is 0.88 and standard
 error is 0.02, you can expect the <em>true</em> average accuracy of the
 classifier to be somewhere roughly between 0.86 and 0.90 (although it may
 fall outside this range).</p>
-<div class="sourceCode" id="cb226"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb226-1"><a href="classification-continued.html#cb226-1"></a>knn_fit <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">collect_metrics</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb234"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb234-1"><a href="classification-continued.html#cb234-1"></a>knn_fit <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">collect_metrics</span>()</span></code></pre></div>
 <pre><code>## # A tibble: 2 x 5
 ##   .metric  .estimator  mean     n std_err
 ##   &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt;
@@ -781,13 +780,13 @@ neighbour) and the speed of your computer. In practice, this is a trial and
 error process, but typically <span class="math inline">\(C\)</span> is chosen to be either 5 or 10. Here we show
 how the standard error decreases when we use 10-fold cross validation rather
 than 5-fold:</p>
-<div class="sourceCode" id="cb228"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb228-1"><a href="classification-continued.html#cb228-1"></a>cancer_vfold &lt;-<span class="st"> </span><span class="kw">vfold_cv</span>(cancer_train, <span class="dt">v =</span> <span class="dv">10</span>, <span class="dt">strata =</span> Class)</span>
-<span id="cb228-2"><a href="classification-continued.html#cb228-2"></a></span>
-<span id="cb228-3"><a href="classification-continued.html#cb228-3"></a><span class="kw">workflow</span>() <span class="op">%&gt;%</span></span>
-<span id="cb228-4"><a href="classification-continued.html#cb228-4"></a><span class="st">  </span><span class="kw">add_recipe</span>(cancer_recipe) <span class="op">%&gt;%</span></span>
-<span id="cb228-5"><a href="classification-continued.html#cb228-5"></a><span class="st">  </span><span class="kw">add_model</span>(knn_spec) <span class="op">%&gt;%</span></span>
-<span id="cb228-6"><a href="classification-continued.html#cb228-6"></a><span class="st">  </span><span class="kw">fit_resamples</span>(<span class="dt">resamples =</span> cancer_vfold) <span class="op">%&gt;%</span></span>
-<span id="cb228-7"><a href="classification-continued.html#cb228-7"></a><span class="st">  </span><span class="kw">collect_metrics</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb236"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb236-1"><a href="classification-continued.html#cb236-1"></a>cancer_vfold &lt;-<span class="st"> </span><span class="kw">vfold_cv</span>(cancer_train, <span class="dt">v =</span> <span class="dv">10</span>, <span class="dt">strata =</span> Class)</span>
+<span id="cb236-2"><a href="classification-continued.html#cb236-2"></a></span>
+<span id="cb236-3"><a href="classification-continued.html#cb236-3"></a><span class="kw">workflow</span>() <span class="op">%&gt;%</span></span>
+<span id="cb236-4"><a href="classification-continued.html#cb236-4"></a><span class="st">  </span><span class="kw">add_recipe</span>(cancer_recipe) <span class="op">%&gt;%</span></span>
+<span id="cb236-5"><a href="classification-continued.html#cb236-5"></a><span class="st">  </span><span class="kw">add_model</span>(knn_spec) <span class="op">%&gt;%</span></span>
+<span id="cb236-6"><a href="classification-continued.html#cb236-6"></a><span class="st">  </span><span class="kw">fit_resamples</span>(<span class="dt">resamples =</span> cancer_vfold) <span class="op">%&gt;%</span></span>
+<span id="cb236-7"><a href="classification-continued.html#cb236-7"></a><span class="st">  </span><span class="kw">collect_metrics</span>()</span></code></pre></div>
 <pre><code>## # A tibble: 2 x 5
 ##   .metric  .estimator  mean     n std_err
 ##   &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt;
@@ -809,20 +808,20 @@ of <span class="math inline">\(K\)</span> in a reasonable range, and then pick t
 best accuracy. The <code>tidymodels</code> package collection provides a very simple
 syntax for tuning models: each parameter in the model to be tuned should be specified
 as <code>tune()</code> in the model specification rather than given a particular value.</p>
-<div class="sourceCode" id="cb230"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb230-1"><a href="classification-continued.html#cb230-1"></a>knn_spec &lt;-<span class="st"> </span><span class="kw">nearest_neighbor</span>(<span class="dt">weight_func =</span> <span class="st">&quot;rectangular&quot;</span>, <span class="dt">neighbors =</span> <span class="kw">tune</span>()) <span class="op">%&gt;%</span></span>
-<span id="cb230-2"><a href="classification-continued.html#cb230-2"></a><span class="st">  </span><span class="kw">set_engine</span>(<span class="st">&quot;kknn&quot;</span>) <span class="op">%&gt;%</span></span>
-<span id="cb230-3"><a href="classification-continued.html#cb230-3"></a><span class="st">  </span><span class="kw">set_mode</span>(<span class="st">&quot;classification&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb238"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb238-1"><a href="classification-continued.html#cb238-1"></a>knn_spec &lt;-<span class="st"> </span><span class="kw">nearest_neighbor</span>(<span class="dt">weight_func =</span> <span class="st">&quot;rectangular&quot;</span>, <span class="dt">neighbors =</span> <span class="kw">tune</span>()) <span class="op">%&gt;%</span></span>
+<span id="cb238-2"><a href="classification-continued.html#cb238-2"></a><span class="st">  </span><span class="kw">set_engine</span>(<span class="st">&quot;kknn&quot;</span>) <span class="op">%&gt;%</span></span>
+<span id="cb238-3"><a href="classification-continued.html#cb238-3"></a><span class="st">  </span><span class="kw">set_mode</span>(<span class="st">&quot;classification&quot;</span>)</span></code></pre></div>
 <p>Then instead of using <code>fit</code> or <code>fit_resamples</code>, we will use the <code>tune_grid</code> function
 to fit the model for each value in a range of parameter values. Here the <code>grid = 10</code>
 argument specifies that the tuning should try 10 values of the number of neighbours
 <span class="math inline">\(K\)</span> when tuning. We set the seed prior to tuning to ensure results are reproducible:</p>
-<div class="sourceCode" id="cb231"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb231-1"><a href="classification-continued.html#cb231-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
-<span id="cb231-2"><a href="classification-continued.html#cb231-2"></a>knn_results &lt;-<span class="st"> </span><span class="kw">workflow</span>() <span class="op">%&gt;%</span></span>
-<span id="cb231-3"><a href="classification-continued.html#cb231-3"></a><span class="st">  </span><span class="kw">add_recipe</span>(cancer_recipe) <span class="op">%&gt;%</span></span>
-<span id="cb231-4"><a href="classification-continued.html#cb231-4"></a><span class="st">  </span><span class="kw">add_model</span>(knn_spec) <span class="op">%&gt;%</span></span>
-<span id="cb231-5"><a href="classification-continued.html#cb231-5"></a><span class="st">  </span><span class="kw">tune_grid</span>(<span class="dt">resamples =</span> cancer_vfold, <span class="dt">grid =</span> <span class="dv">10</span>) <span class="op">%&gt;%</span></span>
-<span id="cb231-6"><a href="classification-continued.html#cb231-6"></a><span class="st">  </span><span class="kw">collect_metrics</span>()</span>
-<span id="cb231-7"><a href="classification-continued.html#cb231-7"></a>knn_results</span></code></pre></div>
+<div class="sourceCode" id="cb239"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb239-1"><a href="classification-continued.html#cb239-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb239-2"><a href="classification-continued.html#cb239-2"></a>knn_results &lt;-<span class="st"> </span><span class="kw">workflow</span>() <span class="op">%&gt;%</span></span>
+<span id="cb239-3"><a href="classification-continued.html#cb239-3"></a><span class="st">  </span><span class="kw">add_recipe</span>(cancer_recipe) <span class="op">%&gt;%</span></span>
+<span id="cb239-4"><a href="classification-continued.html#cb239-4"></a><span class="st">  </span><span class="kw">add_model</span>(knn_spec) <span class="op">%&gt;%</span></span>
+<span id="cb239-5"><a href="classification-continued.html#cb239-5"></a><span class="st">  </span><span class="kw">tune_grid</span>(<span class="dt">resamples =</span> cancer_vfold, <span class="dt">grid =</span> <span class="dv">10</span>) <span class="op">%&gt;%</span></span>
+<span id="cb239-6"><a href="classification-continued.html#cb239-6"></a><span class="st">  </span><span class="kw">collect_metrics</span>()</span>
+<span id="cb239-7"><a href="classification-continued.html#cb239-7"></a>knn_results</span></code></pre></div>
 <pre><code>## # A tibble: 20 x 6
 ##    neighbors .metric  .estimator  mean     n std_err
 ##        &lt;int&gt; &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt;
@@ -848,14 +847,14 @@ argument specifies that the tuning should try 10 values of the number of neighbo
 ## 20        15 roc_auc  binary     0.940    10 0.0103</code></pre>
 <p>We can select the best value of the number of neighbours (i.e., the one that results
 in the highest classifier accuracy estimate) by plotting the accuracy versus <span class="math inline">\(K\)</span>:</p>
-<div class="sourceCode" id="cb233"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb233-1"><a href="classification-continued.html#cb233-1"></a>accuracies &lt;-<span class="st"> </span>knn_results <span class="op">%&gt;%</span></span>
-<span id="cb233-2"><a href="classification-continued.html#cb233-2"></a><span class="st">  </span><span class="kw">filter</span>(.metric <span class="op">==</span><span class="st"> &quot;accuracy&quot;</span>)</span>
-<span id="cb233-3"><a href="classification-continued.html#cb233-3"></a></span>
-<span id="cb233-4"><a href="classification-continued.html#cb233-4"></a>accuracy_vs_k &lt;-<span class="st"> </span><span class="kw">ggplot</span>(accuracies, <span class="kw">aes</span>(<span class="dt">x =</span> neighbors, <span class="dt">y =</span> mean)) <span class="op">+</span></span>
-<span id="cb233-5"><a href="classification-continued.html#cb233-5"></a><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></span>
-<span id="cb233-6"><a href="classification-continued.html#cb233-6"></a><span class="st">  </span><span class="kw">geom_line</span>() <span class="op">+</span></span>
-<span id="cb233-7"><a href="classification-continued.html#cb233-7"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">x =</span> <span class="st">&quot;Neighbors&quot;</span>, <span class="dt">y =</span> <span class="st">&quot;Accuracy Estimate&quot;</span>)</span>
-<span id="cb233-8"><a href="classification-continued.html#cb233-8"></a>accuracy_vs_k</span></code></pre></div>
+<div class="sourceCode" id="cb241"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb241-1"><a href="classification-continued.html#cb241-1"></a>accuracies &lt;-<span class="st"> </span>knn_results <span class="op">%&gt;%</span></span>
+<span id="cb241-2"><a href="classification-continued.html#cb241-2"></a><span class="st">  </span><span class="kw">filter</span>(.metric <span class="op">==</span><span class="st"> &quot;accuracy&quot;</span>)</span>
+<span id="cb241-3"><a href="classification-continued.html#cb241-3"></a></span>
+<span id="cb241-4"><a href="classification-continued.html#cb241-4"></a>accuracy_vs_k &lt;-<span class="st"> </span><span class="kw">ggplot</span>(accuracies, <span class="kw">aes</span>(<span class="dt">x =</span> neighbors, <span class="dt">y =</span> mean)) <span class="op">+</span></span>
+<span id="cb241-5"><a href="classification-continued.html#cb241-5"></a><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></span>
+<span id="cb241-6"><a href="classification-continued.html#cb241-6"></a><span class="st">  </span><span class="kw">geom_line</span>() <span class="op">+</span></span>
+<span id="cb241-7"><a href="classification-continued.html#cb241-7"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">x =</span> <span class="st">&quot;Neighbors&quot;</span>, <span class="dt">y =</span> <span class="st">&quot;Accuracy Estimate&quot;</span>)</span>
+<span id="cb241-8"><a href="classification-continued.html#cb241-8"></a>accuracy_vs_k</span></code></pre></div>
 <div class="figure"><span id="fig:06-find-k"></span>
 <img src="_main_files/figure-html/06-find-k-1.png" alt="Plot of accuracy estimate versus number of neighbours" width="480" />
 <p class="caption">
@@ -883,22 +882,22 @@ models), we are looking for a value where:</p>
 actually starts to decrease! Rather than setting <code>grid = 10</code> and letting <code>tidymodels</code> decide what values of <span class="math inline">\(K\)</span> to try,
 let’s specify the values explicitly by creating a data frame with a <code>neighbors</code> variable.
 Take a look as the plot below as we vary <span class="math inline">\(K\)</span> from 1 to almost the number of observations in the data set:</p>
-<div class="sourceCode" id="cb234"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb234-1"><a href="classification-continued.html#cb234-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
-<span id="cb234-2"><a href="classification-continued.html#cb234-2"></a>k_lots &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="dt">neighbors =</span> <span class="kw">seq</span>(<span class="dt">from =</span> <span class="dv">1</span>, <span class="dt">to =</span> <span class="dv">385</span>, <span class="dt">by =</span> <span class="dv">10</span>))</span>
-<span id="cb234-3"><a href="classification-continued.html#cb234-3"></a>knn_results &lt;-<span class="st"> </span><span class="kw">workflow</span>() <span class="op">%&gt;%</span></span>
-<span id="cb234-4"><a href="classification-continued.html#cb234-4"></a><span class="st">  </span><span class="kw">add_recipe</span>(cancer_recipe) <span class="op">%&gt;%</span></span>
-<span id="cb234-5"><a href="classification-continued.html#cb234-5"></a><span class="st">  </span><span class="kw">add_model</span>(knn_spec) <span class="op">%&gt;%</span></span>
-<span id="cb234-6"><a href="classification-continued.html#cb234-6"></a><span class="st">  </span><span class="kw">tune_grid</span>(<span class="dt">resamples =</span> cancer_vfold, <span class="dt">grid =</span> k_lots) <span class="op">%&gt;%</span></span>
-<span id="cb234-7"><a href="classification-continued.html#cb234-7"></a><span class="st">  </span><span class="kw">collect_metrics</span>()</span>
-<span id="cb234-8"><a href="classification-continued.html#cb234-8"></a></span>
-<span id="cb234-9"><a href="classification-continued.html#cb234-9"></a>accuracies &lt;-<span class="st"> </span>knn_results <span class="op">%&gt;%</span></span>
-<span id="cb234-10"><a href="classification-continued.html#cb234-10"></a><span class="st">  </span><span class="kw">filter</span>(.metric <span class="op">==</span><span class="st"> &quot;accuracy&quot;</span>)</span>
-<span id="cb234-11"><a href="classification-continued.html#cb234-11"></a></span>
-<span id="cb234-12"><a href="classification-continued.html#cb234-12"></a>accuracy_vs_k_lots &lt;-<span class="st"> </span><span class="kw">ggplot</span>(accuracies, <span class="kw">aes</span>(<span class="dt">x =</span> neighbors, <span class="dt">y =</span> mean)) <span class="op">+</span></span>
-<span id="cb234-13"><a href="classification-continued.html#cb234-13"></a><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></span>
-<span id="cb234-14"><a href="classification-continued.html#cb234-14"></a><span class="st">  </span><span class="kw">geom_line</span>() <span class="op">+</span></span>
-<span id="cb234-15"><a href="classification-continued.html#cb234-15"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">x =</span> <span class="st">&quot;Neighbors&quot;</span>, <span class="dt">y =</span> <span class="st">&quot;Accuracy Estimate&quot;</span>)</span>
-<span id="cb234-16"><a href="classification-continued.html#cb234-16"></a>accuracy_vs_k_lots</span></code></pre></div>
+<div class="sourceCode" id="cb242"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb242-1"><a href="classification-continued.html#cb242-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb242-2"><a href="classification-continued.html#cb242-2"></a>k_lots &lt;-<span class="st"> </span><span class="kw">tibble</span>(<span class="dt">neighbors =</span> <span class="kw">seq</span>(<span class="dt">from =</span> <span class="dv">1</span>, <span class="dt">to =</span> <span class="dv">385</span>, <span class="dt">by =</span> <span class="dv">10</span>))</span>
+<span id="cb242-3"><a href="classification-continued.html#cb242-3"></a>knn_results &lt;-<span class="st"> </span><span class="kw">workflow</span>() <span class="op">%&gt;%</span></span>
+<span id="cb242-4"><a href="classification-continued.html#cb242-4"></a><span class="st">  </span><span class="kw">add_recipe</span>(cancer_recipe) <span class="op">%&gt;%</span></span>
+<span id="cb242-5"><a href="classification-continued.html#cb242-5"></a><span class="st">  </span><span class="kw">add_model</span>(knn_spec) <span class="op">%&gt;%</span></span>
+<span id="cb242-6"><a href="classification-continued.html#cb242-6"></a><span class="st">  </span><span class="kw">tune_grid</span>(<span class="dt">resamples =</span> cancer_vfold, <span class="dt">grid =</span> k_lots) <span class="op">%&gt;%</span></span>
+<span id="cb242-7"><a href="classification-continued.html#cb242-7"></a><span class="st">  </span><span class="kw">collect_metrics</span>()</span>
+<span id="cb242-8"><a href="classification-continued.html#cb242-8"></a></span>
+<span id="cb242-9"><a href="classification-continued.html#cb242-9"></a>accuracies &lt;-<span class="st"> </span>knn_results <span class="op">%&gt;%</span></span>
+<span id="cb242-10"><a href="classification-continued.html#cb242-10"></a><span class="st">  </span><span class="kw">filter</span>(.metric <span class="op">==</span><span class="st"> &quot;accuracy&quot;</span>)</span>
+<span id="cb242-11"><a href="classification-continued.html#cb242-11"></a></span>
+<span id="cb242-12"><a href="classification-continued.html#cb242-12"></a>accuracy_vs_k_lots &lt;-<span class="st"> </span><span class="kw">ggplot</span>(accuracies, <span class="kw">aes</span>(<span class="dt">x =</span> neighbors, <span class="dt">y =</span> mean)) <span class="op">+</span></span>
+<span id="cb242-13"><a href="classification-continued.html#cb242-13"></a><span class="st">  </span><span class="kw">geom_point</span>() <span class="op">+</span></span>
+<span id="cb242-14"><a href="classification-continued.html#cb242-14"></a><span class="st">  </span><span class="kw">geom_line</span>() <span class="op">+</span></span>
+<span id="cb242-15"><a href="classification-continued.html#cb242-15"></a><span class="st">  </span><span class="kw">labs</span>(<span class="dt">x =</span> <span class="st">&quot;Neighbors&quot;</span>, <span class="dt">y =</span> <span class="st">&quot;Accuracy Estimate&quot;</span>)</span>
+<span id="cb242-16"><a href="classification-continued.html#cb242-16"></a>accuracy_vs_k_lots</span></code></pre></div>
 <div class="figure"><span id="fig:06-lots-of-ks"></span>
 <img src="_main_files/figure-html/06-lots-of-ks-1.png" alt="Plot of accuracy estimate versus number of neighbours for many K values" width="480" />
 <p class="caption">
