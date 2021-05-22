@@ -1,5 +1,5 @@
 # Copyright (c) UBC-DSCI Development Team.
-FROM rocker/verse:4.0.0
+FROM rocker/verse:4.1.0
 
 RUN apt-get update --fix-missing \
 	&& apt-get install -y \
@@ -45,3 +45,45 @@ RUN apt-get update -qq && install2.r --error \
     tidymodels \
     reticulate \ 
     kknn
+    
+RUN Rscript -e "devtools::install_github('ttimbers/canlang@0.0.1')"
+
+# install LaTeX packages
+RUN tlmgr install amsmath \
+    latex-amsmath-dev \
+    fontspec \
+    tipa \
+    unicode-math \
+    xunicode \
+    kvoptions \
+    ltxcmds \
+    kvsetkeys \
+    etoolbox \
+    xcolor \
+    auxhook \
+    bigintcalc \
+    bitset \
+    etexcmds \
+    gettitlestring \
+    hycolor \
+    hyperref \
+    intcalc \
+    kvdefinekeys \
+    letltxmacro \
+    pdfescape \
+    refcount \
+    rerunfilecheck \
+    stringenc \
+    uniquecounter \
+    zapfding \
+    pdftexcmds \
+    infwarerr \
+    fancyvrb \
+    framed \
+    booktabs \
+    mdwtools \
+    grffile \
+    caption \
+    sourcecodepro \
+    amscls \
+    natbib
