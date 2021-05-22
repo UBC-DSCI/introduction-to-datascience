@@ -36,7 +36,7 @@ This is the source for the Introduction to Data Science textbook.
 > You can use this docker container to edit the files without RStudio using either vim or emacs. This can be done via:
 >
 > ```
-> docker-compose run --rm rstudio bash
+> docker-compose run --rm book-env bash
 > ```
 > 
 > or via:
