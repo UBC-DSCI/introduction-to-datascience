@@ -32,6 +32,12 @@ This is the source for the Introduction to Data Science textbook.
 
 > ### Usage without RStudio
 > You can use this docker container to edit the files without RStudio using either vim or emacs. This can be done via:
+>
+> ```
+> docker-compose run rstudio bash
+> ```
+> 
+> or via:
 > ```
 > docker run --rm -it -v $PWD:/introduction-to-datascience ubcdsci/intro-to-ds /bin/bash
 > ```
