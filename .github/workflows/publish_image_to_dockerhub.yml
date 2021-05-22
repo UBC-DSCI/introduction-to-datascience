@@ -1,8 +1,11 @@
 name: Publish Docker image on DockerHub
 on: 
   push: 
+    branches:
+      - master
     paths: 
       - 'Dockerfile'
+    
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,6 +20,14 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         WITH_V: true
       id: bump
+    - name: update Docker Compose
+      id: update_docker_compose
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git pull origin master
+        awk '{gsub("v[0-9]+[.]+.+", ${{ steps.bump.outputs.new_tag }}, $0); print}' docker-compose.yml
+        git commit -m "update Docker Compose" -a
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
