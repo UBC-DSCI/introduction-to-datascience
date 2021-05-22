@@ -8,9 +8,17 @@ This is the source for the Introduction to Data Science textbook.
 2. Run RStudio inside the `ubcdsci/intro-to-ds` docker container:
     - in terminal, navigate to the root of this project repo
     - type the following in terminal:
+
     ```
-    docker run --rm -it -p 8787:8787 -v $PWD:/home/rstudio/introduction-to-datascience -e PASSWORD=password ubcdsci/intro-to-ds:v0.1.0
+    docker-compose up
     ```
+
+    > Alternatively, you can type:
+    > ```
+    > docker run --rm -it -p 8787:8787 -v $PWD:/home/rstudio/introduction-to-datascience -e PASSWORD=password ubcdsci/intro-to-ds:v0.1.0
+    > ```
+    
+    Next:
     - open a web browser and type [http://localhost:8787/](http://localhost:8787/)
     - for the username enter `rstudio` 
     - for the password enter `password` (or whatever you may have changed it to in the `docker run` command above)
