@@ -10,8 +10,10 @@ This is the source for the Introduction to Data Science textbook.
     - type the following in terminal:
 
     ```
-    docker-compose up
+    docker-compose up -d
     ```
+    If you use this, then when you are done working, type `docker-compose down` to remove the dangling container.
+    
 
     > Alternatively, you can type:
     > ```
@@ -34,7 +36,7 @@ This is the source for the Introduction to Data Science textbook.
 > You can use this docker container to edit the files without RStudio using either vim or emacs. This can be done via:
 >
 > ```
-> docker-compose run rstudio bash
+> docker-compose run --rm rstudio bash
 > ```
 > 
 > or via:
