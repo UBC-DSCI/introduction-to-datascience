@@ -1,6 +1,7 @@
 # Copyright (c) UBC-DSCI Development Team.
 FROM rocker/verse:4.1.0
 
+# install system dependencies
 RUN apt-get update --fix-missing \
 	&& apt-get install -y \
 		ca-certificates \
