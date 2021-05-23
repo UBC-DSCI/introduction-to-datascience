@@ -26,8 +26,13 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git pull origin master
-        awk '{gsub("v[0-9]+[.]+.+", ${{ steps.bump.outputs.new_tag }}, $0); print}' docker-compose.yml
-        git commit -m "update Docker Compose" -a
+        awk -v tag=${{ steps.bump.outputs.new_tag }} '{gsub("v[0-9]+[.]+.+", tag, $0); print}' docker-compose.yml > docker-compose.tmp && mv docker-compose.tmp docker-compose.yml
+        git add docker-compose.yml
+        git commit -m "update Docker Compose"
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
