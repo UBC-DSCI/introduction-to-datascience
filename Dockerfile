@@ -1,4 +1,4 @@
-# Copyright (c) UBC DSCI Development Team.
+# Copyright (c) UBC-DSCI Development Team.
 FROM rocker/verse:4.1.0
 
 # install system dependencies
