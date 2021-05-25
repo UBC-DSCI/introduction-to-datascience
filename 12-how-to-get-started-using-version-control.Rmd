@@ -9,18 +9,24 @@ knitr::opts_chunk$set(message = FALSE, echo = FALSE, warning = FALSE)
 
 ## Overview
 
-Now that you have been introduced to the motivations behind using version 
-control for collaboration for data science project, this chapter will introduce 
-how to actually use the two most common version control tools: Git for local 
-version control, and GitHub for remote version control. There are many user 
-interfaces for using Git, here will will focus on how to use the Jupyter Git 
-interface. We will focus on the most common version control operations used 
-day-to-day in a standard data science project. 
+This chapter will introduce the concept of using version control systems 
+to track changes to a project over its lifespan, to share 
+and edit code in a collaborative team, 
+and to distribute the finished project to its intended audience.
+This chapter will also introduce how to use 
+the two most common version control tools: Git for local version control, 
+and GitHub for remote version control. 
+There are many user interfaces for using Git, 
+here will will focus on how to use the Jupyter Git interface. 
+We will focus on the most common version control operations used day-to-day 
+in a standard data science project. 
 
 ## Chapter learning objectives
 
 By the end of the chapter, students will be able to:
 
+- Describe what version control is 
+and why data analysis projects can benefit from it
 - Create a remote version control repository on GitHub
 - use Jupyter's Git version control tools for project versioning and 
 collaboration, specifically to:
@@ -29,13 +35,70 @@ collaboration, specifically to:
   - push changes to a remote version control repository
   - pull changes from a remote version control repository
   - resolve merge conflicts
-- Give co llaborators access to a GitHub repository
+- Give collaborators access to a GitHub repository
 - Communicate with collaborators using GitHub issues
+- Use best practices when collaborating on a project with others
+
+## What is version control, and why should I use it?
+
+Data analysis projects often require iteration and revision to move from an initial idea 
+to a finished product that is ready for the intended audience. Without 
+deliberate and conscious effort towards tracking changes made to the analysis, 
+projects tend to become messy, with mystery results files that cannot be reproduced,
+temporary files with snippets of ideas, mind-boggling filenames like `document_final_draft_v5_final.txt`,
+large blocks of commented code "saved for later," and more. Additionally,
+the iterative nature of data analysis projects makes it important to be able to examine
+earlier versions of code and writing. Finally, data analyses are typically completed by a team of 
+people rather than a single person. This means that files need to be 
+shared across multiple computers, and multiple people often end up editing the project
+simultaneously. In such a situation, determining who has the latest version of the project---and
+how to resolve conflicting edits---can be a real challenge.
+
+Version control helps solve these challenges by tracking changes to the files in the 
+analysis (code, writing, data, etc) over the lifespan of the project, including when the changes were made and who made 
+them. This provides the means both to view earlier versions of the project and to revert changes.
+Version control also facilitates collaboration via tools to share edits with others and resolve conflicting edits. 
+But even if you're working on a project alone, you should still use version control.
+It helps you keep track of what you've done, when you did it, and what you're planning to do next!
+ 
+> *You mostly collaborate with yourself, and me-from-two-months-ago never responds to email.*
+> 
+> --Mark T. Holder
+
+In order to version control a project, you generally need two things: a *version control system* 
+and a *repository hosting service*. The version control system is the software that is responsible 
+for tracking changes, sharing changes you make with others, obtaining changes others have made, and resolving conflicting edits.
+The repository hosting service is responsible for storing a copy of the version controlled project online (a *repository*), 
+where you and your collaborators can access it remotely, discuss issues and bugs, and distribute your final product. 
+For both of these items, there is a wide variety of choices; some of the more popular ones are:
+
+- **Version control systems:**
+    - [Git](https://git-scm.com) 
+    - [Mercurial](https://mercurial-scm.org)
+    - [Subversion](https://subversion.apache.org)
+- **Repository hosting services:**
+    - [GitHub](https://github.com)
+    - [GitLab](https://gitlab.com)
+    - [BitBucket](https://bitbucket.org)
+
+In this textbook we'll use Git for version control, and GitHub for repository hosting, because both are currently the most widely-used platforms.
+
+> **Note:** technically you don't *have to* use a repository hosting service. You can, for example, use Git to version control a project
+> that is stored only in a folder on your computer. But using a repository hosting service provides a few big benefits, including managing collaborator access permissions,
+> tools to discuss and track bugs, and the ability to have external collaborators contribute work, not to mention the safety of having your work backed up in the cloud. Since most
+> repository hosting services now offer free accounts, there are not many situations in which you wouldn't want to use one for your project. 
 
 ## Creating a space for your project online
 
-Before you can create repositories, you will need a GitHub account;
-you can sign up for a free account at [https://github.com/](https://github.com/).
+There are several different workflows you can use to start using version control
+with a new project. For simplicity and ease of setup, 
+we recommend the workflow of creating a remote repository on GitHub first, 
+and then copying that repository to your local computer 
+(*i.e.*, JupyterHub server workspace or laptop).
+
+Before you can create remote repositories on GitHub, 
+you will need a GitHub account; you can sign up for a free account 
+at [https://github.com/](https://github.com/).
 Once you have logged into your account, you can create a new repository to host 
 your project by clicking on the "+" icon in the upper right 
 hand corner, and then on "New Repository" as shown below:
@@ -232,26 +295,66 @@ image_read("img/version_control/clone_04.png") %>%
   image_crop("2400x1430+1")
 ```
 
-## Working in a cloned repository on JupyterHub 
+## Working in a cloned repository 
 
-Now that you have cloned your repository on JupyterHub, you can get to work 
-editing, creating, and deleting files. Once you reach a point that you want 
-Git to keep a record of the current version, you need to *commit* 
-(*i.e.*, snapshot) your changes. Then once you have made commits that you want 
-to share with your collaborators, you need to *push* (i.e., send) those commits 
-back to GitHub. Again, we can use the JupyterLab Git extension tool 
-to do all of this. In particular, your workflow on JupyterHub should look like 
-this:
+Now that you have cloned your repository from GitHub to your local computer
+(*i.e.,* JupyterHub or your laptop), you can get to work editing, creating, 
+and deleting files using an application, such as Jupyter. 
+Even after saving these files, these changes will only initially exist in the
+working directory of your local computer (Figure \@ref(fig:vc2-changes)).
 
-1. You edit, create, and delete files in your cloned repository on JupyterHub.
-2. Once you want a record of the current version, you specify which files to "add" to Git's *staging area*. You can think of files in the staging area as
-those modified files for which you want a snapshot.
-3. You commit those flagged files to your repository, and include a helpful *commit message* to tell your collaborators about the changes
-you made. **Note:** here you are *only* committing to your *cloned repository* stored on JupyterHub. The repository on GitHub has not changed, and your collaborators
-cannot see your work yet.
-4. Go back to step 1. and keep working! 
-5. When you want to store your commits (that only exist in your cloned repository right now) on the cloud where they can be shared with your collaborators, you *push* them
-back to the hosted repository on GitHub.
+```{r vc2-changes, fig.cap = 'Conceptual map of the Git and GitHub version control systems.', fig.retina = 2}
+image_read("img/vc2-changes.png") %>%
+  image_crop("3632x2000")
+```
+
+Once you reach a point that you want Git to keep a record 
+of the current version of your work, you need to *commit* 
+(*i.e.*, snapshot) your changes. A pre-requisite to this is telling Git which
+files should be included in that snapshot. We call this step **adding** the 
+files to the staging area. 
+Note that the staging area is **not** a real physical location on your computer, 
+it is instead a conceptual placeholder for these files until they are commit.
+The benefit of the Git version control system using a staging area is that you 
+can choose to commit changes from only certain files. For example, 
+in Figure \@ref(fig:vc-ba2-add) we only add the two files 
+that are quite relevant to the analysis project 
+(`analysis.ipynb` and `README.md`) and not our personal scratch notes for the 
+project (`notes.txt`).
+
+```{r vc-ba2-add, fig.cap = 'The modified files for which you want a snapshot need to be **added** to the staging area.', fig.retina = 2}
+image_read("img/vc-ba2-add.png") %>%
+  image_crop("3632x1200")
+```
+
+Once the files we wish to commit to the repository history have been added 
+to the staging area, we can then commit those flagged files to the repository.
+When we do this, we are required to include a helpful *commit message* to tell 
+collaborators (which included future you) about the changes that were made 
+(Figure \@ref(fig:vc-ba3-commit)). 
+It is important to note here that these changes are only being committed to the 
+repository history on you local computer. 
+The repository on GitHub has not changed, and your collaborators would not yet
+be able to see your work.
+
+```{r vc-ba3-commit, fig.cap = "The files in the staging area need a commit message to be **committed** (*i.e.*, snapshot and archived) to the repository's history on your local computer.", fig.retina = 2}
+image_read("img/vc-ba3-commit.png") %>%
+  image_crop("3632x1100")
+```
+
+Finally, once the commits that you want to share with your collaborators 
+have been made, you need to *push* (*i.e.*, send) those commits 
+back to GitHub. This updates the repository history on the remote repository 
+(*i.e.*, GitHub) as well as the version of the files you see when you first 
+visit the repository on GitHub (the remote repository working directory)
+(Figure \@ref(fig:vc5-push)).
+
+```{r vc5-push, fig.cap = 'The commit needs to be **pushed** to send the changes to the remote repository on GitHub.', fig.retina = 2}
+image_read("img/vc5-push.png") %>%
+  image_crop("3632x2000")
+```
+
+## Using the Jupyter Git extension tool
 
 Below we walk through how to use the Jupyter Git extension tool to do 
 each of the steps outlined above.
@@ -400,53 +503,78 @@ to enable write access.
 
 ### Pulling changes from GitHub
 
-If your collaborators send their own commits to the GitHub repository, you will need to
-*pull* those changes to your own cloned copy on JupyterHub before you're allowed to push
-any more changes yourself. By pulling their changes, you sync your local repository
-to what is present on GitHub.  
+If your collaborators send their own commits to the GitHub repository, 
+they will only initially exist there 
+and not on your own machine (Figure \@ref(fig:vc2-changes)).
+
+```{r vc6-remote-changes, fig.cap = 'Changes pushed by collaborators, or created directly on GitHub will not be automatically sent to your local computer.', fig.retina = 2}
+image_read("img/vc6-remote-changes.png") %>%
+  image_crop("3632x2000")
+```
+
+To get the new changes from the remote repository on GitHub, 
+you will need to *pull* those changes to your own local computer 
+(*i.e.*, JupyterHub server workspace or laptop) so that you can have a copy of 
+them locally. Additionally, until you do this you will not be able to push
+any more changes yourself. By pulling their changes, 
+you sync your local repository to what is present on GitHub.  
 
 > **Note:** you can still work on your own cloned repository and commit changes even if collaborators
 have pushed changes to the GitHub repository. It is only when you try to *push* your changes back to GitHub
 that Git will make sure nobody else has pushed any work in the meantime. 
 
-```{r git-pull-00}
+```{r vc7-pull, fig.cap = '**Pulling** changes from the remote repository on GitHub syncs your the repository on your local computer to what is present on the remote repository on GitHub.', fig.retina = 2}
+image_read("img/vc7-pull.png") %>%
+  image_crop("3632x2000")
+```
+
+Below we walk through how to use the Jupyter Git extension tool to pull changes 
+to our `eda.ipynb` analysis file that were made by our collaborator 
+(Figure \@ref(fig:git-pull-00)).
+
+```{r git-pull-00, fig.cap = 'The GitHub interface indicates the name of the last person to push a commit to the remote repositoey, a preview of the associated commit message, the unique commit identifier, and how long ago the commit was snapshotted.', fig.retina = 2}
 image_read("img/version_control/git_pull_00.png") %>%
   image_crop("3584x1900")
 ```
-You can do this using the Jupyter Git tab by clicking on the cloud icon with 
-the down arrow:
 
-```{r git-pull-01}
+You can do this using the Jupyter Git tab by clicking on the cloud icon with 
+the down arrow (Figure \@ref(fig:git-pull-01)).
+
+```{r git-pull-01, fig.cap = 'The Jupyter Git extension clone button', fig.retina = 2}
 image_read("img/version_control/git_pull_01.png")
 ```
 
 Once the files are successfully pulled from GitHub, you need to click "Dismiss"
-to keep working:
+to keep working (Figure \@ref(fig:git-pull-02)).
 
-```{r git-pull-02}
+```{r git-pull-02, fig.cap = 'The Jupyter Git extension prompt after changes have been successfully pulled from a remote repository.', fig.retina = 2}
 image_read("img/version_control/git_pull_02.png")
 ```
 
 And then when you open (or refresh) the files whose changes you just pulled,
-you should be able to see them:
+you should be able to see them (Figure \@ref(fig:git-pull-03)).
 
-```{r git-pull-03}
+```{r git-pull-03, fig.cap = 'Changes made by the collaborator to `eda.ipynb` (code highlighted by red arrows).', fig.retina = 2}
 image_read("img/version_control/git_pull_03.png")
 ```
 
 It can be very useful to review the history of the changes to your project. You
-can do this directly on the JupyterHub by clicking "History" in the Git tab.
+can do this directly on the JupyterHub by clicking "History" in the Git tab 
+(Figure \@ref(fig:git-pull-04)).
 
-```{r git-pull-04}
+```{r git-pull-04, fig.cap = 'Version control repository history viewed using the Jupyter Git extension.', fig.retina = 2}
 image_read("img/version_control/git_pull_04.png")
 ```
 
-It is good practice to pull any changes at the start of *every* work session before
-you start working on your local copy. If you do not do this, and your collaborators have pushed some changes
-to the project to GitHub, then you will be unable to push your changes to 
-GitHub until you pull. This situation can be recognized by this error message:
+It is good practice to pull any changes at the start of *every* work session 
+before you start working on your local copy. 
+If you do not do this, 
+and your collaborators have pushed some changes to the project to GitHub, 
+then you will be unable to push your changes to GitHub until you pull. 
+This situation can be recognized by the error message 
+shown in Figure \@ref(fig:merge-conflict-01).
 
-```{r merge-conflict-01}
+```{r merge-conflict-01, fig.cap = 'Error message that indicates that there are changes on the remote repository that you do not have locally.', fig.retina = 2}
 image_read("img/version_control/merge_conflict_01.png") %>%
   image_crop("3584x1900")
 ```
@@ -461,9 +589,9 @@ If however, you and your collaborators made changes to the same line of the same
 file, Git will not be able to automatically merge the changes---it will not know whether to keep your version of the line(s), your 
 collaborators version of the line(s), or some blend of the two. When this 
 happens, Git will tell you that you have a merge conflict and that it needs 
-human intervention (you!), and which file(s) this occurs in.
+human intervention (you!), and which file(s) this occurs in (Figure \@ref(fig:merge-conflict-03)).
 
-```{r merge-conflict-03}
+```{r merge-conflict-03, fig.cap = 'Error message that indicates you and your collaborators made changes to the same line of the same file and that Git will not be able to automatically merge the changes', fig.retina = 2}
 image_read("img/version_control/merge_conflict_03.png") %>%
   image_crop("3584x1900")
 ```
