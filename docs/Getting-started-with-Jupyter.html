@@ -4,11 +4,11 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Chapter 10 Clustering | Data Science: A First Introduction</title>
+  <title>Chapter 12 Getting started with Jupyter | Data Science: A First Introduction</title>
   <meta name="description" content="This is a textbook for teaching a first introduction to data science." />
   <meta name="generator" content="bookdown 0.22 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Chapter 10 Clustering | Data Science: A First Introduction" />
+  <meta property="og:title" content="Chapter 12 Getting started with Jupyter | Data Science: A First Introduction" />
   <meta property="og:type" content="book" />
   
   
@@ -16,7 +16,7 @@
   
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Chapter 10 Clustering | Data Science: A First Introduction" />
+  <meta name="twitter:title" content="Chapter 12 Getting started with Jupyter | Data Science: A First Introduction" />
   
   <meta name="twitter:description" content="This is a textbook for teaching a first introduction to data science." />
   
@@ -33,8 +33,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-<link rel="prev" href="regression2.html"/>
-<link rel="next" href="inference.html"/>
+<link rel="prev" href="inference.html"/>
+<link rel="next" href="move-to-your-own-machine.html"/>
 <script src="libs/header-attrs-2.8/header-attrs.js"></script>
 <script src="libs/jquery-3.5.1/jquery.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
@@ -453,563 +453,429 @@ div.csl-indent {
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="clustering" class="section level1" number="10">
-<h1><span class="header-section-number">Chapter 10</span> Clustering</h1>
-<div id="overview-8" class="section level2" number="10.1">
-<h2><span class="header-section-number">10.1</span> Overview</h2>
-<p>As part of exploratory data analysis, it is often helpful to see if there are
-meaningful subgroups (or <em>clusters</em>) in the data; this grouping can be used
-for many purposes, such as generating new questions or improving predictive analyses.
-This chapter provides an introduction to clustering using the <em>K-means</em> algorithm,
-including techniques to choose the number of clusters.</p>
+<div id="Getting-started-with-Jupyter" class="section level1" number="12">
+<h1><span class="header-section-number">Chapter 12</span> Getting started with Jupyter</h1>
+<div id="overview-11" class="section level2" number="12.1">
+<h2><span class="header-section-number">12.1</span> Overview</h2>
+<p>To be able to effectively and efficiently write R code for your analysis you
+will need access to the R programming language on a computer. This chapter will
+show you how to use the R programming language with a common coding platform in
+data science, Jupyter. In this chapter, we will show you how to use this
+platform via a web-interface for ease of getting going quickly. In a later
+chapter, we will also show you how to install and configure this on your local
+computer (i.e., laptop). These skills are essential to getting your analysis
+running; think of it like getting dressed in the morning!</p>
 </div>
-<div id="chapter-learning-objectives-9" class="section level2" number="10.2">
-<h2><span class="header-section-number">10.2</span> Chapter learning objectives</h2>
+<div id="chapter-learning-objectives-11" class="section level2" number="12.2">
+<h2><span class="header-section-number">12.2</span> Chapter learning objectives</h2>
 <p>By the end of the chapter, students will be able to:</p>
 <ul>
-<li>Describe a case where clustering is appropriate, and what insight it might extract from the data.</li>
-<li>Explain the K-means clustering algorithm.</li>
-<li>Interpret the output of a K-means analysis.</li>
-<li>Identify when it is necessary to scale variables before clustering, and do this using R.</li>
-<li>Perform K-means clustering in R using <code>kmeans</code>.</li>
-<li>Use the elbow method to choose the number of clusters for K-means.</li>
-<li>Visualize the output of K-means clustering in R using coloured scatter plots.</li>
-<li>Describe the advantages, limitations and assumptions of the K-means clustering algorithm.</li>
+<li>use Jupyter to run, edit and write R code</li>
+<li>open and view plain text data files in Jupyter</li>
+<li>create new Jupyter notebooks</li>
+<li>export Jupyter notebooks to other standard file types (e.g., <code>.html</code>, <code>.pdf</code>)</li>
 </ul>
 </div>
-<div id="clustering-1" class="section level2" number="10.3">
-<h2><span class="header-section-number">10.3</span> Clustering</h2>
-<p>Clustering is a data analysis task involving separating a data set into
-subgroups of related data. For example, we might use clustering to separate a
-data set of documents into groups that correspond to topics, a data set of
-human genetic information into groups that correspond to ancestral
-subpopulations, or a data set of online customers into groups that correspond
-to purchasing behaviours. Once the data are separated, we can, for example,
-use the subgroups to generate new questions about the data and follow up with a
-predictive modelling exercise. In this course, clustering will be used only for
-exploratory analysis, i.e., uncovering patterns in the data.</p>
-<p>Note that clustering is a fundamentally different kind of task than classification or
-regression. In particular, both classification and regression are <em>supervised tasks</em> where
-there is a <em>predictive target</em> (a class label or value), and we
-have examples of past data with labels/values that help us predict those of
-future data. By contrast, clustering is an <em>unsupervised task</em>, as we are
-trying to understand and examine the structure of data without any labels to
-help us. This approach has both advantages and disadvantages. Clustering
-requires no additional annotation or input on the data. For example, it would
-be nearly impossible to annotate all the articles on Wikipedia with human-made
-topic labels. However, we can still cluster the articles without this
-information to find groupings corresponding to topics automatically.</p>
-<p>However, because there is no predictive target, it is not as easy to evaluate
-the “quality” of a clustering. With classification, we can use a test data set
-to assess prediction performance. In clustering, there is not a single good
-choice for evaluation. In this book, we will use visualization to ascertain the
-quality of a clustering, and leave rigorous evaluation for more advanced
-courses.</p>
-<blockquote>
-<p>There are also so-called <em>semisupervised</em> tasks, where only some of the data
-come with labels/annotations, but the vast majority don’t. The goal
-is to try to uncover underlying structure in the data that allows one to
-guess the missing labels. This sort of task is beneficial, for example, when one
-has an unlabelled data set that is too large to manually label, but one is willing to
-provide a few informative example labels as a “seed” to guess the labels for all the data.</p>
-</blockquote>
-<p><strong>An illustrative example</strong></p>
-Here we will present an illustrative example using a data set from the
-<a href="https://allisonhorst.github.io/palmerpenguins/">{palmerpenguins} R data package</a>. This data set was
-collected by <a href="https://www.uaf.edu/cfos/people/faculty/detail/kristen-gorman.php">Dr. Kristen Gorman</a> and
-the <a href="https://lternet.edu/">Palmer Station, Antarctica LTER</a> and includes
-measurements for adult penguins near Palmer Station <span class="citation">(<a href="#ref-palmerpenguins" role="doc-biblioref">Horst, Hill, and Gorman 2020</a>)</span>. We have
-modified the data set for use in this chapter. Here we will focus on using two
-variables—penguin bill and flipper length, both in mm—to determine whether
-there are distinct types of penguins in our data.
-Understanding this might help us with species discovery and classification in a data-driven
-way.
-<div class="figure"><span id="fig:09-penguins"></span>
-<img src="https://upload.wikimedia.org/wikipedia/commons/0/00/Brown_Bluff-2016-Tabarin_Peninsula%E2%80%93Gentoo_penguin_%28Pygoscelis_papua%29_03.jpg" alt="Gentoo penguin. [@penguinsimage]"  />
+<div id="jupyter" class="section level2" number="12.3">
+<h2><span class="header-section-number">12.3</span> Jupyter</h2>
+<p>Jupyter is a web-based interactive development environment for creating, editing
+and executing documents called Jupyter notebooks. Jupyter notebooks are
+documents that contain a mix of computer code (and its output) and formattable
+text. Given that they combine these two analysis artifacts in a single
+document—code is not separate from the output or written report—notebooks are
+one of the leading tools to create reproducible data analyses. Reproducible data
+analysis is one where you can reliably and easily recreate the same results when
+analyzing the same data. Although this sounds like something that should always
+be true of any data analysis, in reality, this is not often the case; one needs
+to make a conscious effort to perform data analysis in a reproducible manner.</p>
+<p>The name Jupyter came from combining the names of the three programming
+languages that it was initially targeted for (Julia, Python, and R), and now
+many other languages can be used with Jupyter notebooks.</p>
+<p>An example of what a Jupyter notebook looks like is shown in
+Figure <a href="index.html#fig:img-jupyter">1.1</a>.</p>
+<div class="figure"><span id="fig:jupyter"></span>
+<img src="img/jupyter.png" alt="A screenshot of a Jupyter Notebook." width="1792" />
 <p class="caption">
-Figure 10.1: Gentoo penguin. <span class="citation">(<a href="#ref-penguinsimage" role="doc-biblioref">Andrew Shiva 2016</a>)</span>
+Figure 12.1: A screenshot of a Jupyter Notebook.
 </p>
 </div>
-<p>Below we will work with <code>penguin_data</code>, a subset of 18 observations of the original data, which has already been scaled. We will discuss scaling for K-means in more detail later in this chapter.</p>
-<div class="sourceCode" id="cb286"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb286-1"><a href="clustering.html#cb286-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb286-2"><a href="clustering.html#cb286-2" aria-hidden="true" tabindex="-1"></a>penguin_data</span></code></pre></div>
-<pre><code>## # A tibble: 18 x 2
-##    flipper_length_scaled[,1] bill_length_scaled[,1]
-##                        &lt;dbl&gt;                  &lt;dbl&gt;
-##  1                    -0.190                 -0.641
-##  2                    -1.33                  -1.14 
-##  3                    -0.922                 -1.52 
-##  4                    -0.922                 -1.11 
-##  5                    -1.41                  -0.847
-##  6                    -0.678                 -0.641
-##  7                    -0.271                 -1.24 
-##  8                    -0.434                 -0.902
-##  9                     1.19                   0.720
-## 10                     1.36                   0.646
-## 11                     1.36                   0.963
-## 12                     1.76                   0.440
-## 13                     1.11                   1.21 
-## 14                     0.786                  0.123
-## 15                    -0.271                  0.627
-## 16                    -0.271                  0.757
-## 17                    -0.108                  1.78 
-## 18                    -0.759                  0.776</code></pre>
-<div class="figure"><span id="fig:10-toy-example-plot"></span>
-<img src="_main_files/figure-html/10-toy-example-plot-1.png" alt="Subset data of penguin scaled bill length versus flipper length." width="417.6" />
+<div id="accessing-jupyter" class="section level3" number="12.3.1">
+<h3><span class="header-section-number">12.3.1</span> Accessing Jupyter</h3>
+<p>One of the easiest ways to start computing in R with Jupyter is to use a
+web-based platform called JupyterHub that already has Jupyter, R, a number of R
+packages, and collaboration tools installed, configured and ready to use.
+JupyterHub’s are usually created and provisioned by organizations (for example,
+a university, a company, <em>etcetera</em>) and require authentication to gain
+access. <!--- Insert link to public JupyterHub here if we can get 
+access/permission (either 2i2c collaboration, or 
+https://notebooks.gesis.org/hub/home) --> Jupyter can also be installed on your
+own computer (desktop or laptop), and we provide examples of how to do this in
+chapter <a href="move-to-your-own-machine.html#move-to-your-own-machine">13</a>.</p>
+</div>
+</div>
+<div id="code-cells" class="section level2" number="12.4">
+<h2><span class="header-section-number">12.4</span> Code cells</h2>
+<p>The sections of a Jupyter notebook that contain code in the R programming
+language are referred to as code cells. A code cell that has not yet been
+executed has no number inside the square brackets to the left of the cell
+(Figure <a href="Getting-started-with-Jupyter.html#fig:code-cell-not-run">12.2</a>). Running a code cell will execute all of
+the code it contains, and the output (if any exists) will be displayed directly
+underneath the code that generated it. Outputs may include printed text or
+numbers, data frames and data visualizations. Cells that have been executed
+also have a number inside the square brackets to the left of the cell.
+This number indicates the order in which the cells were run
+(Figure <a href="Getting-started-with-Jupyter.html#fig:code-cell-run">12.3</a>).</p>
+<div class="figure"><span id="fig:code-cell-not-run"></span>
+<img src="_main_files/figure-html/code-cell-not-run-1.png" alt="A code cell in Jupyter that has not yet been executed." width="100%" />
 <p class="caption">
-Figure 10.2: Subset data of penguin scaled bill length versus flipper length.
+Figure 12.2: A code cell in Jupyter that has not yet been executed.
 </p>
 </div>
-<p>Based on the visualization in Figure <a href="clustering.html#fig:10-toy-example-plot">10.2</a>, we might
-suspect there are a few subtypes of penguins, selected from combinations of
-high/low flipper length and high/low bill length. How do we find this grouping
-automatically, and how do we pick the number of subtypes? The way to rigorously
-separate the data into groups is to use a clustering algorithm.
-In this chapter, we will focus on the <em>K-means</em> algorithm, a widely-used
-and often very effective clustering method, combined with the <em>elbow method</em> for
-selecting the number of clusters. This procedure will separate the data into
-the following groups denoted by colour:</p>
-<div class="figure"><span id="fig:10-toy-example-clustering"></span>
-<img src="_main_files/figure-html/10-toy-example-clustering-1.png" alt="Subset data of penguin scaled bill length versus flipper length with coloured groups" width="480" />
+<div class="figure"><span id="fig:code-cell-run"></span>
+<img src="_main_files/figure-html/code-cell-run-1.png" alt="A code cell in Jupyter that has been executed." width="100%" />
 <p class="caption">
-Figure 10.3: Subset data of penguin scaled bill length versus flipper length with coloured groups
+Figure 12.3: A code cell in Jupyter that has been executed.
 </p>
 </div>
-<p>What are the labels for these groups? Unfortunately, we don’t have any. K-means,
-like almost all clustering algorithms, just outputs meaningless “cluster labels”
-that are typically whole numbers: 1, 2, 3, etc. But in a simple case like this,
-where we can easily visualize the clusters on a scatter plot, we can give
-human-made labels to the groups using their positions on
-the plot:</p>
-<ul>
-<li>small flipper length and small bill length (<font color="#D55E00">orange cluster</font>),</li>
-<li>small flipper length and large bill length (<font color="#0072B2">blue cluster</font>).</li>
-<li>and large flipper length and large bill length (<font color="#F0E442">yellow cluster</font>).</li>
-</ul>
-<p>Once we have made these determinations, we can use them to inform our species
-classifications or ask further questions about our data. For example, we might
-be interested in understanding the relationship between flipper length and bill
-length, and that relationship may differ depending on the type of penguin we
-have.</p>
-</div>
-<div id="k-means" class="section level2" number="10.4">
-<h2><span class="header-section-number">10.4</span> K-means</h2>
-<div id="measuring-cluster-quality" class="section level3" number="10.4.1">
-<h3><span class="header-section-number">10.4.1</span> Measuring cluster quality</h3>
-<p>The K-means algorithm is a procedure that groups data into K clusters.
-It starts with an initial clustering of the data, and then iteratively
-improves it by making adjustments to the assignment of data
-to clusters until it cannot improve any further. But how do we measure
-the “quality” of a clustering, and what does it mean to improve it?
-In K-means clustering, we measure the quality of a cluster by its
-<em>within-cluster sum-of-squared-distances</em> (WSSD). Computing this involves two steps.
-First, we find the cluster centers by computing the mean of each variable
-over data points in the cluster. For example, suppose we have a
-cluster containing four observations, and we are using two variables, <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span>, to cluster the data.
-Then we would compute the <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> variables, <span class="math inline">\(\mu_x\)</span> and <span class="math inline">\(\mu_y\)</span>, of the cluster center via</p>
-<p><span class="math display">\[\mu_x = \frac{1}{4}(x_1+x_2+x_3+x_4) \quad \mu_y = \frac{1}{4}(y_1+y_2+y_3+y_4).\]</span></p>
-<p>In the first cluster from the example, there are 4 data points. These are shown with their cluster center
-(<code>flipper_length_scaled = -0.35</code> and <code>bill_length_scaled = 0.99</code>) highlighted
-in Figure <a href="clustering.html#fig:10-toy-example-clus1-center">10.4</a>.</p>
-<div class="figure"><span id="fig:10-toy-example-clus1-center"></span>
-<img src="_main_files/figure-html/10-toy-example-clus1-center-1.png" alt="Cluster 1 from the toy example, with center highlighted." width="417.6" />
+<div id="executing-code-cells" class="section level3" number="12.4.1">
+<h3><span class="header-section-number">12.4.1</span> Executing code cells</h3>
+<p>Code cells can be run independently or as part of executing the entire notebook
+using one of the “<strong>Run all</strong>” commands found in the <strong>Run</strong> or <strong>Kernel</strong> menus
+in Jupyter. Running a single code cell independently is a workflow typically
+used when editing or writing your own R code. Executing an entire notebook is a
+workflow typically used to ensure that your analysis runs in its entirety before
+sharing it with others, and when using a notebook as part of an automated
+process.</p>
+<p>To run the a code cell independently, the cell needs to first be activated. This
+is done by clicking on it with the cursor. Jupyter will indicate a cell has been
+activated by highlighting it with a blue rectangle to its left. After the cell
+has been activated, the cell can be run by either pressing the <strong>Run</strong> (▶)
+button in the Jupyter notebook tab menu, or by using a keyboard shortcut of
+<code>Shift + Enter</code>.</p>
+<div class="figure"><span id="fig:activate-and-run-button"></span>
+<img src="_main_files/figure-html/activate-and-run-button-1.png" alt="An activated cell that is ready to be be run. The red arrow points to blue rectangle to the cell's left. The blue rectangle indicates that it is ready to be run. This can be done by clicking the run button (circled in red)." width="100%" />
 <p class="caption">
-Figure 10.4: Cluster 1 from the toy example, with center highlighted.
+Figure 12.4: An activated cell that is ready to be be run. The red arrow points to blue rectangle to the cell’s left. The blue rectangle indicates that it is ready to be run. This can be done by clicking the run button (circled in red).
 </p>
 </div>
-<p>The second step in computing the WSSD is to add up the squared distance between each point in the cluster and the cluster center.
-We use the straight-line / Euclidean distance formula that we learned about in the classification chapter.
-In the 4-observation cluster example above, we would compute the WSSD <span class="math inline">\(S^2\)</span> via</p>
-<p><span class="math display">\[\begin{align*}
-S^2 = \left((x_1 - \mu_x)^2 + (y_1 - \mu_y)^2\right) + \left((x_2 - \mu_x)^2 + (y_2 - \mu_y)^2\right) + \\ \left((x_3 - \mu_x)^2 + (y_3 - \mu_y)^2\right)  +  \left((x_4 - \mu_x)^2 + (y_4 - \mu_y)^2\right).
-\end{align*}\]</span></p>
-<p>These distances are denoted by lines in Figure <a href="clustering.html#fig:10-toy-example-clus1-dists">10.5</a> for the first cluster of the penguin data example.</p>
-<div class="figure"><span id="fig:10-toy-example-clus1-dists"></span>
-<img src="_main_files/figure-html/10-toy-example-clus1-dists-1.png" alt="Cluster 1 from the toy example, with distances to the center highlighted." width="417.6" />
-<p class="caption">
-Figure 10.5: Cluster 1 from the toy example, with distances to the center highlighted.
-</p>
-</div>
-<p>The larger the value of <span class="math inline">\(S^2\)</span>, the more spread-out the cluster is, since large <span class="math inline">\(S^2\)</span> means that points are far from the cluster center.
-Note, however, that “large” is relative to <em>both</em> the scale of the variables for clustering <em>and</em> the number of points in the cluster. A cluster where points are very close to the center might still have a large <span class="math inline">\(S^2\)</span> if there are many data points in the cluster.</p>
-</div>
-<div id="the-clustering-algorithm" class="section level3" number="10.4.2">
-<h3><span class="header-section-number">10.4.2</span> The clustering algorithm</h3>
-<p>We begin the K-means algorithm by picking K, and uniformly randomly assigning data to the K clusters.
-Then K-means consists of two major steps that attempt to minimize the
-sum of WSSDs over all the clusters, i.e. the <em>total WSSD</em>:</p>
+<p>To execute all of the code cells in an entire notebook, you can either select:</p>
 <ol style="list-style-type: decimal">
-<li><strong>Center update:</strong> Compute the center of each cluster.</li>
-<li><strong>Label update:</strong> Reassign each data point to the cluster with the nearest center.</li>
+<li><p><strong>Run</strong> &gt;&gt; <strong>Run All Cells</strong></p></li>
+<li><p><strong>Kernel</strong> &gt;&gt; <strong>Restart Kernel and Run All Cells…</strong> from the Jupyter menu</p></li>
+<li><p>Click the <strong>Restart the kernel, then re-run the whole notebook</strong> button (▶▶)
+in the Jupyter notebook tab menu.</p></li>
 </ol>
-These two steps are repeated until the cluster assignments no longer change.
-For example, in the penguin data example, our initialization might look like this:
-<center>
-<div class="figure"><span id="fig:10-toy-kmeans-init"></span>
-<img src="_main_files/figure-html/10-toy-kmeans-init-1.png" alt="Random initialization of labels." width="417.6" />
+<p>All of these commands result in all of the code cells in a notebook being run,
+however only the <strong>Restart Kernel and Run All Cells…</strong> command and the ▶▶
+button will restart the R session before running all of the cells. Restarting
+the R session before running all of the cells means that all previous objects
+that were created from running cells before this command was run will be
+deleted. This command emulates how your notebook code would run if you
+completely restarted Jupyter before executing your entire notebook.</p>
+<div class="figure"><span id="fig:restart-kernel-run-all"></span>
+<img src="_main_files/figure-html/restart-kernel-run-all-1.png" alt="Restarting the R session can be accomplished by clicking Restart Kernel and Run All Cells..." width="100%" />
 <p class="caption">
-Figure 10.6: Random initialization of labels.
+Figure 12.5: Restarting the R session can be accomplished by clicking Restart Kernel and Run All Cells…
 </p>
 </div>
-</center>
-And the first four iterations of K-means would look like (each row corresponds to an iteration,
-where the left column depicts the center update,
-and the right column depicts the reassignment of data to clusters):
-<center>
-<strong>Center Update</strong>                            <strong>Label Update</strong>
-<img src="_main_files/figure-html/10-toy-kmeans-iter-1.png" width="768" /><img src="_main_files/figure-html/10-toy-kmeans-iter-2.png" width="768" /><img src="_main_files/figure-html/10-toy-kmeans-iter-3.png" width="768" /><img src="_main_files/figure-html/10-toy-kmeans-iter-4.png" width="768" />
-</center>
-<p>Note that at this point, we can terminate the algorithm since none of the assignments changed
-in the fourth iteration; both the centers and labels will remain the same from this point onward.</p>
 <blockquote>
-<p>Is K-means <em>guaranteed</em> to stop at some point, or could it iterate forever? As it turns out,
-thankfully, the answer is that K-means is guaranteed to stop after <em>some</em> number of iterations. For the interested reader, the
-logic for this has three steps: (1) both the label update and the center update decrease total WSSD in each iteration,
-(2) the total WSSD is always greater than or equal to 0, and (3) there are only a finite number of possible
-ways to assign the data to clusters. So at some point, the total WSSD must stop decreasing, which means none of the assignments
-are changing, and the algorithm terminates.</p>
+<h4 id="the-kernel">The Kernel</h4>
+<p>The kernel is a program that executes the code inside your notebook and
+outputs the results. Kernels for many different programming languages have
+been created for Jupyter, which means that Jupyter can interpret and execute
+the code of many different programming languages. To run R code, your notebook
+will need an R kernel. In the top right of your window, you can see a circle
+that indicates the status of your kernel. If the circle is empty (⚪),
+the kernel is idle and ready to execute code. If the circle is filled in (⚫),
+the kernel is busy running some code.</p>
+<p>You may run into problems where your kernel is stuck for an excessive amount
+of time, your notebook is very slow and unresponsive, or your kernel loses its
+connection. If this happens, try the following steps:</p>
+<ul>
+<li>At the top of your screen, click <strong>Kernel</strong>, then <strong>Interrupt Kernel</strong>.</li>
+<li>If that doesn’t help, click <strong>Kernel</strong>, then <strong>Restart Kernel</strong>…. If you do this, you will have to run your code cells from the start of your notebook up until where you paused your work.</li>
+<li>If that doesn’t help, restart your server. First, save your work by clicking <strong>File</strong> at the top left of your screen, then <strong>Save Notebook</strong>. Next, from the <strong>File</strong> menu click <strong>Hub Control Panel</strong>. Choose <strong>Stop My Server</strong> to shut it down, then the <strong>My Server</strong> button to start it back up. Then, navigate back to the notebook you were working on.</li>
+</ul>
 </blockquote>
 </div>
-<div id="random-restarts" class="section level3" number="10.4.3">
-<h3><span class="header-section-number">10.4.3</span> Random restarts</h3>
-Unlike the classification and regression models we studied in previous chapters, K-means can get “stuck” in a bad solution.
-For example, if we were unlucky and initialized K-means with the following labels:
-<center>
-<div class="figure"><span id="fig:10-toy-kmeans-bad-init"></span>
-<img src="_main_files/figure-html/10-toy-kmeans-bad-init-1.png" alt="Random initialization of labels." width="417.6" />
+<div id="creating-new-code-cells" class="section level3" number="12.4.2">
+<h3><span class="header-section-number">12.4.2</span> Creating new code cells</h3>
+<p>To create a new code cell in Jupyter, click the <code>+</code> button in the Jupyter
+notebook tab menu. By default, all new cells in Jupyter start out as code cells,
+so after this, all you have to do is write R code within the new cell you just
+created!</p>
+<div class="figure"><span id="fig:create-new-code-cell"></span>
+<img src="_main_files/figure-html/create-new-code-cell-1.png" alt="New cells can be created by clicking the + button, and are by default code cells." width="100%" />
 <p class="caption">
-Figure 10.7: Random initialization of labels.
+Figure 12.6: New cells can be created by clicking the + button, and are by default code cells.
 </p>
 </div>
-</center>
-Then the iterations of K-means would look like:
-<center>
-<strong>Center Update</strong>                            <strong>Label Update</strong>
-<img src="_main_files/figure-html/10-toy-kmeans-bad-iter-1.png" width="768" /><img src="_main_files/figure-html/10-toy-kmeans-bad-iter-2.png" width="768" /><img src="_main_files/figure-html/10-toy-kmeans-bad-iter-3.png" width="768" /><img src="_main_files/figure-html/10-toy-kmeans-bad-iter-4.png" width="768" /><img src="_main_files/figure-html/10-toy-kmeans-bad-iter-5.png" width="768" />
-</center>
-<p>This looks like a relatively bad clustering of the data, but K-means cannot improve it.
-To solve this problem when clustering data using K-means, we should randomly re-initialize the labels a few times, run K-means for each initialization,
-and pick the clustering that has the lowest final total WSSD.</p>
 </div>
-<div id="choosing-k" class="section level3" number="10.4.4">
-<h3><span class="header-section-number">10.4.4</span> Choosing K</h3>
-<p>In order to cluster data using K-means, we also have to pick the number of clusters, K.
-But unlike in classification, we have no data labels and cannot perform
-cross-validation with some measure of model prediction error.
-Further, if K is chosen too small, then multiple clusters get grouped together;
-if K is too large, then clusters get subdivided. In both cases, we will potentially miss
-interesting structure in the data. For example, take a look below at the K-means
-clustering of our penguin flipper and bill length data for a number of clusters
-ranging from 1 to 9.</p>
-<div class="figure"><span id="fig:10-toy-kmeans-vary-k"></span>
-<img src="_main_files/figure-html/10-toy-kmeans-vary-k-1.png" alt="Clustering of the penguin data for # clusters ranging from 1 to 9." width="1152" />
+</div>
+<div id="markdown-cells" class="section level2" number="12.5">
+<h2><span class="header-section-number">12.5</span> Markdown cells</h2>
+<p>Text cells inside a Jupyter notebook are called Markdown cells. Markdown cells
+are rich formatted text cells, which means you can <strong>bold</strong> and <em>italicize</em>
+text, create subject headers, format bullet and numbered lists. These cells are
+given the name “Markdown” because they use the Markdown markup language to
+specify the rich text formatting. A markup language is a human readable computer
+language for specifying how plain text should be richly formatted by the program
+that renders it.</p>
+<p>You do not need to learn Markdown to write text in the Markdown cells in
+Jupyter, plain text will work just fine. However, you might want to learn a bit
+about the Markdown markup language eventually. Teaching the markdown formatting
+language is beyond the scope of this book. However, If you are keen to learn
+more, a good place to start is this cheatsheet by Commonmark:
+<a href="https://commonmark.org/help/">https://commonmark.org/help/</a>,
+as well as their tutorial:
+<a href="https://commonmark.org/help/tutorial/">https://commonmark.org/help/tutorial/</a>.</p>
+<div id="editing-markdown-cells" class="section level3" number="12.5.1">
+<h3><span class="header-section-number">12.5.1</span> Editing Markdown cells</h3>
+<p>To edit a Markdown cell in Jupyter, you need to double click on any Markdown
+cell and the unformatted (we call this unrendered) version of the text will be
+shown. You can then use your keyboard to edit the text. To view the formatted
+(we call this rendered) text, click the <strong>Run</strong> (▶) button in the Jupyter
+notebook tab menu, or use the <code>Shift + Enter</code> keyboard shortcut.</p>
+<div class="figure"><span id="fig:markdown-cell-not-run"></span>
+<img src="_main_files/figure-html/markdown-cell-not-run-1.png" alt="A Markdown cell in Jupyter that has not yet been rendered and can be edited." width="100%" />
 <p class="caption">
-Figure 10.8: Clustering of the penguin data for # clusters ranging from 1 to 9.
+Figure 12.7: A Markdown cell in Jupyter that has not yet been rendered and can be edited.
 </p>
 </div>
-If we set K less than 3, then the clustering merges separate groups of data; this causes a large
-total WSSD, since the cluster center (denoted by an “x”) is not close to any of the data in the cluster. On
-the other hand, if we set K greater than 3, the clustering subdivides subgroups of data; this does indeed still
-decrease the total WSSD, but by only a <em>diminishing amount</em>. If we plot the total WSSD versus the number of
-clusters, we see that the decrease in total WSSD levels off (or forms an “elbow shape”) when we reach roughly
-the right number of clusters.
-<center>
-<div class="figure"><span id="fig:10-toy-kmeans-elbow"></span>
-<img src="_main_files/figure-html/10-toy-kmeans-elbow-1.png" alt="Total WSSD for # clusters ranging from 1 to 9." width="960" />
+<div class="figure"><span id="fig:markdown-cell-run"></span>
+<img src="_main_files/figure-html/markdown-cell-run-1.png" alt="A Markdown cell in Jupyter that has been rendered and exhibits rich text formatting. " width="100%" />
 <p class="caption">
-Figure 10.9: Total WSSD for # clusters ranging from 1 to 9.
+Figure 12.8: A Markdown cell in Jupyter that has been rendered and exhibits rich text formatting.
 </p>
 </div>
-</center>
+</div>
+<div id="creating-new-markdown-cells" class="section level3" number="12.5.2">
+<h3><span class="header-section-number">12.5.2</span> Creating new Markdown cells</h3>
+<p>To create a new Markdown cell in Jupyter, click the <code>+</code> button in the Jupyter
+notebook tab menu. By default, all new cells in Jupyter start as code cells, so
+the cell format needs to be changed to be recognized and rendered as a Markdown
+cell. To do this, click on the cell with your cursor to
+ensure it is activated, and then click on the drop-down box next to the
+<strong>Restart the kernel, then re-run the whole notebook</strong> button (▶▶) in the
+Jupyter notebook tab menu and changing it from “<strong>Code</strong>” to “<strong>Markdown</strong>.”</p>
+<div class="figure"><span id="fig:convert-to-markdown-cell"></span>
+<img src="_main_files/figure-html/convert-to-markdown-cell-1.png" alt="New cells are by default code cells. To create Markdown cells, the cell format must be changed." width="100%" />
+<p class="caption">
+Figure 12.9: New cells are by default code cells. To create Markdown cells, the cell format must be changed.
+</p>
 </div>
 </div>
-<div id="data-pre-processing-for-k-means" class="section level2" number="10.5">
-<h2><span class="header-section-number">10.5</span> Data pre-processing for K-means</h2>
-<p>Similar to K-nearest neighbours classification and regression, K-means
-clustering uses straight-line distance to decide which points are similar to
-each other. Therefore, the <em>scale</em> of each of the variables in the data
-will influence which cluster data points end up being assigned.
-Variables with a large scale will have a much larger
-effect on deciding cluster assignment than variables with a small scale.
-To address this problem, we typically standardize our data before clustering,
-which ensures that each variable has a mean of 0 and standard deviation of 1.
-The <code>scale</code> function in R can be used to do this.
-We show an example of how to use this function
-below using an unscaled version of data set in this chapter:</p>
-<div class="sourceCode" id="cb288"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb288-1"><a href="clustering.html#cb288-1" aria-hidden="true" tabindex="-1"></a>unscaled_data</span></code></pre></div>
-<pre><code>## # A tibble: 18 x 2
-##    bill_length_mm flipper_length_mm
-##             &lt;dbl&gt;             &lt;dbl&gt;
-##  1           39.2               196
-##  2           36.5               182
-##  3           34.5               187
-##  4           36.7               187
-##  5           38.1               181
-##  6           39.2               190
-##  7           36                 195
-##  8           37.8               193
-##  9           46.5               213
-## 10           46.1               215
-## 11           47.8               215
-## 12           45                 220
-## 13           49.1               212
-## 14           43.3               208
-## 15           46                 195
-## 16           46.7               195
-## 17           52.2               197
-## 18           46.8               189</code></pre>
-<div class="sourceCode" id="cb290"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb290-1"><a href="clustering.html#cb290-1" aria-hidden="true" tabindex="-1"></a>scaled_data <span class="ot">&lt;-</span> <span class="fu">map_df</span>(unscaled_data, scale)</span>
-<span id="cb290-2"><a href="clustering.html#cb290-2" aria-hidden="true" tabindex="-1"></a>scaled_data</span></code></pre></div>
-<pre><code>## # A tibble: 18 x 2
-##    bill_length_mm[,1] flipper_length_mm[,1]
-##                 &lt;dbl&gt;                 &lt;dbl&gt;
-##  1             -0.641                -0.190
-##  2             -1.14                 -1.33 
-##  3             -1.52                 -0.922
-##  4             -1.11                 -0.922
-##  5             -0.847                -1.41 
-##  6             -0.641                -0.678
-##  7             -1.24                 -0.271
-##  8             -0.902                -0.434
-##  9              0.720                 1.19 
-## 10              0.646                 1.36 
-## 11              0.963                 1.36 
-## 12              0.440                 1.76 
-## 13              1.21                  1.11 
-## 14              0.123                 0.786
-## 15              0.627                -0.271
-## 16              0.757                -0.271
-## 17              1.78                 -0.108
-## 18              0.776                -0.759</code></pre>
 </div>
-<div id="k-means-in-r" class="section level2" number="10.6">
-<h2><span class="header-section-number">10.6</span> K-means in R</h2>
-<p>To perform K-means clustering in R, we use the <code>kmeans</code> function. It takes at
-least two arguments: the data frame containing the data you wish to cluster,
-and K, the number of clusters (here we choose K = 3). Note that since the K-means
-algorithm uses a random initialization of assignments, we need to set the random
-seed to make the clustering reproducible.</p>
-<div class="sourceCode" id="cb292"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb292-1"><a href="clustering.html#cb292-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
-<span id="cb292-2"><a href="clustering.html#cb292-2" aria-hidden="true" tabindex="-1"></a>penguin_clust <span class="ot">&lt;-</span> <span class="fu">kmeans</span>(scaled_data, <span class="at">centers =</span> <span class="dv">3</span>)</span>
-<span id="cb292-3"><a href="clustering.html#cb292-3" aria-hidden="true" tabindex="-1"></a>penguin_clust</span></code></pre></div>
-<pre><code>## K-means clustering with 3 clusters of sizes 4, 8, 6
-## 
-## Cluster means:
-##   bill_length_mm flipper_length_mm
-## 1      0.9858721        -0.3524358
-## 2     -1.0050404        -0.7692589
-## 3      0.6828058         1.2606357
-## 
-## Clustering vector:
-##  [1] 2 2 2 2 2 2 2 2 3 3 3 3 3 3 1 1 1 1
-## 
-## Within cluster sum of squares by cluster:
-## [1] 1.098928 2.121932 1.247042
-##  (between_SS / total_SS =  86.9 %)
-## 
-## Available components:
-## 
-## [1] &quot;cluster&quot;      &quot;centers&quot;      &quot;totss&quot;        &quot;withinss&quot;     &quot;tot.withinss&quot; &quot;betweenss&quot;    &quot;size&quot;        
-## [8] &quot;iter&quot;         &quot;ifault&quot;</code></pre>
-<p>As you can see above, the clustering object returned by <code>kmeans</code> has a lot of information
-that can be used to visualize the clusters, pick K, and evaluate the total WSSD.
-To obtain this information in a tidy format, we will call in help
-from the <code>broom</code> package. Let’s start by visualizing the clustering
-as a coloured scatter plot. To do that
-we use the <code>augment</code> function, which takes in the model and the original data
-frame, and returns a data frame with the data and the cluster assignments for
-each point:</p>
-<div class="sourceCode" id="cb294"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb294-1"><a href="clustering.html#cb294-1" aria-hidden="true" tabindex="-1"></a>clustered_data <span class="ot">&lt;-</span> <span class="fu">augment</span>(penguin_clust, scaled_data)</span>
-<span id="cb294-2"><a href="clustering.html#cb294-2" aria-hidden="true" tabindex="-1"></a>clustered_data</span></code></pre></div>
-<pre><code>## # A tibble: 18 x 3
-##    bill_length_mm[,1] flipper_length_mm[,1] .cluster
-##                 &lt;dbl&gt;                 &lt;dbl&gt; &lt;fct&gt;   
-##  1             -0.641                -0.190 2       
-##  2             -1.14                 -1.33  2       
-##  3             -1.52                 -0.922 2       
-##  4             -1.11                 -0.922 2       
-##  5             -0.847                -1.41  2       
-##  6             -0.641                -0.678 2       
-##  7             -1.24                 -0.271 2       
-##  8             -0.902                -0.434 2       
-##  9              0.720                 1.19  3       
-## 10              0.646                 1.36  3       
-## 11              0.963                 1.36  3       
-## 12              0.440                 1.76  3       
-## 13              1.21                  1.11  3       
-## 14              0.123                 0.786 3       
-## 15              0.627                -0.271 1       
-## 16              0.757                -0.271 1       
-## 17              1.78                 -0.108 1       
-## 18              0.776                -0.759 1</code></pre>
-<p>Now that we have this information in a tidy data frame, we can make a visualization
-of the cluster assignments for each point:</p>
-<div class="sourceCode" id="cb296"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb296-1"><a href="clustering.html#cb296-1" aria-hidden="true" tabindex="-1"></a>cluster_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(clustered_data,</span>
-<span id="cb296-2"><a href="clustering.html#cb296-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">aes</span>(<span class="at">x =</span> flipper_length_mm, <span class="at">y =</span> bill_length_mm, <span class="at">colour =</span> .cluster),</span>
-<span id="cb296-3"><a href="clustering.html#cb296-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
-<span id="cb296-4"><a href="clustering.html#cb296-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb296-5"><a href="clustering.html#cb296-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Flipper Length (scaled)&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Bill Length (scaled)&quot;</span>, <span class="at">colour =</span> <span class="st">&quot;Cluster&quot;</span>) <span class="sc">+</span> </span>
-<span id="cb296-6"><a href="clustering.html#cb296-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">&quot;dodgerblue3&quot;</span>,<span class="st">&quot;darkorange3&quot;</span>,  <span class="st">&quot;goldenrod1&quot;</span>))</span>
-<span id="cb296-7"><a href="clustering.html#cb296-7" aria-hidden="true" tabindex="-1"></a>cluster_plot</span></code></pre></div>
-<p><img src="_main_files/figure-html/10-plot-clusters-2-1.png" width="417.6" /></p>
-<p>As mentioned above, we also need to select K by finding
-where the “elbow” occurs in the plot of total WSSD versus the number of clusters.
-We can obtain the total WSSD (<code>tot.withinss</code>) from our
-clustering using <code>broom</code>’s <code>glance</code> function. For example:</p>
-<div class="sourceCode" id="cb297"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb297-1"><a href="clustering.html#cb297-1" aria-hidden="true" tabindex="-1"></a><span class="fu">glance</span>(penguin_clust)</span></code></pre></div>
-<pre><code>## # A tibble: 1 x 4
-##   totss tot.withinss betweenss  iter
-##   &lt;dbl&gt;        &lt;dbl&gt;     &lt;dbl&gt; &lt;int&gt;
-## 1    34         4.47      29.5     2</code></pre>
-<p>To calculate the total WSSD for a variety of Ks, we will
-create a data frame with a column named <code>k</code> with rows containing
-each value of K we want to run K-means with (here, 1 to 9).</p>
-<div class="sourceCode" id="cb299"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb299-1"><a href="clustering.html#cb299-1" aria-hidden="true" tabindex="-1"></a>penguin_clust_ks <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">k =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>)</span>
-<span id="cb299-2"><a href="clustering.html#cb299-2" aria-hidden="true" tabindex="-1"></a>penguin_clust_ks</span></code></pre></div>
-<pre><code>## # A tibble: 9 x 1
-##       k
-##   &lt;int&gt;
-## 1     1
-## 2     2
-## 3     3
-## 4     4
-## 5     5
-## 6     6
-## 7     7
-## 8     8
-## 9     9</code></pre>
-<p>Then we use <code>map</code> to apply the <code>kmeans</code> function to each
-K. However, we need to use <code>map</code> a little bit differently than we have
-before. This is because we need to iterate over <code>k</code>, which is the <em>second argument</em>
-to the <code>kmeans</code> function. In the past, we have used <code>map</code> only to iterate over values of the
-<em>first argument</em> of a function. Since that is the default, we could simply
-write <code>map(data_frame, function_name)</code>. This won’t work here; we need to
-provide our data frame as the first argument to the <code>kmeans</code> function.</p>
-<p>The solution is to create something called an <em>anonymous function</em>.
-An anonymous function is a function that has no name,
-unlike other functions you’ve seen so far (<code>kmeans</code>, <code>select</code>, etc).
-To do this we will write our map statement like this:</p>
-<div class="sourceCode" id="cb301"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb301-1"><a href="clustering.html#cb301-1" aria-hidden="true" tabindex="-1"></a><span class="fu">map</span>(penguin_clust_ks, <span class="cf">function</span>(k) <span class="fu">kmeans</span>(scaled_data, k))</span></code></pre></div>
-<p>The anonymous function in the above call is <code>function(k) kmeans(scaled_data, k)</code>.
-This function takes a single argument (<code>k</code>) and evaluates <code>kmeans(scaled_data, k)</code>.
-Since <code>k</code> is the <em>first</em> (and only) argument to the function, we can use <code>map</code> just
-like we did before! The rest of the call above does just that – it passes each row of
-<code>penguin_clust_ks</code> to our anonymous function.</p>
-<p>Below, we execute this <code>map</code> call inside of a <code>mutate</code> call on the
-<code>penguin_clust_ks</code> data frame and get a list column that contains a K-means
-clustering object for each value of K we had:</p>
-<div class="sourceCode" id="cb302"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb302-1"><a href="clustering.html#cb302-1" aria-hidden="true" tabindex="-1"></a>penguin_clust_ks <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">k =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb302-2"><a href="clustering.html#cb302-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">penguin_clusts =</span> <span class="fu">map</span>(k, <span class="cf">function</span>(ks) <span class="fu">kmeans</span>(scaled_data, ks)))</span>
-<span id="cb302-3"><a href="clustering.html#cb302-3" aria-hidden="true" tabindex="-1"></a>penguin_clust_ks</span></code></pre></div>
-<pre><code>## # A tibble: 9 x 2
-##       k penguin_clusts
-##   &lt;int&gt; &lt;list&gt;        
-## 1     1 &lt;kmeans&gt;      
-## 2     2 &lt;kmeans&gt;      
-## 3     3 &lt;kmeans&gt;      
-## 4     4 &lt;kmeans&gt;      
-## 5     5 &lt;kmeans&gt;      
-## 6     6 &lt;kmeans&gt;      
-## 7     7 &lt;kmeans&gt;      
-## 8     8 &lt;kmeans&gt;      
-## 9     9 &lt;kmeans&gt;</code></pre>
-<p>Next, we use <code>map</code> again to apply <code>glance</code> to each of the K-means
-clustering objects to get the clustering statistics (including WSSD). The output
-of glance is a data frame, and so we get another list column. This results in a
-complex data frame with 3 columns, one for K, one for the
-K-means clustering objects, and one for the clustering statistics:</p>
-<div class="sourceCode" id="cb304"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb304-1"><a href="clustering.html#cb304-1" aria-hidden="true" tabindex="-1"></a>penguin_clust_ks <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">k =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb304-2"><a href="clustering.html#cb304-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb304-3"><a href="clustering.html#cb304-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">penguin_clusts =</span> <span class="fu">map</span>(k, <span class="sc">~</span> <span class="fu">kmeans</span>(scaled_data, .x)),</span>
-<span id="cb304-4"><a href="clustering.html#cb304-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">glanced =</span> <span class="fu">map</span>(penguin_clusts, glance)</span>
-<span id="cb304-5"><a href="clustering.html#cb304-5" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb304-6"><a href="clustering.html#cb304-6" aria-hidden="true" tabindex="-1"></a>penguin_clust_ks</span></code></pre></div>
-<pre><code>## # A tibble: 9 x 3
-##       k penguin_clusts glanced         
-##   &lt;int&gt; &lt;list&gt;         &lt;list&gt;          
-## 1     1 &lt;kmeans&gt;       &lt;tibble [1 × 4]&gt;
-## 2     2 &lt;kmeans&gt;       &lt;tibble [1 × 4]&gt;
-## 3     3 &lt;kmeans&gt;       &lt;tibble [1 × 4]&gt;
-## 4     4 &lt;kmeans&gt;       &lt;tibble [1 × 4]&gt;
-## 5     5 &lt;kmeans&gt;       &lt;tibble [1 × 4]&gt;
-## 6     6 &lt;kmeans&gt;       &lt;tibble [1 × 4]&gt;
-## 7     7 &lt;kmeans&gt;       &lt;tibble [1 × 4]&gt;
-## 8     8 &lt;kmeans&gt;       &lt;tibble [1 × 4]&gt;
-## 9     9 &lt;kmeans&gt;       &lt;tibble [1 × 4]&gt;</code></pre>
-<p>Finally we extract the total WSSD from the <code>glanced</code> column. Given that each
-item in this column is a data frame, we will need to use the <code>unnest</code> function
-to unpack the data frames into simpler column data types.</p>
-<div class="sourceCode" id="cb306"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb306-1"><a href="clustering.html#cb306-1" aria-hidden="true" tabindex="-1"></a>clustering_statistics <span class="ot">&lt;-</span> penguin_clust_ks <span class="sc">%&gt;%</span></span>
-<span id="cb306-2"><a href="clustering.html#cb306-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(glanced)</span>
-<span id="cb306-3"><a href="clustering.html#cb306-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb306-4"><a href="clustering.html#cb306-4" aria-hidden="true" tabindex="-1"></a>clustering_statistics</span></code></pre></div>
-<pre><code>## # A tibble: 9 x 6
-##       k penguin_clusts totss tot.withinss betweenss  iter
-##   &lt;int&gt; &lt;list&gt;         &lt;dbl&gt;        &lt;dbl&gt;     &lt;dbl&gt; &lt;int&gt;
-## 1     1 &lt;kmeans&gt;          34       34      7.11e-15     1
-## 2     2 &lt;kmeans&gt;          34       10.9    2.31e+ 1     1
-## 3     3 &lt;kmeans&gt;          34        4.47   2.95e+ 1     2
-## 4     4 &lt;kmeans&gt;          34        3.16   3.08e+ 1     2
-## 5     5 &lt;kmeans&gt;          34        2.86   3.11e+ 1     2
-## 6     6 &lt;kmeans&gt;          34        2.21   3.18e+ 1     1
-## 7     7 &lt;kmeans&gt;          34        1.37   3.26e+ 1     2
-## 8     8 &lt;kmeans&gt;          34        1.23   3.28e+ 1     2
-## 9     9 &lt;kmeans&gt;          34        0.706  3.33e+ 1     2</code></pre>
-<p>Now that we have <code>tot.withinss</code> and <code>k</code> as columns in a data frame, we can make a line plot
-and search for the “elbow” to find which value of K to use.</p>
-<div class="sourceCode" id="cb308"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb308-1"><a href="clustering.html#cb308-1" aria-hidden="true" tabindex="-1"></a>elbow_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(clustering_statistics, <span class="fu">aes</span>(<span class="at">x =</span> k, <span class="at">y =</span> tot.withinss)) <span class="sc">+</span></span>
-<span id="cb308-2"><a href="clustering.html#cb308-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb308-3"><a href="clustering.html#cb308-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
-<span id="cb308-4"><a href="clustering.html#cb308-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;K&quot;</span>) <span class="sc">+</span></span>
-<span id="cb308-5"><a href="clustering.html#cb308-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Total within-cluster sum of squares&quot;</span>) <span class="sc">+</span></span>
-<span id="cb308-6"><a href="clustering.html#cb308-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>)</span>
-<span id="cb308-7"><a href="clustering.html#cb308-7" aria-hidden="true" tabindex="-1"></a>elbow_plot</span></code></pre></div>
-<p><img src="_main_files/figure-html/10-plot-choose-k-1.png" width="417.6" /></p>
-<p>It looks like 3 clusters is the right choice for this data.
-But why is there a “bump” in the total WSSD plot here? Shouldn’t total WSSD always
-decrease as we add more clusters? Technically yes, but remember: K-means can
-get “stuck” in a bad solution. Unfortunately, for K = 8 we had an unlucky initialization
-and found a bad clustering! We can help prevent finding a bad clustering by trying a
-few different random initializations via the <code>nstart</code> argument (here we use 10 restarts).</p>
-<div class="sourceCode" id="cb309"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb309-1"><a href="clustering.html#cb309-1" aria-hidden="true" tabindex="-1"></a>penguin_clust_ks <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">k =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb309-2"><a href="clustering.html#cb309-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb309-3"><a href="clustering.html#cb309-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">penguin_clusts =</span> <span class="fu">map</span>(k, <span class="sc">~</span> <span class="fu">kmeans</span>(scaled_data, <span class="at">nstart =</span> <span class="dv">10</span>, .x)),</span>
-<span id="cb309-4"><a href="clustering.html#cb309-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">glanced =</span> <span class="fu">map</span>(penguin_clusts, glance)</span>
-<span id="cb309-5"><a href="clustering.html#cb309-5" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb309-6"><a href="clustering.html#cb309-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb309-7"><a href="clustering.html#cb309-7" aria-hidden="true" tabindex="-1"></a>clustering_statistics <span class="ot">&lt;-</span> penguin_clust_ks <span class="sc">%&gt;%</span></span>
-<span id="cb309-8"><a href="clustering.html#cb309-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(glanced)</span>
-<span id="cb309-9"><a href="clustering.html#cb309-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb309-10"><a href="clustering.html#cb309-10" aria-hidden="true" tabindex="-1"></a>elbow_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(clustering_statistics, <span class="fu">aes</span>(<span class="at">x =</span> k, <span class="at">y =</span> tot.withinss)) <span class="sc">+</span></span>
-<span id="cb309-11"><a href="clustering.html#cb309-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb309-12"><a href="clustering.html#cb309-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
-<span id="cb309-13"><a href="clustering.html#cb309-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;K&quot;</span>) <span class="sc">+</span></span>
-<span id="cb309-14"><a href="clustering.html#cb309-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Total within-cluster sum of squares&quot;</span>) <span class="sc">+</span></span>
-<span id="cb309-15"><a href="clustering.html#cb309-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>)</span>
-<span id="cb309-16"><a href="clustering.html#cb309-16" aria-hidden="true" tabindex="-1"></a>elbow_plot</span></code></pre></div>
-<p><img src="_main_files/figure-html/10-choose-k-nstart-1.png" width="417.6" /></p>
+<div id="saving-your-work" class="section level2" number="12.6">
+<h2><span class="header-section-number">12.6</span> Saving your work</h2>
+<p>As with any file you work on, it is critical to save your work often so you
+don’t lose your progress! Jupyter has an autosave feature, where open files are
+saved periodically. The default for this is every two minutes. You can also
+manually save a Jupyter notebook by selecting <strong>Save Notebook</strong> from the
+File menu, by clicking the dick icon on the tab menu of the Jupyter notebook,
+or by using a keyboard shortcut (<code>Control + S</code> for Windows, or <code>Command + S</code> for
+Mac OS).</p>
 </div>
-<div id="additional-resources-6" class="section level2" number="10.7">
-<h2><span class="header-section-number">10.7</span> Additional resources</h2>
+<div id="best-practices-for-running-a-notebook" class="section level2" number="12.7">
+<h2><span class="header-section-number">12.7</span> Best practices for running a notebook</h2>
+<div id="best-practices-for-executing-code-cells" class="section level3" number="12.7.1">
+<h3><span class="header-section-number">12.7.1</span> Best practices for executing code cells</h3>
+<p>As you might know (or at least imagine) by now, Jupyter notebooks are great for
+interactively editing, writing and running R code - this is what they were
+designed for. Consequently, Jupyter notebooks are flexible in regards to code
+cell execution order. This flexibility means that code cells can be run in any
+arbitrary order using the <strong>Run</strong> (▶) button. This flexibility has a downside
+since it can lead to Jupyter notebooks whose code cannot be executed in a linear
+order (from top to bottom of the notebook). A non-linear notebook is problematic
+because a linear order is the conventional way code documents are run, and
+others will have this expectation when running your notebook. Finally, if the
+code is used in some automated process, it will need to run in a linear order,
+from top to bottom of the notebook.</p>
+<p>Even with the best intentions, the flexibility of a Jupyter notebook can
+sometimes cause us to misstep and write non-linear code. This misstep is most
+often due to relying solely on using the ▶ button to execute cells. For example,
+suppose you write some R code that creates an R object, say a variable named
+<code>y</code>. When you execute that cell and create <code>y</code>, it will continue
+to exist until it is deliberately deleted with R code, or when the Jupyter
+notebook R session (<em>i.e.</em>, kernel) is stopped or restarted. It can also be
+referenced in another distinct code cell (Figure <a href="Getting-started-with-Jupyter.html#fig:out-of-order-1">12.10</a>).
+Together, this means that you could then write a code cell further above in the
+notebook that references <code>y</code> and execute it without error in the current session
+(Figure <a href="Getting-started-with-Jupyter.html#fig:out-of-order-2">12.11</a>). This could also be done successfully in
+future sessions if, and only if, you run the cells in the same non-conventional
+order. However, it is difficult to remember this non-conventional order, and it
+is not the order that others would expect your code to be executed in. Thus in
+future this would lead to errors when the notebook is run in the conventional
+linear order (Figure <a href="Getting-started-with-Jupyter.html#fig:out-of-order-3">12.12</a>).</p>
+<div class="figure"><span id="fig:out-of-order-1"></span>
+<img src="_main_files/figure-html/out-of-order-1-1.png" alt="Code that was written out of order, but not yet executed." width="100%" />
+<p class="caption">
+Figure 12.10: Code that was written out of order, but not yet executed.
+</p>
+</div>
+<div class="figure"><span id="fig:out-of-order-2"></span>
+<img src="_main_files/figure-html/out-of-order-2-1.png" alt="Code that was written out of order, and was executed using the run button in a non-linear error without error. The order of execution can be traced by following the numbers to the left of the code cells; their order indicates the order in which the cells were executed." width="100%" />
+<p class="caption">
+Figure 12.11: Code that was written out of order, and was executed using the run button in a non-linear error without error. The order of execution can be traced by following the numbers to the left of the code cells; their order indicates the order in which the cells were executed.
+</p>
+</div>
+<div class="figure"><span id="fig:out-of-order-3"></span>
+<img src="_main_files/figure-html/out-of-order-3-1.png" alt="Code that was written out of order, and was executed in a linear order using &quot;Restart Kernel and Run All Cells...&quot; This resulted in an error at the execution of the second code cell and it failed to run all code cells in the notebook." width="100%" />
+<p class="caption">
+Figure 12.12: Code that was written out of order, and was executed in a linear order using “Restart Kernel and Run All Cells…” This resulted in an error at the execution of the second code cell and it failed to run all code cells in the notebook.
+</p>
+</div>
+<p>Another thing that the flexibility of a Jupyter notebooks allows you to do is
+create objects through running a cell, which later gets deleted. In such a
+scenario, that object only exists for that one particular R session and would
+not exist again if the notebook session was restarted and the notebook run
+again. If that object was referenced in another cell in that notebook, an error
+would likely occur when the Jupyter notebook was run again in a new session.</p>
+<p>These events may not negatively affect the current R session when
+the code was being written, but as you might now see, they will likely lead to
+errors when that notebook is run in a future session. Regularly, and
+intentionally executing the entire notebook in a fresh R session will help guard
+against this by letting a user know that some aspect of the code does not allow
+the notebook to be run linearly. Knowing this sooner than later will allow the
+user to fix the issue quickly and easily, ideally within that session.</p>
+<p>We recommend as a best practice to run the entire notebook in a fresh R session,
+at least 2-3 times within any work session on a Jupyter notebook. Note that a
+key thing about our best practice recommendation here is not just
+running all the cells, but also doing this in a fresh R session. To do this in
+Jupyter, we recommend using either the <strong>Kernel</strong> &gt;&gt;
+<strong>Restart Kernel and Run All Cells…</strong> command from the Jupyter menu or the ▶▶
+button in the Jupyter notebook tab menu. The <strong>Run</strong> &gt;&gt; <strong>Run All Cells</strong>
+command from the Jupyter menu will run all the cells, but it will not do this
+a fresh R session, and so it is not sufficient to guard against these errors.</p>
+</div>
+<div id="best-practices-for-including-r-packages-in-notebooks" class="section level3" number="12.7.2">
+<h3><span class="header-section-number">12.7.2</span> Best practices for including R packages in notebooks</h3>
+<p>Most data analyses these days depend on functions from external R packages that
+are not built-in to R. One example is the <code>tidyverse</code> metapackage that we
+heavily rely on in this book. This package provides us access to functions like
+<code>read_csv</code> for reading data, <code>select</code> for subsetting columns, and <code>ggplot</code> for
+creating high-quality graphics.</p>
+<p>As mentioned earlier in the book, external R packages need to be loaded before
+the functions they contain can be used. Our recommended way to do this is via
+<code>library(package_name)</code>. But where should this line of code be written in a
+Jupyter notebook? One idea could be to load the library right before the
+function is used in the notebook. However, although this technically works, this
+causes hidden, or at least non-obvious, R package dependencies when others view
+or try to run the notebook. These hidden dependencies can lead to errors when
+the notebook is executed on another computer if the needed R packages are not
+installed. Additionally, if the data analysis code takes a long time to run,
+uncovering the hidden dependencies that need to be installed so that the
+analysis can run without error can take a great deal of time to uncover.</p>
+<p>Therefore, we recommend you load all R packages in a code cell near the top of
+the Jupyter notebook. Loading all your packages at the start ensures that all
+packages are loaded before their functions are called (assuming the notebook is
+run in a linear order from top to bottom, as recommended above) and makes it
+easy for others viewing or running the notebook to see what external R packages
+were used in the analysis, and hence, what packages they should install on
+their computer to run the analysis successfully.</p>
+</div>
+<div id="summary-of-best-practices-for-running-a-notebook" class="section level3" number="12.7.3">
+<h3><span class="header-section-number">12.7.3</span> Summary of best practices for running a notebook</h3>
+<ol style="list-style-type: decimal">
+<li><p>Write code so that it can be executed in a linear order.</p></li>
+<li><p>As you write code in a Jupyter notebook, run the notebook in a linear order
+and in it’s entirety often (2-3 times every work session) via the <strong>Kernel</strong> &gt;&gt;
+<strong>Restart Kernel and Run All Cells…</strong> command from the Jupyter menu or the ▶▶
+button in the Jupyter notebook tab menu.</p></li>
+<li><p>Write the code that loads external R packages near the top of the Jupyter
+notebook.</p></li>
+</ol>
+</div>
+</div>
+<div id="exploring-data-files" class="section level2" number="12.8">
+<h2><span class="header-section-number">12.8</span> Exploring data files</h2>
+<p>It is essential to preview data files before you try to read them into R to see
+whether or not there are column names, what the delimiters are, and if there are
+lines you need to skip. In Jupyter, you preview data files stored as plain text
+files (e.g., comma- and tab-separated files) in their plain text format by
+right-clicking on the file’s name in the Jupyter file explorer and selecting
+<strong>Open with</strong> and then selecting <strong>Editor</strong>. Suppose you do not specify to open
+the data file with an editor. In that case, Jupyter will render a nice table
+for you, and you will not be able to see the column delimiters, and therefore
+you will not know which function to use, nor which arguments to use and values
+to specify for them.</p>
+<div class="figure"><span id="fig:open-data-w-editor-1"></span>
+<img src="_main_files/figure-html/open-data-w-editor-1-1.png" alt="Opening data files with an editor in Jupyter." width="100%" />
+<p class="caption">
+Figure 12.13: Opening data files with an editor in Jupyter.
+</p>
+</div>
+<div class="figure"><span id="fig:open-data-w-editor-2"></span>
+<img src="_main_files/figure-html/open-data-w-editor-2-1.png" alt="A data file as viewed in an editor in Jupyter." width="100%" />
+<p class="caption">
+Figure 12.14: A data file as viewed in an editor in Jupyter.
+</p>
+</div>
+</div>
+<div id="exporting-to-a-different-file-format" class="section level2" number="12.9">
+<h2><span class="header-section-number">12.9</span> Exporting to a different file format</h2>
+<p>In Jupyter, viewing, editing and running R code is done in the Jupyter notebook
+(file extension <code>.ipynb</code>) file format. This file format is not easy to open and
+view outside of Jupyter. Thus, to share your analysis with people who do not
+commonly use Jupyter, it is recommended that you export your executed analysis
+as a more common file type, such as an <code>.html</code> file, or a <code>.pdf</code>. We recommend
+exporting the Jupyter notebook after executing the analysis so that you can
+also share the outputs of your code.</p>
+<div id="exporting-to-html" class="section level3" number="12.9.1">
+<h3><span class="header-section-number">12.9.1</span> Exporting to HTML</h3>
+<p>The <code>.html</code> file format will result in a shareable file that anyone can open
+using a web browser (<em>e.g.,</em> Firefox, Safari, Chrome, Edge, <em>etc.</em>). It will
+result in a document that is visually similar to what the Jupyter notebook
+looked like inside Jupyter. One point of caution here is that if there are
+images in your Jupyter notebook, you will need to share the image files and the
+<code>.html</code> file to see them.</p>
+</div>
+<div id="exporting-to-pdf" class="section level3" number="12.9.2">
+<h3><span class="header-section-number">12.9.2</span> Exporting to PDF</h3>
+<p>The <code>.pdf</code> file format will result in a shareable file that anyone can open
+using many programs, including Adobe Acrobat, Preview, web browsers and many
+more. The benefit of exporting to PDF is that it is a standalone document,
+even if the Jupyter notebook included references to image files. The
+conventional route for exporting Jupyter notebooks to <code>.pdf</code> files depends on
+a powerful tool called LaTeX. The default settings will result in a document
+that visually looks quite different from what the Jupyter notebook looked
+like inside Jupyter regarding font and page margins. The formatting can be
+customized, however, this requires some learning of the LaTeX markup language.</p>
+</div>
+</div>
+<div id="creating-a-new-jupyter-notebook" class="section level2" number="12.10">
+<h2><span class="header-section-number">12.10</span> Creating a new Jupyter notebook</h2>
+<p>At some point, you will want to create a new, fresh Jupyter notebook for your
+own project instead of viewing, running or editing a notebook that was started
+by someone else. To do this, navigate to the <strong>Launcher</strong> tab, and click on
+the R icon under the <strong>Notebook</strong> heading. If no <strong>Launcher</strong> tab is visible,
+you can get a new one via clicking the <strong>+</strong> button at the top of the Jupyter
+file explorer.</p>
+<div class="figure"><span id="fig:launcher"></span>
+<img src="_main_files/figure-html/launcher-1.png" alt="Clicking on the R icon under the Notebook heading will create a new Jupyter notebook with an R kernel." width="100%" />
+<p class="caption">
+Figure 12.15: Clicking on the R icon under the Notebook heading will create a new Jupyter notebook with an R kernel.
+</p>
+</div>
+<p>Once you have created a new Jupyter notebook, be sure to give it a descriptive
+name, as the default file name is <code>Untitle.ipynb</code>. You can rename files by
+right-clicking on the file name of the Jupyter notebook you just created and
+click <strong>Rename</strong>. This will make the file name editable. Use your keyboard to
+change the name. Pressing <code>Enter</code> or clicking anywhere else in the Jupyter the
+interface will save the changed file name.</p>
+<p>We recommend not using white space or non-standard characters in file names.
+Doing so will not prevent you from using that file in Jupyter. However, these
+sorts of things become troublesome as you start to do more advanced data
+science projects that involve repetition and automation. We recommend naming
+files using lower case characters and separating words by a dash (<code>-</code>) or an
+underscore (<code>_</code>).</p>
+</div>
+<div id="additional-resources-8" class="section level2" number="12.11">
+<h2><span class="header-section-number">12.11</span> Additional resources</h2>
 <ul>
-<li>Chapter 10 of <a href="https://www.statlearning.com/">An Introduction to Statistical Learning</a> <span class="citation">(<a href="#ref-james2013introduction" role="doc-biblioref">2013</a>)</span> provides a great next stop in the process of learning about clustering and unsupervised learning in general. In the realm of clustering specifically, it provides a great companion introduction to K-means, but also covers <em>hierarchical</em> clustering for when you expect there to be subgroups, and then subgroups within subgroups, etc. in your data. In the realm of more general unsupervised learning, it covers <em>principal components analysis (PCA)</em>, which is a very popular technique in scientific applications for reducing the number of predictors in a dataset.</li>
+<li>The <a href="https://jupyterlab.readthedocs.io/en/latest/">JupyterLab Documentation</a></li>
 </ul>
-<!--We have linked a helpful companion vi 
 
-<iframe width="840" height="473" src="https://www.youtube.com/embed/aIybuNt9ps4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe> -->
-
-</div>
-</div>
-<h3>References</h3>
-<div id="refs" class="references csl-bib-body hanging-indent">
-<div id="ref-penguinsimage" class="csl-entry">
-Andrew Shiva. 2016. <span>“Brown Bluff-2016-Tabarin Peninsula–Gentoo Penguin (Pygoscelis Papua).”</span> <a href="https://upload.wikimedia.org/wikipedia/commons/0/00/Brown_Bluff-2016-Tabarin_Peninsula%E2%80%93Gentoo_penguin_%28Pygoscelis_papua%29_03.jpg">https://upload.wikimedia.org/wikipedia/commons/0/00/Brown_Bluff-2016-Tabarin_Peninsula%E2%80%93Gentoo_penguin_%28Pygoscelis_papua%29_03.jpg</a>.
-</div>
-<div id="ref-palmerpenguins" class="csl-entry">
-Horst, Allison Marie, Alison Presmanes Hill, and Kristen B Gorman. 2020. <em><span class="nocase">palmerpenguins</span>: Palmer Archipelago (Antarctica) Penguin Data</em>. <a href="https://doi.org/10.5281/zenodo.3960218">https://doi.org/10.5281/zenodo.3960218</a>.
-</div>
-<div id="ref-james2013introduction" class="csl-entry">
-James, Gareth, Daniela Witten, Trevor Hastie, and Robert Tibshirani. 2013. <em>An Introduction to Statistical Learning</em>. <span class="math inline">\(1^\text{st}\)</span> ed. Springer.
 </div>
 </div>
             </section>
@@ -1017,8 +883,8 @@ James, Gareth, Daniela Witten, Trevor Hastie, and Robert Tibshirani. 2013. <em>A
           </div>
         </div>
       </div>
-<a href="regression2.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="inference.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="inference.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="move-to-your-own-machine.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
@@ -1050,7 +916,7 @@ gitbook.start({
 "size": 2
 },
 "edit": {
-"link": "https://github.com/rstudio/bookdown-demo/edit/master/09-clustering.Rmd",
+"link": "https://github.com/rstudio/bookdown-demo/edit/master/11-getting-started-with-Jupyter.Rmd",
 "text": "Edit"
 },
 "history": {
