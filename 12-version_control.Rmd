@@ -1,0 +1,796 @@
+# Getting started with version control {#Getting-started-with-version-control}
+
+```{r 12-getting-started-with-version-control, echo = FALSE, message = FALSE, warning = FALSE}
+library(magick)
+library(magrittr)
+library(knitr)
+knitr::opts_chunk$set(message = FALSE, echo = FALSE, warning = FALSE)
+```
+
+## Overview
+
+This chapter will introduce the concept of using version control systems 
+to track changes to a project over its lifespan, to share 
+and edit code in a collaborative team, 
+and to distribute the finished project to its intended audience.
+This chapter will also introduce how to use 
+the two most common version control tools: Git for local version control, 
+and GitHub for remote version control. 
+There are many user interfaces for using Git, 
+here will will focus on how to use the Jupyter Git interface. 
+We will focus on the most common version control operations used day-to-day 
+in a standard data science project. 
+
+## Chapter learning objectives
+
+By the end of the chapter, students will be able to:
+
+- Describe what version control is 
+and why data analysis projects can benefit from it
+- Create a remote version control repository on GitHub
+- use Jupyter's Git version control tools for project versioning and 
+collaboration, specifically to:
+
+  - commit changes to a local version control repository
+  - push changes to a remote version control repository
+  - pull changes from a remote version control repository
+  - resolve merge conflicts
+
+- Give collaborators access to a remote GitHub repository
+- Communicate with collaborators using GitHub issues
+- Use best practices when collaborating on a project with others
+
+## What is version control, and why should I use it?
+
+Data analysis projects often require iteration 
+and revision to move from an initial idea to a finished product 
+that is ready for the intended audience. 
+Without deliberate and conscious effort towards tracking changes 
+made to the analysis, projects tend to become messy. This mess can include 
+mystery results files that cannot be reproduced,
+temporary files with snippets of ideas, 
+mind-boggling filenames like `document_final_draft_v5_final.txt`,
+large blocks of commented code "saved for later," and more. 
+Additionally, the iterative nature of data analysis projects 
+makes it important to be able to examine earlier versions of code and writing. 
+Finally, data analyses are typically completed by a team of people 
+rather than a single person. 
+This means that files need to be shared across multiple computers, 
+and multiple people often end up editing the project simultaneously. 
+In such a situation, determining who has the latest version of the project---
+and how to resolve conflicting edits---can be a real challenge.
+
+Version control helps solve these challenges by tracking changes to the files 
+in the analysis (code, writing, data, etc) over the lifespan of the project, 
+including when the changes were made and who made them. 
+This provides the means both to view earlier versions of the project 
+and to revert changes. Version control also facilitates collaboration 
+via tools to share edits with others and resolve conflicting edits. 
+But even if you're working on a project alone, 
+you should still use version control. 
+It helps you keep track of what you've done, when you did it, 
+and what you're planning to do next!
+ 
+> *You mostly collaborate with yourself, 
+> and me-from-two-months-ago never responds to email.*
+> 
+> --Mark T. Holder
+
+In order to version control a project, you generally need two things: 
+a *version control system* and a *repository hosting service*. 
+The version control system is the software that is responsible 
+for tracking changes, sharing changes you make with others, 
+obtaining changes others have made, and resolving conflicting edits.
+The repository hosting service is responsible for storing a copy 
+of the version controlled project online (a *repository*), 
+where you and your collaborators can access it remotely, 
+discuss issues and bugs, and distribute your final product. 
+For both of these items, there is a wide variety of choices; 
+some of the more popular ones are:
+
+- **Version control systems:**
+    - [Git](https://git-scm.com) 
+    - [Mercurial](https://mercurial-scm.org)
+    - [Subversion](https://subversion.apache.org)
+- **Repository hosting services:**
+    - [GitHub](https://github.com)
+    - [GitLab](https://gitlab.com)
+    - [BitBucket](https://bitbucket.org)
+
+In this textbook we'll use Git for version control, 
+and GitHub for repository hosting, 
+because both are currently the most widely-used platforms.
+
+> **Note:** technically you don't *have to* use a repository hosting service. 
+> You can, for example, use Git to version control a project
+> that is stored only in a folder on your computer. 
+> But using a repository hosting service provides a few big benefits, 
+> including managing collaborator access permissions,
+> tools to discuss and track bugs, 
+> and the ability to have external collaborators contribute work, 
+> not to mention the safety of having your work backed up in the cloud. 
+> Since most repository hosting services now offer free accounts, 
+> there are not many situations in which you wouldn't 
+> want to use one for your project. 
+
+### Version control repositories
+
+Typically when we put a data analysis project under version control, 
+we create two copies of the repository. 
+One we store on our local computer where we most commonly create, 
+edit and delete files.
+This copy is commonly referred to as our **local** repository. The other copy
+is typically stored on the repository hosting service (*e.g.,* GitHub), where
+we can easily share it with our collaborators. 
+This copy is commonly referred to as our **remote** repository 
+(Figure \@ref(fig:vc1-no-changes)).
+
+> **Note:** In this book, we consider a workspace on a server 
+> (*e.g.,* a Jupyterhub), 
+> as well as a laptop or desktop computer to be the local computer.
+
+```{r vc1-no-changes, fig.cap = 'Schematic of local and remote version control repositories.', fig.retina = 2}
+image_read("img/vc2-changes.png") %>%
+  image_crop("3632x2000")
+```
+
+Both copies of the repository have a working directory, 
+where you easily create, edit and delete files, 
+as well as a history (Figure \@ref(fig:vc1-no-changes)). 
+This history is a record of all versions of the project files 
+that have been recorded. 
+The repository history is not automatically generated, 
+and requires human intervention to tell the version control software 
+(*e.g.,* Git) that we would like to record a version of the project. 
+These records are called *commits* and they are a snapshot of the files when 
+Git was told to record a version of the project, as well metadata about the 
+repository at that time the record was created 
+(who made the changes, when they were made, *etc.*). 
+
+> **Note:** During the process that creates commits, 
+> a human needs to tell Git which files should be tracked 
+> (*i.e.,* included in the snapshot). We will discuss this in more detail later.
+
+To create a commit, Git requires a human to tell it a human-readable message
+that will be stored along with the file snapshot 
+and other metadata (Figure \@ref(fig:vc1-no-changes)). 
+If these messages are written so that they contain a rich description 
+of what work was done since the last commit, 
+these messages can act as a very useful to narrative 
+of the changes to a project over its lifespan. 
+This narrative can then allow a human to identify points in the past when they
+might want to view or revert to earlier versions of the project. 
+Each commit also has a unique identifier, called a hash, that is a combination
+of about 40 letters and numbers. This hash can be used
+by Git to index the history when a human wants to view 
+or revert to earlier versions of the project. 
+Luckily Git can work with shorter versions of the commit hash, 
+which is what we have shown in Figure \@ref(fig:vc1-no-changes)
+
+## Commiting changes to a local repository's history
+
+After working on files in your project's local version control repository 
+(e.g., using Jupyter) and saving your work,
+these changes will only initially exist in the
+working directory of your local computer (Figure \@ref(fig:vc2-changes)).
+
+```{r vc2-changes, fig.cap = 'Conceptual map of the Git and GitHub version control systems.', fig.retina = 2}
+image_read("img/vc2-changes.png") %>%
+  image_crop("3632x2000")
+```
+
+Once you reach a point that you want Git to keep a record 
+of the current version of your work, you need to *commit* 
+(*i.e.*, snapshot) your changes. A pre-requisite to this is telling Git which
+files should be included in that snapshot. We call this step **adding** the 
+files to the staging area. 
+Note that the staging area is **not** a real physical location on your computer, 
+it is instead a conceptual placeholder for these files until they are commit.
+The benefit of the Git version control system using a staging area is that you 
+can choose to commit changes from only certain files. For example, 
+in Figure \@ref(fig:vc-ba2-add) we only add the two files 
+that are quite relevant to the analysis project 
+(`analysis.ipynb` and `README.md`) and not our personal scratch notes for the 
+project (`notes.txt`).
+
+```{r vc-ba2-add, fig.cap = 'The modified files for which you want a snapshot need to be **added** to the staging area.', fig.retina = 2}
+image_read("img/vc-ba2-add.png") %>%
+  image_crop("3632x1200")
+```
+
+Once the files we wish to commit to the repository history have been added 
+to the staging area, we can then commit those flagged files to the repository.
+When we do this, we are required to include a helpful *commit message* to tell 
+collaborators (which included future you) about the changes that were made 
+(Figure \@ref(fig:vc-ba3-commit)). 
+It is important to note here that these changes are only being committed to the 
+repository history on you local computer. 
+The repository on GitHub has not changed, and your collaborators would not yet
+be able to see your work.
+
+```{r vc-ba3-commit, fig.cap = "The files in the staging area need a commit message to be **committed** (*i.e.*, snapshot and archived) to the repository's history on your local computer.", fig.retina = 2}
+image_read("img/vc-ba3-commit.png") %>%
+  image_crop("3632x1100")
+```
+
+### Pushing changes from a remote repository
+
+Finally, once the commits that you want to share with your collaborators 
+have been made, you need to *push* (*i.e.*, send) those commits 
+back to GitHub. This updates the repository history on the remote repository 
+(*i.e.*, GitHub) as well as the version of the files you see when you first 
+visit the repository on GitHub (the remote repository working directory)
+(Figure \@ref(fig:vc5-push)).
+
+```{r vc5-push, fig.cap = 'The commit needs to be **pushed** to send the changes to the remote repository on GitHub.', fig.retina = 2}
+image_read("img/vc5-push.png") %>%
+  image_crop("3632x2000")
+```
+
+### Pulling changes from a remote repository
+
+If your collaborators send their own commits to the GitHub repository, 
+they will only initially exist there 
+and not on your own machine (Figure \@ref(fig:vc2-changes)).
+
+```{r vc6-remote-changes, fig.cap = 'Changes pushed by collaborators, or created directly on GitHub will not be automatically sent to your local computer.', fig.retina = 2}
+image_read("img/vc6-remote-changes.png") %>%
+  image_crop("3632x2000")
+```
+
+To get the new changes from the remote repository on GitHub, 
+you will need to *pull* those changes to your own local computer 
+(*i.e.*, JupyterHub server workspace or laptop) so that you can have a copy of 
+them locally. Additionally, until you do this you will not be able to push
+any more changes yourself. By pulling their changes, 
+you sync your local repository to what is present on GitHub.  
+
+> **Note:** you can still work on your own cloned repository and commit changes even if collaborators
+have pushed changes to the GitHub repository. It is only when you try to *push* your changes back to GitHub
+that Git will make sure nobody else has pushed any work in the meantime. 
+
+```{r vc7-pull, fig.cap = '**Pulling** changes from the remote repository on GitHub syncs your the repository on your local computer to what is present on the remote repository on GitHub.', fig.retina = 2}
+image_read("img/vc7-pull.png") %>%
+  image_crop("3632x2000")
+```
+
+Now that you have been introduced to some of the key general concepts 
+and workflows when using Git and GitHub to version control a data analysis 
+project, we will next walk through how to do this using Git, GitHub and the 
+Jupyter Git extension tool.
+
+## Creating a space for your project online
+
+There are several different workflows you can use to start using version control
+with a new project. For simplicity and ease of setup, 
+we recommend the workflow of creating a remote repository on GitHub first, 
+and then copying that repository to your local computer 
+(*i.e.*, JupyterHub server workspace or laptop).
+
+Before you can create remote repositories on GitHub, 
+you will need a GitHub account; you can sign up for a free account 
+at [https://github.com/](https://github.com/).
+Once you have logged into your account, you can create a new repository to host 
+your project by clicking on the "+" icon in the upper right 
+hand corner, and then on "New Repository" as shown in 
+Figure \@ref(fig:new-repository-01).
+
+```{r new-repository-01, fig.cap = 'New repositories on GitHub can be created by clicking on "New Repository" from the + menu.', fig.retina = 2}
+image_read("img/version_control/new_repository_01.png") %>%
+  image_flop() %>%
+  image_crop("3632x1148") %>%
+  image_flop()
+```
+
+Repositories can be setup with a variety of configurations, including a name, 
+optional description, the visibility to the outside world (public or private),
+and the inclusion (or not) of several template files. To get started with
+a configuration with a public repository (meaning it can be viewed by anyone, 
+but is only editable by you) with a template `READEME.md` file, do the 
+following (also shown in Figure \@ref(fig:new-repository-02)): 
+
+1. Enter the name for your project repository. In the example below, we use `canadian_languages`. Most repositories follow this naming convention, which involves lowercase letter words separated by either underscores or hyphens.
+2. Choose an option for the privacy of your repository
+    1. If you select "Public", your repository may be *viewed* by anyone, but only you and collaborators you designate will be able to *modify* it.
+    2. If you select "Private", only you and your collaborators can *view* or *modify* it.
+3. Select "Add a README file." This creates a template `README.md` file in your repository's root folder.
+4. When you are happy with your repository name and configuration, click on the green "Create Repository" button.
+
+```{r new-repository-02, fig.cap = 'Respository configuration for a project that is public and initialized with a README.md template file.', fig.retina = 2}
+image_read("img/version_control/new_repository_02.png") %>%
+  image_flop() %>%
+  image_crop("1700x2240+1000-150") %>%
+  image_flop()
+```
+
+A newly created repository that was configured as being public 
+and with a with a `README.md` template file should look something
+like Figure \@ref(fig:new-repository-03).
+
+```{r new-repository-03, fig.cap = 'Respository configuration for a project that is public and initialized with a README.md template file.', fig.retina = 2}
+image_read("img/version_control/new_repository_03.png") %>%
+  image_flop() %>%
+  image_crop("3584x1700") %>%
+  image_flop()
+```
+
+
+## Creating and editing files on GitHub
+
+There are several ways to use the GitHub interface to add files to your 
+repository and to edit them. Below we cover how to use the pen tool to edit 
+existing files, and how to use the “Add file” drop down to create a new file or 
+upload files from your computer. These techniques are useful for handling simple
+plain text files, for example, the `README.md` file that is already present in 
+the repository.
+
+### The pen tool
+
+The pen tool can be used to edit existing plain text files. When you click on 
+the pen tool the file will be opened in a text box where you can use your 
+keyboard to make changes.
+
+```{r pen-tool-01, fig.cap = 'Clicking on the pen tool opens a textbox for editing plain text files.', fig.retina = 2}
+image_read("img/version_control/pen-tool_01.png") %>%
+  image_flop() %>%
+  image_crop("3584x1500") %>%
+  image_flop()
+```
+
+```{r pen-tool-02, fig.cap = 'The textbox where edits can be made after clicking on the pen tool.', fig.retina = 2}
+image_read("img/version_control/pen-tool_02.png") %>%
+  # image_flop() %>%
+  image_crop("3584x1300") # %>%
+# image_flop()
+```
+
+After you are done with your edits, they can be "saved" by *committing* your 
+changes. When you *commit a file* in a repository, the version control system 
+takes a snapshot of what the file looks like. As you continue working on the 
+project, over time you will possibly make many commits to a single file; this 
+generates a useful version history for that file. On GitHub, if you click the 
+green "Commit changes" button, it will save the file and then make a commit.
+
+```{r pen-tool-03, fig.cap = 'Saving changes using the pen tool requires committing those changes, and an associated commit message.', fig.retina = 2}
+image_read("img/version_control/pen-tool_03.png") %>%
+  image_crop("3583x1500+1+500")
+```
+
+
+### The "Add file" menu
+
+The "Add file" menu can be used to create new plain text files and upload files 
+from your computer. To create a new plain text file, click the "Add file" drop 
+down menu and select the "Create new file" option:
+
+```{r create-new-file-01, fig.cap = 'New plain text files can be created directly on GitHub.', fig.retina = 2}
+image_read("img/version_control/create-new-file_01.png") %>%
+  image_flop() %>%
+  image_crop("3584x1600") %>%
+  image_flop()
+```
+
+A page will open with a small text box for the file name to be entered, and a 
+larger text box where the desired file content text can be entered. Note the two 
+tabs, "Edit new file" and "Preview". Toggling between them lets you enter and 
+edit text and view what the text will look like when rendered, respectively. 
+Note that GitHub understands and renders `.md` files using a 
+[markdown syntax](https://guides.github.com/pdfs/markdown-cheatsheet-online.pdf) 
+very similar to Jupyter notebooks, so the "Preview" tab is especially helpful 
+for checking markdown code correctness.
+
+```{r create-new-file-02, fig.cap = 'New plain text files require a filename be inputted in the textbox circled in red, and file content entered in the larger text box (red arrow).', fig.retina = 2}
+image_read("img/version_control/create-new-file_02.png") %>%
+  image_flop() %>%
+  image_crop("3584x1300") %>%
+  image_flop()
+```
+
+Save and commit your changes by click the green "Commit changes" button at the 
+bottom of the page.
+
+```{r create-new-file-03, fig.cap = 'To be saved, newly created files are required to be committed along with an associated commit message.', fig.retina = 2}
+image_read("img/version_control/create-new-file_03.png") %>%
+  image_crop("3584x1500+1+500")
+```
+
+You can also upload files that you have created on your local machine by using 
+the "Add file" drop down menu and selecting "Upload files":
+
+```{r upload-files-01, fig.cap = 'New files of any type can be uploaded to GitHub.', fig.retina = 2}
+image_read("img/version_control/upload-files_01.png") %>%
+  image_flop() %>%
+  image_crop("3584x1600") %>%
+  image_flop()
+```
+
+To select the files from your local computer to upload, you can either drag and 
+drop them into the grey box area shown below, or click the "choose your files" 
+link to access a file browser dialog. Once the files you want to upload have 
+been selected, click the green "Commit changes" button at the bottom of the 
+page.
+
+```{r upload-files-02, fig.cap = 'Uploaded files can specified by dragging them into the GitHub website where specified (red circle) or by clicking on the "choose your files" to select them via a file browser. Uploaded files are also required to be committed along with an associated commit message.', fig.retina = 2}
+image_read("img/version_control/upload-files_02.png") %>%
+  image_flop() %>%
+  image_crop("3584x2200") %>%
+  image_flop()
+```
+
+Note that Git and GitHub are designed to track changes in individual files. 
+*Do not* upload your whole project in an archive file (e.g. `.zip`), because
+then Git can only keep track of changes to the entire `.zip` file---that 
+wouldn't be very useful if you're trying to see the history of changes to a 
+single code file in your project!
+
+
+## Cloning your repository on JupyterHub
+
+Although there are several ways to create and edit files on 
+GitHub, they are not quite powerful enough for 
+efficiently creating and editing complex files, or files that need to be 
+executed to assess whether they work (e.g., files containing code). Thus, it is 
+useful to be able to connect the project repository that was created on 
+GitHub to a coding environment. This can be done on 
+your local computer, or using a JupyterHub; below we show how to do this using a 
+JupyterHub.
+
+We need to *clone* our project's Git repository to our JupyterHub---i.e., make a 
+copy that knows where it was obtained from so that it knows where send/receive 
+new committed edits. In order to do this, first copy the URL from the HTTPS tab 
+of the Code drop down menu on GitHub:
+
+```{r clone-02, fig.cap = 'The remote address (URL) corresponding to the location of the GitHub repository needed to clone it to a computer can be found under the green "Code" button.', fig.retina = 2}
+image_read("img/version_control/clone_02.png") %>%
+  image_crop("3584x1500")
+```
+
+Then open JupyterHub, and click the Git+ icon on the file browser tab:
+
+```{r clone-01, fig.cap = 'The Jupyter Git Clone icon (red circle)', fig.retina = 2}
+image_read("img/version_control/clone_01.png") %>%
+  image_crop("2400x1430+1")
+```
+
+Paste the URL of the GitHub project repository you 
+created and click the blue "CLONE" button:
+
+```{r clone-03, fig.cap = 'Prompt where the remote address (URL) corresponding to the location of the GitHub repository needs to be input in Jupyter.', fig.retina = 2}
+image_read("img/version_control/clone_03.png") %>%
+  image_crop("2400x1430+1")
+```
+
+On the file browser tab, you will now see a folder for your project's repository 
+(and inside it will be all the files that existed on GitHub):
+
+```{r clone-04, fig.cap = 'Cloned GitHub repositories can been seen and accessed via the Jupyter file browser.', fig.retina = 2}
+image_read("img/version_control/clone_04.png") %>%
+  image_crop("2400x1430+1")
+```
+
+## Working in a cloned repository using Jupyter
+
+Now that you have cloned your repository from GitHub to your local computer
+(*i.e.,* JupyterHub or your laptop), you can get to work editing, creating, 
+and deleting files using an application, such as Jupyter. 
+Below we walk through how to use the Jupyter Git extension tool to do 
+each of the steps outlined above.
+
+### Specifying files to commit
+
+Below we created and saved a new file (named `eda.ipynb`) that we would 
+like to send back to the project repository on GitHub.
+To "add" this modified file to the staging area (*i.e.*, flag that this is a
+file whose changes we would like to commit), we click the Jupyter Git extension 
+icon on the far left-hand side of JupyterLab:
+
+```{r git-add-01}
+image_read("img/version_control/git_add_01.png")
+```
+
+This opens the Jupyter Git graphical user interface pane, and then we
+click the plus sign beside the file that we want to "add". 
+
+> **Note:** because this is the first change for this file that we want to add, it falls under the 
+"Untracked" heading. However, next time we edit this file and want to add the 
+changes we made, we will find it under the "Changed" heading.
+
+> **Note:** do not add the `eda-checkpoint.ipynb` file (sometimes called `.ipynb_checkpoints`). This file is 
+automatically created by Jupyter when you work on `eda.ipynb`. You generally do not add auto-generated files to Git repositories,
+only add the files you directly create and edit.
+
+```{r git-add-02}
+image_read("img/version_control/git_add_02.png")
+```
+
+This moves the file from the "Untracked" heading to the "Staged" heading, 
+flagging this file so that Git knows we want a snapshot of its current state as a commit.
+Now we are ready to "commit" the changes. Make sure to include a (clear and helpful!) message about what was changed
+so that your collaborators (and future you) know what happened in this commit. 
+
+```{r git-add-03}
+image_read("img/version_control/git_add_03.png")
+```
+
+### Making the commit
+
+To snapshot the changes with an associated commit message, we put the message in the text box 
+at the bottom of the Git pane and click on the blue "Commit" button. 
+It is highly recommended to write useful and meaningful messages about what 
+was changed. These commit messages, and the datetime stamp for a given 
+commit, are the primary means to navigate through the project's histry in the 
+ event that we need to view or retrieve a past version of a file, or 
+revert our project to an earlier state.
+
+```{r git-commit-01}
+image_read("img/version_control/git_commit_01.png")
+```
+
+> When you click the "Commit" button for the first time, you will be prompted to 
+> enter your name and email. This only needs to be done once for each machine 
+> you use Git on.
+
+After "commiting" the file(s), you will see there there are 0 "Staged" files and we 
+are now ready to push our changes (and the attached commit message) to our 
+project repository on GitHub:
+
+```{r git-commit-03}
+image_read("img/version_control/git_commit_03.png")
+```
+
+### Pushing the commits to GitHub
+
+To send the committed changes back to the project repository on 
+GitHub, we need to *push* them. To do this we click on 
+the cloud icon with the up arrow on the Jupyter Git tab:
+
+```{r git-push-01}
+image_read("img/version_control/git_push_01.png")
+```
+
+We will then be prompted to enter our GitHub username 
+and password, and click the blue "OK" button:
+
+```{r git-push-02}
+image_read("img/version_control/git_push_02.png")
+```
+
+If the files were successfully pushed to our project repository on 
+GitHub we will be given the success message shown 
+below. Click "Dismiss" to continue working in Jupyter.
+
+```{r git-push-03}
+image_read("img/version_control/git_push_03.png")
+```
+
+You will see that the changes now exist there!
+
+```{r git-push-04}
+image_read("img/version_control/git_push_04.png") %>%
+  image_crop("3584x2000")
+```
+
+## Collaboration
+
+### Giving collaborators access to your project
+
+As mentioned earlier, GitHub allows you to control who has access to your 
+project. The default of both public and private projects are that only the 
+person who created the GitHub repository has permissions to create, edit and 
+delete files (*write access*). To give your collaborators write access to the projects, navigate to the "Settings" tab:
+
+```{r add-collab-01}
+image_read("img/version_control/add_collab_01.png") %>%
+  image_crop("3584x1250")
+```
+
+Then click "Manage access":
+
+```{r add-collab-02}
+image_read("img/version_control/add_collab_02.png") %>%
+  image_crop("3584x1200")
+```
+
+Click the green "Invite a collaborator" button:
+
+```{r add-collab-03}
+image_read("img/version_control/add_collab_03.png") %>%
+  image_crop("3584x2200")
+```
+
+Type in the collaborator's GitHub username and select their name when it 
+appears:
+
+```{r add-collab-04}
+image_read("img/version_control/add_collab_04.png") %>%
+  image_crop("3584x1250")
+```
+
+Finally, click the green "Add <COLLABORATORS_GITHUB_USER_NAME> to this repository" button:
+
+```{r add-collab-05}
+image_read("img/version_control/add_collab_05.png") %>%
+  image_crop("3584x1250")
+```
+
+After this you should see your newly added collaborator listed under the 
+"Manage access" tab. They should receive an email invitation to join the 
+GitHub repository as a collaborator. They need to accept this invitation 
+to enable write access.
+
+### Pulling changes from GitHub using Jupyter
+
+Below we walk through how to use the Jupyter Git extension tool to pull changes 
+to our `eda.ipynb` analysis file that were made by our collaborator 
+(Figure \@ref(fig:git-pull-00)).
+
+```{r git-pull-00, fig.cap = 'The GitHub interface indicates the name of the last person to push a commit to the remote repositoey, a preview of the associated commit message, the unique commit identifier, and how long ago the commit was snapshotted.', fig.retina = 2}
+image_read("img/version_control/git_pull_00.png") %>%
+  image_crop("3584x1900")
+```
+
+You can do this using the Jupyter Git tab by clicking on the cloud icon with 
+the down arrow (Figure \@ref(fig:git-pull-01)).
+
+```{r git-pull-01, fig.cap = 'The Jupyter Git extension clone button', fig.retina = 2}
+image_read("img/version_control/git_pull_01.png")
+```
+
+Once the files are successfully pulled from GitHub, you need to click "Dismiss"
+to keep working (Figure \@ref(fig:git-pull-02)).
+
+```{r git-pull-02, fig.cap = 'The Jupyter Git extension prompt after changes have been successfully pulled from a remote repository.', fig.retina = 2}
+image_read("img/version_control/git_pull_02.png")
+```
+
+And then when you open (or refresh) the files whose changes you just pulled,
+you should be able to see them (Figure \@ref(fig:git-pull-03)).
+
+```{r git-pull-03, fig.cap = 'Changes made by the collaborator to `eda.ipynb` (code highlighted by red arrows).', fig.retina = 2}
+image_read("img/version_control/git_pull_03.png")
+```
+
+It can be very useful to review the history of the changes to your project. You
+can do this directly on the JupyterHub by clicking "History" in the Git tab 
+(Figure \@ref(fig:git-pull-04)).
+
+```{r git-pull-04, fig.cap = 'Version control repository history viewed using the Jupyter Git extension.', fig.retina = 2}
+image_read("img/version_control/git_pull_04.png")
+```
+
+It is good practice to pull any changes at the start of *every* work session 
+before you start working on your local copy. 
+If you do not do this, 
+and your collaborators have pushed some changes to the project to GitHub, 
+then you will be unable to push your changes to GitHub until you pull. 
+This situation can be recognized by the error message 
+shown in Figure \@ref(fig:merge-conflict-01).
+
+```{r merge-conflict-01, fig.cap = 'Error message that indicates that there are changes on the remote repository that you do not have locally.', fig.retina = 2}
+image_read("img/version_control/merge_conflict_01.png") %>%
+  image_crop("3584x1900")
+```
+
+Usually, getting out of this situation is not too troublesome. First you need to 
+pull the changes that exist on GitHub that you do not yet have on your machine.
+Usually when this happens, Git can automatically merge the changes for you, 
+even if you and your collaborators were working on different parts of the same 
+file!
+
+If however, you and your collaborators made changes to the same line of the same
+file, Git will not be able to automatically merge the changes---it will not know whether to keep your version of the line(s), your 
+collaborators version of the line(s), or some blend of the two. When this 
+happens, Git will tell you that you have a merge conflict and that it needs 
+human intervention (you!), and which file(s) this occurs in (Figure \@ref(fig:merge-conflict-03)).
+
+```{r merge-conflict-03, fig.cap = 'Error message that indicates you and your collaborators made changes to the same line of the same file and that Git will not be able to automatically merge the changes', fig.retina = 2}
+image_read("img/version_control/merge_conflict_03.png") %>%
+  image_crop("3584x1900")
+```
+
+### Handling merge conflicts
+
+To fix the merge conflict we need to open the file that had the merge 
+conflict in a plain text editor and look for special marks that Git puts in the
+file to tell you where the merge conflict occurred. 
+
+```{r merge-conflict-04}
+image_read("img/version_control/merge_conflict_04.png") %>%
+  image_crop("3584x1200")
+```
+
+The beginning of the merge
+conflict is preceded by `<<<<<<< HEAD` and the end of the merge conflict is 
+marked by `>>>>>>>`. Between these markings, Git also inserts a separator 
+(`=======`). The version of the change before the separator is your change, and 
+the version that follows the separator was the change that existed on GitHub.
+
+```{r merge-conflict-05}
+image_read("img/version_control/merge_conflict_05.png") %>%
+  image_crop("3584x1200")
+```
+
+Once you have decided which version of the change (or what combination!) to keep, you need to use the 
+plain text editor to remove the special marks that Git added.  
+
+```{r merge-conflict-06}
+image_read("img/version_control/merge_conflict_06.png") %>%
+  image_crop("3584x1200")
+```
+
+The file must be saved, added to the staging area, and then committed before you will be able to 
+push your changes to GitHub.
+
+### Communicating using GitHub issues
+
+When working on a project in a team, you don't just want a historical record of who changed
+what file and when in the project---you also want a record of decisions that were made, 
+ideas that were floated, problems that were identified and addressed, and all other 
+communication surrounding the project. Email and messaging apps are both very popular for general communication, but are not
+designed for project-specific communication: they both generally do not have facilities for organizing conversations by project subtopics,
+searching for conversations related to particular bugs or software versions, etc.
+
+GitHub *issues* are an alternative written communication medium to email and 
+messaging apps, and were designed specifically to facilitate project-specific 
+communication. Issues are *opened* from the "Issues" tab on the project's
+GitHub page, and they persist there even after the conversation is over and the issue is *closed* (in 
+contrast to email, issues are not usually deleted). One issue thread is usually created
+per topic, and they are easily searchable using GitHub's search tools. All 
+issues are accessible to all project collaborators, so no one is left out of 
+the conversation. Finally, issues can be setup so that team members get email 
+notifications when a new issue is created or a new post is made in an issue 
+thread. Replying to issues from email is also possible. Given all of these advantages,
+ we highly recommend the use of issues for project-related communication.
+
+To open a GitHub issue, first click on the "Issues" tab:
+
+```{r issue-01}
+image_read("img/version_control/issue_01.png") %>%
+  image_crop("3584x1250")
+```
+
+Next click the "New issue" button:
+
+```{r issue-02}
+image_read("img/version_control/issue_02.png") %>%
+  image_crop("3584x1250")
+```
+
+Add an issue title (which acts like an email subject line), and then put the 
+body of the message in the larger text box. Finally click "Submit new issue"
+to post the issue to share with others:
+
+```{r issue-03}
+image_read("img/version_control/issue_03.png") %>%
+  image_crop("3584x2200")
+```
+
+You can reply to an issue that someone opened by adding your written response to
+the large text box and clicking comment:
+
+```{r issue-04}
+image_read("img/version_control/issue_04.png") %>%
+  image_crop("3584x2000")
+```
+
+When a conversation is resolved, you can click "Close issue". The closed issue 
+can be later viewed be clicking the "Closed" header link in the "Issue" tab:
+
+```{r issue-06}
+image_read("img/version_control/issue_06.png") %>%
+  image_crop("3584x1900")
+```
+
+## Additional resources
+
+Now that you've picked up the basics of version control with Git and GitHub, you can expand your knowledge using 
+one of the many tutorials available online:
+
+### Best practices and workflows
+- [Good enough practices in scientific computing](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1005510#sec014) [-@wilson2014best]  by Greg Wilson, Jennifer Bryan, Karen Cranston, Justin Kitzes, Lex Nederbragt & Tracy K. Teal
+- [Configuration Management for Large-Scale Scientific Computing at the UK Met Office](https://ieeexplore.ieee.org/iel5/5992/4653193/04653206.pdf?casa_token=6gY_5D7UbE4AAAAA:Z7BBJHplUfZEq31EfOpF_iP1qUQJwn170LdU8-ZUTtCu1N-ZpXYMV6yZHqIcSuRHLNVSkjM) [-@matthews2008configuration] by David Mathews, Greg Wilson & Steve Easterbrook
+
+### Technical references
+- GitHub's [guides website](https://guides.github.com/)
+- GitHub's [YouTube channel](https://www.youtube.com/githubguides)
+- BitBucket's [tutorials](https://www.atlassian.com/git/tutorials/what-is-version-control)
