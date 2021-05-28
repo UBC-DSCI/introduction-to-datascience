@@ -264,9 +264,11 @@ can_lang
 Looking at our `can_lang` data, we see that the column `category` contains 
 different high-level categories of languages, which include "Aboriginal languages",
 "Non-Official & Non-Aboriginal languages" and "Official languages". 
-To answer our question (*what ten Aboriginal languages were most often reported in 2016 as mother tongues in Canada, and how many people speak each of them?*) we 
-want to filter our data set, so we restrict our attention to only the 
-"Aboriginal languages" category. We can use the `filter` function to obtain
+To answer our question (what ten Aboriginal languages were most often reported in 2016 as mother tongues in Canada, and how many people speak each of them?) we 
+want to filter our data set so we restrict our attention to only the 
+"Aboriginal languages" category. 
+
+We can use the `filter` function to obtain
 the subset of rows with desired values from a data frame. Again, our first 
 argument is the name of the data frame object, `can_lang`. The second argument
 is a logical statement to use when filtering the rows. Suppose we were interested 
@@ -297,8 +299,9 @@ the  `select` function returns two columns (the `language` and `mother_tongue` c
 selected_lang <- select(aboriginal_lang, language, mother_tongue)
 selected_lang
 ```
+> Note: we didn't actually *need* to `select` the columns in our data frame before moving on to the next step! However, `select` allows us to display only the columns in the data frame we want and can make it easier for us to view the data especially if we have a large data frame with lots of columns. 
 
-### Using `arrange` and `slice` to order and select rows
+### Using `arrange` to order and `slice` to select rows by index number
 
 The  `arrange` function allows us to order the rows of a data frame by the values of a selected column. We need to pass the data frame, and the variable to order by in the first two arguments of this function.  
 Since we want to choose the ten Aboriginal languages most often reported as a mother tongue language, we will use the `arrange` function to order the rows in our `selected_lang` data frame by the `mother_tongue` column. We want to order the rows in descending order (from largest to smallest) so we include `desc` before the column name `mother_tongue` to sort in descending order. 
@@ -308,12 +311,13 @@ arranged_lang <- arrange(selected_lang, by = desc(mother_tongue))
 arranged_lang
 ```
 
-Next we will use the `slice` function, which selects rows according to their row number. Since we want to choose the ten Aboriginal languages, we will indicate we want the rows 1 to 10 (`1:10`).
+Next we will use the `slice` function, which selects rows according to their row number. Since we want to choose the ten Aboriginal languages, we will indicate we want the rows 1 to 10 as indicated by the argument `1:10`.
 ```{r}
 ten_lang <- slice(arranged_lang, 1:10)
 ten_lang
 ```
-Now we have answered our initial question with the frequency table we generated in R. Are we done? Well technically this table does answer our question. However, we can go one step further and create a visualization to answer our question as well. Visualizations are a great tool for summarizing information into a clear format to help you effectively communicate with your audience. 
+Now we have answered our initial question with the frequency table we generated in R. Are we done? Technically, this table answers our question. However, we can go one step further and create a visualization to answer our question as well. Visualizations are a great tool for summarizing information to help you effectively communicate with your audience. While tables are great for displaying information, a visualization can sometimes provide more insight. For example, if we were really interested in comparing the values between the different languages (e.g. how many more people reported "Cree, n.o.s." versus "Inuktitut" versus "Ojibway" etc.), then a visualization is a more effective way to communicate your results than a frequency table. 
+
 
 ## Exploring data with visualizations
 Creating effective data visualizations is an essential piece to any data analysis. We will develop a visualization of the language data collected in the 2016 Canadian census we’ve been working with to help us understand what ten Aboriginal languages were most often reported in 2016 as mother tongues in Canada and how many people speak each of them? 
@@ -385,7 +389,7 @@ Learning how to describe data visualizations is a very useful skill. We will pro
 
 ### Putting it all together
 
-In the code chunk below, we put everything from this chapter together. We have added a few more layers to make the data visualization even more effective. Specifically, we changed the colour of the bars and changed the background from grey to white to improve the contrast. 
+In the code chunk below, we put everything from this chapter together. We have added a few more layers to make the data visualization even more effective. Specifically, we changed the colour of the bars and changed the background from grey to white to improve the contrast. Note that we actually skipped the `select` step that we did above just to show you that we didn't actually need to `select` the columns to create the visualization! 
 
 ```{r nachos-to-cheesecake, fig.width=7.75, fig.height=4, warning=FALSE, message=FALSE, fig.cap = "Putting it all together: Bar plot of the ten Aboriginal languages most often reported by Canadians as their mother tongue"}
 library(tidyverse)
@@ -394,7 +398,9 @@ can_lang <- read_csv("data/can_lang.csv")
 
 aboriginal_lang <- filter(can_lang, category == "Aboriginal languages")
 
-ten_lang <- slice_max(aboriginal_lang, n = 10, order_by = mother_tongue)
+arranged_lang <- arrange(aboriginal_lang, by = desc(mother_tongue))
+
+ten_lang <- slice(arranged_lang, 1:10)
 
 ggplot(ten_lang, aes(
   x = reorder(language, mother_tongue),
