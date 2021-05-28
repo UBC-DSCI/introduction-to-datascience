@@ -38,7 +38,13 @@ to use and manipulate these objects in our data analysis.
 
 ### What is a data frame?
 
-To define a **data frame**, first, let's explain a few commonly used terms in statistics. In statistics, **observations** are the things we measure (e.g. students) and **variables** are the characteristics of those observations, which *vary* (e.g. students' grades). From a data perspective, a data frame is a rectangle where the rows are the observations:
+To define a **data frame**, first, let's explain a few commonly used terms in statistics:
+
+- **observation** -  all of the quantities or a qualities we collect from a given entity/object 
+- **variable** - any characteristic, number, or quantity that can be measured or collected 
+-  **value** - a single collected quantity or a quality from a given entity/object
+
+From a data perspective, a data frame is a rectangle where the rows are the observations:
 
 ```{r 02-setup, include=FALSE}
 devtools::install_github("ttimbers/canlang")
@@ -80,13 +86,15 @@ Table: (\#tab:datatype-table) Basic data types in R
 | Data type | Description | Example |
 |-------|------------------|-----------|
 | character | Letters or numbers surrounded by quotes |  "1" , "Hello world!" |
-| numeric | Whole numbers and numbers with decimal values.  Numeric is an umbrella term that includes integer and double types |   1.23, 20 |  
 |  double  | Numbers with decimals values         | 1.2333 | 
 |  integer | Numbers that do not contain decimals | 1L, 20L (where "L" tells R to store as an integer) | 
 | logical |  A value of true and false | `TRUE`, `FALSE` | 
+| factor  | Used to represent data with a limited number of values | a `size` variable with levels "large", "medium" and "small" | 
 
->  Most of the time when working with numbers in R they will be double. That is the default when you create a vector using `c()` from numbers in R (even whole numbers), and when you read in whole numbers via `read_csv`.
+>  "Numeric" is an umbrella term that includes integer and double data types.
+> Most of the time when working with numbers in R they will be double. For instance, a double data type is the default when you create a vector of numbers using `c()`, and when you read in whole numbers via `read_csv`.
 > There are other basic data types in R, such as *raw* and *complex*, which we won't cover in this textbook. 
+> We will go into more details about factors in chapter \@ref(viz).
 
 ### How are vectors different from a list?
 
@@ -101,9 +109,13 @@ knitr::include_graphics("img/vec_vs_list.jpeg")
 
 ### What does this have to do with data frames?
 
-As mentioned earlier, a data frame is really a special type of list where the elements can only be vectors. Representing data with such an 
-object enables us to easily work with our data in a rectangular/spreadsheet-like manner, and to have columns/vectors of 
-different characteristics associated/linked in one object. This is similar to a table in a spreadsheet or a database.
+As mentioned earlier, a data frame is really a special type of list
+where the elements can only be vectors.
+Representing data with such an object enables us to easily work with our data
+in a spreadsheet-like manner. It also allows us to have columns,
+containing qualities or values, for different statistical variables linked
+in a row for one observation - these columns cannot be independently sorted.
+This is similar to a table in a database.
 
 ```{r 02-dataframe, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Data frame and vector types", fig.retina = 2, out.width = "650"}
 knitr::include_graphics("img/dataframe.jpeg")
@@ -130,11 +142,10 @@ Table: (\#tab:datastructure-table) Basic data structures in R
 There are many ways a spreadsheet-like data set can be organized. 
 This chapter will focus on introducing the *tidy data* format of organization 
 and how to make your raw (and likely messy) data tidy. 
-We want to tidy our data because that format maps onto 
-the statistical questions we are asking, 
-and because most of the tools for data analysis in R have been designed 
-to work most effectively (and efficiently) with tidy data.
 
+### Why is tidy data important in R?
+
+First, one of R's most popular plotting toolsets, the `ggplot2` package (which is one of the packages that the `tidyverse` package loads), expects the data to be in a tidy format. Second, most statistical analysis functions also expect data in a tidy format. Given that both of these tasks are central in almost all data analysis projects, it is well worth spending the time to get your data into a tidy format upfront. Luckily there are many well-designed `tidyverse` data cleaning/wrangling tools to help you easily tidy your data. Let's explore them now!
 
 ### What is tidy data?
 
@@ -148,18 +159,6 @@ Tidy data satisfy the following three criteria [@wickham2014tidy]:
 knitr::include_graphics("img/tidy_data.jpeg")
 ```
 
-
-> **Definitions to know:**
->
-> observation -  all of the quantities or a qualities we collect from a given entity/object 
->
-> variable - any characteristic, number, or quantity that can be measured or collected 
->
-> value - a single collected quantity or a quality from a given entity/object
-
-### Why is tidy data important in R?
-
-First, one of R's most popular plotting toolsets, the `ggplot2` package (which is one of the packages that the `tidyverse` package loads), expects the data to be in a tidy format. Second, most statistical analysis functions also expect data in a tidy format. Given that both of these tasks are central in almost all data analysis projects, it is well worth spending the time to get your data into a tidy format upfront. Luckily there are many well-designed `tidyverse` data cleaning/wrangling tools to help you easily tidy your data. Let's explore them now!
 
 ### Going from wide to long (or tidy!) using `pivot_longer`
 
@@ -200,9 +199,9 @@ lang_mother_tidy
 ```
 
 
-> **Splitting code across lines**: In the code above, the call to the `pivot_longer` function is split across several lines.*
+> **Splitting code across lines**: *In the code above, the call to the `pivot_longer` function is split across several lines.*
 > *This is allowed and encouraged when programming in R when your code line gets too long*
-> *to read clearly. When doing this, it is important to end the line with a comma `,` so that R*
+> *to read clearly. About 80 characters is recommended and when doing this, it is important to end the line with a comma `,` so that R*
 > *knows the function should continue to the next line.*
 
 The data above is now tidy because all three criteria for tidy data have now been met:
@@ -285,6 +284,8 @@ lang_no_delimiter <- separate(lang_messy_longer,
 )
 lang_no_delimiter
 ```
+
+### Using `mutate` to create and modify columns
 
 You might notice in the table above the word `<chr>` appears beneath each of the column names. The word under the column name indicates the data type of each column. Here all of our variables are "character" data types. Recall, a character data type is a letter or a number surrounded by quotes. In the previous example, `most_at_home` and `most_at_work`  were `<dbl>` (double) (you can verify this by looking at the tables in the previous sections), which is a numeric data type. This change is due to the delimiter "/" when we read in this messy data set. R read the columns in as character types, and it stayed that way after we separated the columns. 
 
