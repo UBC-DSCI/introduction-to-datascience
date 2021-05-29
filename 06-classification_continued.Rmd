@@ -31,8 +31,9 @@ accurate predictions on data *not seen during training*. But then how can we
 evaluate our classifier without having to visit the hospital to collect more
 tumour images? 
 
-The trick is to split up the data set into a **training set** and **test set**,
-and only show the classifier the **training set** when building the classifier.
+The trick is to split up the data set into a **training set** and **test set**&mdash;as
+shown in Figure \@ref(fig:06-training-test)&mdash;and 
+only show the classifier the **training set** when building the classifier.
 Then to evaluate the accuracy of the classifier, we can use it to predict the
 labels (which we know) in the **test set**. If our predictions match the true
 labels for the observations in the **test set** very well, then we have some
@@ -51,10 +52,11 @@ How exactly can we assess how well our predictions match the true labels for
 the observations in the test set? One way we can do this is to calculate the
 **prediction accuracy**. This is the fraction of examples for which the
 classifier made the correct prediction. To calculate this we divide the number
-of correct predictions by the number of predictions made. Other measures for
-how well our classifier performed include *precision* and *recall*; these will
-not be discussed here, but you will encounter them in other more advanced
-courses on this topic. This process is illustrated below:
+of correct predictions by the number of predictions made. 
+This process is illustrated in Figure \@ref(fig:06-ML-paradigm-test).
+Note that there are other measures for how well classifiers perform, such as *precision* and *recall*; 
+these will not be discussed here, but you will likely encounter them in other more advanced
+courses on this topic. 
 
 ```{r 06-ML-paradigm-test, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Process for splitting the data and finding the prediction accuracy", fig.retina = 2, out.width = "800"}
 knitr::include_graphics("img/ML-paradigm-test.png")
@@ -62,9 +64,10 @@ knitr::include_graphics("img/ML-paradigm-test.png")
 
 In R, we can use the `tidymodels` library collection not only to perform K-nearest neighbour
 classification, but also to assess how well our classification worked. Let's
-start by loading the necessary libraries, reading in the breast cancer data
+work through an example of this process using the breast cancer dataset.
+We start by loading the necessary libraries, reading in the breast cancer data
 from the previous chapter, and making a quick scatter plot visualization of
-tumour cell concavity versus smoothness coloured by diagnosis.
+tumour cell concavity versus smoothness coloured by diagnosis in Figure \@ref(fig:06-precode).
 
 ```{r 06-precode, fig.height = 4, fig.width = 5, fig.cap="Scatterplot of tumour cell concavity versus smoothness coloured by diagnosis label"}
 # load packages
@@ -194,18 +197,100 @@ cancer_test_predictions %>%
   metrics(truth = Class, estimate = .pred_class)
 ```
 
-This shows that the accuracy of the classifier on the test data was 88%.
+```{r 06-accuracy-2, echo = FALSE, warning = FALSE}
+cancer_acc_1 <- cancer_test_predictions %>% 
+                metrics(truth = Class, estimate = .pred_class) %>% 
+                filter(.metric == 'accuracy')
+```
+
+This shows that the accuracy of the classifier on the test data 
+was `r round(100*cancer_acc_1$.estimate, 2)`%.
 We can also look at the *confusion matrix* for the classifier, which shows
 the table of predicted labels and correct labels, using the `conf_mat` function:
 
 ```{r 06-confusionmat}
-cancer_test_predictions %>%
-  conf_mat(truth = Class, estimate = .pred_class)
+confusion <- cancer_test_predictions %>%
+             conf_mat(truth = Class, estimate = .pred_class)
+confusion
 ```
 
-This says that the classifier labelled 43+82 = 125 observations correctly,
- 10 observations as benign when they were truly malignant,
-and 7 observations as malignant when they were truly benign. 
+```{r 06-confusionmat-2, echo = FALSE}
+confusionmt <- confusion %>% tidy()
+confu11 <- (confusionmt %>% filter(name == "cell_1_1"))$value
+confu12 <- (confusionmt %>% filter(name == "cell_1_2"))$value
+confu21 <- (confusionmt %>% filter(name == "cell_2_1"))$value
+confu22 <- (confusionmt %>% filter(name == "cell_2_2"))$value
+```
+
+This table shows that the classifier labelled 
+`r confu11`+`r confu22` = `r confu11+confu22` observations 
+correctly, `r confu21` observations as benign when they were truly malignant,
+and `r confu12` observations as malignant when they were truly benign. 
+
+**6. Critically analyze performance**
+
+We now know that the classifier was `r round(100*cancer_acc_1$.estimate,2)`% accurate
+on the test dataset. That sounds pretty good!...Wait, *is* it good? 
+Or do we need something higher?
+
+In general, what a *good* value for accuracy is depends on the application.
+On a task of predicting whether a tumour is benign or malignant
+for a type of tumour that is benign 99% of the time, it is very easy to
+obtain a 99% accuracy just by guessing benign for every observation. In this
+case, 99% accuracy is probably not good enough. And beyond just accuracy,
+sometimes the *kind* of mistake the classifier makes is important as well. In
+the previous example, it might be very bad for the classifier to predict
+"benign" when the true class is "malignant", as this might result in a patient
+not receiving appropriate medical attention. On the other hand, it might be
+less bad for the classifier to guess "malignant" when the true class is
+"benign", as the patient will then likely see a doctor who can provide an
+expert diagnosis. This is why it is important not only to look at accuracy, but
+also the confusion matrix.
+
+However, there is always an easy baseline that you can compare to for any
+classification problem: the *majority classifier*. The majority classifier
+*always* guesses the majority class label from the training data, regardless of
+what values the predictor variables take.  It helps to give you a sense for
+scale when considering accuracies. If the majority classifier obtains a 90%
+accuracy on a problem, then you might hope for your K-nearest neighbours
+classifier to do better than that. If your classifier provides a significant
+improvement upon the majority classifier, this means that at least your method
+is extracting some useful information from your predictor variables.  Be
+careful though: improving on the majority classifier does not *necessarily*
+mean the classifier is working well enough for your application. 
+
+As an example, in the breast cancer data, the proportions of benign and malignant
+observations in the training data are as follows:
+```{r 06-proportions}
+cancer_proportions <- cancer_train %>%
+                      group_by(Class) %>%
+                      summarize(n = n()) %>%
+                      mutate(percent = 100*n/nrow(cancer_train))
+cancer_proportions
+```
+```{r 06-proportions-2, echo = FALSE, warning = FALSE}
+cancer_propn_1 <- cancer_proportions %>%
+                filter(Class == 'B') %>%
+                select(percent)
+```
+
+Since the benign class represents the majority of the training data,
+the majority classifier would *always* predict that a new observation
+is benign. The estimated accuracy of the majority classifier is usually
+fairly close to the majority class proportion in the training data.
+In this case, we would suspect that the majority classifier will have 
+an accuracy of around `r round(cancer_propn_1[1,1], 2)`%.
+The K-nearest neighbours classifier we built does quite a bit better than this, 
+with an accuracy of `r round(100*cancer_acc_1$.estimate, 2)`%. 
+This means that from the perspective of accuracy,
+the K-nearest neighbours classifier improved quite a bit on the basic
+majority classifier. Hooray! But we still need to be cautious; in 
+this application, it is likely very important not to miss-diagnose any malignant tumours to avoid missing
+patients who actually need medical care. The confusion matrix above shows
+that the classifier does indeed miss-diagnose a non-negligible number malignant tumours as benign.
+Therefore, even though the accuracy improved upon the majority classifier,
+our critical analysis suggests that this classifier may not have appropriate performance
+for the application.
 
 ## Tuning the classifier
 
@@ -236,9 +321,12 @@ different train / validation splits, we'll get a better estimate of accuracy,
 which will lead to a better choice of the number of neighbours $K$ for the
 overall set of training data. 
 
-> **Note:** you might be wondering why we can't we use the multiple splits to test our final classifier after tuning is done. This is simply
-> because at the end of the day, we will produce a single classifier using our overall training data. If we do multiple train / test splits, we will
-> end up with multiple classifiers, each with their own accuracy evaluated on different test data.
+> **Note:** you might be wondering why we can't we use the multiple splits to
+> test our final classifier after tuning is done. This is simply because at the
+> end of the day, we will produce a single classifier using our overall
+> training data. If we do multiple train / test splits, we will end up with
+> multiple classifiers, each with their own accuracy evaluated on different
+> test data.
 
 Let's investigate this idea in R! In particular, we will use different seed
 values in the `set.seed` function to generate five different train / validation
@@ -295,14 +383,15 @@ validation set only a single time. The name for this strategy is called
 **cross-validation**.  In **cross-validation**, we split our **overall training
 data** into $C$ evenly-sized chunks, and then iteratively use $1$ chunk as the
 **validation set** and combine the remaining $C-1$ chunks 
-as the **training set**:
+as the **training set**. 
 
 
 ```{r 06-cv-image, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "5-fold cross validation", fig.retina = 2, out.width = "800"}
 knitr::include_graphics("img/cv.png")
 ```
 
-In the picture above, $C=5$ different chunks of the data set are used,
+This procedure is shown in Figure \@ref(fig:06-cv-image).
+Here, $C=5$ different chunks of the data set are used,
 resulting in 5 different choices for the **validation set**; we call this
 *5-fold* cross-validation. To do 5-fold cross-validation in R with `tidymodels`, we
 use another function: `vfold_cv`. This function splits our training data into
@@ -362,21 +451,24 @@ than 5-fold:
 ```{r 06-10-fold}
 cancer_vfold <- vfold_cv(cancer_train, v = 10, strata = Class)
 
-workflow() %>%
-  add_recipe(cancer_recipe) %>%
-  add_model(knn_spec) %>%
-  fit_resamples(resamples = cancer_vfold) %>%
-  collect_metrics()
+vfold_metrics <- workflow() %>%
+                  add_recipe(cancer_recipe) %>%
+                  add_model(knn_spec) %>%
+                  fit_resamples(resamples = cancer_vfold) %>%
+                  collect_metrics()
+vfold_metrics
 ```
 
 ### Parameter value selection
 
 Using 5- and 10-fold cross-validation, we have estimated that the prediction
-accuracy of our classifier is somewhere around 88%. Whether 88% is good or not
+accuracy of our classifier is somewhere around `r round(100*(vfold_metrics %>% filter(.metric == "accuracy"))$mean,2)`%. 
+Whether that is good or not
 depends entirely on the downstream application of the data analysis. In the
 present situation, we are trying to predict a tumour diagnosis, with expensive,
 damaging chemo/radiation therapy or patient death as potential consequences of
-misprediction. Hence, we'd like to do better than 88% for this application.  
+misprediction. Hence, we might like to 
+do better than `r round(100*(vfold_metrics %>% filter(.metric == "accuracy"))$mean,2)`% for this application.  
 
 In order to improve our classifier, we have one choice of parameter: the number of
 neighbours, $K$. Since cross-validation helps us evaluate the accuracy of our
@@ -404,8 +496,8 @@ knn_results <- workflow() %>%
 knn_results
 ```
 We can select the best value of the number of neighbours (i.e., the one that results
-in the highest classifier accuracy estimate) by plotting the accuracy versus $K$:
-```{r 06-find-k, fig.height = 4, fig.width = 5, fig.cap= "Plot of accuracy estimate versus number of neighbours"}
+in the highest classifier accuracy estimate) by plotting the accuracy versus $K$.
+```{r 06-find-k, fig.height = 4, fig.width = 5, fig.cap= "Plot of estimated accuracy versus the number of neighbours"}
 accuracies <- knn_results %>%
   filter(.metric == "accuracy")
 
@@ -415,27 +507,32 @@ accuracy_vs_k <- ggplot(accuracies, aes(x = neighbors, y = mean)) +
   labs(x = "Neighbors", y = "Accuracy Estimate")
 accuracy_vs_k
 ```
-
-This visualization suggests that $K = 7$ provides the highest accuracy.
+Figure \@ref(fig:06-find-k) suggests that setting the number of 
+neighbours to $K =$ `r (accuracies %>% arrange(desc(mean)) %>% head(1))$neighbors`
+provides the highest accuracy.
 But as you can see, there is no exact or perfect answer here; 
- any selection between $K = 3$ and $13$ would be reasonably justified, as all
+ any selection from $K = 2$ and $15$ would be reasonably justified, as all
 of these differ in classifier accuracy by less than 1%. Remember: the
 values you see on this plot are *estimates* of the true accuracy of our
-classifier. Although the $K=7$ value is higher than the others on this plot,
+classifier. Although the 
+$K =$ `r (accuracies %>% arrange(desc(mean)) %>% head(1))$neighbors` value is 
+higher than the others on this plot,
 that doesn't mean the classifier is actually more accurate with this parameter
 value! Generally, when selecting $K$ (and other parameters for other predictive
 models), we are looking for a value where:
 
 - we get roughly optimal accuracy, so that our model will likely be accurate
-- changing the value to a nearby one (e.g. from $K=7$ to 6 or 8) doesn't decrease accuracy too much, so that our choice is reliable in the presence of uncertainty
+- changing the value to a nearby one (e.g. adding or subtracting 1) doesn't decrease accuracy too much, so that our choice is reliable in the presence of uncertainty
 - the cost of training the model is not prohibitive (e.g., in our situation, if $K$ is too large, predicting becomes expensive!)
 
-### Under/overfitting
+### Under/Overfitting
 
-To build a bit more intuition, what happens if we keep increasing the number of neighbours $K$? In fact, the accuracy 
-actually starts to decrease! Rather than setting `grid = 10` and letting `tidymodels` decide what values of $K$ to try,
-let's specify the values explicitly by creating a data frame with a `neighbors` variable. 
-Take a look as the plot below as we vary $K$ from 1 to almost the number of observations in the data set:
+To build a bit more intuition, what happens if we keep increasing the number of
+neighbours $K$? In fact, the accuracy actually starts to decrease! Rather than
+setting `grid = 10` and letting `tidymodels` decide what values of $K$ to try,
+let's specify the values explicitly by creating a data frame with a `neighbors`
+variable. Figure \@ref(fig:06-lots-of-ks) shows a plot of estimated accuracy as 
+we vary $K$ from 1 to almost the number of observations in the data set.
 
 ```{r 06-lots-of-ks, fig.height = 4, fig.width = 5, fig.cap="Plot of accuracy estimate versus number of neighbours for many K values"}
 set.seed(1)
@@ -479,7 +576,8 @@ new data: if we had a different training set, the predictions would be
 completely different.  In general, if the model *is influenced too much* by the
 training data, it is said to **overfit** the data.
 
-You can see this effect in the plots below as we vary the number of neighbours $K$ in (1, 7, 20, 200):
+You can see these two effects in Figure \@ref(fig:06-decision-grid-K),
+which shows how the classifier changes as we set the number of neighbours $K$ to 1, 7, 20, and 200.
 
 <center>
 ```{r 06-decision-grid-K, echo = FALSE, fig.height = 7, fig.width = 10, fig.cap = "Effect of K in overfitting and underfitting"}
@@ -540,7 +638,7 @@ training observations. We can evaluate a classifier by splitting the data
 randomly into a training and test data set, using the training set to build the
 classifier, and using the test set to estimate its accuracy. To tune the
 classifier (e.g., select the K in K-nearest neighbours), we maximize accuracy
-estimates from cross-validation.
+estimates from cross-validation. This process is summarized in Figure \@ref(fig:06-overview).
 
 ```{r 06-overview, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Overview of K-nn classification", fig.retina = 2, out.width = "660"}
 knitr::include_graphics("img/train-test-overview.jpeg")
@@ -558,16 +656,16 @@ The overall workflow for performing K-nearest neighbour classification using `ti
 8. Evaluate the estimated accuracy of the classifier on the test set using the `predict` function.
 
 **Strengths:**
-
-1. Simple, intuitive algorithm
-2. Few assumptions about what the data must look like 
-3. Works for binary (two-class) and multi-class (> 2 classes) classification problems
+The K-nearest neighbours classifier:
+1. is a simple, intuitive algorithm
+2. requires few assumptions about what the data must look like 
+3. works for binary (two-class) and multi-class (more than 2 classes) classification problems
 
 **Weaknesses:**
-
-1. As the training data gets larger, K-nearest neighbours becomes very slow
-2. May not perform well with a large number of predictors
-3. Does not perform well when classes are imbalanced (when many more observations are in one of the classes compared to the others)
+The K-nearest neighbours classifier:
+1. becomes very slow as the training data gets larger
+2. may not perform well with a large number of predictors
+3. may not perform well when classes are imbalanced 
 
 ## Predictor variable selection
 
@@ -587,10 +685,9 @@ Let's take a look at an example where K-nearest neighbours performs
 worse when given more predictors to work with. Here we have modified
 the breast cancer data to include the variables `Smoothness` and `Concavity`,
 as well as irrelevant variables
-that
-we created ourselves using a random number generator.
-You will see from the scatter plot below with two example
-irrelevant variables `Irrelevant1`, `Irrelevant2` that
+that we created ourselves using a random number generator.
+Figure \@ref(fig:06-irrelevant-loaddata) shows a scatter plot with two of the 
+irrelevant variables&mdash;`Irrelevant1` and `Irrelevant2`&mdash;demonstrating that
 these variables have no meaningful relationship
 with the `Class` response variable.
 <center>
@@ -611,8 +708,13 @@ plot_irrelev
 Next, we build a sequence of K-NN classifiers that include both `Smoothness`
 and `Concavity` as predictor variables, but also increasingly many irrelevant
 variables (from 0 to 500 of them). Each model is tuned via 5-fold
-cross-validation. We show the plot of cross-validation accuracy estimate versus 
-the number of irrelevant predictors below.
+cross-validation. Figure \@ref(fig:06-performance-irrelevant-features)
+shows the estimated cross-validation accuracy versus 
+the number of irrelevant predictors.
+Once we add sufficiently many irrelevant predictor variables, our classifier
+does not do much better than just always guessing "benign", 
+ the most common class label in the data (63% of observations are benign).
+
 <center>
 ```{r 06-performance-irrelevant-features, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "600", fig.cap = "Effect of inclusion of irrelevant predictors"}
 set.seed(1)
@@ -668,13 +770,8 @@ plt_irrelevant_accuracies
 ```
 </center>
 
-Wow! Once we add sufficiently many irrelevant predictor variables, our classifier
-does not do much better than just always guessing "benign", 
- the most common class label in the data (63% of observations are benign).
-
 So then if we can't just use all of our variables as predictors without consideration, how 
-do we choose which variables we *should* use?  
-A simple method is to rely on your scientific understanding
+do we choose which variables we *should* use?  A simple method is to rely on your scientific understanding
 of the data to tell you which variables are not likely to be useful predictors. For example, in the cancer
 data that we have been studying, the `ID` variable is just a unique identifier for the observation.
 As it is not related to any measured property of the cells, the `ID` variable should therefore not be used
