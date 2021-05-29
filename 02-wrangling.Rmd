@@ -201,7 +201,7 @@ lang_mother_tidy
 
 > **Splitting code across lines**: *In the code above, the call to the `pivot_longer` function is split across several lines.*
 > *This is allowed and encouraged when programming in R when your code line gets too long*
-> *to read clearly. About 80 characters is recommended and when doing this, it is important to end the line with a comma `,` so that R*
+> *to read clearly. About 80 characters per line is recommended and when doing this, it is important to end the line with a comma `,` so that R*
 > *knows the function should continue to the next line.*
 
 The data above is now tidy because all three criteria for tidy data have now been met:
@@ -285,11 +285,21 @@ lang_no_delimiter <- separate(lang_messy_longer,
 lang_no_delimiter
 ```
 
+
 ### Using `mutate` to create and modify columns
 
 You might notice in the table above the word `<chr>` appears beneath each of the column names. The word under the column name indicates the data type of each column. Here all of our variables are "character" data types. Recall, a character data type is a letter or a number surrounded by quotes. In the previous example, `most_at_home` and `most_at_work`  were `<dbl>` (double) (you can verify this by looking at the tables in the previous sections), which is a numeric data type. This change is due to the delimiter "/" when we read in this messy data set. R read the columns in as character types, and it stayed that way after we separated the columns. 
 
 Here it makes sense for `region`, `category`, and `language` to be stored as a character type. However, if we want to apply any functions that treat the `most_at_home` and `most_at_work` columns as a number (e.g. finding the maximum of the column), it won't be possible to do if the variable is stored as a `character`. R has a variety of data types, but here we will use the function `mutate` to convert these two columns to a "numeric" data type. `mutate` is a function that will allow us to create a new variable in our data set. We specify the data set in the first argument, and in the proceeding arguments, we specify the function we want to apply (`as.numeric`) to which columns (`most_at_home`, `most_at_work`). Then we give the mutated variable a new name. Here we are naming the columns the same names ("most_at_home", "most_at_work"), but you can call these mutated variables anything you'd like. 
+
+`mutate` is useful for creating new columns in a data frame or transforming existing columns. Its general syntax is: 
+
+```{r img-mutate, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the mutate function", out.width="1100", fig.retina = 2}
+knitr::include_graphics("img/mutate_function.jpeg")
+```
+
+
+Below we use `mutate` to convert the columns `most_at_home` and `most_at_home` to numeric data types in the `lang_no_delimiter` data set as shown in figure \@ref(fig:img-mutate):
 
 ```{r}
 lang_no_delimiter <- mutate(lang_no_delimiter,
@@ -300,29 +310,83 @@ lang_no_delimiter
 ```
 Now we see `<dbl>` appears under our columns, `most_at_home` and `most_at_work`, indicating they are double data types (which is one of the sub-types of numeric)!
 
-Is this data now tidy? Well, if we recall the three criteria for tidy data:
+```{r , include = FALSE}
+census_popn <- 35151728
+number_most_home <- filter(lang_no_delimiter, language == "Afrikaans" & region == "Toronto") %>% 
+  pull(most_at_home)
+```
+
+We can see in the table that `r format(number_most_home, scientific = FALSE, big.mark = ",")` people reported speaking Afrikaans in Toronto as the language most spoken at home according to the 2016 Canadian census. What does this number mean to us? To understand this number, we need context. In particular, how many people were in Canada when this data was collected? From the 2016 Canadian census profile, the population was reported to be `r format(census_popn, scientific = FALSE, big.mark = ",")` people. The number of people who report that Afrikaans is their primary language at home is much more meaningful when we report it in this context. We can even go a step further and transform this count to a relative frequency or proportion. We can do this by dividing the number of people reporting a given language as their mother tongue by the number of people who live in Canada. For example, the proportion of people who reported that their primary language at home was Afrikaans in the 2016 Canadian census was `r format(round(number_most_home/census_popn, 8), scientific = FALSE, big.mark = ",")`.
+
+Below we use `mutate` to calculate the proportion of people reporting a given language as their primary language at home and work for all the languages in the `lang_no_delimiter` data set:
+```{r}
+mutated_can_lang <- mutate(lang_no_delimiter,
+                           most_at_home_proportion = most_at_home / 35151728, 
+                           most_at_work_proportion = most_at_work / 35151728)
+```
+
+Here we used a new data frame name (`mutated_can_lang`) and column names (`most_at_home_proportion`, `most_at_work_proportion`) to create a new data frame and new columns. But we could have used the existing data frame name (`lang_no_delimiter`) and column names, which would have written over our original data frame and column.
+
+### Using `select` to extract a range of columns
+
+Chapter 1 discussed two `tidyverse` functions: `select` and `filter` to select a single column and filter rows from a data frame. We will now learn more ways we can use these functions. Recall, the `select` function creates a subset of the *columns* of a data frame, while the `filter` subsets *rows* with specific values.
+
+We learned that we can use `select` to obtain a subset of the data frame with multiple column. We can also use `select` to obtain a subset of the data frame constructed from a range of columns. To do this, we use the colon (`:`) operator to denote the range. For example, to get all the columns in the `can_lang` data frame from `language` to `most_at_home` we pass `language:most_at_home` as the second argument to the `select` function.
+
+```{r}
+column_range <- select(mutated_can_lang, language:most_at_home)
+column_range
+```
+
+### Using `filter` to extract a single row
+
+Recall we can use the `filter` function to obtain the subset of rows with desired values from a data frame. Again, our first argument is the name of the data frame object, `mutated_can_lang`. The second argument is a logical statement to use when filtering the rows. Here, for example, we'll say that we are interested in rows where the category is "Official languages". We use the *equivalency operator* (`==`) to compare the values of the `category` column with the value `"Official languages"`. With these arguments, `filter` returns a data frame with all the columns of the input data frame but only the rows we asked for in our logical filter statement. 
+
+```{r}
+official_langs <- filter(mutated_can_lang, category == "Official languages")
+official_langs
+```
+
+
+```{r changing_the_units, include = FALSE}
+census_popn <- 35151728
+most_french <- filter(official_langs, region == "Montréal" & language == "French") %>% 
+  pull(most_at_home)
+```
+
+### Using `filter` to extract rows with values above or below a threshold
+
+We see that `r format(most_french, scientific = FALSE, big.mark = ",")` people reported speaking French in Montréal as their primary language at home. If we are interested in finding the languages in regions with higher numbers of people who speak it as their primary language at home than French in Montréal then we can create a filter to obtain rows where the value of `most_at_home` is greater than `r format(most_french, scientific = FALSE, big.mark = ",")`. In this case, we see that `filter` returns a data frame with only one row; this indicates that only one language in a region is spoken more often at home than French in Montréal.
+
+```{r}
+filter(official_langs, most_at_home > 2669195)
+```
+
+### Creating a visualization with tidy data
+
+Is this data set, `offical_langs`, now tidy? Well, if we recall the three criteria for tidy data:
 
 - each row is a single observation,
 - each column is a single variable, and
 - each value is a single cell.
 
-We can see that this data now satisfies all three criteria, making it easier to analyze.
-For example, we could visualize how many people speak each of Canada's two 
+```{r}
+official_langs
+```
+
+We can see that this data now satisfies all three criteria, making it easier to analyze. For example, we could visualize how many people speak each of Canada's two 
 official languages (English and French) as their primary language at home in 
-these 5 regions. To do this, we first need to filter the data set for the 
-rows that list the category as "Official languages", and then we can again use
+these 5 regions. We can use
 `ggplot` to create our data visualization. Here we create a bar chart to 
-represent the counts for each region, and colour the counts by language. 
+represent the proportions for each region, and colour the proportions by language. 
 
 ```{r 02-plot}
-official_langs <- filter(lang_no_delimiter, category == "Official languages")
-
-ggplot(official_langs, aes(x = region, y = most_at_work, fill = language)) +
+ggplot(official_langs, aes(x = region, y = most_at_home_proportion, fill = language)) +
   geom_bar(stat = "identity") +
   scale_color_manual(values = c("deepskyblue2", "firebrick1")) +
   xlab("Region") +
   scale_y_continuous(
-    name = "Number of Canadians reporting their primary language at home",
+    name = "Proportion of Canadians reporting their primary language at home",
     labels = scales::comma
   ) +
   coord_flip() + # making bars horizontal
@@ -335,74 +399,6 @@ From this visualization, we can see that in Calgary, Edmonton, Toronto and Vanco
 
 Is there only one shape for tidy data for a given data set? Not necessarily! It depends on the statistical question you are asking and what the variables are for that question. For tidy data, each variable should be its own column. So, just as it's essential to match your statistical question with the appropriate data analysis tool (classification, clustering, hypothesis testing, etc.). It's important to match your statistical question with the appropriate variables and ensure they are represented as individual columns to make the data tidy.
 
-
-
-## More ways to create subsets of data frames with `select` & `filter`
-
-Chapter 1 discussed two `tidyverse` functions: `select` and `filter` to select a single column and filter rows from a data frame. We will now learn more ways we can use these functions. Recall, the `select` function creates a subset of the *columns* of a data frame, while the `filter` subsets *rows* with specific values.
-
-### Using `select` to extract multiple columns
-
-We can use `select` to obtain a subset of the data frame with multiple columns. The first argument is the name of the data frame. Then we list all the columns we want as arguments separated by commas. Here we create a subset of three columns: language, mother tongue, and language spoken most often at home.
-
-```{r}
-three_columns <- select(can_lang, language, mother_tongue, most_at_home)
-three_columns
-```
-
-
-### Using `select` to extract a range of columns
-
-We can also use `select` to obtain a subset of the data frame constructed from a range of columns. To do this, we use the colon (`:`) operator to denote the range. For example, to get all the columns in the `can_lang` data frame from `language` to `most_at_home` we pass `language:most_at_home` as the second argument to the `select` function.
-
-```{r}
-column_range <- select(can_lang, language:most_at_home)
-column_range
-```
-
-### Using `filter` to extract a single row
-
-Recall we can use the `filter` function to obtain the subset of rows with desired values from a data frame. Again, our first argument is the name of the data frame object, `can_lang`. The second argument is a logical statement to use when filtering the rows. Here, for example, we'll say that we are interested in rows where the language is Mandarin. We use the *equivalency operator* (`==`) to compare the values of the `language` column with the value `"Mandarin"`. With these arguments, `filter` returns a data frame with all the columns of the input data frame but only the rows we asked for in our logical filter statement. 
-
-```{r}
-mandarin <- filter(can_lang, language == "Mandarin")
-mandarin
-```
-
-
-```{r changing_the_units, include = FALSE}
-mandarin_mother_tongue <- mandarin %>%
-  pull(mother_tongue)
-census_popn <- 35151728
-```
-### Using `filter` to extract rows with values above or below a threshold
-
-If we are interested in finding the languages with higher numbers of people who speak it as their mother tongue than Mandarin---which is  `r format(mandarin_mother_tongue, scientific = FALSE, big.mark = ",")` people ---then we can create a filter to obtain rows where the value of `mother_tongue` is greater than `r format(mandarin_mother_tongue, scientific = FALSE, big.mark = ",")`. In this case, we see that `filter` returns a data frame with two rows; this indicates that two languages are spoken more often as their mother tongue compared to Mandarin.
-
-```{r}
-spoke_often_at_home <- filter(can_lang, mother_tongue > 592040)
-spoke_often_at_home
-```
-
-
-### Using `mutate` to add columns or overwrite existing columns
-
-We found that `r format(mandarin_mother_tongue, scientific = FALSE, big.mark = ",")` 
-people reported that their mother tongue was Mandarin in the 2016 Canadian census. What does this number mean to us? To understand this number, we need context. In particular, how many people were in Canada when this data was collected? From the 2016 Canadian census profile, the population was reported to be `r format(census_popn, scientific = FALSE, big.mark = ",")` people. The number of people who report that Mandarin is their mother tongue is much more meaningful when we report it in this context. We can even go a step further and transform this count to a relative frequency or proportion. We can do this by dividing the number of people reporting a given language as their mother tongue by the number of people who live in Canada. For example, the proportion of people who reported that their mother tongue was Mandarin in the 2016 Canadian census was `r format(round(mandarin_mother_tongue/census_popn, 2), scientific = FALSE, big.mark = ",")`.
-
-
-We can use the `mutate` function in R to calculate the proportion for all of the languages in the 2016 Canadian census data set. `mutate` is useful for creating new columns in a data frame or transforming existing columns. Its general syntax is: 
-
-```{r img-mutate, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the mutate function", out.width="1100", fig.retina = 2}
-knitr::include_graphics("img/mutate_function.jpeg")
-```
-
-Below we use `mutate` to calculate the proportion of people reporting a given language as their mother tongue for all the languages in the `can_lang` data set as shown in figure \@ref(fig:img-mutate):
-```{r}
-mutated_can_lang <- mutate(can_lang, mother_tongue_proportion = mother_tongue / 35151728)
-```
-
-Here we used a new data frame name (`mutated_can_lang`) and column name (`mother_tongue_proportion`) to create a new data frame and a new column. But we could have used the existing data frame name (`can_lang`) and column name (`mother_tongue`), which would have written over our original data frame and column.
 
 
 ## Combining functions using the pipe operator, `%>%`:
