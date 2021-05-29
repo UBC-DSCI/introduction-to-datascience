@@ -3,20 +3,32 @@ This is the source for the Introduction to Data Science textbook.
 
 ## Setup and Build
 
+In order to build the book, you need to first install Docker 
+(instructions here: [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/)).
+Then obtain the build image via
+```
+docker pull ubcdsci/intro-to-ds
+```
+From this point you have two options:
+
+- use whatever text editor you want, and build the book on the command line
+- use RStudio to both edit and build the book
+
+We provide instructions for both methods here.
+
 ### Without RStudio
 
-You can just run 
+Once you are done editing, navigate to the repository root folder and run
 ```
 ./build.sh
 ``` 
-from the command line to build the book. This command automatically spawns a docker container
-with the `ubcdsci/intro-to-ds` image, and runs the script `build.R` from within the container.
+from the command line. This command automatically spawns a docker container
+with the `ubcdsci/intro-to-ds` image, runs the script `build.R` from within the container,
+and then stops the container.
 
 ### With RStudio
 
-1. Install Docker (instructions here: [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/))
-
-2. Run RStudio inside the `ubcdsci/intro-to-ds` docker container:
+1. Run RStudio inside the `ubcdsci/intro-to-ds` docker container:
     - in terminal, navigate to the root of this project repo
     - type the following in terminal:
 
