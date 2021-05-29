@@ -99,7 +99,7 @@ you want to trade off between training an accurate model (by using a larger
 training data set) and getting an accurate evaluation of its performance (by
 using a larger test data set).  Here, we will use 75% of the data for training,
 and 25% for testing.  To do this we will use the `initial_split` function, 
-specifying that `prop = 0.75` and the target variable is `Class`:
+specifying that `prop = 0.75` and the response variable is `Class`:
 ```{r 06-initial-split}
 set.seed(1)
 cancer_split <- initial_split(cancer, prop = 0.75, strata = Class)
@@ -548,9 +548,9 @@ knitr::include_graphics("img/train-test-overview.jpeg")
 
 The overall workflow for performing K-nearest neighbour classification using `tidymodels` is as follows:
 
-1. Use the `initial_split` function to split the data into a training and test set. Set the `strata` argument to the target variable. Put the test set aside for now.
+1. Use the `initial_split` function to split the data into a training and test set. Set the `strata` argument to the response variable. Put the test set aside for now.
 2. Use the `vfold_cv` function to split up the training data for cross validation.
-3. Create a `recipe` that specifies the target and predictor variables, as well as preprocessing steps for all variables. Pass the training data as the `data` argument of the recipe.
+3. Create a `recipe` that specifies the response and predictor variables, as well as preprocessing steps for all variables. Pass the training data as the `data` argument of the recipe.
 4. Create a `nearest_neighbors` model specification, with `neighbors = tune()`.
 5. Add the recipe and model specification to a `workflow()`, and use the `tune_grid` function on the train/validation splits to estimate the classifier accuracy for a range of $K$ values.
 6. Pick a value of $K$ that yields a high accuracy estimate that doesn't change much if you change $K$ to a nearby value.
@@ -571,11 +571,12 @@ The overall workflow for performing K-nearest neighbour classification using `ti
 
 ## Predictor variable selection
 
-> This section is not required reading for the remainder of the textbook.
+> *This section is not required reading for the remainder of the textbook. It is included for those readers 
+interested in learning how irrelevant variables can influence the performance of a classifier, and how to
+pick a subset of useful variables to include as predictors.*
 
 Another potentially important part of tuning your classifier is to choose which
-variables from your data will be treated as predictor variables. Based
-on your initial exploratory analysis, you can choose
+variables from your data will be treated as predictor variables. Technically, you can choose
 anything from using a single predictor variable to using every variable in your
 data; the K-nearest neighbours algorithm accepts any number of
 predictors. However, it is **not** the case that using more predictors always
@@ -585,12 +586,12 @@ actually negatively affect classifier performance.
 Let's take a look at an example where K-nearest neighbours performs
 worse when given more predictors to work with. Here we have modified
 the breast cancer data to include the variables `Smoothness` and `Concavity`,
-as well as 500 irrelevant variables
-named `Irrelevant1` to `Irrelevant500`, which
-we generated ourselves using a random number generator.
+as well as irrelevant variables
+that
+we created ourselves using a random number generator.
 You will see from the scatter plot below with two example
-variables `Irrelevant1`, `Irrelevant2` that
-these irrelevant variables have no meaningful relationship
+irrelevant variables `Irrelevant1`, `Irrelevant2` that
+these variables have no meaningful relationship
 with the `Class` response variable.
 <center>
 ```{r 06-irrelevant-loaddata, echo = FALSE, warning = FALSE, fig.cap = "A scatter showing two of the synthetic variables that were added to the data", fig.retina = 2, out.width = "600"}
@@ -608,7 +609,7 @@ plot_irrelev
 </center>
 
 Next, we build a sequence of K-NN classifiers that include both `Smoothness` and `Concavity` as predictor variables,
-but also increasingly many irrelevant variables. Each model is tuned via 5-fold cross-validation.
+but also increasingly many irrelevant variables (from 0 to 500 of them). Each model is tuned via 5-fold cross-validation.
 We show the plot of estimated accuracy versus the number of irrelevant predictors below.
 <center>
 ```{r 06-performance-irrelevant-features, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "600", fig.cap = "Effect of inclusion of irrelevant predictors"}
