@@ -56,16 +56,19 @@ its sale price? In particular, recall that we have come across a new 2,000-squar
 in purchasing with an advertised list price of
 \$350,000. Should we offer the list price, or is that over/undervalued?
 To answer this question using simple linear regression, we use the data we have
-to draw the straight line of best fit through our existing data points:
+to draw the straight line of best fit through our existing data points.
+The small subset of data as well as the line of best fit are shown
+in Figure \@ref(fig:08-lin-reg1).
 
 ```{r 08-lin-reg1, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square footage) with line of best fit for subset of the Sacramento housing data set"}
 library(tidyverse)
 library(gridExtra)
 library(caret)
 
-data(Sacramento)
-set.seed(1234)
-small_sacramento <- sample_n(Sacramento, size = 30)
+sacramento <- read_csv("data/sacramento.csv")
+
+set.seed(2)
+small_sacramento <- sample_n(sacramento, size = 30)
 
 small_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
   geom_point() +
@@ -87,7 +90,8 @@ where
 Therefore using the data to find the line of best fit is equivalent to finding coefficients 
 $\beta_0$ and $\beta_1$ that *parametrize* (correspond to) the line of best fit.
 Once we have the coefficients, we can use the equation above to evaluate the predicted price given the value we
-have for the predictor/explanatory variable&mdash;here 2,000 square feet. 
+have for the predictor/explanatory variable&mdash;here 2,000 square feet. Figure \@ref(fig:08-lin-reg2)
+demonstrates this process.
 
 ```{r 08-lin-reg2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square footage) with line of best fit and predicted price for a 2000 square foot home represented as a red dot"}
 small_model <- lm(price ~ sqft, data = small_sacramento)
@@ -105,8 +109,8 @@ By using simple linear regression on this small data set to predict the sale pri
 for a 2,000 square foot house, we get a predicted value of 
 \$`r format(round(prediction[[1]]), scientific = FALSE)`. But wait a minute...how
 exactly does simple linear regression choose the line of best fit? Many
-different lines could be drawn through the data points. We show some examples
-below:
+different lines could be drawn through the data points. 
+Some plausible examples are shown in Figure \@ref(fig:08-several-lines).
 
 ```{r 08-several-lines, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5,  fig.cap = "Scatter plot of price (USD) versus house size (square footage) with many possible lines that could be drawn through the data points"}
 
@@ -118,10 +122,10 @@ small_plot +
 
 Simple linear regression chooses the straight line of best fit by choosing
 the line that minimizes the **average** vertical distance between itself and
-each of the observed data points. From the lines shown above, that is the blue
-line. What exactly do we mean by the vertical distance between the predicted
-values (which fall along the line of best fit) and the observed data points?
-We illustrate these distances in the plot below with a red line:
+each of the observed data points in the training data. Figure \@ref(fig:08-verticalDisttoMin) illustrates 
+these vertical distances as red lines. Finally, to assess the predictive 
+accuracy of a simple linear regression model,
+we use RMSPE&mdash;the same measure of predictive performance we used with K-NN regression.
 
 ```{r 08-verticalDistToMin,  echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square footage) with the vertical distances between the predicted values and the observed data points"}
 small_sacramento <- small_sacramento %>%
@@ -130,8 +134,6 @@ small_plot +
   geom_segment(data = small_sacramento, aes(xend = sqft, yend = predicted), colour = "red")
 ```
 
-To assess the predictive accuracy of a simple linear regression model,
-we use RMSPE&mdash;the same measure of predictive performance we used with K-NN regression.
 
 ## Linear regression in R
 
@@ -181,8 +183,8 @@ Our coefficients are
 (intercept) $\beta_0=$ `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), scientific=FALSE)`
 and (slope) $\beta_1=$ `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`.
 This means that the equation of the line of best fit is
-$$\text{house price} = `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), scientific=FALSE)` + `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`\cdot (\text{house size}),$$
-and that the model predicts that houses 
+$$\text{house price} = `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), scientific=FALSE)` + `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`\cdot (\text{house size}).$$
+In other words, the model predicts that houses 
 start at \$`r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), scientific=FALSE)` for 0 square feet, and that
 every extra square foot increases the cost of the house by \$`r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`. Finally, we predict on the test data set to assess how well our model does:
 
@@ -206,11 +208,11 @@ To visualize the simple linear regression model, we can plot the predicted house
 price across all possible house sizes we might encounter superimposed on a scatter
 plot of the original housing price data. There is a plotting function in 
 the `tidyverse`, `geom_smooth`, that
-allows us to do this easily by adding a layer on our plot with the simple
+allows us to add a layer on our plot with the simple
 linear regression predicted line of best fit. The default for this adds a
 plausible range to this line that we are not interested in at this point, so to
 avoid plotting it, we provide the argument `se = FALSE` in our call to
-`geom_smooth`.
+`geom_smooth`. Figure \@ref(fig:08-lm-predict-all) displays the result.
 
 ```{r 08-lm-predict-all, fig.height = 4, fig.width = 5, warning = FALSE, message = FALSE, fig.cap = "Scatter plot of price (USD) versus house size (square footage) with line of best fit for complete Sacramento housing data set"}
 
@@ -240,7 +242,7 @@ regression, we can start to compare and contrast these methods as well as the
 predictions made by them. To start, let's look at the visualization of the
 simple linear regression model predictions for the Sacramento real estate data
 (predicting price from house size) and the "best" K-NN regression model
-obtained from the same problem:
+obtained from the same problem, shown in Figure \@ref(fig:08-compareRegression).
 
 ```{r 08-compareRegression, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 4, fig.width = 10, fig.cap = "Comparison of simple linear regression and K-NN regression"}
 set.seed(1234)
@@ -295,7 +297,7 @@ lm_plot_final <- lm_plot_final +
 grid.arrange(lm_plot_final, knn_plot_final, ncol = 2)
 ```
 
-What differences do we observe from the visualization above? One obvious
+What differences do we observe in Figure \@ref(fig:08-compareRegression)? One obvious
 difference is the shape of the blue lines. In simple linear regression we are
 restricted to a straight line, whereas in K-NN regression our line is much more
 flexible and can be quite wiggly. But there is a major interpretability advantage in limiting the
@@ -319,8 +321,8 @@ set. On such a data set, K-NN regression may fare better. Additionally, there
 are other types of regression you can learn about in future courses that may do
 even better at predicting with such data.
 
-How do these two models compare on the Sacramento house prices data set? On 
-the visualizations above we also printed the RMPSE as calculated from 
+How do these two models compare on the Sacramento house prices data set? In
+Figure \@ref(fig:08-compareRegression), we also printed the RMPSE as calculated from 
 predicting on the test data set that was not used to train/fit the models. The RMPSE for the simple linear
 regression model is slightly lower than the RMPSE for the K-NN regression model.
 Considering that the simple linear regression model is also more interpretable,
@@ -378,7 +380,8 @@ lm_mult_test_results <- lm_fit %>%
 lm_mult_test_results
 ```
 
-In the case of two predictors, our linear regression creates a *plane* of best fit, shown below:
+In the case of two predictors, our linear regression creates a *plane* of best fit, as
+shown in Figure \@ref(fig:08-assessFinal-multi).
 
 ```{r 08-3DlinReg, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Simple linear regression model’s predictions represented as a plane overlaid on top of the data using three predictors (price, house size, and the number of bedrooms)"}
 library(plotly)
