@@ -96,7 +96,7 @@ data that we are interested in are `sqft` (house size, in livable square feet)
 and `price` (house price, in US dollars (USD)).  The first step is to visualize
 the data as a scatter plot where we place the predictor/explanatory variable
 (house size) on the x-axis, and we place the target/response variable that we
-want to predict (price) on the y-axis:
+want to predict (price) on the y-axis.
 
 ```{r 07-edaRegr, message = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square footage)"}
 eda <- ggplot(sacramento, aes(x = sqft, y = price)) +
@@ -106,8 +106,9 @@ eda <- ggplot(sacramento, aes(x = sqft, y = price)) +
   scale_y_continuous(labels = dollar_format())
 eda
 ```
-
-Based on the visualization above, we can see that in Sacramento, CA, as the
+ 
+The plot is shown in Figure \@ref(fig:07-edaRegr).
+We can see that in Sacramento, CA, as the
 size of a house increases, so does its sale price. Thus, we can reason that we
 may be able to use the size of a not-yet-sold house (for which we don't know
 the sale price) to predict its final sale price. Note that we do not suggest here
@@ -132,7 +133,7 @@ This function takes two arguments:
 2. `size` (the number of observations/rows to be randomly selected/sampled)
 
 ```{r 07-sacramento}
-set.seed(1234)
+set.seed(1)
 small_sacramento <- sample_n(sacramento, size = 30)
 ```
 
@@ -141,7 +142,8 @@ interested in purchasing, with an advertised list price of \$350,000. Should we
 offer to pay the asking price for this house, or is it overpriced and we should
 offer less? Absent any other information, we can get a sense for a good answer
 to this question by using the data we have to predict the sale price given the
-sale prices we have already observed. But in the plot below, we have no
+sale prices we have already observed. But in Figure \ref@(fig:07-small-eda-regr),
+you can see that we have no
 observations of a house of size *exactly* 2000 square feet. How can we predict
 the price? 
 
@@ -158,7 +160,7 @@ small_plot
 We will employ the same intuition from the classification chapter, and use the
 neighbouring points to the new point of interest to suggest/predict what its
 price should be. For the example above, we find and label the 5 nearest
-neighbours to our observation of a house that is 2000 square feet:
+neighbours to our observation of a house that is 2000 square feet.
 
 ```{r 07-find-k3}
 nearest_neighbours <- small_sacramento %>%
@@ -178,10 +180,13 @@ nn_plot <- small_plot +
 nn_plot
 ```
 
-Now that we have the 5 nearest neighbours (in terms of house size) to our new
-2,000 square-foot house of interest, we can use their values to predict a
+Figure \@ref(fig:07-knn3-example) illustrates the difference between the house sizes
+of the 5 nearest neighbours (in terms of house size) to our new
+2,000 square-foot house of interest. Now that we have obtained these nearest neighbours, 
+we can use their values to predict a
 selling price for the new home.  Specifically, we can take the mean (or
-average) of these 5 values as our predicted value.
+average) of these 5 values as our predicted value, as illustrated by
+the red point in Figure \@ref(fig:07-predictedViz-knn).
 
 ```{r 07-predicted-knn}
 prediction <- nearest_neighbours %>%
@@ -310,7 +315,8 @@ Here we can see that the smallest RMSPE occurs when $K =$ `r sacr_min %>% pull(n
 
 ## Underfitting and overfitting
 Similar to the setting of classification, by setting the number of neighbours
-to be too small or too large, we cause the RMSPE to increase:
+to be too small or too large, we cause the RMSPE to increase, as shown in
+Figure \@ref(fig:07-choose-k-knn-plot).  What is happening here? 
 
 ```{r 07-choose-k-knn-plot, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Effect of the number of neighbours on the RMSPE"} 
 sacr_results <- sacr_results %>%
@@ -324,12 +330,12 @@ sacr_tunek_plot <- ggplot(sacr_results, aes(x = neighbors, y = mean)) +
 sacr_tunek_plot
 ```
 
-What is happening here? To visualize the effect of different settings of $K$ on the
-regression model, we will plot the predicted values for house price from
-our K-NN regression models for 6 different values for $K$.  For each model, we
-predict a price for every possible home size across the range of home sizes we
+Figure \@ref(fig:07-howK) visualizes the effect of different settings of $K$ on the
+regression model. Each plot shows the predicted values for house price from
+our K-NN regression model for 6 different values for $K$: 1, 3, `r kmin`, 41, 250, and 450.
+For each model, we predict a price for every possible home size across the range of home sizes we
 observed in the data set (here 500 to 4250 square feet) and we plot the
-predicted prices as a blue line:
+predicted prices as a blue line.
 
 ```{r 07-howK, echo = FALSE, fig.height = 12, fig.width = 10,fig.cap = "Predicted values for house price (represented as a blue line) from K-NN regression models for six different values for $K$"}
 kmin <- sacr_min %>% pull(neighbors)
@@ -362,49 +368,49 @@ for (i in 1:6) {
 grid.arrange(grobs = plots, ncol = 2)
 ```
 
-Based on the plots above, we see that when $K$ = 1, the blue line runs perfectly
+Figure \@ref(fig:07-howK) shows that when $K$ = 1, the blue line runs perfectly
 through almost all of our training observations. This happens because our
-predicted values for a given region depend on just a single observation. A
-model like this has high variance and low bias (intuitively, it provides unreliable
-predictions). It has high variance because
-the flexible blue line follows the training observations very closely, and if
-we were to change any one of the training observation data points we would
-change the flexible blue line quite a lot. This means that the blue line
-matches the data we happen to have in this training data set, however, if we
+predicted values for a given region depend on just a single observation. 
+Since the flexible blue line follows the training observations very closely, if
+we were to change any one of the training observation data points, we would
+change the flexible blue line quite a lot. This means that if we
 were to collect another training data set from the Sacramento real estate
-market it likely wouldn't match those observations as well. Another term 
-that we use to collectively describe this phenomenon is *overfitting*.
+market it likely wouldn't match those observations as well. Recall from the classification
+chapters that this behaviour is called *overfitting*; we use this same term 
+in the context of regression. We also sometimes say that the predictions have
+*high variance*, because they *vary* a lot when you change the data a little bit.
 
-What about the plot where $K$ is quite large, say $K$ = 450, for example? When
-$K$ = 450 for this data set, the blue line is extremely smooth, and almost
+What about the plot in Figure \@ref(fig:07-howK) where $K$ is quite large, say, $K$ = 450? 
+In this case  the blue line is extremely smooth, and almost
 flat. This happens because our predicted values for a given x value (here home
-size), depend on many many (450) neighbouring observations. A model
-like this has low variance and high bias (intuitively, it provides very reliable,
-but generally very inaccurate predictions). It has low variance because the
-smooth, inflexible blue line does not follow the training observations very
-closely, and if we were to change any one of the training observation data
-points it really wouldn't affect the shape of the smooth blue line at all. This
-means that although the blue line matches does not match the data we happen to
+size), depend on many many (450) neighbouring observations. 
+In contrast to the $K=1$ example, 
+the smooth, inflexible blue line does not follow the training observations very
+closely, and changing a single training data point
+will likely not change the blue line very much.
+This means that although the blue line matches does not match the data we happen to
 have in this particular training data set perfectly, if we were to collect
 another training data set from the Sacramento real estate market it likely
-would match those observations equally as well as it matches those in this
-training data set.  Another term that
-we use to collectively describe this kind of model is *underfitting*. 
+would match those observations equally poorly. Recall from the classification
+chapters that this behaviour is called *underfitting*; we again use this same
+term in the context of regression. We also sometimes say that the predictions
+have *low variance*, because they don't *vary* too much when you change the 
+data a little bit.
 
 Ideally, what we want is neither of the two situations discussed above. Instead,
 we would like a model with low variance (so that it will transfer/generalize
 well to other data sets, and isn't too dependent on the
-observations that happen to be in the training set) **and** low bias
+observations that happen to be in the training set) **and** low error on the training data
 (where the model does not completely ignore our training data). If we explore 
 the other values for $K$, in particular $K$ = `r sacr_min %>% pull(neighbors)`
 (as suggested by cross-validation),
-we can see it has a lower bias than our model with a very high $K$ (e.g., 450),
+we can see it has a lower training data error than our model with a very high $K$ (e.g., 450),
 and thus the model/predicted values better match the actual observed values
 than the high $K$ model. Additionally, it has lower variance than our model
 with a very low $K$ (e.g., 1) and thus it should better transer/generalize to
 other data sets compared to the low $K$ model. All of this is similar to how
-the choice of $K$ affects K-NN classification (discussed in the previous
-chapter). 
+the choice of $K$ affects K-NN classification, as discussed in the previous
+chapter. 
 
 ## Evaluating on the test set
 
@@ -452,12 +458,12 @@ generalizing well to a new data set it has never seen before. In future courses
 on statistical/machine learning, you will learn more about how to interpret RMSPE
 from testing data and other ways to assess models.
 
-Finally, what does our model look like when we predict across all possible
-house sizes we might encounter in the Sacramento area? We plotted it above
-where we explored how $k$ affects K-NN regression, but we show it again now,
-along with the code that generated it:
+Finally, Figure \@ref(fig:07-predict-all) shows the predictions that our final model makes across
+all house sizes we might encounter in the Sacramento area. You have already seen a few
+plots like this in this chapter; but here we also provide the code that generated it
+as a learning challenge.
 
-```{r 07-predict-all, fig.height = 4, fig.width = 5, fig.cap = "Predicted values for house price (represented as a blue line) for K-NN regression model with $K = 14$"}
+```{r 07-predict-all, fig.height = 4, fig.width = 5, fig.cap = "Predicted values of house price (blue line) for the final K-NN regression model"}
 set.seed(1234)
 sacr_preds <- sacr_fit %>%
   predict(sacramento_train) %>%
@@ -478,16 +484,21 @@ plot_final
 
 As with K-NN classification (or any prediction algorithm for that manner), K-NN regression has both strengths and weaknesses. Some are listed here:
 
-**Strengths of K-NN regression**
+**Strengths:**
 
-1. Simple and easy to understand
-2. No assumptions about what the data must look like 
-3. Works well with non-linear relationships (i.e., if the relationship is not a straight line)
+K-nearest neighbours regression:
 
-**Limitations of K-NN regression**
+1. is simple and easy to understand
+2. requires few assumptions about what the data must look like 
+3. works well with non-linear relationships (i.e., if the relationship is not a straight line)
 
-1. As data gets bigger and bigger, K-NN gets slower and slower, quite quickly 2. Does not perform well with a large number of predictors unless the size of the training set is exponentially larger 
-3. Does not predict well beyond the range of values input in your training data
+**Weaknesses:**
+
+K-nearest neighbours regression:
+
+1. becomes very slow as the training data gets larger
+2. may not perform well with a large number of predictors
+3. may not predict well beyond the range of values input in your training data
 
 ## Multivariate K-NN regression
 
@@ -515,7 +526,7 @@ that we are trying to predict.
 It is always a good practice to do exploratory data analysis, such as
 visualizing the data, before we start modeling the data. Thus the first thing
 we will do is use ggpairs (from the `GGally` package) to plot all the variables
-we are interested in using in our analyses:
+we are interested in using in our analyses.
 
 ```{r 07-ggpairs, fig.height = 5, fig.width = 6, fig.cap = "Scatterplots of each pair of variables (price, house size, and the number of bedrooms) are displayed in the figure's bottom left corner. Correlation coefficients are shown in the top right corner. The distributions of price, house size and number of bedrooms are each shown along the diagonal."}
 library(GGally)
@@ -525,7 +536,14 @@ plot_pairs <- sacramento %>%
 plot_pairs
 ```
 
-From this we can see that generally, as both house size and number of bedrooms increase, so does price. Does adding the number of bedrooms to our model improve our ability to predict house price? To answer that question, we will have to come up with the test error for a K-NN regression model using house size and number of bedrooms, and then we can compare it to the test error for the model we previously came up with that only used house size to see if it is smaller (decreased test error indicates increased prediction quality). Let's do that now!
+Figure \@ref(fig:07-ggpairs) shows that generally, as both house size and
+number of bedrooms increase, so does price. Does adding the number of bedrooms
+to our model improve our ability to predict house price? To answer that
+question, we will have to estimate the test error for a K-NN regression
+model using house size and number of bedrooms, and then we can compare it to
+the test error for the model we previously came up with that only used house
+size to see if it is smaller (decreased test error indicates increased
+prediction quality). Let's do that now!
 
 First we'll build a new model specification and recipe for the analysis. Note that
 we use the formula `price ~ sqft + beds` to denote that we have two predictors,
@@ -553,7 +571,6 @@ sacr_k <- workflow() %>%
 sacr_k
 ```
 Here we see that the smallest RMSPE occurs when $K =$ `r sacr_k`.
-
 Now that we have chosen $K$, we need to re-train the model on the entire
 training data set, and after that we can use that model to predict
 on the test data to get our test error. 
@@ -575,7 +592,7 @@ knn_mult_mets <- metrics(knn_mult_preds, truth = price, estimate = .pred)
 knn_mult_mets
 ```
 This time when we performed K-NN regression on the same data set, but also
-included number of bedrooms as a predictor we obtained a RMSPE test error 
+included number of bedrooms as a predictor, we obtained a RMSPE test error 
 of `r format(round(knn_mult_mets %>% filter(.metric == 'rmse') %>% pull(.estimate)), scientific=FALSE)`.
 This compares to a RMSPE test error 
 of  `r format(round(sacr_summary %>% filter(.metric == 'rmse') %>% pull(.estimate)), scientific=FALSE)`
@@ -583,9 +600,9 @@ when we used only house size as the
 single predictor. Thus in this case, we did not improve the model 
 by a large amount by adding this additional predictor.
 
-We can also visualize the model's predictions overlaid on top of the data. This time the predictions
-will be a surface in 3-D space, instead of a line in 2-D space, as we have 2
-predictors instead of 1. 
+Figure \@ref(fig:07-knn-mult-viz) visualizes the model's predictions overlaid on top of the data. This 
+time the predictions are a surface in 3-D space, instead of a line in 2-D space, as we have 2
+predictors instead of 1.  
 ```{r 07-knn-mult-viz, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "K-NN regression model’s predictions represented as a surface in 3-D space overlaid on top of the data using three predictors (price, house size, and the number of bedrooms)"}
 library(plotly)
 
@@ -620,9 +637,9 @@ plot_ly() %>%
 ```
 
 We can see that the predictions in this case, where we have 2 predictors, form
-a surface instead of a line. Because the newly added predictor, number of
-bedrooms, is correlated with price (USD) (meaning as price changes, so does
-number of bedrooms) and not totally determined by house size (our other predictor),
+a surface instead of a line. Because the newly added predictor (number of bedrooms) is 
+related to price (as price changes, so does number of bedrooms)
+and is not totally determined by house size (our other predictor),
 we get additional and useful information for making our
 predictions. For example, in this model we would predict that the cost of a
 house with a size of 2,500 square feet generally increases slightly as the number
