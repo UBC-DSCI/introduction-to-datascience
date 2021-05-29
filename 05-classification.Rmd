@@ -21,7 +21,7 @@ predictions from our classifier are, as well as how to improve our classifier
 - Recognize situations where a classifier would be appropriate for making predictions
 - Describe what a training data set is and how it is used in classification
 - Interpret the output of a classifier
-- Compute, by hand, the straight-line (Euclidean) distance between points on a graph when there are two explanatory variables/predictors
+- Compute, by hand, the straight-line (Euclidean) distance between points on a graph when there are two predictor variables
 - Explain the K-nearest neighbour classification algorithm
 - Perform K-nearest neighbour classification in R using `tidymodels`  
 - Explain why one should center, scale, and balance data in predictive modelling
@@ -67,7 +67,8 @@ In this chapter and the next, we will study a data set of
 [digitized breast cancer image features](http://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29),
 created by Dr. William H. Wolberg, W. Nick Street, and Olvi L. Mangasarian at
 the University of Wisconsin, Madison. Each row in the data set represents an
-image of a tumour sample, including the diagnosis (benign or malignant) and
+image of a tumour sample&mdash;such as the one shown in Figure \@ref(fig:05-bc-cells)&mdash;including 
+the diagnosis (benign or malignant) and
 several other measurements (e.g., nucleus texture, perimeter, area, etc.).
 Diagnosis for each image was conducted by physicians. 
 
@@ -84,6 +85,10 @@ surrounding tissue and spread into nearby organs where they can cause serious
 damage ([learn more about cancer here](https://www.worldwidecancerresearch.org/who-we-are/cancer-basics/)).
 Thus, it is important to quickly and accurately diagnose the tumour type to
 guide patient treatment.
+
+```{r 05-bc-cells, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "A malignant breast fine needle aspiration image. [Source](https://pubsonline.informs.org/doi/abs/10.1287/opre.43.4.570)", fig.retina = 2, out.width="400"}
+knitr::include_graphics("img/malignant_cancer.png")
+```
 
 **Loading the data**
 
@@ -116,15 +121,14 @@ Breast tumours can be diagnosed by performing a *biopsy*, a process where
 tissue is removed from the body and examined for the presence of disease.
 Traditionally these procedures were quite invasive; modern methods such as fine
 needle asipiration, used to collect the present data set, extract only a small
-amount of tissue and are less invasive. Based on a digital image of each breast
-tissue sample collected for this data set, 10 different variables were measured
-for each cell nucleus in the image (3-12 below), and then the mean 
+amount of tissue and are less invasive. After taking a digital image of the breast
+tissue sample&mdash;such as the one in Figure \@ref(fig:05-bc-cells)&mdash;10 
+different variables (numbers 3-12 below) were measured for each cell nucleus in the image, and then the mean 
  for each variable across the nuclei was recorded. As part of the
 data preparation, these values have been *scaled*; we will discuss what this
 means and why we do it later in this chapter. Each image additionally was given
 a unique ID and a diagnosis for malignance by a physician.  Therefore, the
-total set of variables per image in this data set are:
-
+total set of variables per image in this data set is:
 
 1. ID number 
 2. Class: the diagnosis of **M**alignant or **B**enign
@@ -136,12 +140,9 @@ total set of variables per image in this data set are:
 8. Compactness: the ratio of squared perimeter and area
 9. Concavity: severity of concave portions of the contour 
 10. Concave Points: the number of concave portions of the contour
-11. Symmetry 
-12. Fractal Dimension 
+11. Symmetry: how similar the nucleus is when mirrored 
+12. Fractal Dimension: a measurement of how "rough" the perimeter is 
 
-```{r 05-bc-cells, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "A malignant breast fine needle aspiration image. [Source](https://pubsonline.informs.org/doi/abs/10.1287/opre.43.4.570)", fig.retina = 2, out.width="400"}
-knitr::include_graphics("img/malignant_cancer.png")
-```
 
 Below we use `glimpse` to preview the data frame. This function can make it easier to inspect the data when we have a lot of columns:
 
@@ -199,7 +200,7 @@ the `scale_color_manual` function. We also make the category labels ("B" and
 "M") more readable by changing them to "Benign" and "Malignant" using the
 `labels` argument.
 
-```{r 05-scatter, fig.height = 4, fig.width = 5, fig.cap= "Scatterplot of concavity versus perimeter coloured by diagnosis label"}
+```{r 05-scatter, fig.height = 4, fig.width = 5, fig.cap= "Scatter plot of concavity versus perimeter coloured by diagnosis label"}
 # colour palette
 cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")
 
@@ -211,7 +212,7 @@ perim_concav <- cancer %>%
 perim_concav
 ```
 
-In this visualization, we can see that malignant observations typically fall in
+In Figure \@ref(fig:05-scatter), we can see that malignant observations typically fall in
 the the upper right-hand corner of the plot area. By contrast, benign
 observations typically fall in lower left-hand corner of the plot. Suppose we
 obtain a new observation not in the current data set that has all the variables
@@ -267,25 +268,25 @@ $K$ for us. We will cover how to choose $K$ ourselves in the next chapter.
 
 To illustrate the concept of K-nearest neighbours classification, we 
 will walk through an example.  Suppose we have a
-new observation, with perimeter of `r new_point[1]` and concavity of `r new_point[2]` 
-(labelled in red on the scatterplot), whose diagnosis "Class" is
-unknown.
+new observation, with perimeter of `r new_point[1]` and concavity of `r new_point[2]`, whose 
+diagnosis "Class" is unknown. This new observation is the red scatter point in
+Figure \@ref(fig:05-knn-1).
 
 
-```{r 05-knn-1, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatterplot of concavity versus perimeter with new observation labelled in red"}
+```{r 05-knn-1, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with new observation labelled in red"}
 perim_concav +
   geom_point(aes(x = new_point[1], y = new_point[2]), color = cbPalette[6], size = 2.5)
 ```
 </center>
 
-We see that the nearest point to this new observation is **malignant** and
+Figure \@ref(fig:05-knn-2) shows that the nearest point to this new observation is **malignant** and
 located at the coordinates (`r round(neighbours[1, c(attrs[1], attrs[2])],
 1)`). The idea here is that if a point is close to another in the scatterplot,
 then the perimeter and concavity values are similar, and so we may expect that
 they would have the same diagnosis. 
 
 
-```{r 05-knn-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatterplot of concavity versus perimeter where the nearest neighbour to the new observation is malignant"}
+```{r 05-knn-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter, with malignant nearest neighbour to a new observation highlighted"}
 perim_concav + geom_point(aes(x = new_point[1], y = new_point[2]),
   color = cbPalette[6],
   size = 2.5
@@ -307,14 +308,14 @@ neighbours <- cancer[order(my_distances$Distance), ]
 ```
 
 Suppose we have another new observation with perimeter `r new_point[1]` and
-concavity of `r new_point[2]`. Looking at the scatterplot below, how would you
+concavity of `r new_point[2]`. Looking at the scatterplot in Figure \@ref(fig:05-knn-4), how would you
 classify this red observation? The nearest neighbour to this new point is a
 **benign** observation at (`r round(neighbours[1, c(attrs[1], attrs[2])], 1)`).
 Does this seem like the right prediction to make? Probably not, if you consider
 the other nearby points...
 
 
-```{r 05-knn-4, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatterplot of concavity versus perimeter where the nearest neighbour to this new observation is benign"}
+```{r 05-knn-4, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter, with benign nearest neighbour to a new observation highlighted"}
 perim_concav + geom_point(aes(x = new_point[1], y = new_point[2]),
   color = cbPalette[6],
   size = 2.5
@@ -331,14 +332,14 @@ perim_concav + geom_point(aes(x = new_point[1], y = new_point[2]),
 So instead of just using the one nearest neighbour, we can consider several
 neighbouring points, say $K = 3$, that are closest to the new red observation
 to predict its diagnosis class. Among those 3 closest points, we use the
-*majority class* as our prediction for the new observation. In this case, we
+*majority class* as our prediction for the new observation. As shown in Figure \@ref(fig:05-knn-5), we
 see that the diagnoses of 2 of the 3 nearest neighbours to our new observation
 are malignant. Therefore we take majority vote and classify our new red
 observation as malignant. 
 <!-- For our red observation at (`r new_point`), the nearest points are: (`r round(neighbours[1, c(attrs[1], attrs[2])], 1)`), (`r round(neighbours[2,  c(attrs[1], attrs[2])],1)`), and (`r round(neighbours[3, c(attrs[1], attrs[2])],1)`). -->
 
 
-```{r 05-knn-5, echo =  FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatterplot of concavity versus perimeter with three nearest neighbours"}
+```{r 05-knn-5, echo =  FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with three nearest neighbours"}
 perim_concav + geom_point(aes(x = new_point[1], y = new_point[2]),
   color = cbPalette[6],
   size = 2.5
@@ -368,8 +369,10 @@ next chapter.
 
 **Distance between points** 
 
-How do we decide which points are the $K$ "nearest" to our new observation? We
-can compute the distance between any pair of points using the following
+We decide which points are the $K$ "nearest" to our new observation
+using the *straight-line distance* (we will often just refer to this as *distance*). 
+The straight-line distance between any pair of points $(x_a, y_a)$ 
+and $(x_b, y_b)$ on the x-y plane can be computed using the following
 formula: 
 
 $$\mathrm{Distance} = \sqrt{(x_a -x_b)^2 + (y_a - y_b)^2}$$
@@ -377,15 +380,18 @@ $$\mathrm{Distance} = \sqrt{(x_a -x_b)^2 + (y_a - y_b)^2}$$
 new_point <- c(0, 3.5)
 ```
 
-> This formula -- sometimes called the *Euclidean distance* -- is simply the straight line distance between two points on the x-y plane with coordinates $(x_a, y_a)$ and $(x_b, y_b)$.
-
-Suppose we want to classify a new observation with perimeter of `r new_point[1]` and 
-concavity of `r new_point[2]`. Let's calculate the distances
+To find the $K$ nearest neighbours to our new observation, we compute the distance
+to each observation in our training data, and take the $K$ observations corresponding to the
+$K$ *smallest* distance values. For example, suppose we want to classify a new 
+observation with perimeter of `r new_point[1]` and 
+concavity of `r new_point[2]`, shown in \@ref(fig:05-multiknn-1). Let's calculate the distances
 between our new point and each of the observations in the training set to find
-the $K=5$ observations in the training data that are nearest to our new point. 
+the $K=5$ training observations that are nearest to our new point. 
+You will see in the `mutate` step below, we compute the straight-line
+distance using the formula: we square the differences between the two observations' perimeter 
+and concavity coordinates, add the squared differences, and then take the square root.
 
-
-```{r 05-multiknn-1, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatterplot of concavity versus perimeter with new observation labelled in red"}
+```{r 05-multiknn-1, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with new observation labelled in red"}
 perim_concav <- cancer %>%
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
   geom_point(alpha = 0.5) +
@@ -409,12 +415,32 @@ cancer %>%
   slice(1:5) # subset the first 5 rows
 ```
 
-From this, we see that 3 of the 5 nearest neighbours to our new observation are
-malignant so classify our new observation as malignant. We circle those 5 in
-the plot below:
+Below we show in mathematical detail how the `mutate` step was used to compute the `dist_from_new` 
+variable (the distance to the new observation) for each of the 5 nearest neighbours in the training
+data.
 
 
-```{r 05-multiknn-3, echo = FALSE, fig.cap="Scatterplot of concavity versus perimeter with 5 nearest neighbours circled"}
+```{r 05-multiknn-4, echo = FALSE}
+my_distances <- table_with_distances(cancer[, attrs], new_point)
+neighbours <- my_distances[order(my_distances$Distance), ]
+k <- 5
+tab <- data.frame(neighbours[1:k, ], cancer[order(my_distances$Distance), ][1:k, c("ID", "Class")])
+```
+
+|Perimeter | Concavity | Distance          | Class          |
+ |----------------- | -----------------    | ---------------| ----------------- |
+| `r round(tab[1,1],2) `              	| `r round(tab[1,2],2) `             |$\sqrt{0  - 0.241)^2 + (3.5 - 2.65)^2}=$ `r round(neighbours[1, "Distance"],2)` |	`r tab[1, "Class"]`  | 
+|`r round(tab[2,1],2) `              |`r round(tab[2,2],2) `               |$\sqrt{(0 - 0.750)^2 + (3.5 - 2.87)^2} =$ `r round(neighbours[2, "Distance"],2)`	|`r tab[2, "Class"]`  |
+|`r round(tab[3,1],2) `              |`r round(tab[3,2],2) `        | $\sqrt{(0 - 0.623)^2 + (3.5 - 2.54)^2} =$ `r round(neighbours[3, "Distance"],2)` | `r tab[3, "Class"]`|
+|`r round(tab[4,1],2) `              |`r round(tab[4,2],2) `        | $\sqrt{(0 - 0.417)^2 + (3.5 - 2.31)^2} =$ `r round(neighbours[4, "Distance"],2)` | `r tab[4, "Class"]`|
+|`r round(tab[5,1],2) `              |`r round(tab[5,2],2) `        | $\sqrt{(0 - (-1.16))^2 + (3.5 - 4.04)^2} =$ `r round(neighbours[5, "Distance"],2)` | `r tab[5, "Class"]`|
+-----------------     ----------------- ----------------- 
+
+The result of this computation shows that 3 of the 5 nearest neighbours to our new observation are
+malignant (`M`); since this is the majority, we classify our new observation as malignant. 
+These 5 neighbours are circled in Figure \@ref(fig:05-multiknn-3).
+
+```{r 05-multiknn-3, echo = FALSE, fig.cap="Scatter plot of concavity versus perimeter with 5 nearest neighbours circled"}
 perim_concav + annotate("path",
   x = new_point[1] + 1.4 * cos(seq(0, 2 * pi,
     length.out = 100
@@ -426,45 +452,32 @@ perim_concav + annotate("path",
 ```
 </center>
 
-```{r 05-multiknn-4, echo = FALSE}
-my_distances <- table_with_distances(cancer[, attrs], new_point)
-neighbours <- my_distances[order(my_distances$Distance), ]
-k <- 5
-tab <- data.frame(neighbours[1:k, ], cancer[order(my_distances$Distance), ][1:k, c("ID", "Class")])
-```
-
-It can be difficult sometimes to read code as math, so here we mathematically
-show the calculation of distance for each of the 5 closest points.
-
-|Perimeter | Concavity | Distance          | Class          |
- |----------------- | -----------------    | ---------------| ----------------- |
-| `r round(tab[1,1],2) `              	| `r round(tab[1,2],2) `             |$\sqrt{0  - 0.241)^2 + (3.5 - 2.65)^2}=$ `r round(neighbours[1, "Distance"],2)` |	`r tab[1, "Class"]`  | 
-|`r round(tab[2,1],2) `              |`r round(tab[2,2],2) `               |$\sqrt{(0 - 0.750)^2 + (3.5 - 2.87)^2} =$ `r round(neighbours[2, "Distance"],2)`	|`r tab[2, "Class"]`  |
-|`r round(tab[3,1],2) `              |`r round(tab[3,2],2) `        | $\sqrt{(0 - 0.623)^2 + (3.5 - 2.54)^2} =$ `r round(neighbours[3, "Distance"],2)` | `r tab[3, "Class"]`|
-|`r round(tab[4,1],2) `              |`r round(tab[4,2],2) `        | $\sqrt{(0 - 0.417)^2 + (3.5 - 2.31)^2} =$ `r round(neighbours[4, "Distance"],2)` | `r tab[4, "Class"]`|
-|`r round(tab[5,1],2) `              |`r round(tab[5,2],2) `        | $\sqrt{(0 - (-1.16))^2 + (3.5 - 4.04)^2} =$ `r round(neighbours[5, "Distance"],2)` | `r tab[5, "Class"]`|
------------------     ----------------- ----------------- 
-
 
 **More than two predictor variables**
 
 Although the above description is directed toward two predictor variables, 
 exactly the same K-nearest neighbour algorithm applies when you
-have a higher number of explanatory variables (i.e., a higher-dimensional
-predictor space).  Each explanatory variable/predictor can give us new
+have a higher number of predictor variables (i.e., a higher-dimensional
+predictor space).  Each predictor variable may give us new
 information to help create our classifier.  The only difference is the formula
 for the distance between points. In particular, let's say we have $m$ predictor
 variables for two observations $u$ and $v$, i.e., 
 $u = (u_{1}, u_{2}, \dots, u_{m})$ and
 $v = (v_{1}, v_{2}, \dots, v_{m})$.
-Before, we added up the squared difference between each of our (two) variables,
-and then took the square root; now we will do the same, except for *all* of our
+Previously, when we had two variables, we added up the squared difference between each of our (two) variables,
+and then took the square root. Now we will do the same, except for *all* of our
 $m$ variables.  In other words, the distance formula becomes
 
-$$Distance = \sqrt{(u_{1} -v_{1})^2 + (u_{2} - v_{2})^2 + \dots + (u_{m} - v_{m})^2}.$$
+$$\mathrm{Distance} = \sqrt{(u_{1} -v_{1})^2 + (u_{2} - v_{2})^2 + \dots + (u_{m} - v_{m})^2}.$$
+
+This formula still corresponds to a straight-line distance, just in a space with 
+more dimensions. For example, suppose we decide to use 3 predictor variables (so, a 3-dimensional space):
+perimeter, concavity, and symmetry. Figure \@ref(fig:05-more) shows what
+the data look like when we visualize them as a 3-dimensional scatter.
+In this case, the formula above is just the straight line distance in this 3-dimensional space.
 
 
-```{r 05-more, echo = FALSE, fig.cap = "3D scatterplot of symmetry, concavity and perimeter"}
+```{r 05-more, echo = FALSE, fig.cap = "3D scatterplot of the symmetry, concavity, and perimeter variables."}
 library(plotly)
 cancer %>%
   plot_ly(
@@ -486,17 +499,17 @@ cancer %>%
 
 *Click and drag the plot above to rotate it, and scroll to zoom. Note that in
 general we recommend against using 3D visualizations; here we show the data in
-3D only to illustrate what "higher dimensions" look like for learning
-purposes.*
+3D only to illustrate what "higher dimensions" and "nearest neighbours" look like,
+for learning purposes.*
 
 **Summary**
 
 In order to classify a new observation using a K-nearest neighbour classifier, we have to:
 
-1. Compute the distance between the new observation and each observation in the training set
-2. Sort the data table in ascending order according to the distances
-3. Choose the top $K$ rows of the sorted table
-4. Classify the new observation based on a majority vote of the neighbour classes
+1. Compute the distance between the new observation and each observation in the training set.
+2. Sort the data table in ascending order according to the distances.
+3. Choose the top $K$ rows of the sorted table.
+4. Classify the new observation based on a majority vote of the neighbour classes.
 
 
 ## K-nearest neighbours with `tidymodels`
@@ -520,7 +533,7 @@ library(tidymodels)
 
 Let's again suppose we have a new observation with perimeter 0 and concavity
 3.5, but its diagnosis is unknown (as in our example above). Suppose we 
-want to use the perimeter and concavity explanatory variables/predictors to
+want to use the perimeter and concavity predictor variables to
 predict the diagnosis class of this observation. Let's pick out our 2 desired
 predictor variables and class label and store it as a new dataset named `cancer_train`:
 
@@ -675,10 +688,19 @@ scaled_cancer <- bake(uc_recipe, unscaled_cancer)
 scaled_cancer
 ```
 
-Now let's generate the two scatter plots, one for `unscaled_cancer` and one for
-`scaled_cancer`, and show them side-by-side. Each has the same new observation
-annotated with its $K=3$ nearest neighbours:
-
+Figure \@ref(fig:05-scaling-plt) shows the two scatter plots side-by-side&mdash;one for `unscaled_cancer` and one for
+`scaled_cancer`. Each has the same new observation annotated with its $K=3$ nearest neighbours.
+In the plot for the nonstandardized original data, you can see some odd choices
+for the three nearest neighbours. In particular, the "neighbours" are visually
+well within the cloud of benign observations, and the neighbours are all nearly
+vertically aligned with the new observation (which is why it looks like there
+is only one black line on this plot).  Here the computation of nearest
+neighbours is dominated by the much larger-scale area variable. On the right,
+the plot for standardized data shows a much more intuitively reasonable
+selection of nearest neighbours. Thus, standardizing the data can change things
+in an important way when we are using predictive algorithms.  As a rule of
+thumb, standardizing your data should be a part of the preprocessing you do
+before any predictive modelling / analysis.
 
 ```{r 05-scaling-plt, echo = FALSE, fig.height = 4, fig.width = 10, fig.cap = "Comparison of K = 3 nearest neighbours with standardized and unstandardized data"}
 
@@ -751,18 +773,6 @@ gridExtra::grid.arrange(unscaled, scaled, ncol = 2)
 ```
 </center>
 
-In the plot for the nonstandardized original data, you can see some odd choices
-for the three nearest neighbours. In particular, the "neighbours" are visually
-well within the cloud of benign observations, and the neighbours are all nearly
-vertically aligned with the new observation (which is why it looks like there
-is only one black line on this plot).  Here the computation of nearest
-neighbours is dominated by the much larger-scale area variable. On the right,
-the plot for standardized data shows a much more intuitively reasonable
-selection of nearest neighbours. Thus, standardizing the data can change things
-in an important way when we are using predictive algorithms.  As a rule of
-thumb, standardizing your data should be a part of the preprocessing you do
-before any predictive modelling / analysis.
-
 
 ### Balancing
 
@@ -781,7 +791,7 @@ To better illustrate the problem, let's revisit the breast cancer data; except
 now we will remove many of the observations of malignant tumours, simulating
 what the data would look like if the cancer was rare. We will do this by
 picking only 3 observations randomly from the malignant group, and keeping all
-of the benign observations.
+of the benign observations. The new imbalanced data is shown in Figure \@ref(fig:05-unbalanced).
 
 ```{r 05-unbalanced, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data"}
 set.seed(3)
@@ -811,13 +821,13 @@ With only 3 observations of malignant tumours, the classifier
 will *always predict that the tumour is benign, no matter what its concavity and perimeter
 are!* This is because in a majority vote of 7 observations, at most 3 will be
 malignant (we only have 3 total malignant observations), so at least 4 must be
-benign, and the benign vote will always win. For example, look what happens for
-a new tumour observation that is quite close to two that were tagged as
-malignant:
+benign, and the benign vote will always win. For example, Figure \@ref(fig:05-upsample)
+shows what happens for a new tumour observation that is quite close to three observations
+in the training data that were tagged as malignant.
 
 
-```{r 05-upsample, echo=FALSE, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data with K = 7"}
-new_point <- c(3, 2)
+```{r 05-upsample, echo=FALSE, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data with 7 nearest neighbours to a new observation highlighted"}
+new_point <- c(2, 2)
 attrs <- c("Perimeter", "Concavity")
 my_distances <- table_with_distances(rare_cancer[, attrs], new_point)
 my_distances <- bind_cols(my_distances, select(rare_cancer, Class))
@@ -843,11 +853,12 @@ rare_plot + geom_point(aes(x = new_point[1], y = new_point[2]),
 ```
 </center>
 
-And if we set the background colour of each area of the plot to the decision the K-nearest neighbour 
-classifier would make, we can see that the decision is always "benign," corresponding to the blue colour:
+Figure \@ref(fig:05-upsample-2) shows what happens if we set the background colour of 
+each area of the plot to the decision the K-nearest neighbour 
+classifier would make. We can see that the decision is 
+always "benign," corresponding to the blue colour.
 
-
-```{r 05-upsample-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data with background colour indicating the decision of the K-nn classifier"}
+```{r 05-upsample-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data with background colour indicating the decision of the classifier"}
 
 knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) %>%
   set_engine("kknn") %>%
@@ -898,12 +909,14 @@ upsampled_cancer %>%
   group_by(Class) %>%
   summarize(n = n())
 ```
-Now suppose we train our K-nearest neighbour classifier with $K=7$ on this *balanced* data. Setting the background colour 
+Now suppose we train our K-nearest neighbour classifier with $K=7$ on this *balanced* data. 
+Figure \@ref(fig:05-upsample-plot) shows what happens now when we set the background colour 
 of each area of our scatter plot to the decision the K-nearest neighbour 
-classifier would make, we can see that the decision is more reasonable; when the points are close
-to those labelled malignant, the classifier predicts a malignant tumour, and vice versa when they are closer to the benign tumour observations:
+classifier would make. We can see that the decision is more reasonable; when the points are close
+to those labelled malignant, the classifier predicts a malignant tumour, and vice versa when they are 
+closer to the benign tumour observations.
 
-```{r 05-upsample-plot, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "K-nn after upsampling"}
+```{r 05-upsample-plot, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Upsampled data with background colour indicating the decision of the classifier"}
 
 knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) %>%
   set_engine("kknn") %>%
@@ -975,12 +988,14 @@ for the number of neighbours and weight function (for now, these are just the va
  manually when we created `knn_spec` above). But now the fit object also includes information about
 the overall workflow, including the centering and scaling preprocessing steps.
 
-Let's visualize the predictions that this trained K-nearest neighbour model will make on new observations.
-Below you will see how to make the coloured prediction map plots from earlier in this chapter.
+Figure \@ref(fig:05-workflow-plot-show) visualizes the predictions that this 
+trained K-nearest neighbour model will make on new observations.
+Although you have seen coloured prediction map visualizations like this a few times now,
+we have not included the code to generate them, as it is a little bit complicated.
+For the interested reader who wants a learning challenge, we now include it below. 
 The basic idea is to create a grid of synthetic new observations using the `expand.grid` function, 
 predict the label of each, and visualize the predictions with a coloured scatter having a very high transparency 
-(low `alpha` value) and large point radius. We include the code here as a learning challenge; see
-if you can figure out what each line is doing!
+(low `alpha` value) and large point radius. See if you can figure out what each line is doing!
 
 ```{r 05-workflow-fit-plot} 
 # create the grid of area/smoothness vals, and arrange in a data frame
@@ -1005,6 +1020,6 @@ wkflw_plot <-
   scale_color_manual(labels = c("Malignant", "Benign"), values = cbPalette)
 ```
 
-```{r 05-workflow-plot-show, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatterplot of smoothness versus area where background colour indicates the decision of the classifier"}
+```{r 05-workflow-plot-show, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of smoothness versus area where background colour indicates the decision of the classifier"}
 wkflw_plot
 ```
