@@ -512,7 +512,7 @@ neighbours to $K =$ `r (accuracies %>% arrange(desc(mean)) %>% head(1))$neighbor
 provides the highest accuracy.
 But as you can see, there is no exact or perfect answer here; 
  any selection from $K = 2$ and $15$ would be reasonably justified, as all
-of these differ in classifier accuracy by less than 1%. Remember: the
+of these differ in classifier accuracy by a small amount. Remember: the
 values you see on this plot are *estimates* of the true accuracy of our
 classifier. Although the 
 $K =$ `r (accuracies %>% arrange(desc(mean)) %>% head(1))$neighbors` value is 
@@ -685,46 +685,52 @@ predictors. However, it is **not** the case that using more predictors always
 yields better predictions! In fact, including irrelevant predictors can
 actually negatively affect classifier performance.
 
+**The effect of irrelevant predictors**
+
 Let's take a look at an example where K-nearest neighbours performs
 worse when given more predictors to work with. Here we have modified
-the breast cancer data to include the variables `Smoothness` and `Concavity`,
-as well as irrelevant variables
-that we created ourselves using a random number generator.
-Figure \@ref(fig:06-irrelevant-loaddata) shows a scatter plot with two of the 
-irrelevant variables&mdash;`Irrelevant1` and `Irrelevant2`&mdash;demonstrating that
-these variables have no meaningful relationship
-with the `Class` response variable.
-<center>
-```{r 06-irrelevant-loaddata, echo = FALSE, warning = FALSE, fig.cap = "A scatter showing two of the synthetic variables that were added to the data", fig.retina = 2, out.width = "600"}
-cancer_irrelevant <- read_csv("data/wdbc_irrelevant.csv") %>%
-                mutate(Class = as_factor(Class))
+the breast cancer data to have only the `Smoothness`, `Concavity`, and `Perimeter` variables from the original data,
+and then added irrelevant variables that we created ourselves using a random number generator.
+The irrelevant variables each take a value of 0 or 1 with equal probability for each observation, regardless
+of what the value `Class` variable takes. In other words, the irrelevant variables have 
+no meaningful relationship with the `Class` variable.
 
-plot_irrelev <- cancer_irrelevant %>%
-  ggplot(aes(x = Irrelevant1, y = Irrelevant2, color = Class)) +
-  geom_point(alpha = 0.5) +
-  labs(color = "Diagnosis") +
-  scale_color_manual(labels = c("Malignant", "Benign"), values = cbPalette)
+```{r 06-irrelevant-gendata, echo = FALSE, warning = FALSE}
+set.seed(4)
+cancer_irrelevant <- cancer %>% select(Class, Smoothness, Concavity, Perimeter)
 
-plot_irrelev
+
+for (i in 1:500) {
+    # create column
+    col = (sample(2, size=nrow(cancer_irrelevant), replace=TRUE)-1)
+    cancer_irrelevant <- cancer_irrelevant %>% 
+	add_column( !!paste("Irrelevant", i, sep="") := col)
+}
 ```
-</center>
+```{r 06-irrelevant-printdata, warning = FALSE}
+cancer_irrelevant %>% 
+      select(Class, Smoothness, Concavity, Perimeter, Irrelevant1, Irrelevant2)
+```
 
 Next, we build a sequence of K-NN classifiers that include both `Smoothness`
 and `Concavity` as predictor variables, but also increasingly many irrelevant
-variables (from 0 to 500 of them). Each model is tuned via 5-fold
-cross-validation. Figure \@ref(fig:06-performance-irrelevant-features)
-shows the estimated cross-validation accuracy versus 
-the number of irrelevant predictors.
-Once we add sufficiently many irrelevant predictor variables, our classifier
-does not do much better than the majority classifier that just always predicts "benign," 
- the most common class label in the data (63% of observations are benign).
+variables (from 0 to 40 of them). Each model is tuned via 5-fold
+cross-validation. Figure \@ref(fig:06-performance-irrelevant-features) shows
+the estimated cross-validation accuracy versus the number of irrelevant predictors.  As
+we add more irrelevant predictor variables, the estimated accuracy of our
+classifier decreases. This is because the irrelevant variables add a random
+amount to the distance between each pair of observations; the more irrelevant
+variables there are, the more (random) influence they have, and the more they
+corrupt the set of nearest neighbours that vote on the class of the new
+observation to predict.  
 
 <center>
 ```{r 06-performance-irrelevant-features, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "600", fig.cap = "Effect of inclusion of irrelevant predictors"}
-set.seed(1)
 # get accuracies after including k irrelevant features
-ks <- c(0, 5, 10, 20, 50, 100, 200, 500)
+ks <- c(0, 5, 10, 15, 20, 40)
+fixedaccs <- list()
 accs <- list()
+nghbrs <- list()
 for (i in 1:length(ks)) {
   knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = tune()) %>%
      set_engine("kknn") %>%
@@ -737,42 +743,91 @@ for (i in 1:length(ks)) {
   cancer_recipe <- recipe(Class ~ ., data = cancer_irrelevant_subset) %>%
       step_scale(all_predictors()) %>%
       step_center(all_predictors())
-
   
-  accs[[i]] <- workflow() %>%
+  res <- workflow() %>%
     add_recipe(cancer_recipe) %>%
     add_model(knn_spec) %>%
-    tune_grid(resamples = cancer_vfold, grid = 10) %>%
+    tune_grid(resamples = cancer_vfold, grid = 20) %>%
     collect_metrics() %>%
     filter(.metric == "accuracy") %>%
-    summarize(mx = max(mean)) %>%
-    select(mx)
-  accs[[i]] <- accs[[i]]$mx
+    arrange(desc(mean)) %>%
+    head(1)
+  accs[[i]] <- res$mean
+  nghbrs[[i]] <- res$neighbors
+
+  knn_spec_fixed <- nearest_neighbor(weight_func = "rectangular", neighbors = 3) %>%
+     set_engine("kknn") %>%
+     set_mode("classification")
+
+  res <- workflow() %>%
+    add_recipe(cancer_recipe) %>%
+    add_model(knn_spec_fixed) %>%
+    tune_grid(resamples = cancer_vfold, grid = 1) %>%
+    collect_metrics() %>%
+    filter(.metric == "accuracy") %>%
+    arrange(desc(mean)) %>%
+    head(1)
+  fixedaccs[[i]] <- res$mean
 }
 accs <- accs %>% unlist()
+nghbrs <- nghbrs %>% unlist()
+fixedaccs <- fixedaccs %>% unlist()
 
-# get accuracy if we always just guess the most frequent label
-base_acc <- cancer_irrelevant %>%
-                group_by(Class) %>%
-                summarize(n = n()) %>%
-                mutate(frac = n/sum(n)) %>%
-                summarize(mx = max(frac)) %>%
-                select(mx)
-base_acc <- base_acc$mx %>% unlist()
+## get accuracy if we always just guess the most frequent label
+#base_acc <- cancer_irrelevant %>%
+#                group_by(Class) %>%
+#                summarize(n = n()) %>%
+#                mutate(frac = n/sum(n)) %>%
+#                summarize(mx = max(frac)) %>%
+#                select(mx)
+#base_acc <- base_acc$mx %>% unlist()
 
 # plot
-res <- tibble(ks = ks, accs = accs)
-res <- res %>% mutate(base_acc = base_acc)
-plt_irrelevant_accuracies <- res %>%
-  ggplot() +
-  geom_line(mapping = aes(x=ks, y=accs, linetype="Tuned K-NN")) +
-  geom_hline(data=res, mapping=aes(yintercept=base_acc, linetype="Always Predict Benign (63%)")) +
-  labs(x = "Number of Irrelevant Predictors", y = "Model Accuracy Estimate") + 
-  scale_linetype_manual(name="Method", values = c("dashed", "solid"))
+res <- tibble(ks = ks, accs = accs, fixedaccs = fixedaccs, nghbrs = nghbrs)
+#res <- res %>% mutate(base_acc = base_acc)
+#plt_irrelevant_accuracies <- res %>%
+#  ggplot() +
+#  geom_line(mapping = aes(x=ks, y=accs, linetype="Tuned K-NN")) +
+#  geom_hline(data=res, mapping=aes(yintercept=base_acc, linetype="Always Predict Benign")) +
+#  labs(x = "Number of Irrelevant Predictors", y = "Model Accuracy Estimate") + 
+#  scale_linetype_manual(name="Method", values = c("dashed", "solid"))
+
+plt_irrelevant_accuracies <- ggplot(res) +
+              geom_line(mapping = aes(x=ks, y=accs)) +
+              labs(x = "Number of Irrelevant Predictors", y = "Model Accuracy Estimate") 
 
 plt_irrelevant_accuracies
 ```
 </center>
+
+Although the accuracy decreases as expected, one surprising thing about 
+Figure \@ref(fig:06-performance-irrelevant-features) is that it shows that the method
+still outperforms the baseline majority classifier (with about `r round(cancer_propn_1[1,1], 0)`% accuracy) 
+even with 20 irrelevant variables.
+How could that be? Figure \@ref(fig:06-neighbours-irrelevant-features) provides the answer:
+the tuning procedure for the K-nearest neighbours classifier combats the extra randomness from the irrelevant variables 
+by increasing the number of neighbours. Of course, because of all the extra noise in the data from the irrelevant
+variables, the number of neighbours does not increase smoothly; but the general trend is increasing.
+Figure \@ref(fig:06-fixed-irrelevant-features) corroborates
+this evidence; if we fix the number of neighbours to $K=3$, the accuracy falls off more quickly.
+
+```{r 06-neighbours-irrelevant-features, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "600", fig.cap = "Tuned number of neighbours for varying number of irrelevant predictors"}
+plt_irrelevant_nghbrs <- ggplot(res) +
+              geom_line(mapping = aes(x=ks, y=nghbrs)) +
+              labs(x = "Number of Irrelevant Predictors", y = "Number of neighbours")
+plt_irrelevant_nghbrs
+```
+
+```{r 06-fixed-irrelevant-features, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "600", fig.cap = "Accuracy versus number of irrelevant predictors for tuned and untuned number of neighbours"}
+res_tmp <- res %>% pivot_longer(cols=c("accs", "fixedaccs"), names_to="Type", values_to="accuracy")
+plt_irrelevant_nghbrs <- ggplot(res_tmp) +
+              geom_line(mapping = aes(x=ks, y=accuracy, color=Type)) +
+              labs(x = "Number of Irrelevant Predictors", y = "Accuracy") + 
+              scale_color_discrete(labels= c("Tuned K", "K = 3"))
+plt_irrelevant_nghbrs
+```
+
+**Finding a good subset of predictors**
 
 So then if we can't just use all of our variables as predictors without consideration, how 
 do we choose which variables we *should* use?  A simple method is to rely on your scientific understanding
@@ -784,23 +839,23 @@ is less obvious, as all seem like reasonable candidates. It
 is not clear which subset of them will create the best classifier. One could use visualizations and
 other exploratory analyses to try to help understand which variables are potentially relevant, but
 this process is both time-consuming and error-prone when there are many variables to consider.
-
 We therefore need a more systematic and programmatic way of choosing variables. 
 This is a very difficult problem to solve in
 general, and there are a number of methods that have been developed that apply
 in particular cases of interest; see the additional resources at the end of
 this chapter to find out where you can learn more about variable selection.
-Here we will discuss *best subset selection,* which is applicable to any 
-classification method (K-NN or otherwise), and works when you have a small
-number of total variables (i.e., at most 10) from which you want to keep only the relevant ones. 
-Best subset selection works as follows. If you have $m$ predictors, you: 
 
-1. create a separate model for every possible subset of predictors,
-2. tune each one using cross validation, and 
-3. finally pick the subset of predictors that gives you the highest estimated prediction accuracy.  
+The first idea you might think of for a systematic way to select predictors
+is *best subset selection*. Best subset selection essentially involves trying
+all possible subsets of variables and picking the "best" one. In particular, you
 
-Note that best subset selection becomes very slow when you have even a moderate
-number of predictors to choose from. This is because the number of possible predictor subsets
+1. create a separate model for every possible subset of predictors
+2. tune each one using cross validation
+3. pick the subset of predictors that gives you the highest estimated prediction accuracy  
+
+Best subset selection is applicable to any  classification method (K-NN or otherwise).
+However, it becomes very slow when you have even a moderate
+number of predictors to choose from (say, around 10). This is because the number of possible predictor subsets
 grows very quickly with the number of predictors, and you have to train the model (itself
 a slow process!) for each one. For example, if we have $m=2$ predictors---let's call
 them A and B---then we have 3 variable sets to try: A alone, B alone, and finally A
@@ -808,67 +863,89 @@ and B together. If we have $m=3$ predictors---A, B, and C---then we have 7
 to try: A, B, C, AB, BC, AC, and ABC. In general, the number of models
 we have to train for $m$ predictors is $2^m-1$; in other words, when we 
 get to $m=10$ predictors we have over *one thousand* models to train, and 
-at $m=20$ predictors we have
-over *one million* models to train! If you have more than about 10 predictors,
-you should first use your scientific understanding of the data
-to choose the 10 or so predictors that you think are most meaningful, and then
-run best subset selection within those 10. Alternatively, you can use a different
-predictor variable selection method; see the additional resources at the end
-of this chapter. 
+at $m=20$ predictors we have over *one million* models to train! 
+So although it is a simple method, best subset selection is usually too computationally 
+expensive to use in practice.
 
-We now turn to implementing best subset selection in R.
+Another idea is to iteratively build up a model by adding one predictor variable 
+at a time. This method&mdash;known as *forward selection*&mdash;is also widely
+applicable and fairly straightforward. It involves the following steps:
+
+1. start with no predictors
+2. run the following 4 steps until you run out of predictors:
+    1. for each predictor you have not chosen yet, try adding it to the set of predictors to make a candidate model
+    2. tune each candidate model
+    3. pick the model with the highest estimated accuracy
+    4. add the new predictor for that model to your set
+3. pick the set of predictors with a good trade-off between accuracy and model simplicity
+
+Say you have $m$ total predictors to work with. In the first iteration, you have to make
+$m$ candidate models, each with 1 predictor. Then in the second iteration, you have
+to make $m-1$ candidate models, each with 2 predictors (the one you chose before and a new one).
+This pattern continues for as many iterations as you want. If you run the method
+all the way until you run out of predictors to choose, you will end up training
+approximately $m^2$ separate models. This is a *big* improvement from the $2^m-1$
+models that best subset selection requires you to train! Therefore we will
+continue the rest of this section using forward selection.
+
+> One word of caution before we move on. Every additional model that you train 
+> increases the likelihood that you will get unlucky and stumble 
+> on a model that has a high cross-validation accuracy estimate, but a low true
+> accuracy on the test data and other future observations.
+> Since forward selection involves training a lot of models, you run a fairly
+> high risk of this happening. To keep this risk low, only use forward selection
+> when you have a large amount of data and a relatively small total number of 
+> predictors. More advanced methods do not suffer from this
+> problem as much; see the additional resources at the end of this chapter for
+> where to learn more about advanced predictor selection methods. 
+ 
+We now turn to implementing forward selection in R.
 Unfortunately there is no built-in way to do this using the `tidymodels` framework,
 so we will have to code it ourselves. First we will use the `select` function
 to extract the "total" set of predictors that we are willing to work with. 
-Here we select `Smoothness`, `Concavity`, `Symmetry`, and `Area`
+Here we will load the modified version of the cancer data with irrelevant 
+predictors, and select `Smoothness`, `Concavity`, `Perimeter`, `Irrelevant1`, `Irrelevant2`, and `Irrelevant3`
 as potential predictors, and the `Class` variable as the response.
-```{r 06-best-subset, warning = FALSE}
-cancer_subset <- cancer_train %>% select(Class, Smoothness, Concavity, Symmetry, Area)
-```
-
-Next we will use the `combn` function to collect all possible subsets
-of predictors. As an example to see how this function works, 
-below we will create a vector `names` of column 
-names corresponding to predictors, and then use the `combn`
-to list all 6 possible combinations of size 2.
-```{r 06-best-subset-2, warning = FALSE}
+We will also extract the column names for the full set of predictor variables.
+```{r 06-fwdsel, warning = FALSE}
+set.seed(1)
+cancer_subset <- cancer_irrelevant %>% select(Class, Smoothness, Concavity, Perimeter, Irrelevant1, Irrelevant2, Irrelevant3)
 names <- colnames(cancer_subset %>% select(-Class))
 
-combn(names, 2, simplify=FALSE)
+cancer_subset
 ```
-We combine this with the `paste` function (which concatenates strings
-separated by spaces) to create a model formula for each combination.
+The key idea of the forward selection code is to use the `paste` function (which concatenates strings
+separated by spaces) to create a model formula for each subset of predictors for which we want to build a model.
 The `collapse` argument tells `paste` what to put between the items in the list;
 to make a formula, we need to put a `+` symbol between each variable.
-For example, if we try this with the first combination
-of `Smoothness` and `Concavity` above, we obtain the formula
-`Class ~ Smoothness + Concavity` as expected:
+As an example, let's make a model formula for all the predictors,
+which should output something like
+`Class ~ Smoothness + Concavity + Perimeter + Irrelevant1 + Irrelevant2 + Irrelevant3`:
 ```{r}
-example_comb <- combn(names, 2, simplify=FALSE)[[1]]
-example_formula <- paste("Class", "~", paste(example_comb, collapse="+"))
+example_formula <- paste("Class", "~", paste(names, collapse="+"))
 example_formula
 ```
 
-Finally, in order to search over the subsets of predictors of *all* sizes,
-we will need to iterate over the possible sizes from 1 to 4.
+Finally, we need to write some code that performs the task of sequentially
+finding the best predictor to add to the model.
 If you recall the end of the wrangling chapter, we mentioned
 that sometimes one needs more flexible forms of iteration than what 
 we have used earlier, and in these cases one typically resorts to
 [a for loop](https://r4ds.had.co.nz/iteration.html#iteration).
 This is one of those cases! Here we will use two for loops:
-one over the possible sizes of the predictor subset
-(where you see `for (i in 1:length(names))` below)
-and another over the subsets of each size (where you see `for (j in 1:length(combs))` below).
-For each subset, we construct a model formula,
+one over increasing predictor set sizes 
+(where you see `for (i in 1:length(names))` below),
+and another to check which predictor to add in each round (where you see `for (j in 1:length(names))` below).
+For each set of predictors to try, we construct a model formula,
 pass it into a `recipe`, build a `workflow` that tunes
 a K-NN classifier using 5-fold cross-validation, 
 and finally records the estimated accuracy.
 
-```{r 06-best-subset-3, warning = FALSE}
+```{r 06-fwdsel-2, warning = FALSE}
 set.seed(1)
 
 # create an empty tibble to store the results
-accuracies <- tibble(size = integer(), index = integer(), model_string = character(), accuracy = numeric())
+accuracies <- tibble(size = integer(), model_string = character(), accuracy = numeric())
 
 # create a model specification
 knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = tune()) %>%
@@ -878,22 +955,27 @@ knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = tune()) %>
 # create a 5-fold cross-validation object
 cancer_vfold <- vfold_cv(cancer_subset, v = 5, strata = Class)
 
-# for every size from 1 to length(names)
-for (i in 1:length(names)) {
-    # get all combinations of predictors of size i
-    combs <- combn(names, i, simplify=FALSE)
-    
-    # for every combination of predictors of size i
-    for (j in 1:length(combs)) {
+# store the total number of predictors
+n_total <- length(names)
+
+# stores selected predictors
+selected <- c()
+
+# for every size from 1 to the total number of predictors
+for (i in 1:n_total) {
+    # for every predictor still not added yet
+    accs <- list()
+    models <- list()
+    for (j in 1:length(names)) {
         # create a model string for this combination of predictors
-        model_string <- paste("Class", "~", paste(combs[[j]], collapse="+"))
+        preds_new <- c(selected, names[[j]])
+        model_string <- paste("Class", "~", paste(preds_new, collapse="+"))
 
         # create a recipe from the model string
         cancer_recipe <- recipe(as.formula(model_string), data = cancer_subset) %>%
-            step_scale(all_predictors()) %>%
-            step_center(all_predictors())
+                          step_scale(all_predictors()) %>%
+                          step_center(all_predictors())
 
-  
         # tune the K-NN classifier with these predictors, and collect the accuracy for the best K
         acc <- workflow() %>%
           add_recipe(cancer_recipe) %>%
@@ -905,18 +987,37 @@ for (i in 1:length(names)) {
         acc <- acc$mx %>% unlist()
 
         # add this result to the dataframe
-        accuracies <- accuracies %>% add_row(size = i, index = j, model_string = model_string, accuracy = acc)
+        accs[[j]] <- acc
+        models[[j]] <- model_string
     }
+    jstar <- which.max(unlist(accs))
+    accuracies <- accuracies %>% add_row(size = i, model_string = models[[jstar]], accuracy = accs[[jstar]])
+    selected <- c(selected, names[[jstar]])
+    names <- names[-jstar]
 }
-
 accuracies
 ```
-The maximum accuracy estimate is obtained for the formula
-`Class ~ Concavity + Symmetry + Area`, so the best subset selection 
-method would result in a model with these three predictors. Note,
-however, that the model with all 4 predictors, as well as the 
-model `Class ~ Smoothness + Concavity + Area` are reasonable
-alternatives that provide a similar estimated accuracy.
+
+Interesting! The forward selection procedure first added the three meaningful variables `Perimeter`,
+`Concavity`, and `Smoothness`, followed by the irrelevant variables. Figure \@ref(fig:06-fwdsel-3)
+visualizes the accuracy as a function of the number of predictors in the model. You can see that
+as meaningful predictors are added, the estimated accuracy increases; and as you add irrelevant
+variables, the accuracy either exhibits small fluctuations or decreases as the model attempts to tune the number
+of neighbours to account for the extra noise. Given that generally speaking, you should prefer a simpler model (it has a 
+lower variance and less chance of overfitting), the right trade-off of accuracy and number of predictors
+occurs with the model `Class ~ Perimeter + Concavity + Smoothness`. We have successfully removed irrelevant
+predictors from the model! It is always worth remembering, however, that what cross validation gives you 
+is an *estimate* of the true accuracy; you have to use your judgement when looking at this plot to decide
+whether adding a variable provides a meaningful increase in accuracy.
+
+```{r 06-fwdsel-3, warning = FALSE, fig.retina = 2, out.width = "600", fig.cap = "Estimated accuracy versus the number of predictors for the sequence of models built using forward selection"}
+fwd_sel_accuracies_plot <- accuracies %>%
+  ggplot(aes(x = size, y = accuracy)) +
+  geom_line() +
+  labs(x = "Number of Predictors", y = "Estimated Accuracy")
+
+fwd_sel_accuracies_plot
+```
 
 > Remember: since the choice of which variables to include as predictors is
 > part of tuning your classifier, you *cannot use your test data* for this
