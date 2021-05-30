@@ -64,7 +64,7 @@ and the columns are the variables:
 knitr::include_graphics("img/vars.jpeg")
 ```
 
-From a computer programming perspective, in R, a data frame is a special subtype of a list object whose elements (columns) are *vectors*. For example, the data frame below has three vectors whose names are `state`, `year` and `population`.
+From a computer programming perspective, in R, a data frame is a special subtype of a list object whose elements (columns) are *vectors*. For example, the data frame below has three vectors whose names are `region`, `year` and `population`.
 
 ```{r 02-vectors, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Data frame with 3 vectors", fig.retina = 2, out.width = "650"}
 knitr::include_graphics("img/vectors.jpeg")
@@ -164,6 +164,15 @@ First, one of R's most popular plotting toolsets, the `ggplot2` package (which i
 
 One common thing that often has to be done to get data into a tidy format is to combine columns that are really part of the same variable but currently stored in separate columns. Data is often stored in a wider, not tidy, format because this format is usually more intuitive for human readability and understanding, and humans create data sets. We can use the function `pivot_longer`, which combines columns, making the data frame longer and narrower. 
 
+
+For example, in Figure \@ref(fig:02-wide-to-long), the table on the left is an
+untidy format because the year values (2011, 2016) are listed as the column headers. 
+One problem with using data in this format is that we don't know what the values
+under each year represent in the table. Also, we can't easily access the year
+values, so if we wanted to find the maximum year for example, it's harder to do 
+when the values are not in their own column. We can reshape this data set to a long format 
+by creating a column called "year" and a column called "population," which is the table on the right.
+
 ```{r 02-wide-to-long, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from wide to long data", fig.retina = 2, out.width = "1150"}
 knitr::include_graphics("img/wide_to_long.jpeg")
 ```
@@ -181,15 +190,11 @@ lang_wide
 
 What is wrong with our untidy format above? From a data analysis perspective, this format is not ideal because, in this format, the outcome of the variable *region* (Toronto, Montreal, Vancouver, Calgary and Edmonton) is stored as column names. Thus it is not easily accessible for the data analysis functions we will want to apply to our data set. Additionally, the values of the *mother tongue* variable are spread across multiple columns, which will prevent us from doing any desired visualization or statistical tasks until we combine them into one column. For instance, suppose we want to know which languages had the highest number of Canadians reporting it as their mother tongue among all five regions? This question would be tough to answer with the data in its current format. It would be much easier to answer if we tidy our data first. 
 
-To accomplish this data transformation, we will use the `tidyverse` function `pivot_longer`. To use `pivot_longer` we need to specify the:
+To accomplish this data transformation, we will use the `tidyverse` function `pivot_longer`. Figure \@ref(fig:img-pivot-longer) details what we need to specify to use `pivot_longer`.
 
-1. `data`: the data set
-
-2. `cols` : the names of the columns that we want to combine
-
-3. `names_to`: the name of a new column that will be created, whose values will come from the *names of the columns* that we want to combine 
-
-4. `values_to`: the name of a new column that will be created, whose values will come from the *values of the columns* we want to combine 
+```{r img-pivot-longer, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the pivot_longer function", out.width="1100", fig.retina = 2}
+knitr::include_graphics("img/pivot_longer.jpeg")
+```
 
 For the above example, we use `pivot_longer` to combine the Toronto, Montreal, Vancouver, Calgary and Edmonton columns into a single column called `region`, and create a column called `mother_tongue` that contains the count of how many Canadians report each language as their mother tongue for each metropolitan area. We use a colon `:` between Toronto, and Edmonton tells R to select all the columns in between Toronto and Edmonton: 
 ```{r}
@@ -207,6 +212,10 @@ lang_mother_tidy
 > *to read clearly. About 80 characters per line is recommended and when doing this, it is important to end the line with a comma `,` so that R*
 > *knows the function should continue to the next line.*
 
+Figure \@ref(fig:img-pivot-longer-with-table) summarizes how we reshaped our data to go from wide to long with the `pivot_longer` function. 
+```{r img-pivot-longer-with-table, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from wide to long with the pivot_longer function", out.width="1100", fig.retina = 2}
+knitr::include_graphics("img/pivot_longer_with_table.jpeg")
+```
 The data above is now tidy because all three criteria for tidy data have now been met:
 
 1. All the variables (`category`, `language`, `region` and ``mother_tongue``) are now their own columns in the data frame. 
@@ -236,7 +245,12 @@ lang_home_tidy <- pivot_wider(lang_long,
   names_from = type,
   values_from = count
 )
-lang_home_tidy
+lang_home_tidy 
+```
+
+We can see how we transformed the data from long to wide with `pivot_wider` in Figure \@ref(fig:img-pivot-wider-table).  
+```{r img-pivot-wider-table, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from long to wide with pivot_wider", out.width="1100", fig.retina = 2}
+knitr::include_graphics("img/pivot_wider_table.jpeg")
 ```
 
 The data above is now tidy! We can go through the three criteria again to check that this data is a tidy data set. 
@@ -341,7 +355,9 @@ knitr::include_graphics("img/mutate_function.jpeg")
 ```
 
 
-Below we use `mutate` to convert the columns `most_at_home` and `most_at_home` to numeric data types in the `official_langs` data set as described in figure \@ref(fig:img-mutate):
+Below we use `mutate` to convert the columns `most_at_home` and `most_at_home`
+to numeric data types in the `official_langs` data set as described in figure 
+\@ref(fig:img-mutate):
 
 ```{r}
 official_langs <- mutate(official_langs,
@@ -357,7 +373,7 @@ Now when we filter we get what we expect:
 filter(official_langs, most_at_home > 2669195)
 ```
 
-In this case, we see that `filter` returns a data frame with only one row; this indicates that only one language in a region is spoken more often at home than French in Montréal.
+In this case, we see that `filter` returns a data frame with only one row; this indicates that only one English in Toronto is reported by more people as their primary language at home than French in Montréal.
 
 ```{r , include = FALSE}
 census_popn <- 35151728
@@ -366,17 +382,25 @@ number_most_home <- filter(official_langs, language == "English" & region == "To
 
 toronto_popn <- region_data %>% filter(region == "Toronto") %>% 
   pull(population) 
-View(region_data)
 ```
 
 
-We can see in the table that `r format(number_most_home, scientific = FALSE, big.mark = ",")` people reported speaking English in Toronto as their primary language at home according to the 2016 Canadian census. What does this number mean to us? To understand this number, we need context. In particular, how many people were in Toronto when this data was collected? From the 2016 Canadian census profile, the population of Toronto was reported to be `r format(toronto_popn, scientific = FALSE, big.mark = ",")` people. The number of people who report that English as their primary language at home is much more meaningful when we report it in this context. We can even go a step further and transform this count to a relative frequency or proportion. We can do this by dividing the number of people reporting a given language as their primary language at home by the number of people who live in Toronto For example, the proportion of people who reported that their primary language at home was English in the 2016 Canadian census was `r format(round(number_most_home/toronto_popn, 2), scientific = FALSE, big.mark = ",")`.
+We can see in the table that `r format(number_most_home, scientific = FALSE, big.mark = ",")` people reported speaking English in Toronto as their primary language at home according to the 2016 Canadian census. What does this number mean to us? To understand this number, we need context. In particular, how many people were in Toronto when this data was collected? From the 2016 Canadian census profile, the population of Toronto was reported to be `r format(toronto_popn, scientific = FALSE, big.mark = ",")` people. The number of people who report that English as their primary language at home is much more meaningful when we report it in this context. We can even go a step further and transform this count to a relative frequency or proportion. We can do this by dividing the number of people reporting a given language as their primary language at home by the number of people who live in Toronto. For example, the proportion of people who reported that their primary language at home was English in the 2016 Canadian census was `r format(round(number_most_home/toronto_popn, 2), scientific = FALSE, big.mark = ",")` in Toronto.
+
+We can see what the populations in each of the five cities are by filtering the data. 
+```{r}
+region_data %>%
+  filter(region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton")) %>% 
+  select(region, population)
+```
+```{r, include = F}
+city_popn <- region_data %>% filter(region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton")) %>% arrange(desc(population) ) %>% pull(population)
+rep_popn <- rep(city_popn, 2)
+```
 
 Below we use `mutate` to calculate the proportion of people reporting a given language as their primary language at home and work for all the languages in the `official_langs` data set:
 ```{r}
 
-city_popn <- region_data %>% filter(region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton")) %>% arrange(desc(population) ) %>% pull(population)
-rep_popn <- rep(city_popn, 2)
 official_langs <- mutate(official_langs,
                            most_at_home_proportion = most_at_home / 
 rep_popn)
