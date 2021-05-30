@@ -64,7 +64,7 @@ and the columns are the variables:
 knitr::include_graphics("img/vars.jpeg")
 ```
 
-From a computer programming perspective, in R, a data frame is a special subtype of a list object whose elements (columns) are *vectors*. For example, the data frame below has three vectors whose names are `region`, `year` and `population`.
+From a computer programming perspective, in R, a data frame is a special subtype of a list object whose elements (columns) are *vectors*. For example, the data frame in Figure \@ref(fig:02-vectors) has three vectors whose names are `region`, `year` and `population`.
 
 ```{r 02-vectors, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Data frame with 3 vectors", fig.retina = 2, out.width = "650"}
 knitr::include_graphics("img/vectors.jpeg")
@@ -74,12 +74,19 @@ knitr::include_graphics("img/vectors.jpeg")
 
 In R, **vectors** are objects that can contain one or more elements. The vector elements are ordered, and they must all be of the same *data type*. R has several different basic data types, as shown in table \@ref(tab:datatype-table).
 
-In the vector shown below, the elements are of numeric type:
+In the vector shown in Figure \@ref(fig:02-vector), the elements are of numeric type:
 
 ```{r 02-vector, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Example of a numeric type vector", fig.retina = 2, out.width = "600"}
 knitr::include_graphics("img/vector.jpeg")
 ```
 
+
+You can create vectors in R using the concatenate `c()` function. 
+To create the vector of years in Figure \@ref(fig:02-vector) we write:
+```{r}
+year <- c(2015, 2013, 2011, 2016, 2018)
+year
+```
 
 Table: (\#tab:datatype-table) Basic data types in R
 
@@ -348,7 +355,7 @@ Notice in the table above the word `<chr>` appears beneath each of the column na
 
 Here it makes sense for `region`, `category`, and `language` to be stored as a character type. However, if we want to apply any functions that treat the `most_at_home` and `most_at_work` columns as a number (e.g. finding rows that are above a numeric threshold of a column), it won't be possible to do if the variable is stored as a `character`. R has a variety of data types, but here we will use the function `mutate` to convert these two columns to a "numeric" data type. `mutate` is a function that will allow us to create a new variable or transform existing ones in our data set. We specify the data set in the first argument, and in the proceeding arguments, we specify the function we want to apply (`as.numeric`) to which columns (`most_at_home`, `most_at_work`). Then we give the mutated variable a new name. Here we are naming the columns the same names ("most_at_home", "most_at_work"), but you can call these mutated variables anything you'd like. 
 
-`mutate`'s general syntax is: 
+`mutate`'s general syntax is detailed in Figure \@ref(fig:img-mutate). 
 
 ```{r img-mutate, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the mutate function", out.width="1100", fig.retina = 2}
 knitr::include_graphics("img/mutate_function.jpeg")
@@ -387,29 +394,55 @@ toronto_popn <- region_data %>% filter(region == "Toronto") %>%
 
 We can see in the table that `r format(number_most_home, scientific = FALSE, big.mark = ",")` people reported speaking English in Toronto as their primary language at home according to the 2016 Canadian census. What does this number mean to us? To understand this number, we need context. In particular, how many people were in Toronto when this data was collected? From the 2016 Canadian census profile, the population of Toronto was reported to be `r format(toronto_popn, scientific = FALSE, big.mark = ",")` people. The number of people who report that English as their primary language at home is much more meaningful when we report it in this context. We can even go a step further and transform this count to a relative frequency or proportion. We can do this by dividing the number of people reporting a given language as their primary language at home by the number of people who live in Toronto. For example, the proportion of people who reported that their primary language at home was English in the 2016 Canadian census was `r format(round(number_most_home/toronto_popn, 2), scientific = FALSE, big.mark = ",")` in Toronto.
 
-We can see what the populations in each of the five cities are by filtering the data. 
+We can see the populations of the five cities by filtering the data
+using the `%in%` operator. The `%in%` operator is used to see if an element 
+belongs to a vector. Here we are filtering if any of the five cities 
+("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton") match the rows in the `region`
+column.
 ```{r}
-region_data %>%
-  filter(region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton")) %>% 
-  select(region, population)
+filter(region_data, region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton")) 
 ```
+
+> **What's the difference between `==` and `%in%`?**
+> Suppose we have two vectors, `vector1` and `vector2`. 
+
+> `vector1 == vector2` 
+will compare the vectors element by element. It checks if the first element of 
+`vector1` equals the first element of `vector2`, the second element of `vector1`
+equals the second element of `vector2` etc. 
+> On the other hand, `vector1 %in% vector2`
+compares the first element of `vector1` to all the elements in `vector2`. 
+Then the second element of `vector1` is then compared to all the elements in `vector2` etc. 
+ 
+```{r}
+c("Vancouver", "Toronto") == c("Toronto", "Vancouver")
+c("Vancouver", "Toronto") %in% c("Toronto", "Vancouver")
+```
+
 ```{r, include = F}
 city_popn <- region_data %>% filter(region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton")) %>% arrange(desc(population) ) %>% pull(population)
 rep_popn <- rep(city_popn, 2)
 ```
 
-Below we use `mutate` to calculate the proportion of people reporting a given language as their primary language at home and work for all the languages in the `official_langs` data set:
+We can create a vector of the city populations. 
+Below we use `mutate` to calculate
+the proportion of people reporting a given language as their primary language at home and work for all the languages in the `official_langs` data set. 
 ```{r}
+city_populations <- c(5928040, 4098927, 2463431, 1392609, 1321426)
 
 official_langs <- mutate(official_langs,
-                           most_at_home_proportion = most_at_home / 
-rep_popn)
+                           most_at_home_proportion = most_at_home / city_populations)
 
 official_langs
-
 ```
 
-Here we used a new data frame name (`mutated_can_lang`) and column names (`most_at_home_proportion`, `most_at_work_proportion`) to create a new data frame and new columns. But we could have used the existing data frame name (`lang_no_delimiter`) and column names, which would have written over our original data frame and column.
+> Notice that we divided a vector with 10 elements (`most_at_home`) by a vector with 
+only 5 elements (`city_populations`). What gives? Arithmetic operations of vectors are performed memberwise meaning the first element of `most_at_home` will be divided by the first element 
+of `city_populations`, the second element of `most_at_home` will be divided by the second element of `city_populations` and so on. When two vectors have different lengths, the 
+shorter one will be recycled to match the longer one. Here the elements of
+`city_populations` will be repeated once to match the length of `most_at_home`.
+
+
 
 
 ### Creating a visualization with tidy data
