@@ -19,7 +19,7 @@ By the end of the chapter, students will be able to:
     - `select`
     - `filter`
     - `mutate`
-    - `%>%`
+    - `|>`
     - `%in%`
     - `pivot_longer`
     - `pivot_wider`
@@ -233,6 +233,16 @@ The data above is now tidy because all three criteria for tidy data have now bee
 
 Suppose we have observations spread across multiple rows rather than in a single row. To tidy this data, we can use the function `pivot_wider`, which generally increases the number of columns (widens) and decreases the number of rows in a data set.
 
+
+For example, in Figure \@ref(fig:long-to-wide), the table on the left is an
+untidy format because the `count` column contains two variables (population and commuter count). 
+Using data in this format means we can't easily access the count values,
+so if we wanted to find the maximum population, it's harder to do when the values are not in their own column. We can reshape this data set to a wider format by creating a column called "population" and a column called "commuter," which is the table on the right.
+
+```{r long-to-wide, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from long to wide data", fig.retina = 2, out.width = "1150"}
+knitr::include_graphics("img/long_to_wide.jpeg")
+```
+
 The data set `region_lang_top5_cities_long.csv` contains the number of Canadians reporting the primary language at home and work for five major cities (Toronto, Montreal, Vancouver, Calgary and Edmonton). 
 ```{r 02-reading-long, warning=FALSE, message=FALSE}
 lang_long <- read_csv("data/region_lang_top5_cities_long.csv")
@@ -384,10 +394,10 @@ In this case, we see that `filter` returns a data frame with only one row; this 
 
 ```{r , include = FALSE}
 census_popn <- 35151728
-number_most_home <- filter(official_langs, language == "English" & region == "Toronto") %>% 
+number_most_home <- filter(official_langs, language == "English" & region == "Toronto") |> 
   pull(most_at_home)
 
-toronto_popn <- region_data %>% filter(region == "Toronto") %>% 
+toronto_popn <- region_data |> filter(region == "Toronto") |> 
   pull(population) 
 ```
 
@@ -420,7 +430,7 @@ c("Vancouver", "Toronto") %in% c("Toronto", "Vancouver")
 ```
 
 ```{r, include = F}
-city_popn <- region_data %>% filter(region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton")) %>% arrange(desc(population) ) %>% pull(population)
+city_popn <- region_data |> filter(region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton")) |> arrange(desc(population) ) |> pull(population)
 rep_popn <- rep(city_popn, 2)
 ```
 
@@ -484,7 +494,7 @@ Is there only one shape for tidy data for a given data set? Not necessarily! It 
 
 
 
-## Combining functions using the pipe operator, `%>%`:
+## Combining functions using the pipe operator, `|>`:
 
 In R, we often have to call multiple functions in a sequence to process a data frame. The basic ways of doing this can become quickly unreadable if there are many steps. For example, suppose we need to perform three operations on
 a data frame `data`:
@@ -496,7 +506,7 @@ a data frame `data`:
 
 One way of doing is to just write multiple lines of code, storing temporary objects as you go:
 
-```
+```{r eval = F}
 output_1 <- mutate(data, new_col = old_col * 2)
 output_2 <- filter(output_1, other_col > 5)
 output <- select(output_2, new_col)
@@ -508,7 +518,7 @@ through and find where `output_1` and `output_2` are used in each subsequent lin
 
 Another option for doing this would be to *compose* the functions:
 
-```
+```{r eval = F}
 output <- select(filter(mutate(data, new_col = old_col * 2), other_col > 5), new_col)
 ```
 
@@ -516,25 +526,28 @@ Code like this can also be difficult to understand. Functions compose (reading f
 they are computed by R (above, `mutate` happens first, then `filter`, then `select`). It is also just a really long line of code
 to read in one go. 
 
-The *pipe operator* `%>%` solves this problem, resulting in cleaner and easier-to-follow code. The below accomplishes the same thing as the previous two code blocks:
+The *pipe operator* `|>` solves this problem, resulting in cleaner and easier-to-follow code. The below accomplishes the same thing as the previous two code blocks:
 
-```
-output <- data %>% 
-            mutate(new_col = old_col * 2) %>%
-            filter(other_col > 5) %>%
+```{r eval = F}
+output <- data |> 
+            mutate(new_col = old_col * 2) |>
+            filter(other_col > 5) |>
             select(new_col)
 ```
 
+> Note `%>%` is the old pipe feature so you may see it used as the pipe operator
+in some textbooks or online sources. In this textbook we will be using the new pipe operator `|>`. 
+
 You can think of the pipe as a physical pipe. It takes the output from the function on the left-hand side of the pipe, and
 passes it as the first argument to the function on the right-hand side of the pipe. Note here that we have again split the 
-code across multiple lines for readability; R is fine with this, since it knows that a line ending in a pipe `%>%` is continued
+code across multiple lines for readability; R is fine with this, since it knows that a line ending in a pipe `|>` is continued
 on the next line. Similarly, you see that after the first pipe, the remaining 
 lines are indented until the end of the pipeline. This is not required for the 
 R code to work, but again is used to aid in improving code readability.
 
 Next, let's learn about the details of using the pipe, and look at some examples of how to use it in data analysis.
 
-### Using `%>%` to combine `filter` and `select`
+### Using `|>` to combine `filter` and `select`
 
 Let's work with our tidy `lang_home_tidy` data set from above, which contains the number of Canadians reporting their primary language at home and work for five major cities (Toronto, Montreal, Vancouver, Calgary and Edmonton):
 ```{r, warning=FALSE, message=FALSE}
@@ -550,11 +563,11 @@ van_data_selected <- select(van_data, language, most_at_home)
 van_data_selected
 ```
 
-Although this is valid code, there is a more readable approach we could take by using the pipe, `%>%`. With the pipe, we do not need to create an intermediate object to store the output from `filter`. Instead we can directly send the 
+Although this is valid code, there is a more readable approach we could take by using the pipe, `|>`. With the pipe, we do not need to create an intermediate object to store the output from `filter`. Instead we can directly send the 
 output of `filter` to the input of `select`:
 
 ```{r}
-van_data_selected <- filter(lang_home_tidy, region == "Vancouver") %>%
+van_data_selected <- filter(lang_home_tidy, region == "Vancouver") |>
   select(language, most_at_home)
 van_data_selected
 ```
@@ -565,9 +578,9 @@ argument of `select` is the data frame we are `select`-ing from, which is provid
 
 As you can see, both of these approaches give us the same output, but the second approach is more clear and readable.
 
-### Using `%>%` with more than two functions
+### Using `|>` with more than two functions
 
-The `%>%` can be used with any function in R. Additionally, we can pipe together more than two functions. For example, we can pipe together three functions to order the rows by counts of the language most spoken at home for only the counts that are more than 10,000 and only include the region, language and count of Canadians reporting their primary language at home in our table. 
+The `|>` can be used with any function in R. Additionally, we can pipe together more than two functions. For example, we can pipe together three functions to order the rows by counts of the language most spoken at home for only the counts that are more than 10,000 and only include the region, language and count of Canadians reporting their primary language at home in our table. 
 
 To order the  by counts of the language most spoken at home we will use another 
 `tidyverse` function, `arrange`. This function takes column names as input and 
@@ -582,8 +595,8 @@ in reverse order, you can pair a function called `desc` with `arrange` (e.g.,
 
 
 ```{r}
-large_region_lang <- filter(lang_home_tidy, most_at_home > 10000) %>%
-  select(region, language, most_at_home) %>%
+large_region_lang <- filter(lang_home_tidy, most_at_home > 10000) |>
+  select(region, language, most_at_home) |>
   arrange(most_at_home)
 large_region_lang
 ```
@@ -591,7 +604,7 @@ large_region_lang
 > **Note:** You might also have noticed that we split the function calls across lines after the pipe, similar as to 
 > when we did this earlier in the chapter for long function calls. Again this is allowed and recommeded, especially when the 
 > piped function calls would create a long line of code. Doing this makes your code more readable. When you do this it is important 
-> to end each line with the pipe operator `%>%` to tell R that your code is continuing onto the next line. 
+> to end each line with the pipe operator `|>` to tell R that your code is continuing onto the next line. 
 
 ## Iterating over data with `group_by` + `summarize`
 
@@ -622,7 +635,7 @@ A common pairing with `summarize` is `group_by`. Pairing these functions togethe
 The `group_by` function takes at least two arguments. The first is the data frame that will be grouped, and the second and onwards are columns to use in the grouping. Here we use only one column for grouping (`region`), but more than one can also be used. To do this, list additional columns separated by commas. 
 
 ```{r}
-lang_summary_by_region <- group_by(lang_home_tidy, region) %>%
+lang_summary_by_region <- group_by(lang_home_tidy, region) |>
   summarize(
     min_most_at_home = min(most_at_home),
     max_most_at_home = max(most_at_home)
@@ -654,7 +667,7 @@ region_lang
 Next, we will select only the numeric columns of the data frame:
 
 ```{r 02-numeric-data}
-region_lang_numeric <- region_lang %>%
+region_lang_numeric <- region_lang |>
   select(mother_tongue:lang_known)
 region_lang_numeric
 ```
@@ -701,9 +714,9 @@ Which `map_*` function you choose depends on what you want to do with the output
 What if you need to add other arguments to the functions you want to map? For example, what if there were NA values in our columns that we wanted to know the maximum of? 
 
 ```{r 02-making-NAs, include = F}
-region_with_nas <- region_lang_numeric %>%
-  add_row(mother_tongue = 5, most_at_home = 5, most_at_work = NA, lang_known = NA) %>%
-  arrange(!is.na(lang_known), lang_known) %>%
+region_with_nas <- region_lang_numeric |>
+  add_row(mother_tongue = 5, most_at_home = 5, most_at_work = NA, lang_known = NA) |>
+  arrange(!is.na(lang_known), lang_known) |>
   write_csv("data/region_lang_with_nas.csv")
 ```
 
