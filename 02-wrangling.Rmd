@@ -20,6 +20,7 @@ By the end of the chapter, students will be able to:
     - `filter`
     - `mutate`
     - `|>`
+    - `c()`
     - `%in%`
     - `pivot_longer`
     - `pivot_wider`
@@ -82,7 +83,7 @@ knitr::include_graphics("img/vector.jpeg")
 
 
 You can create vectors in R using the concatenate `c()` function. 
-To create the vector of years in Figure \@ref(fig:02-vector) we write:
+To create the vector `year` in Figure \@ref(fig:02-vector) we write:
 ```{r}
 year <- c(2015, 2013, 2011, 2016, 2018)
 year
@@ -165,25 +166,32 @@ knitr::include_graphics("img/tidy_data.jpeg")
 
 ### Why is tidy data important in R?
 
-First, one of R's most popular plotting toolsets, the `ggplot2` package (which is one of the packages that the `tidyverse` package loads), expects the data to be in a tidy format. Second, most statistical analysis functions also expect data in a tidy format. Given that both of these tasks are central in almost all data analysis projects, it is well worth spending the time to get your data into a tidy format upfront. Luckily there are many well-designed `tidyverse` data cleaning/wrangling tools to help you easily tidy your data. Let's explore them below!
+First, one of R's most popular plotting toolsets, the `ggplot2` package
+(which is one of the packages that the `tidyverse` package loads), expects the
+data to be in a tidy format. Second, most statistical analysis functions also
+expect data in a tidy format. Given that both of these tasks are central in
+almost all data analysis projects, it is well worth spending the time to get your
+data into a tidy format upfront. Luckily there are many well-designed `tidyverse`
+data cleaning/wrangling tools to help you easily tidy your data. Let's explore
+them below!
 
 ### Going from wide to long (or tidy!) using `pivot_longer`
-
-One common thing that often has to be done to get data into a tidy format is to combine columns that are really part of the same variable but currently stored in separate columns. Data is often stored in a wider, not tidy, format because this format is usually more intuitive for human readability and understanding, and humans create data sets. We can use the function `pivot_longer`, which combines columns, making the data frame longer and narrower. 
-
+One common step to get data into a tidy format is to combine columns stored in
+separate columns but are really part of the same variable. Data is often stored
+in a wider, not tidy, format because this format is usually more intuitive for
+human readability and understanding, and humans create data sets.
 
 For example, in Figure \@ref(fig:02-wide-to-long), the table on the left is an
 untidy format because the year values (2011, 2016) are listed as the column headers. 
 One problem with using data in this format is that we don't know what the values
 under each year represent in the table. Also, we can't easily access the year
-values, so if we wanted to find the maximum year for example, it's harder to do 
-when the values are not in their own column. We can reshape this data set to a long format 
-by creating a column called "year" and a column called "population," which is the table on the right.
+values, so if we wanted to find the maximum year, for example, it's hard to do 
+when the values are not in their own column. We can reshape this data set to a long format by creating a column called "year" and a column called "population," which is the table on the right.
 
 ```{r 02-wide-to-long, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from wide to long data", fig.retina = 2, out.width = "1150"}
 knitr::include_graphics("img/wide_to_long.jpeg")
 ```
-To learn how to use `pivot_longer`, we will work with a data set called [`region_lang`](https://ttimbers.github.io/canlang/), containing data retrieved from the 2016 Canadian census. For each census metropolitan area, this data set includes counts of how many Canadians cited each language as their mother tongue, the language spoken most often at home/work and which language they know. 
+We can use the function `pivot_longer`, which combines columns, making the data frame longer and narrower. To learn how to use `pivot_longer`, we will work with a data set called [`region_lang`](https://ttimbers.github.io/canlang/), containing data retrieved from the 2016 Canadian census. For each census metropolitan area, this data set includes counts of how many Canadians cited each language as their mother tongue, the language spoken most often at home/work and which language they know. 
 
 We will use `read_csv` to import a subset of the `region_lang` data called `region_lang_top5_cities_wide.csv`, which contains only the counts of how many Canadians cited each language as their mother tongue for five major Canadian cities (Toronto, Montreal, Vancouver, Calgary and Edmonton). Our data set is stored in an untidy format, as shown below:
 
@@ -231,19 +239,14 @@ The data above is now tidy because all three criteria for tidy data have now bee
 
 ### Going from long to wide using `pivot_wider`
 
-Suppose we have observations spread across multiple rows rather than in a single row. To tidy this data, we can use the function `pivot_wider`, which generally increases the number of columns (widens) and decreases the number of rows in a data set.
-
-
-For example, in Figure \@ref(fig:long-to-wide), the table on the left is an
-untidy format because the `count` column contains two variables (population and commuter count). 
-Using data in this format means we can't easily access the count values,
-so if we wanted to find the maximum population, it's harder to do when the values are not in their own column. We can reshape this data set to a wider format by creating a column called "population" and a column called "commuter," which is the table on the right.
+Suppose we have observations spread across multiple rows rather than in a single row. For example, in Figure \@ref(fig:long-to-wide), the table on the left is an
+untidy format because the `count` column contains two variables (population and commuter count) and each observation is split across two rows.
+Using data in this format means it's harder to apply functions when the values are not in their own column. We can reshape this data set to a wider format by creating a column called "population" and a column called "commuter," which is the table on the right.
 
 ```{r long-to-wide, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from long to wide data", fig.retina = 2, out.width = "1150"}
 knitr::include_graphics("img/long_to_wide.jpeg")
 ```
-
-The data set `region_lang_top5_cities_long.csv` contains the number of Canadians reporting the primary language at home and work for five major cities (Toronto, Montreal, Vancouver, Calgary and Edmonton). 
+To tidy this type of data, we can use the function `pivot_wider`, which generally increases the number of columns (widens) and decreases the number of rows in a data set. The data set `region_lang_top5_cities_long.csv` contains the number of Canadians reporting the primary language at home and work for five major cities (Toronto, Montreal, Vancouver, Calgary and Edmonton). 
 ```{r 02-reading-long, warning=FALSE, message=FALSE}
 lang_long <- read_csv("data/region_lang_top5_cities_long.csv")
 lang_long
@@ -324,7 +327,7 @@ lang_no_delimiter
 
 Chapter 1 discussed two `tidyverse` functions: `select` and `filter` to select columns and filter rows from a data frame. We will now learn more ways we can use these functions. Recall, the `select` function creates a subset of the *columns* of a data frame, while the `filter` subsets *rows* with specific values.
 
-We learned how we can use `select` to obtain a subset of the data frame with multiple column. We can also use `select` to obtain a subset of the data frame constructed from a range of columns. To do this, we use the colon (`:`) operator to denote the range. For example, to get all the columns in the `lang_no_delimiter` data frame from `language` to `most_at_work` we pass `language:most_at_work` as the second argument to the `select` function.
+We can use `select` to obtain a subset of the data frame constructed from a range of columns rather than typing each column name out. To do this, we use the colon (`:`) operator to denote the range. For example, to get all the columns in the `lang_no_delimiter` data frame from `language` to `most_at_work` we pass `language:most_at_work` as the second argument to the `select` function.
 
 ```{r}
 column_range <- select(lang_no_delimiter, language:most_at_work)
@@ -359,7 +362,7 @@ filter(official_langs, most_at_home > 2669195)
 
 When we look at the table we got from `filter` above, it isn't quite doing what we'd expect. We see numbers in the table in the `most_at_home` column that are less than `r format(most_french, scientific = FALSE, big.mark = ",")`. What's going on here? 
 
-### Using `mutate` to create and modify columns
+### Using `mutate` to modify columns
 
 Notice in the table above the word `<chr>` appears beneath each of the column names. The word under the column name indicates the data type of each column. Here all of our variables are "character" data types. Recall, a character data type is a letter or a number surrounded by quotes. In the previous example, `most_at_home` and `most_at_work`  were `<dbl>` (double) (you can verify this by looking at the tables in the previous sections), which is a numeric data type. This change is due to the delimiter "/" when we read in this messy data set. R read the columns in as character types, and it stayed that way after we separated the columns. 
 
@@ -390,7 +393,10 @@ Now when we filter we get what we expect:
 filter(official_langs, most_at_home > 2669195)
 ```
 
-In this case, we see that `filter` returns a data frame with only one row; this indicates that only one English in Toronto is reported by more people as their primary language at home than French in Montréal.
+In this case, we see that `filter` returns a data frame with only one row; this indicates that only English in Toronto is reported by more people as their primary language at home than French in Montréal.
+
+
+### Using `mutate` to create new columns
 
 ```{r , include = FALSE}
 census_popn <- 35151728
@@ -422,7 +428,7 @@ will compare the vectors element by element. It checks if the first element of
 equals the second element of `vector2` etc. 
 > On the other hand, `vector1 %in% vector2`
 compares the first element of `vector1` to all the elements in `vector2`. 
-Then the second element of `vector1` is then compared to all the elements in `vector2` etc. 
+Then the second element of `vector1` is then compared to all the elements in `vector2` etc. Notice the difference between `==` and `%in%` in the example below. 
  
 ```{r}
 c("Vancouver", "Toronto") == c("Toronto", "Vancouver")
@@ -435,8 +441,8 @@ rep_popn <- rep(city_popn, 2)
 ```
 
 We can create a vector of the city populations. 
-Below we use `mutate` to calculate
-the proportion of people reporting a given language as their primary language at home and work for all the languages in the `official_langs` data set. 
+Then we use `mutate` to calculate
+the proportion of people reporting a given language as their primary language at home for all the languages in the `official_langs` data set by dividing the column by our vector of city populations. We give the mutated column a new name `most_at_home_proportion`, which will create a new column in our data set. 
 ```{r}
 city_populations <- c(5928040, 4098927, 2463431, 1392609, 1321426)
 
@@ -457,15 +463,16 @@ shorter one will be recycled to match the longer one. Here the elements of
 
 ### Creating a visualization with tidy data
 
-Is this data set, `offical_langs`, now tidy? Well, if we recall the three criteria for tidy data:
-
-- each row is a single observation,
-- each column is a single variable, and
-- each value is a single cell.
+Is this data set, `offical_langs`, now tidy?
 
 ```{r}
 official_langs
 ```
+ Well, if we recall the three criteria for tidy data:
+
+- each row is a single observation,
+- each column is a single variable, and
+- each value is a single cell.
 
 We can see that this data now satisfies all three criteria, making it easier to analyze. For example, we could visualize how many people speak each of Canada's two 
 official languages (English and French) as their primary language at home in 
@@ -535,8 +542,9 @@ output <- data |>
             select(new_col)
 ```
 
-> Note `%>%` is the old pipe feature so you may see it used as the pipe operator
-in some textbooks or online sources. In this textbook we will be using the new pipe operator `|>`. 
+> Note `%>%` is the old pipe operator so you may see it used 
+in some textbooks or other sources. There are some drawbacks to using the `%>%` 
+pipe operator, thus, in this textbook we will be using the new pipe operator syntax `|>`. 
 
 You can think of the pipe as a physical pipe. It takes the output from the function on the left-hand side of the pipe, and
 passes it as the first argument to the function on the right-hand side of the pipe. Note here that we have again split the 
