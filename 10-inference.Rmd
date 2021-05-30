@@ -174,11 +174,11 @@ called a **sampling distribution**. The sampling distribution will help us see
 how much we would expect our sample proportions from this population to vary
 for samples of size 40. Below we again use the `rep_sample_n` to take samples
 of size 40 from our population of Timbits, but we set the `reps` argument
-to specify the number of samples to take, here 15,000. We will use the function `head()` to see the first few rows and `tail()` to see the last few rows of our `samples` data frame.
+to specify the number of samples to take, here 15,000. We will use the function `tail()` to see the last few rows of our `samples` data frame.
 
 ```{r 11-example-proportions5, echo = TRUE, message = FALSE, warning = FALSE}
 samples <- rep_sample_n(virtual_box, size = 40, reps = 15000)
-head(samples)
+samples
 tail(samples)
 ```
 
@@ -189,7 +189,7 @@ Now that we have taken 15,000 samples, to create a sampling distribution of samp
 sample_estimates <- samples %>%
   group_by(replicate) %>%
   summarise(sample_proportion = sum(flavour == "chocolate") / 40)
-head(sample_estimates)
+sample_estimates
 tail(sample_estimates)
 ```
 Now that we have calculated the proportion of chocolate Timbits for each sample, $\hat{p}_\text{chocolate}$, we can visualize the sampling distribution of sample proportions for samples of size 40:
@@ -265,7 +265,7 @@ and calculate the mean of our sample. This number is a **point estimate** for th
 ```{r 11-example-means3, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Distribution of price per night ($) for sample of 40 Airbnb listings", out.width = "60%"}
 sample_1 <- airbnb %>%
   rep_sample_n(40)
-head(sample_1)
+sample_1
 sample_distribution <- ggplot(sample_1, aes(price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   xlab("Price per night ($)")
@@ -290,12 +290,12 @@ for this variation. In this case, we'll use 15,000 samples of size 40.
 
 ```{r 11-example-means4, echo = TRUE, message = FALSE, warning = FALSE, fig.cap= "Sampling distribution of the sample means for sample size of 40",out.width = "60%"}
 samples <- rep_sample_n(airbnb, size = 40, reps = 15000)
-head(samples)
+samples
 
 sample_estimates <- samples %>%
   group_by(replicate) %>%
   summarise(sample_mean = mean(price))
-head(sample_estimates)
+sample_estimates
 
 sampling_distribution_40 <- ggplot(sample_estimates, aes(x = sample_mean)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
@@ -564,7 +564,7 @@ one_sample <- airbnb %>%
   rep_sample_n(40) %>%
   ungroup() %>% # ungroup the data frame
   select(price) # drop the replicate column
-head(one_sample)
+one_sample
 one_sample_dist <- ggplot(one_sample, aes(price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   xlab("Price per night ($)")
@@ -591,7 +591,7 @@ argument for `replace` from its default value of `FALSE` to `TRUE`.
 ```{r 11-bootstrapping3, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Bootstrap distribution", out.width = "60%"}
 boot1 <- one_sample %>%
   rep_sample_n(size = 40, replace = TRUE, reps = 1)
-head(boot1)
+boot1
 boot1_dist <- ggplot(boot1, aes(price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   xlab("Price per night ($)")
@@ -618,7 +618,7 @@ this is often the best we can do.
 ```{r 11-bootstrapping4, echo = TRUE, message = FALSE, warning = FALSE}
 boot15000 <- one_sample %>%
   rep_sample_n(size = 40, replace = TRUE, reps = 15000)
-head(boot15000)
+boot15000
 tail(boot15000)
 ```
 
@@ -645,7 +645,7 @@ We can see that the bootstrap sample distributions and the sample means are diff
 boot15000_means <- boot15000 %>%
   group_by(replicate) %>%
   summarize(mean = mean(price))
-head(boot15000_means)
+boot15000_means
 tail(boot15000_means)
 boot_est_dist <- ggplot(boot15000_means, aes(x = mean)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
@@ -880,8 +880,5 @@ This chapter is only the beginning of the journey into statistical inference. We
 
 ## Additional resources
 
-For more about statistical inference and bootstrapping, refer to 
-
-- Chapters 7 - 8 of [Modern Dive: Statistical 
-Inference via Data Science](https://moderndive.com/) by Chester Ismay and Albert Y. Kim 
-- Chapters 4 - 7 of [OpenIntro Statistics - Fourth Edition](https://www.openintro.org/) by David M. Diez, Christopher D. Barr and Mine Cetinkaya-Rundel
+- Chapters 7 to 10 of [Modern Dive](https://moderndive.com/) provide a great next step in learning about inference. In particular, Chapters 7 and 8 cover sampling and bootstrapping using `tidyverse` and `infer` in a slightly more in-depth manner than the present chapter. Chapters 9 and 10 take the next step beyond the scope of this chapter and begin to provide some of the initial mathematical underpinnings of inference and more advanced applications of the concept of inference in testing hypotheses and performing regression. This material offers a great starting point for getting more into the technical side of statistics.
+- Chapters 4 to 7 of [OpenIntro Statistics - Fourth Edition](https://www.openintro.org/) provide a good next step after Modern Dive. Although it is still certainly an introductory text, things get a bit more mathematical here. Depending on your background, you may actually want to start going through Chapters 1 to 3 first, where you will learn some fundamental concepts in probability theory. Although it may seem like a diversion, probability theory is *the language of statistics*; if you have a solid grasp of probability, more advanced statistics will come naturally to you!

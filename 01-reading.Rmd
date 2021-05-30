@@ -17,8 +17,8 @@ By the end of the chapter, students will be able to:
 - define the following:
     - absolute file path
     - relative file path
-    - url
-- read data into R using a relative path and a url
+    - **u**niform **r**esource **l**ocator (URL)
+- read data into R using a relative path and a URL
 - compare and contrast the following functions:
     - `read_csv` 
     - `read_tsv`
@@ -38,9 +38,10 @@ By the end of the chapter, students will be able to:
 - retrieve data from a database query and bring it into R using the `collect` function from the `dbplyr` package
 - use `write_csv` to save a data frame to a `.csv` file
 
-- (*optional*) scrape data from the web
-    - read/scrape data from an internet URL using the rvest `html_nodes` and `html_text` functions
-    - compare downloading tabular data from a plain text file (e.g. `.csv`) from the web versus scraping data from a `.html` file
+- (*optional*) obtain data using **a**pplication **p**rogramming **i**nterfaces (APIs) and web scraping
+    - read HTML source code from a URL using the `rvest` package
+    - read data from the Twitter API using the `rtweet` package
+    - compare downloading tabular data from a plain text file (e.g. `.csv`), accessing data from an API, and scraping the HTML source code from a website
 
 ## Absolute and relative file paths
 
@@ -203,7 +204,7 @@ canlang_data
 Data frames in R need to have column names, thus if you read data into R as a data frame without column names then R assigns column names for them. If you used the `read_*` functions to read the data into R, then R gives each column a name of X1, X2, ..., XN, where N is the number of columns in the data set.
 
 ### Reading tabular data directly from a URL
-We can also use `read_csv()` or `read_delim()` (and related functions) to read in tabular data directly from a url that contains tabular data. In this case, we provide the url to `read_csv()` as the path to the file instead of a path to a local file on our computer. Similar to when we specify a path on our local computer, here we need to surround the url by quotes. All other arguments that we use are the same as when using these functions with a local file on our computer.
+We can also use `read_csv()` or `read_delim()` (and related functions) to read in tabular data directly from a **u**niform **r**esource **l**ocator (URL) that contains tabular data. In this case, we provide the URL to `read_csv()` as the path to the file instead of a path to a local file on our computer. Similar to when we specify a path on our local computer, here we need to surround the URL by quotes. All other arguments that we use are the same as when using these functions with a local file on our computer.
 
 ```{r}
 canlang_data <- read_csv("https://raw.githubusercontent.com/UBC-DSCI/introduction-to-datascience/master/data/can_lang.csv")
@@ -504,21 +505,66 @@ no_official_lang_data <- filter(can_lang, category != "Official languages")
 write_csv(no_official_lang_data, "data/no_official_languages.csv")
 ```
 
-## Scraping data off the web using R
+## Obtaining data from the web 
 
-In the first part of this chapter, we learned how to read in data from plain text files that are usually "rectangular" in shape using the `tidyverse` `read_*` functions. Sadly, not all data comes in this simple format, but we can happily use many other tools to read in more messy/wild data formats. One common place people often want/need to read in data from is websites. Such data exists in a non-rectangular format. One quick and easy solution to get this data is to copy and paste it. However, this becomes painstakingly long and boring when there is a lot of data that needs gathering. And any time you start doing a lot of copying and pasting, you will likely introduce errors. 
+> *This section is not required reading for the remainder of the textbook. It is included for those readers interested in learning a little bit more about how to obtain different types of data from the web.*
 
-The formal name for gathering non-rectangular data from the web and transforming it into a more useful format for data analysis is **web scraping**. There are two different ways to do web scraping: 1) screen scraping (similar to copying and pasting from a website, but done in a programmatic way to minimize errors and maximize efficiency) and 2) web APIs (**a**pplication **p**rogramming **i**nterface) (a website that provides a programatic way of returning the data as JSON or XML files via http requests). In this course, we will explore the first method, screen scraping using R's [`rvest` package](https://github.com/hadley/rvest).
+Data doesn't just magically appear on your computer; you need to get 
+it from somewhere. Earlier in the chapter we showed you how to access data
+stored in a plaintext, spreadsheet-like format (e.g., comma- or tab-separated)
+from a web URL using one of the `read_*` functions from the `tidyverse`. But 
+as time goes on, it is increasingly uncommon to find
+data (especially large amounts of data) in this format available for download
+from a URL. Instead, websites now often offer something known as an **a**pplication
+**p**rogramming **i**nterface (API), which provides a programmatic way to ask
+for subsets of a dataset. This allows the website owner to control *who* has access
+to the data, *what portion* of the data they have access to, and *how much* data they can access.
+Typically, the website owner will give you a *token* (a secret string
+of characters somewhat like a password) that you have to provide when accessing the API.
 
-### HTML and CSS selectors
+Another interesting thought: websites themselves *are* data! When you type a URL
+into your browser window, your browser asks the *web server* (another computer on the internet whose
+job it is to respond to requests for the website) to give it the website's data, 
+and then your browser translates that data into something you can see. If the website
+shows you some information that you're interested in, you could *create* a data set for yourself
+by copying and pasting that information into a file. This process of taking information
+directly from what a website displays is called *web scraping* (or sometimes *screen scraping*). Now, 
+of course, copying and pasting information manually is a painstaking and error-prone process, especially when there is a lot of
+information to gather. So instead of asking your browser to translate the information that the
+web server provides into something you can see, you can collect
+that data programmatically---in the form of **h**yper**t**ext **m**arkup **l**anguage (HTML) 
+and **c**ascading **s**tyle **s**heet (CSS) code---and
+process it to extract useful information.
 
-Before we jump into scraping, let's set up some motivation and learn a little bit about what the "source code" of a website looks like. Say we are interested in knowing the average rental price (per square footage) of the most recently available one-bedroom apartments in Vancouver from https://vancouver.craigslist.org. When we visit the Vancouver Craigslist website and search for one-bedroom apartments, this is what we are shown:
+This subsection will show you the basics of both web scraping
+with the [`rvest` R package](https://github.com/hadley/rvest)
+and accessing the [Twitter](www.twitter.com) API
+using the [`rtweet` R package](https://github.com/ropensci/rtweet).
+
+### Web scraping
+
+**HTML and CSS selectors**
+
+When you enter a URL into your browser, your browser connects to the
+web server at that URL and asks for the *source code* for the website.
+This is the data that the browser translates into something you can see; so if we
+are going to create our own data by scraping a website, we have to first understand
+what that data looks like! For example, let's say we are interested
+in knowing the average rental price (per square foot) of the most recently
+available one-bedroom apartments in Vancouver from
+https://vancouver.craigslist.org. When we visit the Vancouver Craigslist
+website and search for one-bedroom apartments, this is what we are shown:
 
 ![](img/craigslist_human.png)
 
-From that page, it's pretty easy for our human eyes to find the apartment price and square footage. But how can we do this programmatically, so we don't have to copy and paste all these numbers? Well, we have to deal with the webpage source code, which we show a snippet of below (and link to the [entire source code here](img/website_source.txt)):
+Based on what our browser shows us, it's pretty easy to find the size and price
+for each apartment listed. But we would like to be able to obtain that information
+using R, without any manual human effort or copying and pasting. We do this by
+examining the *source code* that the web server actually sent our browser to
+display for us. We show a snippet of it below (and link to the [entire source
+code here](img/website_source.txt)):
 
-```
+```html
         <span class="result-meta">
                 <span class="result-price">$800</span>
 
@@ -564,45 +610,122 @@ From that page, it's pretty easy for our human eyes to find the apartment price 
 
 ```
 
-This is not easy for our human eyeballs to read! However, it is easy for us to use programmatic tools to extract the data we need by specifying which HTML tags (things inside `<` and `>` in the code above). For example, if we look in the code above and search for lines with a price, we can also look at the tags that are near that price and see if there's a common "word" we can use that is near the price but doesn't exist on other lines that have the information we are not interested in:
-
-```
+Oof...you can tell that the source code for a web page is not really designed for humans
+to understand easily. However, if you look through it closely, you will find that the information
+we're interested in is hidden among the muck. For example, near the top of the snippet
+above you can see a line that looks like
+```html
 <span class="result-price">$800</span>
 ```
+That is definitely storing the price of a particular apartment. With some more investigation,
+you should be able to find things like the date and time of the listing, the address of the listing,
+and more. So this source code most likely contains all the information we are interested in!
 
-and 
-
-```
+Let's dig into that line above a bit more. You can see that that bit of code
+has an *opening tag* (words between `<` and `>`, like `<span>`) and a *closing tag* 
+(the same with a slash, like `</span>`). HTML source code generally stores
+its data between opening and closing tags like these. Above you can see that
+the information we want (`$800`) is stored between an opening and closing 
+tag (`<span>` and `</span>`). In the opening tag, you can also see a very useful
+"class" (a special word that is sometimes included with opening tags): 
+`class="result-price"`. Since we want R
+to programmatically sort through all of the source code for the website to find
+apartment prices, maybe we can look for all the tags with the `"result-price"`
+class, and grab the information between the opening and closing tag. Indeed,
+take a look at another line of the source snippet above:
+```html
 <span class="result-price">$2285</span>
 ```
 
-What we can see is there is a special "word" here, "result-price", which appears only on the lines with prices and not on the other lines (that have information we are not interested in). This special word and the context in which is is used (learned from the other words inside the HTML tag) can be combined to create something called a CSS selector. The CSS selector can then be used by R's `rvest` package to select the information we want (here price) from the website source code.
+It's yet another price for an apartment listing, and the tags surrounding it
+have the `"result-price"` class. Wonderful! Now that we know what pattern we
+are looking for---a dollar amount between opening and closing tags that have the
+`"result-price"` class---we should be able to use code to pull out all of the 
+matching patterns from the source code to obtain our data. This sort of "pattern"
+is known as a *CSS selector* (where CSS stands for **c**ascading **s**tyle **s**heet).
 
-Now, many websites are quite large and complex, and so then is their website source code. And as you saw above, it is not easy to read and pick out the special words we want with our human eyeballs. So to make this easier, we will use the SelectorGadget tool. It is an open source tool that simplifies generating and finding CSS selectors. We recommend you use the Chrome web browser to use this tool, and install the [selector gadget tool from the Chrome Web Store](https://chrome.google.com/webstore/detail/selectorgadget/mhjhnkcfbdhnjickkkdbjoemdmbfginb). Here is a short video on how to install and use the SelectorGadget tool to get a CSS selector for use in web scraping:
+The above was a particularly simple example of "finding the pattern to look for"; many 
+websites are quite a bit larger and more complex, and so is their website
+source code. Fortunately there are tools available to make this process
+easier. For example, 
+[SelectorGadget from the Chrome Web Store](https://chrome.google.com/webstore/detail/SelectorGadget/mhjhnkcfbdhnjickkkdbjoemdmbfginb) is 
+an open source tool that simplifies identifying the generating and finding CSS selectors. 
+At the end of the chapter in the additional resources section, we include a link to
+a short video on how to install and use the SelectorGadget tool to 
+obtain CSS selectors for use in web scraping. 
+After installing and enabling the tool, you can simply click the 
+website element for which you want an appropriate selector. For 
+example, if we click the price of an apartment listing, we
+find that SelectorGadget shows us the selector `.result-price`
+in its toolbar, and highlights all the other apartment
+prices that would be obtained using that selector.
 
-<iframe width="840" height="473" src="https://www.youtube.com/embed/YdIWI6K64zo" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+![](img/sg1.png)
 
-From installing and using the selectorgadget as shown in the video above, we get the two CSS selectors `.housing` and `.result-price` that we can use to scrape information about the square footage and the rental price, respectively. The selector gadget returns them to us as a comma separated list (here `.housing , .result-price`), which is exactly the format we need to provide to R if we are using more than one CSS selector.
+If we then click the size of an apartment listing, SelectorGadget shows us
+the `span` selector, and highlights much of the page; this indicates that the
+`span` selector is not specific enough to just capture apartment sizes. 
 
-### Are you allowed to scrape that website?
+![](img/sg3.png)
 
-**BEFORE** scraping data from the web, you should always check whether or not you are **ALLOWED** to scrape it! There are two documents that are important for this: the robots.txt file and reading the website's Terms of Service document. The website's Terms of Service document is probably the more important of the two, and so you should look there first. What happens when we look at Craigslist's Terms of Service document? Well we read this:
+To narrow the selector, we can click one of the highlighted elements that
+we *do not* want. For example, we can deselect the "pic/map" links, 
+resulting in only the data we want highlighted using the `.housing` selector.
+
+![](img/sg2.png)
+
+So to scrape information about the square footage and rental price
+of apartment listings, we need to use
+the two CSS selectors `.housing` and `.result-price`, respectively.
+The selector gadget returns them to us as a comma separated list (here
+`.housing , .result-price`), which is exactly the format we need to provide to
+R if we are using more than one CSS selector.
+
+**STOP! Are you allowed to scrape that website?**
+
+Before scraping data from the web, you should always check whether or not
+you are *allowed* to scrape it! There are two documents that are important
+for this: the `robots.txt` file and the Terms of Service
+document. Let's take a look at Craigslist's Terms of Service document:
 
 *"You agree not to copy/collect CL content via robots, spiders, scripts, scrapers, crawlers, or any automated or manual equivalent (e.g., by hand)."*
 
 source: https://www.craigslist.org/about/terms.of.use
 
+> Want to learn more about the legalities of web scraping and crawling? Read
+> this interesting blog post titled ["Web Scraping and Crawling Are Perfectly
+> Legal, Right?" by Benoit
+> Bernard](https://benbernardblog.com/web-scraping-and-crawling-are-perfectly-legal-right/).
 
-> Want to learn more about the legalities of web scraping and crawling? Read this interesting blog post titled ["Web Scraping and Crawling Are Perfectly Legal, Right?" by Benoit Bernard](https://benbernardblog.com/web-scraping-and-crawling-are-perfectly-legal-right/) (this is optional, not required reading).
+So what to do now? Well, we *could* ask the owner of Craigslist for permission to scrape.
+However, we are not likely to get a response, and even if we did they would not likely give us permission.
+The more realistic answer is that we simply cannot scrape Craigslist. If we still want
+to find data about rental prices in Vancouver, we must go elsewhere.
 
-So what to do now? Well, we shouldn't scrape Craigslist! Let's instead scrape some data on the population of Canadian cities from Wikipedia (who's [Terms of Service document](https://foundation.wikimedia.org/wiki/Terms_of_Use/en) does not explicilty say do not scrape). In this video below we demonstrate using the selectorgadget tool to get CSS Selectors from [Wikipedia's Canada](https://en.wikipedia.org/wiki/Canada) page to scrape a table that contains city names and their populations from the 2016 Canadian Census: 
+To continue learning how to scrape data from the web, let's instead
+scrape data on the population of Canadian cities from Wikipedia.
+We have checked the [Terms of Service document](https://foundation.wikimedia.org/wiki/Terms_of_Use/en),
+and it does not mention that web scraping is disallowed. 
+We will use the SelectorGadget tool to pick elements that we are interested in
+(city names and population counts) and deselect others to indicate that we are not 
+interested in them (province names), as shown in the screenshot  below.
 
-<iframe width="840" height="473" src="https://www.youtube.com/embed/O9HKbdhqYzk" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+![](img/sg4.png)
 
+We include a link to a short video tutorial on this process at the end of the chapter
+in the additional resources section. SelectorGadget provides in its toolbar
+the following list of CSS selectors to use:
+```
+td:nth-child(5), 
+td:nth-child(7), 
+.infobox:nth-child(122) td:nth-child(1), 
+.infobox td:nth-child(3)
+```
 
-### Using `rvest`
+**Using `rvest`**
 
-Now that we have our CSS selectors we can use `rvest` R package to scrape our desired data from the website. First we start by loading the `rvest` package:
+Now that we have our CSS selectors we can use the `rvest` R package to scrape our
+desired data from the website. We start by loading the `rvest` package:
 
 ```{r 01-load-rvest}
 library(rvest)
@@ -614,23 +737,172 @@ Next, we tell R what page we want to scrape by providing the webpage's URL in qu
 page <- read_html("https://en.wikipedia.org/wiki/Canada")
 ```
 
+The `read_html` function directly downloads the source code for the page at 
+the URL you specify, just like your browser would if you navigated to that site. But 
+instead of  displaying the website to you, the `read_html` function just returns 
+the HTML source code itself, which we have
+stored in the `page` variable. Next, we send the page object to the `html_nodes`
+function, along with the CSS selectors we obtained from
+the SelectorGadget tool. Make sure to surround the selectors with quotations; `html_nodes` expects that
+argument to be a string. The `html_nodes` function then selects *nodes* from the HTML document that 
+match the CSS selectors you specified.
+A *node* is an HTML tag pair combined with the content stored between the tags. For our
+CSS selector `td:nth-child(5)`, an example node that would be selected would
+be: 
+```html
+<td style="text-align:left;background:#f0f0f0;">
+<a href="/wiki/London,_Ontario" title="London, Ontario">London</a>
+</td>
+```
 
-Then we send the page object to the `html_nodes` function. We also provide that function with the CSS selectors we obtained from the selectorgadget tool. These should be surrounded by quotations. The `html_nodes` function select nodes from the HTML document using CSS selectors. Nodes are the HTML tag pairs as well as the content between the tags. For our CSS selector `td:nth-child(5)` and example node that would be selected would be: `<td style="text-align:left;background:#f0f0f0;"><a href="/wiki/London,_Ontario" title="London, Ontario">London</a></td>`
-
-We will use `head()` here to limit the print output of these vectors to 6 lines.
+We store the result of the `html_nodes` function in the `population_nodes` variable.
+Note that below we use the `paste` function with a comma separator (`sep=","`)
+to build the list of selectors while maintaining code readability; this avoids
+having one very long line of code with the string
+`"td:nth-child(5),td:nth-child(7),.infobox:nth-child(122) td:nth-child(1),.infobox td:nth-child(3)"`
+as the second argument of `html_nodes`:
 ```{r 01-select-nodes}
-population_nodes <- html_nodes(page, "td:nth-child(5) , td:nth-child(7) , .infobox:nth-child(122) td:nth-child(1) , .infobox td:nth-child(3)")
+selectors <- paste("td:nth-child(5)",
+             "td:nth-child(7)",
+             ".infobox:nth-child(122) td:nth-child(1)",
+             ".infobox td:nth-child(3)", sep=",")
+population_nodes <- html_nodes(page, selectors)
 head(population_nodes)
 ```
 
-Next we extract the meaningful data from the HTML nodes using the `html_text` function. For our example, this functions only required argument is the an html_nodes object, which we named `rent_nodes`. In the case of this example node: `<td style="text-align:left;background:#f0f0f0;"><a href="/wiki/London,_Ontario" title="London, Ontario">London</a></td>`, the `html_text` function would return `London`.
+Next we extract the meaningful data---in other words, we get rid of the HTML code syntax and tags---from 
+the nodes using the `html_text`
+function. In the case of the example
+node above, `html_text` function returns `"London"`.
 
 ```{r 01-get-text}
 population_text <- html_text(population_nodes)
 head(population_text)
 ```
 
-Are we done? Not quite... If you look at the data closely you see that the data is not in an optimal format for data analysis. Both the city names and population are encoded as characters in a single vector instead of being in a data frame with one character column for city and one numeric column for population (think of how you would organize the data in a spreadsheet). Additionally, the populations contain commas (not useful for programmatically dealing with numbers), and some even contain a line break character at the end (`\n`). Next chapter we will learn more about data wrangling using R so that we can easily clean up this data with a few lines of code.
+Fantastic! We seem to have extracted the data of interest from the 
+raw HTML source code. But we are not quite done; the data
+is not yet in an optimal format for data analysis. Both the city names and
+population are encoded as characters in a single vector, instead of being in a
+data frame with one character column for city and one numeric column for
+population (like a spreadsheet).
+Additionally, the populations contain commas (not useful for programmatically
+dealing with numbers), and some even contain a line break character at the end
+(`\n`). In the next chapter, we will learn more about how to *wrangle* data
+such as this into a more useful format for data analysis using R.
+
+### Using an API
+
+Rather than posting a data file at a URL for you to download, many websites these days
+provide an API that must be accessed through a programming language like R. The benefit of this
+is that data owners have much more control over the data they provide to users. However, unlike
+web scraping, there is no consistent way to access an API across websites. Every website typically
+has its own API designed specially for its own use-case. Therefore we will just provide one example
+of accessing data through an API in this book, with the hope that it gives you enough of a basic
+idea that you can learn how to use another API if needed.
+
+In particular, in this book we will show you the basics of how to use
+the [rtweet](https://github.com/ropensci/rtweet) package in R
+to access data from the [Twitter](www.twitter.com) API. One nice feature of this particular 
+API is that you don't need  a special *token* to access it; you simply need to 
+make an account with them. Your access to the data will then be authenticated and controlled through
+your account username and password. If you have a Twitter account already (or are willing to make one), you can follow
+along with the examples that we show here. To get started, load the `rtweet` package:
+```r
+library(rtweet)
+```
+This package provides an extensive set of functions to search Twitter for tweets, users, their followers, and more. 
+Let's construct a small dataset of the last 400 tweets and retweets from the Tidyverse account. A few of the most recent tweets
+are shown below.
+
+
+```{r 01-tidyverse-twitter, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "The Tidyverse Twitter feed. [Source](https://twitter.com/tidyverse?lang=en)", fig.retina = 2, out.width="800"}
+knitr::include_graphics("img/tidyverse_twitter.png")
+```
+
+**STOP! Think about your API usage carefully!**
+
+When you access an API, you are initiating a transfer of data from a web server
+to your computer. Web servers are expensive to run and do not have infinite resources.
+If you try to ask for *too much data* at once, you can use up a huge amount of the server's bandwidth. 
+If you try to ask for data *too frequently*---e.g., if you 
+make many requests to the server in quick succession---you can also bog the server down and make
+it unable to talk to anyone else. Most servers have mechanisms to revoke your access if you are not
+careful, but you should try to prevent issues from happening in the first place by being extra careful
+with how you write and run your code. You should also keep in mind that when a website owner
+grants you API access, they also usually specify a limit (or *quota*) of how much data you can ask for.
+Be careful not to overrun your quota! In this example, we should take a look at
+ [the Twitter website](https://developer.twitter.com/en/docs/twitter-api/rate-limits) to see what limits
+we should abide by when using the API. 
+
+**Using `rtweet`**
+
+After checking the website, it seems like asking for 400 tweets one time is acceptable.
+So we can use the `get_timelines` function to ask for the last 400 tweets from the Tidyverse account.
+```r
+tidyverse_tweets <- get_timelines('tidyverse', n=400)
+```
+
+When you call the `get_timelines` for the first time (or any other `rtweet` function that accesses the API), 
+you will see a browser pop-up that looks something like this:
+```{r 01-tidyverse-authorize, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "The rtweet authorization prompt.", fig.retina = 2, out.width="800"}
+knitr::include_graphics("img/authorize_question.png")
+```
+
+This is the `rtweet` package asking you to provide your own Twitter account's login information.
+When `rtweet` talks to the Twitter API, it uses your account information to authenticate requests;
+Twitter then can keep track of how much data you're asking for, and how frequently you're asking.
+If you want to follow along with this example using your own Twitter account, you should read
+over the list of permissions you are granting `rtweet` *very carefully* and make sure you are comfortable
+with it. Note that `rtweet` can be used to manage most aspects of your account (make posts, follow others, etc.),
+which is why `rtweet` asks for such extensive permissions.
+If you decide to allow `rtweet` to talk to the Twitter API using your account information, then 
+input your username and password and hit "Sign In." Twitter will probably send you an email to say
+that there was an unusual login attempt on your account, and in that case you will have to take
+the one-time code they send you and provide that to the `rtweet` login page too. 
+
+> Every API has its own way to authenticate users when they try to access data. Many APIs require you to
+> sign up to receive a *token*, which is a secret password that you input into the R package (like `rtweet`) 
+> that you are using to access the API. 
+
+With the authentication setup out of the way, let's run the `get_timelines` function again to actually access
+the API and take a look at what was returned:
+```r
+tidyverse_tweets <- get_timelines('tidyverse', n=400)
+tidyverse_tweets
+```
+```{r 01-reading-hidden-load-tweets, echo = FALSE, message = FALSE, warning = FALSE}
+tidyverse_tweets <- read_csv("data/tweets.csv")
+tidyverse_tweets
+```
+The data has quite a few variables! Let's reduce this down to a few variables of interest: `created_at`,  `retweet_screen_name`, `is_retweet`, and `text`,.
+```{r 01-select-tweets, message = FALSE, warning = FALSE}
+tidyverse_tweets <- tidyverse_tweets %>% select(created_at, retweet_screen_name, 
+                                                is_retweet, text)
+tidyverse_tweets
+```
+If you look back up at the image of the Tidyverse twitter page, you will
+recognize the text of the most recent few tweets in the above dataframe.  In
+other words, we have successfully created a small dataset using the Twitter
+API---neat! This data is also quite different from what we obtained from web scraping;
+it is already well-organized into a `tidyverse` dataframe (although not *every* API
+will provide data in such a nice format).
+ From this point onward, the `tidyverse_tweets` dataframe is stored on your
+machine, and you can play with it to your heart's content. For example, you can use
+`write_csv` to save it to a file and `read_csv` to read it into R again later; 
+and after reading the next few chapters you will have the skills to
+compute the percentage of retweets versus tweets, find the most oft-retweeted
+account, make visualizations of the data, and much more! If you decide that you want 
+to ask the Twitter API for more data 
+(see [the `rtweet` page](https://github.com/ropensci/rtweet)
+for more examples of what is possible), just be mindful as usual about how much
+data you are requesting and how frequently you are making requests. 
 
 ## Additional resources
-- [Data import chapter](https://r4ds.had.co.nz/data-import.html) from [R for Data Science](https://r4ds.had.co.nz/) by Garrett Grolemund & Hadley Wickham
+- The [`readr` page on the tidyverse website](https://readr.tidyverse.org/) is where you should look if you want to learn more about the functions in this chapter, the full set of arguments you can use, and other related functions. The site also provides a very nice cheat sheet that summarizes many of the data wrangling functions from this chapter.
+- Sometimes you might run into data in such poor shape that none of the reading functions we cover in this chapter works. In that case, you can consult the [data import chapter](https://r4ds.had.co.nz/data-import.html) from [R for Data Science](https://r4ds.had.co.nz/), which goes into a lot more detail about how R parses text from files into data frames.
+- The documentation for many of the reading functions we cover in this chapter can be found [on the tidyverse website](https://readr.tidyverse.org/reference/read_delim.html). This site shows you the full set of arguments available for each function.
+- The [rio package](https://github.com/leeper/rio) provides an alternative set of tools for reading and writing data in R. It aims to be a "Swiss army knife" for data reading/writing/converting, and supports a wide variety of data types (including data formats generated by other statistical software like SPSS and SAS).
+- If you read the subsection on obtaining data from the web via scraping and APIs, we provide two companion tutorial video links:
+    - [A brief video tutorial](https://www.youtube.com/embed/YdIWI6K64zo) on using the SelectorGadget tool to obtain desired CSS selectors for extracting the price and size data for apartment listings on CraigsList
+    - [Another brief video tutorial](https://www.youtube.com/embed/O9HKbdhqYzk) on using the SelectorGadget tool to obtain desired CSS selectors for extracting Canadian city names and 2016 census populations from Wikipedia
