@@ -80,6 +80,8 @@ library(tidyverse)
 library(tidymodels)
 library(gridExtra)
 
+set.seed(5)
+
 sacramento <- read_csv("data/sacramento.csv")
 sacramento
 ```
@@ -133,7 +135,6 @@ This function takes two arguments:
 2. `size` (the number of observations/rows to be randomly selected/sampled)
 
 ```{r 07-sacramento}
-set.seed(2)
 small_sacramento <- sample_n(sacramento, size = 30)
 ```
 
@@ -200,7 +201,7 @@ nn_plot +
 ```
 
 Our predicted price is \$`r format(round(prediction[[1]]), big.mark=",", nsmall=0, scientific = FALSE)`
-(shown as a red point above), which is much less than \$350,000; perhaps we
+(shown as a red point in Figure \@ref(fig:07-predictedViz-knn)), which is much less than \$350,000; perhaps we
 might want to offer less than the list price at which the house is advertised.
 But this is only the very beginning of the story. We still have all the same
 unanswered questions here with K-NN regression that we had with K-NN
@@ -216,7 +217,6 @@ now. Note that for the remainder of the chapter we'll be working with the
 entire Sacramento data set, as opposed to the smaller sample of 30 points above.
 
 ```{r 07-test-train-split}
-set.seed(1234)
 sacramento_split <- initial_split(sacramento, prop = 0.6, strata = price)
 sacramento_train <- training(sacramento_split)
 sacramento_test <- testing(sacramento_split)
@@ -294,7 +294,7 @@ the model and returns the RMSPE for each number of neighbours.
 
 ```{r 07-choose-k-knn-results}
 
-gridvals <- tibble(neighbors = seq(1, 200))
+gridvals <- tibble(neighbors = seq(from = 1, to = 200, by = 3))
 
 sacr_results <- sacr_wkflw %>%
   tune_grid(resamples = sacr_vfold, grid = gridvals) %>%
@@ -433,7 +433,6 @@ we specify that we are performing regression in `set_mode`, the `metrics`
 function knows to output a quality summary related to regression, and not, say, classification.
 
 ```{r 07-predict}
-set.seed(1234)
 kmin <- sacr_min %>% pull(neighbors)
 sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = kmin) %>%
   set_engine("kknn") %>%
@@ -468,22 +467,23 @@ on statistical/machine learning, you will learn more about how to interpret RMSP
 from testing data and other ways to assess models.
 
 Finally, Figure \@ref(fig:07-predict-all) shows the predictions that our final model makes across
-all house sizes we might encounter in the Sacramento area. You have already seen a few
-plots like this in this chapter; but here we also provide the code that generated it
+the range of house sizes we might encounter in the Sacramento area&mdash;from 500 to 5000 square feet. 
+You have already seen a few plots like this in this chapter, but here we also provide the code that generated it
 as a learning challenge.
 
 ```{r 07-predict-all, fig.height = 4, fig.width = 5, fig.cap = "Predicted values of house price (blue line) for the final K-NN regression model"}
-set.seed(1234)
-sacr_preds <- sacr_fit %>%
-  predict(sacramento_train) %>%
-  bind_cols(sacramento_train)
+sacr_preds <- tibble(sqft = seq(from = 500, to = 5000, by = 10))
 
-plot_final <- ggplot(sacr_preds, aes(x = sqft, y = price)) +
-  geom_point(alpha = 0.4) +
+sacr_preds <- sacr_fit %>%
+  predict(sacr_preds) %>%
+  bind_cols(sacr_preds)
+
+plot_final <- ggplot() +
+  geom_point(data = sacramento_train, mapping = aes(x = sqft, y = price), alpha = 0.4) +
+  geom_line(data = sacr_preds, mapping = aes(x = sqft, y = .pred), color="blue") +
   xlab("House size (square footage)") +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
-  geom_line(data = sacr_preds, aes(x = sqft, y = .pred), color = "blue") +
   ggtitle(paste0("K = ", kmin))
 
 plot_final
