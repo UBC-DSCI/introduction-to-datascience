@@ -61,7 +61,7 @@ to draw the straight line of best fit through our existing data points.
 The small subset of data as well as the line of best fit are shown
 in Figure \@ref(fig:08-lin-reg1).
 
-```{r 08-lin-reg1, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price versus house size with line of best fit for subset of the Sacramento housing data"}
+```{r 08-lin-reg1, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of sale price versus size with line of best fit for subset of the Sacramento housing data"}
 library(tidyverse)
 library(tidymodels)
 library(scales)
@@ -84,7 +84,7 @@ small_plot
 
 The equation for the straight line is: 
 
-$$\text{house price} = \beta_0 + \beta_1 \cdot (\text{house size}),$$
+$$\text{house sale price} = \beta_0 + \beta_1 \cdot (\text{house size}),$$
 where
 
 - $\beta_0$ is the vertical intercept of the line (the value where the line cuts the vertical axis)
@@ -92,11 +92,11 @@ where
 
 Therefore using the data to find the line of best fit is equivalent to finding coefficients 
 $\beta_0$ and $\beta_1$ that *parametrize* (correspond to) the line of best fit.
-Once we have the coefficients, we can use the equation above to evaluate the predicted price given the value we
+Once we have the coefficients, we can use the equation above to evaluate the predicted sale price given the value we
 have for the predictor/explanatory variable&mdash;here 2,000 square feet. Figure \@ref(fig:08-lin-reg2)
 demonstrates this process.
 
-```{r 08-lin-reg2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price versus house size with line of best fit and a red dot at the predicted price for a 2000 square foot home"}
+```{r 08-lin-reg2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of sale price versus size with line of best fit and a red dot at the predicted sale price for a 2000 square foot home"}
 small_model <- lm(price ~ sqft, data = small_sacramento)
 prediction <- predict(small_model, data.frame(sqft = 2000))
 
@@ -115,7 +115,7 @@ exactly does simple linear regression choose the line of best fit? Many
 different lines could be drawn through the data points. 
 Some plausible examples are shown in Figure \@ref(fig:08-several-lines).
 
-```{r 08-several-lines, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5,  fig.cap = "Scatter plot of price versus house size with many possible lines that could be drawn through the data points"}
+```{r 08-several-lines, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5,  fig.cap = "Scatter plot of sale price versus size with many possible lines that could be drawn through the data points"}
 
 small_plot +
   geom_abline(intercept = -64542.23, slope = 190, color = "green") +
@@ -130,7 +130,7 @@ these vertical distances as red lines. Finally, to assess the predictive
 accuracy of a simple linear regression model,
 we use RMSPE&mdash;the same measure of predictive performance we used with K-NN regression.
 
-```{r 08-verticalDistToMin,  echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price versus house size with red lines denoting the vertical distances between the predicted values and the observed data points"}
+```{r 08-verticalDistToMin,  echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of sale price versus size with red lines denoting the vertical distances between the predicted values and the observed data points"}
 small_sacramento <- small_sacramento %>%
   mutate(predicted = predict(small_model))
 small_plot +
@@ -186,7 +186,7 @@ Our coefficients are
 (intercept) $\beta_0=$ `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), scientific=FALSE)`
 and (slope) $\beta_1=$ `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`.
 This means that the equation of the line of best fit is
-$$\text{house price} = `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), scientific=FALSE)` + `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`\cdot (\text{house size}).$$
+$$\text{house sale price} = `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), scientific=FALSE)` + `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`\cdot (\text{house size}).$$
 In other words, the model predicts that houses 
 start at \$`r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), big.mark=",", nsmall=0, scientific=FALSE)` for 0 square feet, and that
 every extra square foot increases the cost of the house by \$`r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`. Finally, we predict on the test data set to assess how well our model does:
@@ -208,7 +208,7 @@ tricky to answer and requires to use domain knowledge and think about the
 application you are using the prediction for. 
 
 To visualize the simple linear regression model, we can plot the predicted house
-price across all possible house sizes we might encounter superimposed on a scatter
+sale price across all possible house sizes we might encounter superimposed on a scatter
 plot of the original housing price data. There is a plotting function in 
 the `tidyverse`, `geom_smooth`, that
 allows us to add a layer on our plot with the simple
@@ -217,7 +217,7 @@ plausible range to this line that we are not interested in at this point, so to
 avoid plotting it, we provide the argument `se = FALSE` in our call to
 `geom_smooth`. Figure \@ref(fig:08-lm-predict-all) displays the result.
 
-```{r 08-lm-predict-all, fig.height = 4, fig.width = 5, warning = FALSE, message = FALSE, fig.cap = "Scatter plot of price versus house size with line of best fit for the full Sacramento housing data"}
+```{r 08-lm-predict-all, fig.height = 4, fig.width = 5, warning = FALSE, message = FALSE, fig.cap = "Scatter plot of sale price versus size with line of best fit for the full Sacramento housing data"}
 
 lm_plot_final <- ggplot(sacramento_train, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
@@ -435,7 +435,7 @@ coeffs
 ```
 And then use those slopes to write a mathematical equation to describe the prediction plane:
 
-$$\text{house price} = \beta_0 + \beta_1\cdot(\text{house size}) + \beta_2\cdot(\text{number of bedrooms}),$$
+$$\text{house sale price} = \beta_0 + \beta_1\cdot(\text{house size}) + \beta_2\cdot(\text{number of bedrooms}),$$
 where:
 
 - $\beta_0$ is the vertical intercept of the hyperplane (the value where it cuts the vertical axis)
@@ -450,7 +450,7 @@ sqftc <- format(round(coeffs %>% filter(term == "sqft") %>% pull(estimate)), sci
 bedsc <- format(round(coeffs %>% filter(term == "beds") %>% pull(estimate)), scientific = FALSE)
 ```
 
-$$\text{house price} = `r icept` + `r sqftc`\cdot (\text{house size})  `r bedsc` \cdot (\text{number of bedrooms})$$
+$$\text{house sale price} = `r icept` + `r sqftc`\cdot (\text{house size})  `r bedsc` \cdot (\text{number of bedrooms})$$
 
 This model is more interpretable than the multivariate K-NN
 regression model; we can write a mathematical equation that explains how
@@ -468,7 +468,7 @@ We obtain an RMSPE for the multivariate linear regression model
 of `r format(lm_mult_test_results %>% filter(.metric == 'rmse') %>% pull(.estimate), big.mark=",", nsmall=0, scientific = FALSE)`. This prediction error
 is less than the prediction error for the multivariate K-NN regression model,
 indicating that we should likely choose linear regression for predictions of
-house price on this data set. But we should also ask if this more complex
+house sale price on this data set. But we should also ask if this more complex
 model is doing a better job of predicting compared to our simple linear
 regression model with only a single predictor (house size). Revisiting last
 section, we see that our RMSPE for our simple linear regression model with
