@@ -380,49 +380,45 @@ grid.arrange(grobs = plots, ncol = 2)
 ```
 
 Figure \@ref(fig:07-howK) shows that when $K$ = 1, the blue line runs perfectly
-through almost all of our training observations. This happens because our
+through all of our training observations. 
+This happens because our
 predicted values for a given region depend on just a single observation. 
-Since the flexible blue line follows the training observations very closely, if
-we were to change any one of the training observation data points, we would
-change the flexible blue line quite a lot. This means that if we
-were to collect another training data set from the Sacramento real estate
-market it likely wouldn't match those observations as well. Recall from the classification
-chapters that this behaviour is called *overfitting*; we use this same term 
-in the context of regression. We also sometimes say that the predictions have
-*high variance*, because they *vary* a lot when you change the data a little bit.
+In general, when $K$ is too small, the line follows the training data quite
+closely, even if it does not match it perfectly.
+The problem is that if we used a different training data set of house prices and sizes
+from the Sacramento real estate market, we would end up with completely different
+predictions. In other words, the model is *influenced too much* by the data.
+Recall from the classification
+chapters that this behaviour&mdash;where the model is influenced too much
+by the noisy data&mdash;is called *overfitting*; we use this same term 
+in the context of regression. 
 
-What about the plot in Figure \@ref(fig:07-howK) where $K$ is quite large, 
+What about the plots in Figure \@ref(fig:07-howK) where $K$ is quite large, 
 say, $K$ = 250 or 932? 
 In this case the blue line becomes extremely smooth, and actually becomes flat
 once $K$ is equal to the number of datapoints in the entire data set. 
- This happens because our predicted values for a given x value (here home
-size), depend on many neighbouring observations. 
+This happens because our predicted values for a given x value (here home
+size), depend on many neighbouring observations; in the case where $K$ is equal 
+to the size of the dataset, the prediction is just the mean of the house prices
+in the dataset (completely ignoring the house size). 
 In contrast to the $K=1$ example, 
-the smooth, inflexible blue line does not follow the training observations very
-closely, and changing a single training data point
-will likely not change the blue line very much.
-This means that although the blue line matches does not match the data we happen to
-have in this particular training data set perfectly, if we were to collect
-another training data set from the Sacramento real estate market it likely
-would match those observations equally poorly. Recall from the classification
+the smooth, inflexible blue line does not follow the training observations very closely.
+In other words, the model is *not influenced enough* by the training data.
+Recall from the classification
 chapters that this behaviour is called *underfitting*; we again use this same
-term in the context of regression. We also sometimes say that the predictions
-have *low variance*, because they don't *vary* too much when you change the 
-data a little bit.
+term in the context of regression. 
 
 Ideally, what we want is neither of the two situations discussed above. Instead,
-we would like a model with low variance (so that it will transfer/generalize
-well to other data sets, and isn't too dependent on the
-observations that happen to be in the training set) **and** low error on the training data
-(where the model does not completely ignore our training data). If we explore 
+we would like a model that (1) follows the overall "trend" in the training data, so the model
+actually uses the training data to learn something useful, and (2) does not follow
+the noisy fluctuations, so that we can be confident that our model will transfer/generalize
+well to other new data. If we explore 
 the other values for $K$, in particular $K$ = `r sacr_min %>% pull(neighbors)`
 (as suggested by cross-validation),
-we can see it has a lower training data error than our model with a very high $K$ (e.g., 932),
-and thus the model/predicted values better match the actual observed values
-than the high $K$ model. Additionally, it has lower variance than our model
-with a very low $K$ (e.g., 1) and thus it should better transer/generalize to
-other data sets compared to the low $K$ model. All of this is similar to how
-the choice of $K$ affects K-NN classification, as discussed in the previous
+we can see it achieves this goal: it follows the increasing trend of house price
+versus house size, but is not influenced too much by the idiosyncratic variations
+in price. All of this is similar to how
+the choice of $K$ affects K-nearest neighbours classification, as discussed in the previous
 chapter. 
 
 ## Evaluating on the test set
