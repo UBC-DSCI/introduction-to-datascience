@@ -87,12 +87,24 @@ The equation for the straight line is:
 $$\text{house sale price} = \beta_0 + \beta_1 \cdot (\text{house size}),$$
 where
 
-- $\beta_0$ is the vertical intercept of the line (the value where the line cuts the vertical axis)
-- $\beta_1$ is the slope of the line
+- $\beta_0$ is the *vertical intercept* of the line (the price when house size is 0)
+- $\beta_1$ is the *slope* of the line (how quickly the price increases as you increase house size)
 
 Therefore using the data to find the line of best fit is equivalent to finding coefficients 
 $\beta_0$ and $\beta_1$ that *parametrize* (correspond to) the line of best fit.
-Once we have the coefficients, we can use the equation above to evaluate the predicted sale price given the value we
+Now of course, in this particular problem, the idea of a 0-square-foot house is a bit silly;
+but you can think of $\beta_0$ here as the "base price," and 
+$\beta_1$ as the increase in price for each square foot of space.
+Let's push this thought even further: what would happen in the equation for the line if you 
+tried to evaluate the price of a house with size 6 *million* square feet?
+Or what about *negative* 2,000 square feet? As it turns out, nothing in the formula breaks; linear
+regression will happily make predictions for crazy predictor values if you ask it to. But even though
+you *can* make these wild predictions, you shouldn't. You should only make predictions roughly within
+the range of your original data, and perhaps a bit beyond it only if it makes sense. For example,
+the data in Figure \@ref(fig:08-lin-reg1) only reaches around 800 square feet on the low end, but 
+it would probably be reasonable to use the linear regression model to make a prediction at 600 square feet, say.
+
+Back to the example! Once we have the coefficients, we can use the equation above to evaluate the predicted sale price given the value we
 have for the predictor/explanatory variable&mdash;here 2,000 square feet. Figure \@ref(fig:08-lin-reg2)
 demonstrates this process.
 
@@ -103,6 +115,7 @@ prediction <- predict(small_model, data.frame(sqft = 2000))
 small_plot +
   geom_vline(xintercept = 2000, linetype = "dotted") +
   geom_point(aes(x = 2000, y = prediction[[1]], color = "red", size = 2.5)) +
+  annotate("text", x = 2350, y = prediction[[1]]-30000, label=paste("$", format(round(prediction[[1]]), big.mark=",", nsmall=0, scientific = FALSE), sep=""))+
   theme(legend.position = "none")
 
 print(prediction[[1]])
@@ -124,7 +137,7 @@ small_plot +
 ```
 
 Simple linear regression chooses the straight line of best fit by choosing
-the line that minimizes the **average** vertical distance between itself and
+the line that minimizes the **average squared vertical distance** between itself and
 each of the observed data points in the training data. Figure \@ref(fig:08-verticalDistToMin) illustrates 
 these vertical distances as red lines. Finally, to assess the predictive 
 accuracy of a simple linear regression model,
@@ -203,9 +216,8 @@ Our final model's test error as assessed by RMSPE
 is `r format(round(lm_test_results %>% filter(.metric == 'rmse') %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`. 
 Remember that this is in units of the target/response variable, and here that
 is US Dollars (USD). Does this mean our model is "good" at predicting house
-sale price based off of the predictor of home size? Again answering this is
-tricky to answer and requires to use domain knowledge and think about the
-application you are using the prediction for. 
+sale price based off of the predictor of home size? Again, answering this is
+tricky and requires knowledge of how you intend to use the prediction.
 
 To visualize the simple linear regression model, we can plot the predicted house
 sale price across all possible house sizes we might encounter superimposed on a scatter
@@ -352,17 +364,24 @@ so the "flat" extrapolation of K-NN likely does not match reality.
 ## Multivariate linear regression
 
 As in K-NN classification and K-NN regression, we can move beyond the simple
-case of one response variable and only one predictor and perform multivariate
-linear regression where we can have multiple predictors. In this case we fit a
-plane to the data, as opposed to a straight line.
-
+case of only one predictor to the case with multiple predictors,
+known as *multivariate linear regression*. 
 To do this, we follow a very similar approach to what we did for
 K-NN regression; but recall that we do not need to use cross-validation to choose any parameters,
 nor do we need to standardize (i.e., center and scale) the data for linear regression. 
-We demonstrate how to do this below using the Sacramento real estate data with both house size
+Note once again that have the same concerns regarding multiple predictors
+as in the settings of multivariate K-NN regression and classification: more predictors is **not** always
+better, and the choice of which predictors to use has a potentially large influence
+on the quality of predictions. Because the same predictor selection 
+algorithm from the classification chapter extends to the setting of linear regression,
+we will not cover it again in this chapter.
+
+
+We will demonstrate multivariate linear regression using the Sacramento real estate 
+data with both house size
 (measured in square feet) as well as number of bedrooms as our predictors, and
-continue to use house sale price as our outcome/target variable that we are
-trying to predict. We will start by changing the formula in the recipe to 
+continue to use house sale price as our response variable. We will start by 
+changing the formula in the recipe to 
 include both the `sqft` and `beds` variables as predictors:
 
 ```{r 08-lm-mult-test-train-split}
@@ -438,9 +457,9 @@ And then use those slopes to write a mathematical equation to describe the predi
 $$\text{house sale price} = \beta_0 + \beta_1\cdot(\text{house size}) + \beta_2\cdot(\text{number of bedrooms}),$$
 where:
 
-- $\beta_0$ is the vertical intercept of the hyperplane (the value where it cuts the vertical axis)
-- $\beta_1$ is the slope for the first predictor (house size)
-- $\beta_2$ is the slope for the second predictor (number of bedrooms)
+- $\beta_0$ is the *vertical intercept* of the hyperplane (the price when both house size and number of bedrooms are 0)
+- $\beta_1$ is the *slope* for the first predictor (how quickly the price increases as you increase house size)
+- $\beta_2$ is the *slope* for the second predictor (how quickly the price increases as you increase the number of bedrooms)
 
 Finally, we can fill in the values for $\beta_0$, $\beta_1$ and $\beta_2$ from the model output above
 to create the equation of the plane of best fit to the data: 
@@ -454,11 +473,17 @@ $$\text{house sale price} = `r icept` + `r sqftc`\cdot (\text{house size})  `r b
 
 This model is more interpretable than the multivariate K-NN
 regression model; we can write a mathematical equation that explains how
-each predictor is affecting the predictions. But as always, we should look at
-the test error and ask whether linear regression is doing a better job of
-predicting compared to K-NN regression in this multivariate regression case. To
-do that we can use this linear regression model to predict on the test data to
-get our test error.
+each predictor is affecting the predictions. But as always, we should 
+question how well multivariate linear regression is doing compared to
+the other tools we have, such as simple linear regression 
+and multivariate K-NN regression. If this comparison is part of 
+the model tuning process&mdash;for example, if we are trying
+out many different sets of predictors for multivariate linear
+and K-NN regression&mdash;we must perform this comparison using
+cross-validation on only our training data. But if we have already
+decided on a small number (e.g., 2 or 3) of tuned candidate models and
+we want to make a final comparison, we can do so by comparing the prediction
+error of the methods on the test data.
 
 ```{r 08-get-RMSPE}
 lm_mult_test_results
@@ -468,17 +493,23 @@ We obtain an RMSPE for the multivariate linear regression model
 of `r format(lm_mult_test_results %>% filter(.metric == 'rmse') %>% pull(.estimate), big.mark=",", nsmall=0, scientific = FALSE)`. This prediction error
 is less than the prediction error for the multivariate K-NN regression model,
 indicating that we should likely choose linear regression for predictions of
-house sale price on this data set. But we should also ask if this more complex
-model is doing a better job of predicting compared to our simple linear
-regression model with only a single predictor (house size). Revisiting last
-section, we see that our RMSPE for our simple linear regression model with
-only a single predictor was 
+house sale price on this data set. Revisiting the simple linear regression model
+with only a single predictor from earlier in this chapter, we see that the RMSPE for that model was 
 `r format(lm_test_results %>% filter(.metric == 'rmse') %>% pull(.estimate), big.mark=",", nsmall=0, scientific = FALSE)`, 
-which is slightly more than that of our more complex model. Our model with two predictors
+which is slightly higher than that of our more complex model. Our model with two predictors
 provided a slightly better fit on test data than our model with just one. 
 As mentioned earlier, this is not always the case: sometimes including more
 predictors can negatively impact the prediction performance on unseen 
-test data (here we compare test errors purely for the purposes of teaching).
+test data.
+
+## Multicollinearity and Outliers
+
+TODO
+
+- show coefficients get unstable (motivate with negative bedroom coeff, use samples to illustrate)
+- show outliers can mess with predictions (use a single sample, keep/remove outliers)
+- show that knn is less bothered by outliers (since predictions are local)
+
 
 ## Designing new predictors
 
@@ -487,17 +518,17 @@ that seems to have a meaningful and nearly linear relationship with our response
 But what should we do if we cannot immediately find such a nice variable?
 Well, sometimes it is just a fact that the variables in the data do not have enough of 
 a relationship with the response variable to provide useful predictions. For example,
-if the only available predictor was "the current house owner's favourite icecream flavour",
+if the only available predictor was "the current house owner's favourite ice cream flavour",
 we likely would have little hope of using that variable to predict the house's sale price
 (barring any future remarkable scientific discoveries about the relationship between 
-the housing market and homeowner icecream preferences). In cases like these, 
+the housing market and homeowner ice cream preferences). In cases like these, 
 the only option is to obtain measurements of more useful variables.
 
 There are, however, a wide variety of cases where the predictor variables do have a 
 meaningful relationship with the response variable, but that relationship does not fit
 the assumptions of the regression method you have chosen. For example, a dataframe `df`
 with two variables---`x` and `y`---with a nonlinear relationship between the two variables
-will not be correctly captured by simple linear regression:
+will not be correctly captured by simple linear regression, as shown in Figure \@ref(fig:08-predictor-design).
 <center>
 ```{r 08-predictor-design, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Example of a dataset with a nonlinear relationship between the predictor and the response"}
 set.seed(1)
@@ -519,32 +550,38 @@ we might *create a new predictor variable* `z` using the `mutate` function:
 df <- df %>%
         mutate(z = x^3)
 ```
-Then we can perform linear regression for `y` using the predictor variable `z`:
+Then we can perform linear regression for `y` using the predictor variable `z`,
+as shown in Figure \@ref(fig:08-predictor-design-2).
+Here you can see that the transformed predictor `z` helps the 
+linear regression model make more accurate predictions. 
+Note that none of the `y` response values have changed between Figures \@ref(fig:08-predictor-design)
+and \@ref(fig:08-predictor-design-2); the only change is that the `x` values
+have been replaced by `z` values.
 <center>
 ```{r 08-predictor-design-2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Relationship between the transformed predictor and the response"}
 curve_plt2 <- ggplot(df, aes(x = z, y = y)) +
   geom_point() +
-  xlab("z") +
+  xlab("z = x^3") +
   ylab("y") +
   geom_smooth(method = "lm", se = FALSE)
 curve_plt2
 ```
 </center>
-In this case, you can see that the transformed predictor `z` helps the 
-linear regression model make more accurate predictions. The process of
+ 
+The process of
 transforming predictors (and potentially combining multiple predictors in the process)
 is known as *feature engineering*. In real data analysis
 problems, you will need to rely on
 a deep understanding of the problem---as well as the wrangling tools 
 from previous chapters---to engineer useful new features that improve
-predictive performance. 
+predictive performance.
 
 > Note that feature engineering
 > is *part of tuning your model*, and as such you must not use your test data
 > to evaluate the quality of the features you produce. You are free to use
 > cross-validation, though!
 
-## The other side of regression
+## The other sides of regression
 
 So far in this textbook we have used regression only in the context of
 prediction. However, regression can also be seen as a method to understand and
@@ -552,10 +589,13 @@ quantify the effects of individual variables on a response / outcome of interest
 In the housing example from this chapter, beyond just using past data
 to predict future sale prices, 
 we might also be interested in describing the
-individual effects of house size and the number of bedrooms on house price,
-quantifying how big each of these effects are, and assessing how accurately we
-can estimate each of these effects. This side of regression is the topic of
-many follow-on statistics courses and beyond the scope of this course.
+individual relationships of house size and the number of bedrooms with house price,
+quantifying how strong each of these relationships are, and assessing how accurately we
+can estimate their magnitudes. And even beyond that, we may be interested in 
+understanding whether the predictors *cause* changes in the price.
+These sides of regression are well beyond the scope of this book; but
+the material you have learned here should give you a foundation of knowledge
+that will serve you well when moving to more advanced books on the topic.
 
 ## Additional resources
 - The [`tidymodels` website](https://tidymodels.org/packages) is an excellent reference for more details on, and advanced usage of, the functions and packages in the past two chapters. Aside from that, it also has a [nice beginner's tutorial](https://www.tidymodels.org/start/) and [an extensive list of more advanced examples](https://www.tidymodels.org/learn/) that you can use to continue learning beyond the scope of this book. 
