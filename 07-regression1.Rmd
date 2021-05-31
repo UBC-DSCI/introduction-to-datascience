@@ -522,16 +522,15 @@ all predictor variables, this is handled for us.
 Note that we also have the same concern regarding the selection of predictors
 in K-NN regression as in K-NN classification: more predictors is **not** always
 better, and the choice of which predictors to use has a potentially large influence
-on the quality of predictions. Fortunately, we can use the best subset selection 
-algorithm from the classification chapter in K-NN regression as well, assuming
-a small number (at most 10 or so) of total predictors.
+on the quality of predictions. Fortunately, we can use the predictor selection 
+algorithm from the classification chapter in K-NN regression as well.
+As the algorithm is the same, we will not cover it again in this chapter.
 
 We will now demonstrate a multivariate K-NN regression analysis of the 
 Sacramento real estate data using `tidymodels`. This time we will use
 house size (measured in square feet) as well as number of bedrooms as our
 predictors, and continue to use house sale price as our outcome/target variable
 that we are trying to predict.
-
 It is always a good practice to do exploratory data analysis, such as
 visualizing the data, before we start modeling the data. Thus the first thing
 we will do is use ggpairs (from the `GGally` package) to plot all the variables
@@ -569,20 +568,32 @@ sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = tune()) %
 Next, we'll use 5-fold cross-validation to choose the number of neighbours via the minimum RMSPE:
 ```{r 07-mult-cv}
 gridvals <- tibble(neighbors = seq(1, 200))
-sacr_k <- workflow() %>%
+sacr_multi <- workflow() %>%
   add_recipe(sacr_recipe) %>%
   add_model(sacr_spec) %>%
   tune_grid(sacr_vfold, grid = gridvals) %>%
   collect_metrics() %>%
   filter(.metric == "rmse") %>%
-  filter(mean == min(mean)) %>%
-  pull(neighbors)
-sacr_k
+  filter(mean == min(mean))
+sacr_k <- sacr_multi %>%
+              pull(neighbors)
+sacr_multi
 ```
-Here we see that the smallest RMSPE occurs when $K =$ `r sacr_k`.
-Now that we have chosen $K$, we need to re-train the model on the entire
-training data set, and after that we can use that model to predict
-on the test data to get our test error. 
+Here we see that the smallest estimated RMSPE from cross-validation occurs when $K =$ `r sacr_k`.
+If we want to compare this multivariate K-NN regression model to the model with only a single
+predictor *as part of the model tuning process* (i.e., to decide which one we should use to make future predictions),
+then we must compare the accuracy estimated using only the training data via cross-validation.
+Looking back, the estimated cross-validation accuracy for the single-predictor 
+model was `r format(round(sacr_min$mean), big.mark=",", nsmall=0, scientific = FALSE)`.
+The estimated cross validation accuracy for the multivariate model is
+`r format(round(sacr_multi$mean), big.mark=",", nsmall=0, scientific = FALSE)`.
+Thus in this case, we did not improve the model 
+by a large amount by adding this additional predictor.
+
+In order to evaluate the quality of the multivariate K-NN model on the test data,
+we need to re-train the model on the entire
+training data set, and then use that model to make predictions
+on the test data.
 ```{r 07-re-train}
 sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = sacr_k) %>%
   set_engine("kknn") %>%
@@ -603,11 +614,6 @@ knn_mult_mets
 This time when we performed K-NN regression on the same data set, but also
 included number of bedrooms as a predictor, we obtained a RMSPE test error 
 of `r format(round(knn_mult_mets %>% filter(.metric == 'rmse') %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`.
-This compares to a RMSPE test error 
-of  `r format(round(sacr_summary %>% filter(.metric == 'rmse') %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`
-when we used only house size as the
-single predictor. Thus in this case, we did not improve the model 
-by a large amount by adding this additional predictor.
 
 Figure \@ref(fig:07-knn-mult-viz) visualizes the model's predictions overlaid on top of the data. This 
 time the predictions are a surface in 3-D space, instead of a line in 2-D space, as we have 2
