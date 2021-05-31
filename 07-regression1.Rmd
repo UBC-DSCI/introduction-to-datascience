@@ -334,37 +334,47 @@ sacr_tunek_plot
 
 Figure \@ref(fig:07-howK) visualizes the effect of different settings of $K$ on the
 regression model. Each plot shows the predicted values for house price from
-our K-NN regression model for 6 different values for $K$: 1, 3, `r kmin`, 41, 250, and 450.
+our K-NN regression model for 6 different values for $K$: 1, 3, `r kmin`, 41, 250, and 932 (i.e., the entire dataset).
 For each model, we predict a price for every possible home size across the range of home sizes we
 observed in the data set (here 500 to 5,000 square feet) and we plot the
 predicted prices as a blue line.
 
 ```{r 07-howK, echo = FALSE, fig.height = 12, fig.width = 10,fig.cap = "Predicted values for house price (represented as a blue line) from K-NN regression models for six different values for $K$"}
-gridvals <- c(1, 3, kmin, 41, 250, 450)
+gridvals <- c(1, 3, kmin, 41, 250, 932)
 
 plots <- list()
 
 for (i in 1:6) {
-  sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = gridvals[[i]]) %>%
-    set_engine("kknn") %>%
-    set_mode("regression")
+  if (i < 6){
+      sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = gridvals[[i]]) %>%
+        set_engine("kknn") %>%
+        set_mode("regression")
 
-  sacr_wkflw <- workflow() %>%
-    add_recipe(sacr_recipe) %>%
-    add_model(sacr_spec)
+      sacr_wkflw <- workflow() %>%
+        add_recipe(sacr_recipe) %>%
+        add_model(sacr_spec)
 
-  sacr_preds <- sacr_wkflw %>%
-    fit(data = sacramento_train) %>%
-    predict(sacramento_train) %>%
-    bind_cols(sacramento_train)
+      sacr_preds <- sacr_wkflw %>%
+        fit(data = sacramento_train) %>%
+        predict(sacramento_train) %>%
+        bind_cols(sacramento_train)
 
-  plots[[i]] <- ggplot(sacr_preds, aes(x = sqft, y = price)) +
-    geom_point(alpha = 0.4) +
-    xlab("House size (square footage)") +
-    ylab("Price (USD)") +
-    scale_y_continuous(labels = dollar_format()) +
-    geom_line(data = sacr_preds, aes(x = sqft, y = .pred), color = "blue") +
-    ggtitle(paste0("K = ", gridvals[[i]]))
+      plots[[i]] <- ggplot(sacr_preds, aes(x = sqft, y = price)) +
+        geom_point(alpha = 0.4) +
+        xlab("House size (square footage)") +
+        ylab("Price (USD)") +
+        scale_y_continuous(labels = dollar_format()) +
+        geom_line(data = sacr_preds, aes(x = sqft, y = .pred), color = "blue") +
+        ggtitle(paste0("K = ", gridvals[[i]]))
+  } else {
+      plots[[i]] <- ggplot(sacr_preds, aes(x = sqft, y = price)) +
+        geom_point(alpha = 0.4) +
+        xlab("House size (square footage)") +
+        ylab("Price (USD)") +
+        scale_y_continuous(labels = dollar_format()) +
+        geom_hline(data = sacr_preds, mapping = aes(x = sqft), yintercept = mean(sacr_preds$price), color = "blue") +
+        ggtitle(paste0("K = ", gridvals[[i]]))
+  }
 }
 grid.arrange(grobs = plots, ncol = 2)
 ```
@@ -381,9 +391,11 @@ chapters that this behaviour is called *overfitting*; we use this same term
 in the context of regression. We also sometimes say that the predictions have
 *high variance*, because they *vary* a lot when you change the data a little bit.
 
-What about the plot in Figure \@ref(fig:07-howK) where $K$ is quite large, say, $K$ = 450? 
-In this case  the blue line is extremely smooth, and almost
-flat. This happens because our predicted values for a given x value (here home
+What about the plot in Figure \@ref(fig:07-howK) where $K$ is quite large, 
+say, $K$ = 250 or 932? 
+In this case the blue line becomes extremely smooth, and actually becomes flat
+once $K$ is equal to the number of datapoints in the entire data set. 
+ This happens because our predicted values for a given x value (here home
 size), depend on many neighbouring observations. 
 In contrast to the $K=1$ example, 
 the smooth, inflexible blue line does not follow the training observations very
@@ -405,7 +417,7 @@ observations that happen to be in the training set) **and** low error on the tra
 (where the model does not completely ignore our training data). If we explore 
 the other values for $K$, in particular $K$ = `r sacr_min %>% pull(neighbors)`
 (as suggested by cross-validation),
-we can see it has a lower training data error than our model with a very high $K$ (e.g., 450),
+we can see it has a lower training data error than our model with a very high $K$ (e.g., 932),
 and thus the model/predicted values better match the actual observed values
 than the high $K$ model. Additionally, it has lower variance than our model
 with a very low $K$ (e.g., 1) and thus it should better transer/generalize to
