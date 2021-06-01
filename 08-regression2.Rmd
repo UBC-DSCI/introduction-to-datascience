@@ -75,7 +75,7 @@ small_sacramento <- sample_n(sacramento, size = 30)
 
 small_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
   geom_point() +
-  xlab("House size (square footage)") +
+  xlab("House size (square feet)") +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
   geom_smooth(method = "lm", se = FALSE)
@@ -233,7 +233,7 @@ avoid plotting it, we provide the argument `se = FALSE` in our call to
 
 lm_plot_final <- ggplot(sacramento_train, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
-  xlab("House size (square footage)") +
+  xlab("House size (square feet)") +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
   geom_smooth(method = "lm", se = FALSE)
@@ -298,7 +298,7 @@ sacr_rmspe <- sacr_fit %>%
 
 knn_plot_final <- ggplot(sacr_preds, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
-  xlab("House size (square footage)") +
+  xlab("House size (square feet)") +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
   geom_line(data = sacr_preds, aes(x = sqft, y = .pred), color = "blue") +
@@ -503,12 +503,140 @@ test data.
 
 ## Multicollinearity and outliers
 
-TODO
+What can go wrong when performing (multivariate) linear regression? 
+Two common issues to be mindful of are *outliers* and, in the multivarate case, *collinear predictors*.
 
-- show coefficients get unstable (motivate with negative bedroom coeff, use samples to illustrate)
-- show outliers can mess with predictions (use a single sample, keep/remove outliers)
-- show that knn is less bothered by outliers (since predictions are local)
+### Outliers
 
+Outliers are data points that do not follow the usual pattern of the rest of the data.
+In the setting of linear regression, these are points that
+ have a vertical distance to the line of best fit that is either much higher or much lower 
+than you might expect based on the rest of the data. The problem with outliers is that
+they can have *too much influence* on the line of best fit. In general, it is very difficult
+to judge accurately which data are outliers without advanced techniques that are beyond
+the scope of this book.
+
+But to illustrate what can happen when you have outliers, Figure \@ref(fig:08-lm-outlier)
+shows a small subset of the Sacramento housing data again, except we have added a *single* data point (highlighted
+in red). This house is 5,000 square feet in size, and sold for only \$50,000. Unbeknownst to the
+data analyst, this house was sold by a parent to their child for an absurdly low price. Of course
+this is not representative of the real housing market values that the other data points follow; 
+the data point is an *outlier*. In blue we plot the original line of best fit, and in red
+we plot the new line of best fit including the outlier. You can see how different the red line
+is from the blue line, which is entirely caused by that one extra outlier data point.
+
+```{r 08-lm-outlier, fig.height = 4, fig.width = 5, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of a subset of the data, with outlier highlighted in red"}
+
+sacramento_train_small <- sacramento_train %>% sample_n(100)
+
+sacramento_outlier <- tibble(sqft = 5000, price = 50000)
+
+lm_plot_outlier <- ggplot(sacramento_train_small, aes(x = sqft, y = price)) +
+  geom_point(alpha = 0.4) +
+  geom_point(data = sacramento_outlier, mapping = aes(x = sqft, y = price), color="red", size = 2.5) +
+  xlab("House size (square feet)") +
+  ylab("Price (USD)") +
+  scale_y_continuous(labels = dollar_format()) +
+  geom_smooth(method = "lm", se = FALSE) + 
+  geom_smooth(data = sacramento_train_small %>% add_row(sqft = 5000, price = 50000), method = "lm", se = FALSE, color = "red")
+lm_plot_outlier
+```
+
+Fortunately, if you have enough data, the inclusion of one or two
+outliers&mdash;as long as their values are not *too* wild&mdash;will
+typically not have a large an effect on the line of best fit. Figure
+\@ref(fig:08-lm-outlier-2) shows how that same outlier data point from earlier
+influences the line of best fit when we are working with the entire original
+Sacramento training data. You can see that with this larger data set, the line
+changes much less when adding the outlier.
+Nevertheless, it is still important when working with linear regression to critically
+think about how much any individual data point is influencing the model.
+
+```{r 08-lm-outlier-2, fig.height = 4, fig.width = 5, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of the full data, with outlier highlighted in red"}
+
+sacramento_outlier <- tibble(sqft = 5000, price = 50000)
+
+lm_plot_outlier_large <- ggplot(sacramento_train, aes(x = sqft, y = price)) +
+  geom_point(alpha = 0.4) +
+  geom_point(data = sacramento_outlier, mapping = aes(x = sqft, y = price), color="red", size = 2.5) +
+  xlab("House size (square feet)") +
+  ylab("Price (USD)") +
+  scale_y_continuous(labels = dollar_format()) +
+  geom_smooth(method = "lm", se = FALSE) + 
+  geom_smooth(data = sacramento_train %>% add_row(sqft = 5000, price = 50000), method = "lm", se = FALSE, color = "red")
+lm_plot_outlier_large
+```
+
+### Multicollinearity
+
+The second, and much more subtle, issue can occur when performing multivariate linear regression.
+In particular, if you include multiple predictors that are strongly linearly related to one another,
+the coefficients that describe the plane of best fit can be very unstable. Consider
+an extreme example using the Sacramento housing data where the house was measured twice
+by two people.
+Since the two people are each slightly inaccurate, the two measurements might not agree exactly,
+but they are very strongly linearly related to each other, as shown in Figure \@ref(fig:08-lm-multicol).
+
+```{r 08-lm-multicol, fig.height = 4, fig.width = 5, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of the with possible outlier highlighted in red"}
+
+sacramento_train <- sacramento_train %>%
+                          mutate(sqft1 = sqft + 100*sample(1000000, size=nrow(sacramento_train), replace=TRUE)/1000000) %>%
+                          mutate(sqft2 = sqft + 100*sample(1000000, size=nrow(sacramento_train), replace=TRUE)/1000000) %>%
+                          mutate(sqft3 = sqft + 100*sample(1000000, size=nrow(sacramento_train), replace=TRUE)/1000000) 
+
+lm_plot_multicol_1 <- ggplot(sacramento_train) +
+  geom_point(aes(x = sqft, y = sqft1), alpha=0.4)+
+  xlab("House size (square feet)") +
+  ylab("House size (square inches)") 
+lm_plot_multicol_1
+```
+
+```{r 08-lm-multicol-2, echo = FALSE, warning = FALSE}
+lm_recipe1 <- recipe(price ~ sqft + sqft1, data = sacramento_train)
+lm_fit1 <- workflow() %>%
+  add_recipe(lm_recipe1) %>%
+  add_model(lm_spec) %>%
+  fit(data = sacramento_train)
+coeffs <- tidy(pull_workflow_fit(lm_fit1))
+icept1 <- format(round(coeffs %>% filter(term == "(Intercept)") %>% pull(estimate)), scientific = FALSE)
+sqft1 <- format(round(coeffs %>% filter(term == "sqft") %>% pull(estimate)), scientific = FALSE)
+sqft11 <- format(round(coeffs %>% filter(term == "sqft1") %>% pull(estimate)), scientific = FALSE)
+
+lm_recipe2 <- recipe(price ~ sqft + sqft2, data = sacramento_train)
+lm_fit2 <- workflow() %>%
+  add_recipe(lm_recipe2) %>%
+  add_model(lm_spec) %>%
+  fit(data = sacramento_train)
+coeffs <- tidy(pull_workflow_fit(lm_fit2))
+icept2 <- format(round(coeffs %>% filter(term == "(Intercept)") %>% pull(estimate)), scientific = FALSE)
+sqft2 <- format(round(coeffs %>% filter(term == "sqft") %>% pull(estimate)), scientific = FALSE)
+sqft22 <- format(round(coeffs %>% filter(term == "sqft2") %>% pull(estimate)), scientific = FALSE)
+
+lm_recipe3 <- recipe(price ~ sqft + sqft3, data = sacramento_train)
+lm_fit3 <- workflow() %>%
+  add_recipe(lm_recipe3) %>%
+  add_model(lm_spec) %>%
+  fit(data = sacramento_train)
+coeffs <- tidy(pull_workflow_fit(lm_fit3))
+icept3 <- format(round(coeffs %>% filter(term == "(Intercept)") %>% pull(estimate)), scientific = FALSE)
+sqft3 <- format(round(coeffs %>% filter(term == "sqft") %>% pull(estimate)), scientific = FALSE)
+sqft33 <- format(round(coeffs %>% filter(term == "sqft3") %>% pull(estimate)), scientific = FALSE)
+
+```
+
+If we again fit the multivariate linear regression model on this data, then the plane of best fit
+has regression coefficients that are very sensitive to the exact values in the data. For example,
+if we change the data ever so slightly&mdash;e.g., by running cross validation, which splits
+up the data randomly into different chunks&mdash;the coefficients vary by large amounts:
+
+Best Fit 1: $\text{house sale price} = `r icept1` + `r sqft1`\cdot (\text{house size 1 (ft$^2$)}) + `r sqft11` \cdot (\text{house size 2 (ft$^2$)}).$
+
+Best Fit 2: $\text{house sale price} = `r icept2` + `r sqft2`\cdot (\text{house size 1 (ft$^2$)}) + `r sqft22` \cdot (\text{house size 2 (ft$^2$)}).$
+
+Best Fit 3: $\text{house sale price} = `r icept3` + `r sqft3`\cdot (\text{house size 1 (ft$^2$)}) + `r sqft33` \cdot (\text{house size 2 (ft$^2$)}).$
+
+Therefore, when performing multivariate linear regression, it is important to avoid including very
+linearly related predictors. 
 
 ## Designing new predictors
 
