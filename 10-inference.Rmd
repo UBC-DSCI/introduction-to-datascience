@@ -642,24 +642,25 @@ sample_estimates <- samples %>%
   group_by(replicate) %>%
   summarise(sample_mean = mean(price))
 
-sampling_dist <- ggplot(sample_estimates, aes(x = sample_mean),  
-                          xlim(90,250), ylim=c(0, max_count(boot_est_dist))) +
+sampling_dist <- ggplot(sample_estimates, aes(x = sample_mean)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   xlab("Sample mean price per night ($)")  
 
-annotated_sampling_dist <- sampling_dist+  
-  annotate("text",
-           x = max_x(boot_est_dist), 
-           y = 2000,
-           label = paste("mean = ", round(mean(sample_estimates$sample_mean), 2))) +
-    geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red") 
-annotated_boot_est_dist <- boot_est_dist +   xlim(c(90,250)) + 
-  annotate("text",
-    x = max_x(boot_est_dist), y = 2000, vjust = 1, hjust = 1, 
-    label = paste("mean = ", round(mean(boot20000_means$mean), 2)))  +
-    geom_vline(xintercept = mean(boot20000_means$mean), col = "red") 
 
+annotated_sampling_dist <- sampling_dist +  
+  xlim(min_x(sampling_dist), max_x(sampling_dist)) + 
+  geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red") +
+  annotate("text",
+    x = max_x(sampling_dist), y = max_count(sampling_dist), hjust = 1, vjust = 1,
+    label = paste("mean = ", round(mean(sample_estimates$sample_mean), 1)))
+boot_est_dist_limits <- boot_est_dist +   
+    xlim(min_x(sampling_dist), max_x(sampling_dist)) 
 
+annotated_boot_est_dist <- boot_est_dist_limits + 
+  geom_vline(xintercept = mean(boot20000_means$mean), col = "red") +
+  annotate("text",
+    x = max_x(sampling_dist), y = max_count(boot_est_dist_limits), vjust = 1, hjust = 1, 
+    label = paste("mean = ", round(mean(boot20000_means$mean), 1))) 
 grid.arrange(annotated_sampling_dist + ggtitle("Sampling distribution"),
              annotated_boot_est_dist +  ggtitle("Bootstrap distribution"),
              ncol = 2
