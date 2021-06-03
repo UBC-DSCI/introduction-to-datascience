@@ -195,7 +195,7 @@ Therefore, the oscillating pattern in CO2 matches up fairly closely with the two
 
 
 ### The island landmass data set
-The `islands.csv` data set contains a list of Earth's landmasses as well as their area (in thousands of square miles). 
+The `islands.csv` data set contains a list of Earth's landmasses as well as their area (in thousands of square miles) [@islandsdata]. 
 
 **Question:** Are the continents (North / South America, Africa, Europe, Asia, Australia, Antarctica) Earth's seven largest landmasses? If so, what are the next few largest landmasses after those?
 ```{r 03-data-islands, warning=FALSE, message=FALSE}
@@ -308,13 +308,13 @@ We will begin with a scatter plot of the `mother_tongue` and `most_at_home` colu
 ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
   geom_point()
 ``` 
-To improve the interpretability of the data visualization in Figure \@ref(fig:mother-tongue-vs-most-at-home) we should replace the default axis names with a more informative labels. 
+To improve the interpretability of the data visualization in Figure \@ref(fig:mother-tongue-vs-most-at-home) we should replace the default axis names with a more informative labels. We can use `\n` to create a line break in the axis names so the words after `\n` are printed on a new line. This will make the axes labels on the plots more readable.
 
 ```{r mother-tongue-vs-most-at-home-labs, fig.width=5.75, fig.height=5, warning=FALSE, fig.cap = "Scatter plot of number of Canadians reporting a language as their mother tongue vs the primary language at home with x and y labels"}
 ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
   geom_point() +
-  xlab("Language spoken most at home (number of Canadian residents)") +
-  ylab("Mother tongue (number of Canadian residents)")
+  xlab("Language spoken most at home \n (number of Canadian residents)") +
+  ylab("Mother tongue \n (number of Canadian residents)")
 ```
 
 Most of the data points from the 214 observations in this data set are bunched up in the lower left-handside of the visualization in Figure \@ref(fig:mother-tongue-vs-most-at-home-labs). The data is clumped because many more people in Canada speak the two languages represented by the points in the upper right corner. By filtering the data, we can confirm these two points correspond to the two official languages (English and French):
@@ -323,18 +323,24 @@ Most of the data points from the 214 observations in this data set are bunched u
 can_lang %>%
   filter(language == "English" | language == "French")
 ```
-> `|` is a logical operator representing "OR", which allows us to filter the rows where the language column is equal to "English" OR equal to "French". 
 
-To answer our question, we will need to adjust the scale of the x and y axes so that they are on a log scale:
+
+To answer our question, we will need to adjust the scale of the x and y axes so that they are on a log scale. Doing this can help make patterns in the data more interpretable.
 
 ```{r mother-tongue-vs-most-at-home-scale, fig.width=5.75, fig.height=5, warning=FALSE, fig.cap = "Scatter plot of number of Canadians reporting a language as their mother tongue vs the primary language at home with log adjusted x and y axes"}
 ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
   geom_point() +
-  xlab("Language spoken most at home (number of Canadian residents)") +
-  ylab("Mother tongue (number of Canadian residents)") +
+  xlab("Language spoken most at home \n (number of Canadian residents)") +
+  ylab("Mother tongue \n (number of Canadian residents)") +
   scale_x_log10(labels = scales::comma) +
   scale_y_log10(labels = scales::comma)
 ```
+> Here we are adjusting the scale of the x and y axes on a $log$ scale with base 10. 
+> Notice that $log_{10}(10) = 1$, $log_{10}(100) = 2$, and $log_{10}(1000) = 3$. The values 
+10, 100 and 1000 are all the same distance apart on the log scale so we 
+can see that it is moving big values closer together and moving small values farther apart.
+> Therefore by adjusting the scale in this way we are highlighting the differences between small values, which allows us to better see the relationship in Figure \@ref(fig:mother-tongue-vs-most-at-home-scale). 
+> Log transformations are not the only way you can transform the data! Notice if you write `log(0)` in R you get `-Inf` so if you have lots of zeros in your data you will want to do something else, which is beyond the scope of the book. 
 
 From the visualization in Figure \@ref(fig:mother-tongue-vs-most-at-home-scale), we see that for the 214 languages in this data set, as the number of people who have a language as their mother tongue increases, so does the number of people who speak that language at home. When we see two variables do this, we call this a *positive relationship*. Because the points are fairly close together, we can say that the relationship is strong. Because drawing a straight line through these  points would fit the pattern we observe quite well, we say that it's linear.
 
@@ -345,28 +351,29 @@ english_mother_tongue <- can_lang %>%
 census_popn <- 35151728
 ```
 
-We saw that `r format(english_mother_tongue, scientific = FALSE, big.mark = ",")` people reported that their mother tongue was English in the 2016 Canadian census, but what does this number really mean? To really understand this number, we need context. In particular, how many people were in Canada when this data was collected? From the 2016 Canadian census profile, we can see that the population was reported to be `r format(census_popn, scientific = FALSE, big.mark = ",")` people. The number of people who report that English is their mother tongue is much more meaningful when we report it in this context. We can even go a step further and transform this count to a relative frequency or proportion to represent this as a single meaningful number in our data visualizations. We can do this by dividing the number of people reporting a given language as their mother tongue by the number of people who live in Canada. For example, the proportion of people who reported that their mother tongue was English in the 
-2016 Canadian census was `r  format(english_mother_tongue, scientific = FALSE, big.mark = ",") ` / `r  format(census_popn, scientific = FALSE, big.mark = ",")` =
-`r format(round(english_mother_tongue/census_popn, 2), scientific = FALSE, big.mark = ",")`.
+We saw that `r format(english_mother_tongue, scientific = FALSE, big.mark = ",")` people reported that their mother tongue was English in the 2016 Canadian census, but what does this number really mean? To really understand this number, we need context. In particular, how many people were in Canada when this data was collected? From the 2016 Canadian census profile, we can see that the population was reported to be `r format(census_popn, scientific = FALSE, big.mark = ",")` people. The number of people who report that English is their mother tongue is much more meaningful when we report it in this context. We can even go a step further and transform this count to a percent value to represent this as a single meaningful number in our data visualizations. We can do this by dividing the number of people reporting a given language as their mother tongue by the number of people who live in Canada and multiplying by 100. For example, the percentage of people who reported that their mother tongue was English in the 
+2016 Canadian census was `r  format(english_mother_tongue, scientific = FALSE, big.mark = ",") ` / `r  format(census_popn, scientific = FALSE, big.mark = ",")` $\times$ `r 100` \% =
+`r format(round(english_mother_tongue/census_popn*100, 2), scientific = FALSE, big.mark = ",")`\%.
 
-Below we use `mutate` to calculate the proportion of people reporting a given language as their mother tongue and primary language at home for all the languages in the `can_lang` data set:
+Below we use `mutate` to calculate the percentage of people reporting a given language as their mother tongue and primary language at home for all the languages in the `can_lang` data set. Since the new columns are appended to the end of the data table, we selected the new columns after the transformation so you can clearly see the mutated output from the table.
 
 ```{r}
 can_lang <- can_lang %>%
   mutate(
-    mother_tongue = mother_tongue / 35151728,
-    most_at_home = most_at_home / 35151728
+    mother_tongue_percent = (mother_tongue / 35151728)*100,
+    most_at_home_percent = (most_at_home / 35151728)*100
   )
-can_lang
+can_lang %>% 
+  select(mother_tongue_percent, most_at_home_percent)
 ```
 
-Finally, let's visualize the data now that we have represented it as proportions (and change our axis labels to reflect this change in units!):
+Finally, let's visualize the data now that we have represented it as percentages (and change our axis labels to reflect this change in units!):
 
-```{r mother-tongue-vs-most-at-home-scale-props, fig.width=5.75, fig.height=5, warning=FALSE, fig.cap = "Scatter plot of proportion of Canadians reporting a language as their mother tongue vs the primary language at home"}
-ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
+```{r mother-tongue-vs-most-at-home-scale-props, fig.width=5.75, fig.height=5, warning=FALSE, fig.cap = "Scatter plot of percentage of Canadians reporting a language as their mother tongue vs the primary language at home"}
+ggplot(can_lang, aes(x = most_at_home_percent, y = mother_tongue_percent)) +
   geom_point() +
-  xlab("Language spoken most at home (proportion of Canadian residents)") +
-  ylab("Mother tongue (proportion of Canadian residents)") +
+  xlab("Language spoken most at home \n (percentage of Canadian residents)") +
+  ylab("Mother tongue \n (percentage of Canadian residents)") +
   scale_x_log10(labels = scales::comma) +
   scale_y_log10(labels = scales::comma)
 ```
@@ -378,11 +385,11 @@ scatter plot to represent each language's higher-level language category.
 
 We will add an argument to the `aes` function, specifying that the `category` column should colour the points:
 
-```{r scatter-colour-by-category, fig.width=7.75, fig.height=4, warning=FALSE,  fig.cap = "Scatter plot of proportion of Canadians reporting a language as their mother tongue vs the primary language at home coloured by language category"}
-ggplot(can_lang, aes(x = most_at_home, y = mother_tongue, color = category)) +
+```{r scatter-colour-by-category, fig.width=7.75, fig.height=4, warning=FALSE,  fig.cap = "Scatter plot of percentage of Canadians reporting a language as their mother tongue vs the primary language at home coloured by language category"}
+ggplot(can_lang, aes(x = most_at_home_percent, y = mother_tongue_percent, color = category)) +
   geom_point() +
-  xlab("Language spoken most at home (proportion of Canadian residents)") +
-  ylab("Mother tongue (proportion of Canadian residents)") +
+  xlab("Language spoken most at home (percentage of Canadian residents)") +
+  ylab("Mother tongue (percentage of Canadian residents)") +
   scale_x_log10(labels = scales::comma) +
   scale_y_log10(labels = scales::comma)
 ```
@@ -420,24 +427,24 @@ can_lang <- bind_rows(
 > `&` is a logical operator meaning "AND". We are filtering the `can_lang` data frame where the rows do not equal "English" and do not equal "French".  
 
 We have added a few more layers to make the data visualization in Figure \@ref(fig:nachos-to-cheesecake) even more effective. Specifically, we used have improved the visualizations accessibility by choosing colours that are easier to distinguish, mapped category to shape, and handled the problem of overlapping data points by making them slightly transparent. 
-```{r nachos-to-cheesecake, fig.width=7.75, fig.height=4, warning=FALSE, message=FALSE, fig.cap = "Scatter plot of proportion of Canadians reporting a language as their mother tongue vs the primary language at home coloured by language category"}
+```{r nachos-to-cheesecake, fig.width=7.75, fig.height=4, warning=FALSE, message=FALSE, fig.cap = "Scatter plot of percentage of Canadians reporting a language as their mother tongue vs the primary language at home coloured by language category"}
 ggplot(can_lang, aes(
-  x = most_at_home,
-  y = mother_tongue,
+  x = most_at_home_percent,
+  y = mother_tongue_percent,
   colour = category,
   shape = category
 )) + # map categories to different shapes
   geom_point(alpha = 0.6) + # set the transparency of the points
   scale_color_manual(values = c("deepskyblue2", "firebrick1", "black", "forestgreen")) + # choose point colours
-  xlab("Language spoken most at home (proportion of Canadian residents)") +
-  ylab("Mother tongue (proportion of Canadian residents)") +
+  xlab("Language spoken most at home \n (percentage of Canadian residents)") +
+  ylab("Mother tongue \n (percentage of Canadian residents)") +
   scale_x_log10(labels = scales::comma) +
   scale_y_log10(labels = scales::comma)
 ```
 
 ### The Michelson speed of light data set
 The `morley` data set contains measurements of the speed of light (in kilometres per second with 299,000 subtracted) from the year 1879 
-for five experiments, each with 20 consecutive runs. This data set is available in base R under the name `morley` so it does not need to be loaded.
+for five experiments, each with 20 consecutive runs [@lightdata]. This data set is available in base R under the name `morley` so it does not need to be loaded.
 
 **Question:** Given what we know now about the speed of 
 light (299,792.458 kilometres per second), how accurate were each of the experiments?
@@ -479,19 +486,29 @@ morley_hist
 In Figure \@ref(fig:03-data-morley-hist-2), we also still cannot tell which experiments (denoted in the `Expt` column) led to which measurements; perhaps some experiments were more accurate than
 others. To fully answer our question, we need to separate the measurements from each other visually. We can
 try to do this using a *coloured* histogram, where counts from different experiments are stacked on top of each
-other in different colours. We create a histogram coloured by the `Expt` variable by adding it to the `fill` aesthetic mapping. We make sure the different colours can be seen (despite them all sitting on top of each other) by setting the `alpha` argument in `geom_histogram`
+other in different colours. We can create a histogram coloured by the `Expt` variable by adding it to the `fill` aesthetic mapping. We make sure the different colours can be seen (despite them all sitting on top of each other) by setting the `alpha` argument in `geom_histogram`
 to `0.5` to make the bars slightly translucent:
 
 ```{r 03-data-morley-hist-3, warning=FALSE, message=FALSE, fig.cap = "Histogram of Michelson's speed of light data coloured by experiment"}
-morley_hist <- ggplot(morley, aes(x = Speed, fill = factor(Expt))) +
+morley_hist <- ggplot(morley, aes(x = Speed, fill = Expt)) +
   geom_histogram(position = "identity", alpha = 0.5) +
   geom_vline(xintercept = 792.458, linetype = "dashed", size = 1.0)
 morley_hist
 ```
 
 
-> Notice that we wrote `factor(Expt)` in the' fill' aesthetic mapping. A **factor** helps us represent categorical data. Factors can be ordered or unordered, and even though factors look like characters, they are integers underneath. They contain a set of values, known as **levels**. Storing something as a factor helps ensure that R will treat the data correctly. For instance, if we look at the printed `morley` data, the column `Expt` is an integer (we see the label `<int>` underneath the `Expt` column name). But, we want to treat it as a categorical variable, so we use the function `factor()` to make sure it is treated as such. 
+Wait a second, we notice that the histogram is still all the same colour! What is going on here? If we look at the printed `morley` data, the column `Expt` is an integer (we see the label `<int>` underneath the `Expt` column name). But, we want to treat it as a categorical variable.  To fix this issue we can write `factor(Expt)` in the `fill` aesthetic mapping. By writing `factor(Expt)` we are ensuring that R will treat this variable as a factor and the colour will be mapped discretely.
 
+```{r 03-data-morley-hist-with-factor, warning=FALSE, message=FALSE, fig.cap = "Histogram of Michelson's speed of light data coloured by experiment as factor"}
+morley_hist <- ggplot(morley, aes(x = Speed, fill = Expt)) +
+  geom_histogram(position = "identity", alpha = 0.5) +
+  geom_vline(xintercept = 792.458, linetype = "dashed", size = 1.0)
+morley_hist
+```
+
+> Factors impact plots in two ways:
+(1) ensuring a colour is mapped as discretely where appropriate (like in this example) and (2) the ordering of levels in a plot. `ggplot` takes into account the order of the factor levels as opposed to the order that is displayed in your data frame. Learning how to reorder your factor levels will help you with reordering the labels of a factor on a plot.  
+ 
 Unfortunately, the attempt to separate out the experiment number visually has created a bit of a mess. All of the colours in Figure \@ref(fig:03-data-morley-hist-3)
 are blending together, and although it is possible to derive *some* insight from this (e.g., experiments 1 and 3 had some 
 of the most incorrect measurements), it isn't the clearest way to convey our message and answer the question. Let's try a different strategy of 
@@ -501,6 +518,7 @@ In order to create a plot in `ggplot2` that has multiple subplots arranged in a 
 The argument to `facet_grid` specifies the variable(s) used to split the plot into subplots. It has the syntax `vertical_variable ~ horizontal_variable`,
 where `veritcal_variable` is used to split the plot vertically, `horizontal_variable` is used to split horizontally, and `.` is used if there should be no split
 along that axis. In our case, we only want to split vertically along the `Expt` variable, so we use `Expt ~ .` as the argument to `facet_grid`.
+
 
 ```{r 03-data-morley-hist-4, warning=FALSE, message=FALSE, fig.cap = "Histogram of Michelson's speed of light data split vertically by experiment"}
 morley_hist <- ggplot(morley, aes(x = Speed, fill = factor(Expt))) +
@@ -619,7 +637,7 @@ vector graphics as much as you like without the image looking bad, while raster 
 
 
 Let's investigate how different image file formats behave with a scatter plot of the
-[Old Faithful data set](https://www.stat.cmu.edu/~larry/all-of-statistics/=data/faithful.dat):
+[Old Faithful data set](https://www.stat.cmu.edu/~larry/all-of-statistics/=data/faithful.dat) [@faithfuldata]:
 
 ```{r 03-plot-line, collapse=TRUE, warning=FALSE, message=FALSE, fig.cap = "Scatter plot of waiting time and eruption time"}
 library(svglite) # we need this to save SVG files
