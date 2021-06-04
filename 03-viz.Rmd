@@ -29,7 +29,6 @@ charts, line graphs, and histograms) for data using R.
     - aesthetic mappings: `x`, `y`, `fill`, `colour`, `shape`
     - labelling: `xlab`, `ylab`, `labs`
     - font control and legend positioning: `theme`
-    - flipping axes: `coord_flip`
     - subplots: `facet_grid`
 - Describe the difference in raster and vector output formats
 - Use `ggsave` to save visualizations in `.png` and `.svg` format
@@ -214,15 +213,13 @@ islands_bar <- ggplot(islands_df, aes(x = landmass, y = size)) +
 islands_bar
 ```
 
-Alright, not bad! The plot in Figure \@ref(fig:03-data-islands-bar) is definitely the right kind of visualization, as we can clearly see and compare sizes of landmasses. The major issues are that the smaller landmasses' sizes are hard to distinguish, and the names of the landmasses are obscuring each other as they have been squished into too little space. But remember that the question we asked was only about the largest landmasses; let's make the plot a little bit clearer by keeping only the largest 12 landmasses. We do this using the `top_n` function.
-Then to help us make sure the labels have enough space, we'll use horizontal bars instead of vertical ones. We do this using the 
-`coord_flip` function, which swaps the `x` and `y` coordinate axes:
+Alright, not bad! The plot in Figure \@ref(fig:03-data-islands-bar) is definitely the right kind of visualization, as we can clearly see and compare sizes of landmasses. The major issues are that the smaller landmasses' sizes are hard to distinguish, and the names of the landmasses are obscuring each other as they have been squished into too little space. But remember that the question we asked was only about the largest landmasses; let's make the plot a little bit clearer by keeping only the largest 12 landmasses. We do this using the `slice_max` function.
+Then to help us make sure the labels have enough space, we'll use horizontal bars instead of vertical ones. We do this by swapping the `x` and `y` variables:
 
 ```{r 03-data-islands-bar-2, warning=FALSE, message=FALSE, fig.cap = "Bar plot of size for Earth's largest 12 landmasses"}
-islands_top12 <- top_n(islands_df, 12, size)
-islands_bar <- ggplot(islands_top12, aes(x = landmass, y = size)) +
-  geom_bar(stat = "identity") +
-  coord_flip()
+islands_top12 <- slice_max(islands_df, order_by = size, n = 12)
+islands_bar <- ggplot(islands_top12, aes(x = size, y = landmass)) +
+  geom_bar(stat = "identity") 
 islands_bar
 ```
 
@@ -232,7 +229,7 @@ but by size, and to colour them based on whether they are a continent. To do thi
 use `mutate` to add a column to the data regarding whether or not the landmass is a continent:
 
 ```{r 03-data-islands-bar-3, warning=FALSE, message=FALSE}
-islands_top12 <- top_n(islands_df, 12, size)
+islands_top12 <- slice_max(islands_df, order_by = size, n = 12)
 continents <- c("Africa", "Antarctica", "Asia", "Australia", "Europe", "North America", "South America")
 islands_ct <- mutate(islands_top12, is_continent = ifelse(landmass %in% continents, "Continent", "Other"))
 islands_ct
@@ -243,10 +240,9 @@ function in the aesthetic mapping to organize the landmasses by their `size` var
 Finally, we use the `labs` and `theme` functions to add labels, change the font size, and position the legend:
 
 ```{r 03-data-islands-bar-4, warning=FALSE, message=FALSE, fig.cap = "Bar plot of size for Earth's largest 12 landmasses coloured by whether its a continent with clearer axes and labels"}
-islands_bar <- ggplot(islands_ct, aes(x = reorder(landmass, size), y = size, fill = is_continent)) +
+islands_bar <- ggplot(islands_ct, aes(x = size, y = reorder(landmass, size), fill = is_continent)) +
   geom_bar(stat = "identity") +
-  labs(x = "Landmass", y = "Size (1000 square mi)", fill = "Type") +
-  coord_flip() +
+  labs(x = "Size (1000 square mi)", y = "Landmass",  fill = "Type") +
   theme(text = element_text(size = 18), legend.position = c(0.75, 0.45))
 islands_bar
 ```
