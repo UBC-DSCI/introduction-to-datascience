@@ -154,7 +154,7 @@ categorical statistical variable, we will convert it to factor using the
 function `as_factor`.
 
 ```{r 05-class}
-cancer <- cancer %>%
+cancer <- cancer |>
   mutate(Class = as_factor(Class))
 glimpse(cancer)
 ```
@@ -169,9 +169,9 @@ so we use the `pull` function, which converts a single
 column of a data frame into a vector.
 
 ```{r 05-levels}
-cancer %>%
-  select(Class) %>%
-  pull() %>% # turns a data frame into a vector
+cancer |>
+  select(Class) |>
+  pull() |> # turns a data frame into a vector
   levels()
 ```
 
@@ -183,8 +183,8 @@ the `group_by` + `summarize` code pattern we used before to see that we have
 
 ```{r 05-tally}
 num_obs <- nrow(cancer)
-cancer %>%
-  group_by(Class) %>%
+cancer |>
+  group_by(Class) |>
   summarize(
     n = n(),
     percentage = n() / num_obs * 100
@@ -202,7 +202,7 @@ the `scale_color_manual` function. We also make the category labels ("B" and
 # colour palette
 cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")
 
-perim_concav <- cancer %>%
+perim_concav <- cancer |>
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
   geom_point(alpha = 0.5) +
   labs(color = "Diagnosis") +
@@ -379,7 +379,7 @@ the $K=5$ observations in the training data that are nearest to our new point.
 
 
 ```{r 05-multiknn-1, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatterplot of concavity versus perimeter with new observation labelled in red"}
-perim_concav <- cancer %>%
+perim_concav <- cancer |>
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
   geom_point(alpha = 0.5) +
   scale_x_continuous(name = "Perimeter", breaks = seq(-2, 4, 1)) +
@@ -395,10 +395,10 @@ perim_concav
 ```{r 05-multiknn-2}
 new_obs_Perimeter <- 0
 new_obs_Concavity <- 3.5
-cancer %>%
-  select(ID, Perimeter, Concavity, Class) %>%
-  mutate(dist_from_new = sqrt((Perimeter - new_obs_Perimeter)^2 + (Concavity - new_obs_Concavity)^2)) %>%
-  arrange(dist_from_new) %>%
+cancer |>
+  select(ID, Perimeter, Concavity, Class) |>
+  mutate(dist_from_new = sqrt((Perimeter - new_obs_Perimeter)^2 + (Concavity - new_obs_Concavity)^2)) |>
+  arrange(dist_from_new) |>
   slice(1:5) # subset the first 5 rows
 ```
 
@@ -459,7 +459,7 @@ $$Distance = \sqrt{(u_{1} -v_{1})^2 + (u_{2} - v_{2})^2 + \dots + (u_{m} - v_{m}
 
 ```{r 05-more, echo = FALSE, fig.cap = "3D scatterplot of symmetry, concavity and perimeter"}
 library(plotly)
-cancer %>%
+cancer |>
   plot_ly(
     x = ~Perimeter,
     y = ~Concavity,
@@ -468,8 +468,8 @@ cancer %>%
     opacity = 0.4,
     size = 150,
     colors = c(cbPalette[1], cbPalette[2])
-  ) %>%
-  add_markers() %>%
+  ) |>
+  add_markers() |>
   layout(scene = list(
     xaxis = list(title = "Perimeter"),
     yaxis = list(title = "Concavity"),
@@ -518,7 +518,7 @@ predict the diagnosis class of this observation. Let's pick out our 2 desired
 predictor variables and class label and store it as a new dataset named `cancer_train`:
 
 ```{r 05-tidymodels-2}
-cancer_train <- cancer %>%
+cancer_train <- cancer |>
   select(Class, Perimeter, Concavity)
 cancer_train
 ```
@@ -536,8 +536,8 @@ engine (in this case, the `kknn` engine) for training the model with the `set_en
 Finally we specify that this is a classification problem with the `set_mode` function.
 
 ```{r 05-tidymodels-3}
-knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 5) %>%
-  set_engine("kknn") %>%
+knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 5) |>
+  set_engine("kknn") |>
   set_mode("classification")
 knn_spec
 ```
@@ -549,7 +549,7 @@ that `Class` is the target variable (the one we want to predict),
 and `.` (everything *except* `Class`) is to be used as the predictor.
 
 ```{r 05-tidymodels-4}
-knn_fit <- knn_spec %>%
+knn_fit <- knn_spec |>
   fit(Class ~ ., data = cancer_train)
 knn_fit
 ```
@@ -612,8 +612,8 @@ until now. To keep things simple, we will just use the `Area`, `Smoothness`, and
 variables:
 
 ```{r 05-scaling-1, message = FALSE}
-unscaled_cancer <- read_csv("data/unscaled_wdbc.csv") %>%
-  mutate(Class = as_factor(Class)) %>%
+unscaled_cancer <- read_csv("data/unscaled_wdbc.csv") |>
+  mutate(Class = as_factor(Class)) |>
   select(Class, Area, Smoothness)
 unscaled_cancer
 ```
@@ -639,9 +639,9 @@ The `prep` function finalizes the recipe by using the data (here, `unscaled_canc
 to compute anything necessary to run the recipe (in this case, the column means and standard
 deviations):
 ```{r 05-scaling-3}
-uc_recipe <- uc_recipe %>%
-  step_scale(all_predictors()) %>%
-  step_center(all_predictors()) %>%
+uc_recipe <- uc_recipe |>
+  step_scale(all_predictors()) |>
+  step_center(all_predictors()) |>
   prep()
 uc_recipe
 ```
@@ -777,11 +777,11 @@ of the benign observations.
 set.seed(3)
 rare_cancer <- bind_rows(
   filter(cancer, Class == "B"),
-  cancer %>% filter(Class == "M") %>% slice_sample(n = 3)
-) %>%
+  cancer |> filter(Class == "M") |> slice_sample(n = 3)
+) |>
   select(Class, Perimeter, Concavity)
 
-rare_plot <- rare_cancer %>%
+rare_plot <- rare_cancer |>
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
   geom_point(alpha = 0.5) +
   labs(color = "Diagnosis") +
@@ -840,11 +840,11 @@ classifier would make, we can see that the decision is always "benign," correspo
 
 ```{r 05-upsample-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data with background colour indicating the decision of the K-nn classifier"}
 
-knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) %>%
-  set_engine("kknn") %>%
+knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) |>
+  set_engine("kknn") |>
   set_mode("classification")
 
-knn_fit <- knn_spec %>%
+knn_fit <- knn_spec |>
   fit(Class ~ ., data = rare_cancer)
 
 # create a prediction pt grid
@@ -852,7 +852,7 @@ per_grid <- seq(min(rare_cancer$Perimeter), max(rare_cancer$Perimeter), length.o
 con_grid <- seq(min(rare_cancer$Concavity), max(rare_cancer$Concavity), length.out = 100)
 pcgrid <- as_tibble(expand.grid(Perimeter = per_grid, Concavity = con_grid))
 knnPredGrid <- predict(knn_fit, pcgrid)
-prediction_table <- bind_cols(knnPredGrid, pcgrid) %>% rename(Class = .pred_class)
+prediction_table <- bind_cols(knnPredGrid, pcgrid) |> rename(Class = .pred_class)
 
 # create the basic plt
 rare_plot <-
@@ -876,8 +876,8 @@ We show below how to do this, and also
 use the `group_by + summarize` pattern we've seen before to see that our classes are now balanced:
 
 ```{r 05-upsample-cancer}
-ups_recipe <- recipe(Class ~ ., data = rare_cancer) %>%
-  step_upsample(Class, over_ratio = 1, skip = FALSE) %>%
+ups_recipe <- recipe(Class ~ ., data = rare_cancer) |>
+  step_upsample(Class, over_ratio = 1, skip = FALSE) |>
   prep()
 ups_recipe
 ```
@@ -885,8 +885,8 @@ ups_recipe
 ```{r 05-upsample-cancer-2}
 upsampled_cancer <- bake(ups_recipe, rare_cancer)
 
-upsampled_cancer %>%
-  group_by(Class) %>%
+upsampled_cancer |>
+  group_by(Class) |>
   summarize(n = n())
 ```
 Now suppose we train our K-nearest neighbour classifier with $K=7$ on this *balanced* data. Setting the background colour 
@@ -896,16 +896,16 @@ to those labelled malignant, the classifier predicts a malignant tumour, and vic
 
 ```{r 05-upsample-plot, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "K-nn after upsampling"}
 
-knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) %>%
-  set_engine("kknn") %>%
+knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) |>
+  set_engine("kknn") |>
   set_mode("classification")
 
-knn_fit <- knn_spec %>%
+knn_fit <- knn_spec |>
   fit(Class ~ ., data = upsampled_cancer)
 
 # create a prediction pt grid
 knnPredGrid <- predict(knn_fit, pcgrid)
-prediction_table <- bind_cols(knnPredGrid, pcgrid) %>% rename(Class = .pred_class)
+prediction_table <- bind_cols(knnPredGrid, pcgrid) |> rename(Class = .pred_class)
 
 # create the basic plt
 upsampled_plot <-
@@ -929,17 +929,17 @@ First we will load the data, create a model, and specify a recipe for how the da
 ```{r 05-workflow}
 
 # load the unscaled cancer data and make sure the target Class variable is a factor
-unscaled_cancer <- read_csv("data/unscaled_wdbc.csv") %>%
+unscaled_cancer <- read_csv("data/unscaled_wdbc.csv") |>
   mutate(Class = as_factor(Class))
 
 # create the KNN model
-knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) %>%
-  set_engine("kknn") %>%
+knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) |>
+  set_engine("kknn") |>
   set_mode("classification")
 
 # create the centering / scaling recipe
-uc_recipe <- recipe(Class ~ Area + Smoothness, data = unscaled_cancer) %>%
-  step_scale(all_predictors()) %>%
+uc_recipe <- recipe(Class ~ Area + Smoothness, data = unscaled_cancer) |>
+  step_scale(all_predictors()) |>
   step_center(all_predictors())
 ```
 Note that each of these steps is exactly the same as earlier, except for one major difference:
@@ -955,9 +955,9 @@ Note another difference from earlier here: we do not include a formula in the `f
 is again because we included the formula in the recipe, so there is no need to respecify it:
 
 ```{r 05-workflow-add}
-knn_fit <- workflow() %>%
-  add_recipe(uc_recipe) %>%
-  add_model(knn_spec) %>%
+knn_fit <- workflow() |>
+  add_recipe(uc_recipe) |>
+  add_model(knn_spec) |>
   fit(data = unscaled_cancer)
 knn_fit
 ```
@@ -983,7 +983,7 @@ asgrid <- as_tibble(expand.grid(Area = are_grid, Smoothness = smo_grid))
 knnPredGrid <- predict(knn_fit, asgrid)
 
 # bind the predictions as a new column with the grid points
-prediction_table <- bind_cols(knnPredGrid, asgrid) %>% rename(Class = .pred_class)
+prediction_table <- bind_cols(knnPredGrid, asgrid) |> rename(Class = .pred_class)
 
 # plot:
 # 1. the coloured scatter of the original data

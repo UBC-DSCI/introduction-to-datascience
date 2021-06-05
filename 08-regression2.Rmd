@@ -124,7 +124,7 @@ values (which fall along the line of best fit) and the observed data points?
 We illustrate these distances in the plot below with a red line:
 
 ```{r 08-verticalDistToMin,  echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square footage) with the vertical distances between the predicted values and the observed data points"}
-small_sacramento <- small_sacramento %>%
+small_sacramento <- small_sacramento |>
   mutate(predicted = predict(small_model))
 small_plot +
   geom_segment(data = small_sacramento, aes(xend = sqft, yend = predicted), colour = "red")
@@ -165,15 +165,15 @@ sacramento_test <- testing(sacramento_split)
 Now that we have our training data, we will create the model specification
 and recipe, and fit our simple linear regression model:
 ```{r 08-fitLM, fig.height = 4, fig.width = 5}
-lm_spec <- linear_reg() %>%
-  set_engine("lm") %>%
+lm_spec <- linear_reg() |>
+  set_engine("lm") |>
   set_mode("regression")
 
 lm_recipe <- recipe(price ~ sqft, data = sacramento_train)
 
-lm_fit <- workflow() %>%
-  add_recipe(lm_recipe) %>%
-  add_model(lm_spec) %>%
+lm_fit <- workflow() |>
+  add_recipe(lm_recipe) |>
+  add_model(lm_spec) |>
   fit(data = sacramento_train)
 lm_fit
 ```
@@ -187,15 +187,15 @@ start at \$`r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), 
 every extra square foot increases the cost of the house by \$`r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`. Finally, we predict on the test data set to assess how well our model does:
 
 ```{r 08-assessFinal}
-lm_test_results <- lm_fit %>%
-  predict(sacramento_test) %>%
-  bind_cols(sacramento_test) %>%
+lm_test_results <- lm_fit |>
+  predict(sacramento_test) |>
+  bind_cols(sacramento_test) |>
   metrics(truth = price, estimate = .pred)
 lm_test_results
 ```
 
 Our final model's test error as assessed by RMSPE
-is `r format(round(lm_test_results %>% filter(.metric == 'rmse') %>% pull(.estimate)), scientific=FALSE)`. 
+is `r format(round(lm_test_results |> filter(.metric == 'rmse') |> pull(.estimate)), scientific=FALSE)`. 
 Remember that this is in units of the target/response variable, and here that
 is US Dollars (USD). Does this mean our model is "good" at predicting house
 sale price based off of the predictor of home size? Again answering this is
@@ -244,33 +244,33 @@ obtained from the same problem:
 
 ```{r 08-compareRegression, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 4, fig.width = 10, fig.cap = "Comparison of simple linear regression and K-NN regression"}
 set.seed(1234)
-sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 30) %>%
-  set_engine("kknn") %>%
+sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 30) |>
+  set_engine("kknn") |>
   set_mode("regression")
 
-sacr_wkflw <- workflow() %>%
-  add_recipe(sacr_recipe) %>%
+sacr_wkflw <- workflow() |>
+  add_recipe(sacr_recipe) |>
   add_model(sacr_spec)
 
-sacr_fit <- sacr_wkflw %>%
+sacr_fit <- sacr_wkflw |>
   fit(data = sacramento_train)
 
-sacr_preds <- sacr_fit %>%
-  predict(sacramento_train) %>%
+sacr_preds <- sacr_fit |>
+  predict(sacramento_train) |>
   bind_cols(sacramento_train)
 
-sacr_rmse <- sacr_preds %>%
-  metrics(truth = price, estimate = .pred) %>%
-  filter(.metric == "rmse") %>%
-  pull(.estimate) %>%
+sacr_rmse <- sacr_preds |>
+  metrics(truth = price, estimate = .pred) |>
+  filter(.metric == "rmse") |>
+  pull(.estimate) |>
   round(2)
 
-sacr_rmspe <- sacr_fit %>%
-  predict(sacramento_test) %>%
-  bind_cols(sacramento_test) %>%
-  metrics(truth = price, estimate = .pred) %>%
-  filter(.metric == "rmse") %>%
-  pull(.estimate) %>%
+sacr_rmspe <- sacr_fit |>
+  predict(sacramento_test) |>
+  bind_cols(sacramento_test) |>
+  metrics(truth = price, estimate = .pred) |>
+  filter(.metric == "rmse") |>
+  pull(.estimate) |>
   round()
 
 
@@ -283,9 +283,9 @@ knn_plot_final <- ggplot(sacr_preds, aes(x = sqft, y = price)) +
   ggtitle("K-NN regression") +
   annotate("text", x = 3500, y = 100000, label = paste("RMSPE =", sacr_rmspe))
 
-lm_rmspe <- lm_test_results %>%
-  filter(.metric == "rmse") %>%
-  pull(.estimate) %>%
+lm_rmspe <- lm_test_results |>
+  filter(.metric == "rmse") |>
+  pull(.estimate) |>
   round()
 
 lm_plot_final <- lm_plot_final +
@@ -361,9 +361,9 @@ lm_recipe <- recipe(price ~ sqft + beds, data = sacramento_train)
 
 Now we can build our workflow and fit the model:
 ```{r 08-fitlm}
-lm_fit <- workflow() %>%
-  add_recipe(lm_recipe) %>%
-  add_model(lm_spec) %>%
+lm_fit <- workflow() |>
+  add_recipe(lm_recipe) |>
+  add_model(lm_spec) |>
   fit(data = sacramento_train)
 lm_fit
 ```
@@ -371,9 +371,9 @@ lm_fit
 And finally, we predict on the test data set to assess how well our model does:
 
 ```{r 08-assessFinal-multi}
-lm_mult_test_results <- lm_fit %>%
-  predict(sacramento_test) %>%
-  bind_cols(sacramento_test) %>%
+lm_mult_test_results <- lm_fit |>
+  predict(sacramento_test) |>
+  bind_cols(sacramento_test) |>
   metrics(truth = price, estimate = .pred)
 lm_mult_test_results
 ```
@@ -385,25 +385,25 @@ library(plotly)
 xvals <- seq(from = min(sacramento_train$sqft), to = max(sacramento_train$sqft), length = 50)
 yvals <- seq(from = min(sacramento_train$beds), to = max(sacramento_train$beds), length = 50)
 
-zvals <- lm_fit %>%
-  predict(crossing(xvals, yvals) %>% mutate(sqft = xvals, beds = yvals)) %>%
+zvals <- lm_fit |>
+  predict(crossing(xvals, yvals) |> mutate(sqft = xvals, beds = yvals)) |>
   pull(.pred)
 
 zvalsm <- matrix(zvals, nrow = length(xvals))
 
-plot_ly() %>%
+plot_ly() |>
   add_markers(
     data = sacramento_train,
     x = ~sqft,
     y = ~beds,
     z = ~price,
     marker = list(size = 5, opacity = 0.4, color = "red")
-  ) %>%
+  ) |>
   layout(scene = list(
     xaxis = list(title = "House size (square feet)"),
     zaxis = list(title = "Price (USD)"),
     yaxis = list(title = "Number of bedrooms")
-  )) %>%
+  )) |>
   add_surface(
     x = ~xvals,
     y = ~yvals,
@@ -434,9 +434,9 @@ where:
 Finally, we can fill in the values for $\beta_0$, $\beta_1$ and $\beta_2$ from the model output above
 to create the equation of the plane of best fit to the data: 
 ```{r 08-lm-multi-get-coeffs-hidden, echo = FALSE}
-icept <- format(round(coeffs %>% filter(term == "(Intercept)") %>% pull(estimate)), scientific = FALSE)
-sqftc <- format(round(coeffs %>% filter(term == "sqft") %>% pull(estimate)), scientific = FALSE)
-bedsc <- format(round(coeffs %>% filter(term == "beds") %>% pull(estimate)), scientific = FALSE)
+icept <- format(round(coeffs |> filter(term == "(Intercept)") |> pull(estimate)), scientific = FALSE)
+sqftc <- format(round(coeffs |> filter(term == "sqft") |> pull(estimate)), scientific = FALSE)
+bedsc <- format(round(coeffs |> filter(term == "beds") |> pull(estimate)), scientific = FALSE)
 ```
 
 $$\text{house price} = `r icept` + `r sqftc`\cdot (\text{house size})  `r bedsc` \cdot (\text{number of bedrooms})$$
@@ -454,7 +454,7 @@ lm_mult_test_results
 ```
 
 We get that the RMSPE for the multivariate linear regression model 
-of `r format(lm_mult_test_results %>% filter(.metric == 'rmse') %>% pull(.estimate), scientific = FALSE)`. This prediction error
+of `r format(lm_mult_test_results |> filter(.metric == 'rmse') |> pull(.estimate), scientific = FALSE)`. This prediction error
 is less than the prediction error for the multivariate K-NN regression model,
 indicating that we should likely choose linear regression for predictions of
 house price on this data set. But we should also ask if this more complex
@@ -462,7 +462,7 @@ model is doing a better job of predicting compared to our simple linear
 regression model with only a single predictor (house size). Revisiting last
 section, we see that our RMSPE for our simple linear regression model with
 only a single predictor was 
-`r format(lm_test_results %>% filter(.metric == 'rmse') %>% pull(.estimate), scientific = FALSE)`, 
+`r format(lm_test_results |> filter(.metric == 'rmse') |> pull(.estimate), scientific = FALSE)`, 
 which is slightly more than that of our more complex model. Our model with two predictors
 provided a slightly better fit on test data than our model with just one. 
 

@@ -111,7 +111,7 @@ records the atmospheric concentration of carbon dioxide (CO2, in parts per milli
 **Question:** Does the concentration of atmospheric CO2 change over time, and are there any interesting patterns to note?
 ```{r 03-data-co2, warning=FALSE, message=FALSE}
 # mauna loa carbon dioxide data
-co2_df <- read_csv("data/mauna_loa.csv") %>%
+co2_df <- read_csv("data/mauna_loa.csv") |>
   filter(ppm > 0, date_decimal < 2000)
 co2_df
 ```
@@ -318,7 +318,7 @@ ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
 Most of the data points from the 214 observations in this data set are bunched up in the lower left-handside of the visualization in Figure \@ref(fig:03-mother-tongue-vs-most-at-home-labs). The data is clumped because many more people in Canada speak the two languages represented by the points in the upper right corner. By filtering the data, we can confirm these two points correspond to the two official languages (English and French):
 
 ```{r english-mother-tongue}
-can_lang %>%
+can_lang |>
   filter(language == "English" | language == "French")
 ```
 
@@ -344,8 +344,8 @@ is moving big values closer together and moving small values farther apart.
 From the visualization in Figure \@ref(fig:03-mother-tongue-vs-most-at-home-scale), we see that for the 214 languages in this data set, as the number of people who have a language as their mother tongue increases, so does the number of people who speak that language at home. When we see two variables do this, we call this a *positive relationship*. Because the points are fairly close together, we can say that the relationship is strong. Because drawing a straight line through these  points would fit the pattern we observe quite well, we say that it's linear.
 
 ```{r 03-changing_the_units, include = FALSE}
-english_mother_tongue <- can_lang %>%
-  filter(language == "English") %>%
+english_mother_tongue <- can_lang |>
+  filter(language == "English") |>
   pull(mother_tongue)
 census_popn <- 35151728
 ```
@@ -357,12 +357,12 @@ Similar to our example in chapter 1, we can convert the counts to percentages to
 Below we use `mutate` to calculate the percentage of people reporting a given language as their mother tongue and primary language at home for all the languages in the `can_lang` data set. Since the new columns are appended to the end of the data table, we selected the new columns after the transformation so you can clearly see the mutated output from the table.
 
 ```{r}
-can_lang <- can_lang %>%
+can_lang <- can_lang |>
   mutate(
     mother_tongue_percent = (mother_tongue / 35151728)*100,
     most_at_home_percent = (most_at_home / 35151728)*100
   )
-can_lang %>% 
+can_lang |> 
   select(mother_tongue_percent, most_at_home_percent)
 ```
 
@@ -424,8 +424,8 @@ Does this mean that this relationship is positive for all languages in the world
 Now, we can go one step further and distinguish English and French languages with different colours in our visualization. To separate these languages, we will filter the rows where the language is either English or French and mutate the `category` column to equal the corresponding language. 
 
 ```{r 03-separate-English-French}
-english_and_french <- can_lang %>%
-  filter(language == "English" | language == "French") %>%
+english_and_french <- can_lang |>
+  filter(language == "English" | language == "French") |>
   mutate(category = language)
 english_and_french
 ```
@@ -434,7 +434,7 @@ Next we will bind the mutated data set `english_and_french` that we just created
 ```{r 03-bind-english-french}
 can_lang <- bind_rows(
   english_and_french,
-  can_lang %>%
+  can_lang |>
     filter(language != "English" & language != "French")
 )
 ```

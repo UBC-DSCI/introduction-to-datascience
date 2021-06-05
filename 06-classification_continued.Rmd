@@ -72,7 +72,7 @@ library(tidyverse)
 library(tidymodels)
 
 # load data
-cancer <- read_csv("data/unscaled_wdbc.csv") %>%
+cancer <- read_csv("data/unscaled_wdbc.csv") |>
   mutate(Class = as_factor(Class)) # convert the character Class variable to the factor datatype
 
 # colour palette
@@ -80,7 +80,7 @@ cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00",
 
 # create scatter plot of tumour cell concavity versus smoothness,
 # labelling the points be diagnosis class
-perim_concav <- cancer %>%
+perim_concav <- cancer |>
   ggplot(aes(x = Smoothness, y = Concavity, color = Class)) +
   geom_point(alpha = 0.5) +
   labs(color = "Diagnosis") +
@@ -135,8 +135,8 @@ this properly. Below we construct and prepare the recipe using only the training
 data (due to `data = cancer_train` in the first line).
 
 ```{r 06-pre-process}
-cancer_recipe <- recipe(Class ~ Smoothness + Concavity, data = cancer_train) %>%
-  step_scale(all_predictors()) %>%
+cancer_recipe <- recipe(Class ~ Smoothness + Concavity, data = cancer_train) |>
+  step_scale(all_predictors()) |>
   step_center(all_predictors())
 ```
 
@@ -150,13 +150,13 @@ predictors.
 
 ```{r 06-create-K-nearest neighbour-classifier}
 set.seed(1)
-knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 3) %>%
-  set_engine("kknn") %>%
+knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 3) |>
+  set_engine("kknn") |>
   set_mode("classification")
 
-knn_fit <- workflow() %>%
-  add_recipe(cancer_recipe) %>%
-  add_model(knn_spec) %>%
+knn_fit <- workflow() |>
+  add_recipe(cancer_recipe) |>
+  add_model(knn_spec) |>
   fit(data = cancer_train)
 
 knn_fit
@@ -178,7 +178,7 @@ diagnoses, while the `.pred_class` contains the predicted diagnoses from the
 model.
 
 ```{r 06-predict-test}
-cancer_test_predictions <- predict(knn_fit, cancer_test) %>%
+cancer_test_predictions <- predict(knn_fit, cancer_test) |>
   bind_cols(cancer_test)
 cancer_test_predictions
 ```
@@ -190,7 +190,7 @@ from `tidymodels` to get the statistics about the quality of our model, specifyi
 the `truth` and `estimate` arguments:
 
 ```{r 06-accuracy}
-cancer_test_predictions %>%
+cancer_test_predictions |>
   metrics(truth = Class, estimate = .pred_class)
 ```
 
@@ -199,7 +199,7 @@ We can also look at the *confusion matrix* for the classifier, which shows
 the table of predicted labels and correct labels, using the `conf_mat` function:
 
 ```{r 06-confusionmat}
-cancer_test_predictions %>%
+cancer_test_predictions |>
   conf_mat(truth = Class, estimate = .pred_class)
 ```
 
@@ -256,25 +256,25 @@ for (i in 1:5) {
   cancer_validation <- testing(cancer_split)
 
   # recreate the standardization recipe from before (since it must be based on the training data)
-  cancer_recipe <- recipe(Class ~ Smoothness + Concavity, data = cancer_subtrain) %>%
-    step_scale(all_predictors()) %>%
+  cancer_recipe <- recipe(Class ~ Smoothness + Concavity, data = cancer_subtrain) |>
+    step_scale(all_predictors()) |>
     step_center(all_predictors())
 
   # fit the knn model (we can reuse the old knn_spec model from before)
-  knn_fit <- workflow() %>%
-    add_recipe(cancer_recipe) %>%
-    add_model(knn_spec) %>%
+  knn_fit <- workflow() |>
+    add_recipe(cancer_recipe) |>
+    add_model(knn_spec) |>
     fit(data = cancer_subtrain)
 
   # get predictions on the validation data
-  validation_predicted <- predict(knn_fit, cancer_validation) %>%
+  validation_predicted <- predict(knn_fit, cancer_validation) |>
     bind_cols(cancer_validation)
 
   # compute the accuracy
-  acc <- validation_predicted %>%
-    metrics(truth = Class, estimate = .pred_class) %>%
-    filter(.metric == "accuracy") %>%
-    select(.estimate) %>%
+  acc <- validation_predicted |>
+    metrics(truth = Class, estimate = .pred_class) |>
+    filter(.metric == "accuracy") |>
+    select(.estimate) |>
     pull()
   accuracies <- append(accuracies, acc)
 }
@@ -322,14 +322,14 @@ train/validation split.
 set.seed(1)
 
 # recreate the standardization recipe from before (since it must be based on the training data)
-cancer_recipe <- recipe(Class ~ Smoothness + Concavity, data = cancer_train) %>%
-  step_scale(all_predictors()) %>%
+cancer_recipe <- recipe(Class ~ Smoothness + Concavity, data = cancer_train) |>
+  step_scale(all_predictors()) |>
   step_center(all_predictors())
 
 # fit the knn model (we can reuse the old knn_spec model from before)
-knn_fit <- workflow() %>%
-  add_recipe(cancer_recipe) %>%
-  add_model(knn_spec) %>%
+knn_fit <- workflow() |>
+  add_recipe(cancer_recipe) |>
+  add_model(knn_spec) |>
   fit_resamples(resamples = cancer_vfold)
 
 knn_fit
@@ -345,7 +345,7 @@ classifier to be somewhere roughly between 0.86 and 0.90 (although it may
 fall outside this range).
 
 ```{r 06-vfold-metrics}
-knn_fit %>% collect_metrics()
+knn_fit |> collect_metrics()
 ```
 
 We can choose any number of folds, and typically the more we use the better our
@@ -362,10 +362,10 @@ than 5-fold:
 ```{r 06-10-fold}
 cancer_vfold <- vfold_cv(cancer_train, v = 10, strata = Class)
 
-workflow() %>%
-  add_recipe(cancer_recipe) %>%
-  add_model(knn_spec) %>%
-  fit_resamples(resamples = cancer_vfold) %>%
+workflow() |>
+  add_recipe(cancer_recipe) |>
+  add_model(knn_spec) |>
+  fit_resamples(resamples = cancer_vfold) |>
   collect_metrics()
 ```
 
@@ -386,8 +386,8 @@ best accuracy. The `tidymodels` package collection provides a very simple
 syntax for tuning models: each parameter in the model to be tuned should be specified
 as `tune()` in the model specification rather than given a particular value.
 ```{r 06-range-cross-val}
-knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = tune()) %>%
-  set_engine("kknn") %>%
+knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = tune()) |>
+  set_engine("kknn") |>
   set_mode("classification")
 ```
 Then instead of using `fit` or `fit_resamples`, we will use the `tune_grid` function
@@ -396,17 +396,17 @@ argument specifies that the tuning should try 10 values of the number of neighbo
 $K$ when tuning. We set the seed prior to tuning to ensure results are reproducible:
 ```{r 06-range-cross-val-2}
 set.seed(1)
-knn_results <- workflow() %>%
-  add_recipe(cancer_recipe) %>%
-  add_model(knn_spec) %>%
-  tune_grid(resamples = cancer_vfold, grid = 10) %>%
+knn_results <- workflow() |>
+  add_recipe(cancer_recipe) |>
+  add_model(knn_spec) |>
+  tune_grid(resamples = cancer_vfold, grid = 10) |>
   collect_metrics()
 knn_results
 ```
 We can select the best value of the number of neighbours (i.e., the one that results
 in the highest classifier accuracy estimate) by plotting the accuracy versus $K$:
 ```{r 06-find-k, fig.height = 4, fig.width = 5, fig.cap= "Plot of accuracy estimate versus number of neighbours"}
-accuracies <- knn_results %>%
+accuracies <- knn_results |>
   filter(.metric == "accuracy")
 
 accuracy_vs_k <- ggplot(accuracies, aes(x = neighbors, y = mean)) +
@@ -440,13 +440,13 @@ Take a look as the plot below as we vary $K$ from 1 to almost the number of obse
 ```{r 06-lots-of-ks, fig.height = 4, fig.width = 5, fig.cap="Plot of accuracy estimate versus number of neighbours for many K values"}
 set.seed(1)
 k_lots <- tibble(neighbors = seq(from = 1, to = 385, by = 10))
-knn_results <- workflow() %>%
-  add_recipe(cancer_recipe) %>%
-  add_model(knn_spec) %>%
-  tune_grid(resamples = cancer_vfold, grid = k_lots) %>%
+knn_results <- workflow() |>
+  add_recipe(cancer_recipe) |>
+  add_model(knn_spec) |>
+  tune_grid(resamples = cancer_vfold, grid = k_lots) |>
   collect_metrics()
 
-accuracies <- knn_results %>%
+accuracies <- knn_results |>
   filter(.metric == "accuracy")
 
 accuracy_vs_k_lots <- ggplot(accuracies, aes(x = neighbors, y = mean)) +
@@ -488,13 +488,13 @@ ks <- c(1, 7, 20, 200)
 plots <- list()
 
 for (i in 1:length(ks)) {
-  knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = ks[[i]]) %>%
-    set_engine("kknn") %>%
+  knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = ks[[i]]) |>
+    set_engine("kknn") |>
     set_mode("classification")
 
-  knn_fit <- workflow() %>%
-    add_recipe(cancer_recipe) %>%
-    add_model(knn_spec) %>%
+  knn_fit <- workflow() |>
+    add_recipe(cancer_recipe) |>
+    add_model(knn_spec) |>
     fit(data = cancer_train)
 
   # create a prediction pt grid
@@ -502,7 +502,7 @@ for (i in 1:length(ks)) {
   con_grid <- seq(min(cancer_train$Concavity), max(cancer_train$Concavity), length.out = 100)
   scgrid <- as_tibble(expand.grid(Smoothness = smo_grid, Concavity = con_grid))
   knnPredGrid <- predict(knn_fit, scgrid)
-  prediction_table <- bind_cols(knnPredGrid, scgrid) %>% rename(Class = .pred_class)
+  prediction_table <- bind_cols(knnPredGrid, scgrid) |> rename(Class = .pred_class)
 
   # plot
   plots[[i]] <-
