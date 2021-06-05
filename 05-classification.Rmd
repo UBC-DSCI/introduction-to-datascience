@@ -56,7 +56,7 @@ variations on the basic classification problem, e.g.,  binary classification
 where only two classes are involved (e.g. disease or healthy patient), or
 multiclass classification, which involves assigning an object to one of several
 classes (e.g., private, public, or not for-profit organization). Here we will
-focus on the simple, widely used **K-nearest neighbours** algorithm for the
+focus on the widely used **K-nearest neighbours** algorithm for the
 binary classification problem. Other examples you may encounter in the future include decision trees, support vector machines (SVMs), logistic
 regression, and neural networks.
 
@@ -84,14 +84,14 @@ damage ([learn more about cancer here](https://www.worldwidecancerresearch.org/w
 Thus, it is important to quickly and accurately diagnose the tumour type to
 guide patient treatment.
 
-**Loading the data**
+### Loading the cancer data
 
 Our first step is to load, wrangle, and explore the data using visualizations
 in order to better understand the data we are working with.  We start by
 loading the necessary packages for our analysis. Below you'll see (in addition
 to the usual `tidyverse`) a new package: `forcats`. 
 The `forcats` package enables us to easily
-manipulate factors in R; factors are a special categorical type of variable in
+manipulate factors in R. As we learned in chapter \@ref(viz), factors are a special categorical type of variable in
 R that are often used for class label data. 
 
 
@@ -100,7 +100,7 @@ library(tidyverse)
 library(forcats)
 ```
 
-In this case, the file containing the breast cancer data set is a simple `.csv`
+In this case, the file containing the breast cancer data set is a `.csv`
 file with headers. We'll use the `read_csv` function with no additional
 arguments, and then inspect its contents:
 
@@ -109,7 +109,7 @@ cancer <- read_csv("data/wdbc.csv")
 cancer
 ```
 
-**Variable descriptions**
+### Describing the variables in the cancer data set
 
 Breast tumours can be diagnosed by performing a *biopsy*, a process where
 tissue is removed from the body and examined for the presence of disease.
@@ -117,7 +117,7 @@ Traditionally these procedures were quite invasive; modern methods such as fine
 needle asipiration, used to collect the present data set, extract only a small
 amount of tissue and are less invasive. Based on a digital image of each breast
 tissue sample collected for this data set, 10 different variables were measured
-for each cell nucleus in the image (3-12 below), and then the mean 
+for each cell nucleus in the image (items 3-12 of the list of variables below), and then the mean 
  for each variable across the nuclei was recorded. As part of the
 data preparation, these values have been *scaled*; we will discuss what this
 means and why we do it later in this chapter. Each image additionally was given
@@ -159,7 +159,7 @@ cancer <- cancer |>
 glimpse(cancer)
 ```
 
-Factors have what are called "levels", which you can think of as categories. We
+Recall factors have what are called "levels", which you can think of as categories. We
 can ask for the levels from the `Class` column by using the `levels` function.
 This function should return the name of each category in that column. Given
 that we only have 2 different values in our `Class` column (B and M), we
@@ -175,7 +175,7 @@ cancer |>
   levels()
 ```
 
-**Exploring the data**
+### Exploring the cancer data
 
 Before we start doing any modelling, let's explore our data set. Below we use
 the `group_by` + `summarize` code pattern we used before to see that we have
@@ -193,31 +193,33 @@ cancer |>
 
 Next, let's draw a scatter plot to visualize the relationship between the
 perimeter and concavity variables. Rather than use `ggplot's` default palette,
-we define our own here (`cbPalette`) and pass it as the `values` argument to
+we define our own colourblind friendly palette here (`cbPalette`) and pass it as the `values` argument to
 the `scale_color_manual` function. We also make the category labels ("B" and
 "M") more readable by changing them to "Benign" and "Malignant" using the
 `labels` argument.
 
 ```{r 05-scatter, fig.height = 4, fig.width = 5, fig.cap= "Scatterplot of concavity versus perimeter coloured by diagnosis label"}
-# colour palette
-cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")
+
+cbPalette <- c("orange2", "steelblue2")
 
 perim_concav <- cancer |>
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
   geom_point(alpha = 0.5) +
   labs(color = "Diagnosis") +
-  scale_color_manual(labels = c("Malignant", "Benign"), values = cbPalette)
+  scale_color_manual(
+    labels = c("Malignant", "Benign"), 
+    values = cbPalette)
 perim_concav
 ```
 
 In this visualization, we can see that malignant observations typically fall in
 the the upper right-hand corner of the plot area. By contrast, benign
-observations typically fall in lower left-hand corner of the plot. Suppose we
+observations typically fall in lower left-hand corner of the plot. In other words, benign observations tend to have lower concavity and perimeter values and malignant ones tends to have larger concavity and perimeter values. Suppose we
 obtain a new observation not in the current data set that has all the variables
 measured *except* the label (i.e., an image without the physician's diagnosis
 for the tumour class). We could compute the perimeter and concavity values,
 resulting in values of, say, 1 and 1. Could we use this information to classify
-that observation as benign or malignant? What about a new observation with
+that observation as benign or malignant? Based on the scatterplot, how might you classify that new observation? How would you classify a new observation with
 perimeter value of -1 and concavity value of -0.5? What about 0 and 1? It seems
 like the *prediction of an unobserved label* might be possible, based on our
 visualization.  In order to actually do this computationally in practice, we
@@ -267,7 +269,7 @@ unknown.
 
 ```{r 05-knn-1, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatterplot of concavity versus perimeter with new observation labelled in red"}
 perim_concav +
-  geom_point(aes(x = new_point[1], y = new_point[2]), color = cbPalette[6], size = 2.5)
+  geom_point(aes(x = new_point[1], y = new_point[2]), color = "red", size = 2.5)
 ```
 </center>
 
@@ -280,7 +282,7 @@ they would have the same diagnosis.
 
 ```{r 05-knn-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatterplot of concavity versus perimeter where the nearest neighbour to the new observation is malignant"}
 perim_concav + geom_point(aes(x = new_point[1], y = new_point[2]),
-  color = cbPalette[6],
+  color = "red",
   size = 2.5
 ) +
   geom_segment(aes(
@@ -309,7 +311,7 @@ the other nearby points...
 
 ```{r 05-knn-4, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatterplot of concavity versus perimeter where the nearest neighbour to this new observation is benign"}
 perim_concav + geom_point(aes(x = new_point[1], y = new_point[2]),
-  color = cbPalette[6],
+  color = "red",
   size = 2.5
 ) +
   geom_segment(aes(
@@ -333,7 +335,7 @@ observation as malignant.
 
 ```{r 05-knn-5, echo =  FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatterplot of concavity versus perimeter with three nearest neighbours"}
 perim_concav + geom_point(aes(x = new_point[1], y = new_point[2]),
-  color = cbPalette[6],
+  color = "red",
   size = 2.5
 ) +
   geom_segment(aes(
@@ -370,7 +372,7 @@ $$\mathrm{Distance} = \sqrt{(x_a -x_b)^2 + (y_a - y_b)^2}$$
 new_point <- c(0, 3.5)
 ```
 
-> This formula -- sometimes called the *Euclidean distance* -- is simply the straight line distance between two points on the x-y plane with coordinates $(x_a, y_a)$ and $(x_b, y_b)$.
+> This formula -- sometimes called the *Euclidean distance* -- is the straight line distance between two points on the x-y plane with coordinates $(x_a, y_a)$ and $(x_b, y_b)$.
 
 Suppose we want to classify a new observation with perimeter of `r new_point[1]` and 
 concavity of `r new_point[2]`. Let's calculate the distances
@@ -386,7 +388,7 @@ perim_concav <- cancer |>
   scale_y_continuous(name = "Concavity", breaks = seq(-2, 4, 1)) +
   labs(color = "Diagnosis") +
   scale_color_manual(labels = c("Malignant", "Benign"), values = cbPalette) +
-  geom_point(aes(x = new_point[1], y = new_point[2]), color = cbPalette[6], size = 2.5)
+  geom_point(aes(x = new_point[1], y = new_point[2]), color = "red", size = 2.5)
 perim_concav
 ```
 </center>
@@ -439,7 +441,7 @@ show the calculation of distance for each of the 5 closest points.
 -----------------     ----------------- ----------------- 
 
 
-**More than two explanatory variables**
+###More than two explanatory variables 
 
 Although the above description is directed toward two explanatory variables /
 predictors, exactly the same K-nearest neighbour algorithm applies when you
@@ -482,7 +484,7 @@ general we recommend against using 3D visualizations; here we show the data in
 3D only to illustrate what "higher dimensions" look like for learning
 purposes.*
 
-**Summary**
+## Summary of K-nearest neighbours algorithm
 
 In order to classify a new observation using a K-nearest neighbour classifier, we have to:
 
@@ -501,7 +503,7 @@ the K-nearest neighbour algorithm is implemented in the `parsnip` package
 included in the 
 [`tidymodels` package collection](https://www.tidymodels.org/), along with 
 many [other models](https://www.tidymodels.org/find/parsnip/)
- that you will encounter in this and future classes. The `tidymodels` collection
+ that you will encounter in this and future chapters of the book. The `tidymodels` collection
 provides tools to help make and use models, such as classifiers.  Using the packages
 in this collection will help keep our code simple, readable and accurate; the 
 less we have to code ourselves, the fewer mistakes we are likely to make. We 
@@ -828,7 +830,7 @@ for (i in 1:7) {
     )
 }
 rare_plot + geom_point(aes(x = new_point[1], y = new_point[2]),
-  color = cbPalette[6],
+  color = "red",
   size = 2.5
 )
 ```
@@ -922,7 +924,7 @@ upsampled_plot
 
 ## Putting it together in a `workflow`
 
-The `tidymodels` package collection also provides the `workflow`, a simple way to chain
+The `tidymodels` package collection also provides the `workflow`, a way to chain
 together multiple data analysis steps without a lot of otherwise necessary code for intermediate steps.
 To illustrate the whole pipeline, let's start from scratch with the `unscaled_wdbc.csv` data.
 First we will load the data, create a model, and specify a recipe for how the data should be preprocessed:
@@ -970,7 +972,7 @@ Let's visualize the predictions that this trained K-nearest neighbour model will
 Below you will see how to make the coloured prediction map plots from earlier in this chapter.
 The basic idea is to create a grid of synthetic new observations using the `expand.grid` function, 
 predict the label of each, and visualize the predictions with a coloured scatter having a very high transparency 
-(low `alpha` value) and large point radius. We include the code here as a learning challenge; see
+(low `alpha` value) and large point radius. We include the code here as an optional learning challenge. It is not expected that you understand this code, but for those who want a challenge, see
 if you can figure out what each line is doing!
 
 ```{r 05-workflow-fit-plot} 
