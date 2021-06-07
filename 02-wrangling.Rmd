@@ -60,13 +60,13 @@ knitr::include_graphics("img/obs.jpeg")
 and the columns are the variables:
 
 
-```{r 02-vars, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Columns are variables in a data frame", fig.retina = 2, out.width = "650"}
+```{r 02-vars, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Columns are variables in a data frame", fig.retina = 2, out.width = "700"}
 knitr::include_graphics("img/vars.jpeg")
 ```
 
 From a computer programming perspective, in R, a data frame is a special subtype of a list object whose elements (columns) are *vectors*. For example, the data frame in Figure \@ref(fig:02-vectors) has three vectors whose names are `region`, `year` and `population`.
 
-```{r 02-vectors, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Data frame with 3 vectors", fig.retina = 2, out.width = "650"}
+```{r 02-vectors, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Data frame with 3 vectors", fig.retina = 2, out.width = "700"}
 knitr::include_graphics("img/vectors.jpeg")
 ```
 
@@ -76,7 +76,7 @@ In R, **vectors** are objects that can contain one or more elements. The vector 
 
 In the vector shown in Figure \@ref(fig:02-vector), the elements are of integer type:
 
-```{r 02-vector, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Example of a numeric type vector", fig.retina = 2, out.width = "650"}
+```{r 02-vector, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Example of a numeric type vector", fig.retina = 2, out.width = "700"}
 knitr::include_graphics("img/vector.jpeg")
 ```
 
@@ -202,7 +202,14 @@ lang_wide
 
 What is wrong with our untidy format above? From a data analysis perspective, this format is not ideal because the values of the variable *region* (Toronto, Montréal, Vancouver, Calgary and Edmonton) are stored as column names. Thus they are not easily accessible to the data analysis functions we will want to apply to our data set. Additionally, the values of the *mother tongue* variable are spread across multiple columns, which will prevent us from doing any desired visualization or statistical tasks until we combine them into one column. For instance, suppose we want to know the languages with the highest number of Canadians reporting it as their mother tongue among all five regions. This question would be tough to answer with the data in its current format. It would be much easier to answer if we tidy our data first. 
 
-To accomplish this data transformation, we will use the `tidyverse` function `pivot_longer`. Figure \@ref(fig:img-pivot-longer) details what we need to specify to use `pivot_longer`.
+To accomplish this data transformation, we will use the `tidyverse` function
+`pivot_longer`. Figure \@ref(fig:img-pivot-longer-with-table) summarizes how we want to
+reshape our data from wide to long with using the `pivot_longer` function. 
+```{r img-pivot-longer-with-table, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from wide to long with the pivot_longer function", out.width="1100", fig.retina = 2}
+knitr::include_graphics("img/pivot_longer_with_table.jpeg")
+```
+
+Figure \@ref(fig:img-pivot-longer) details what we need to specify to use `pivot_longer`.
 
 ```{r img-pivot-longer, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the pivot_longer function", out.width="1100", fig.retina = 2}
 knitr::include_graphics("img/pivot_longer.jpeg")
@@ -224,10 +231,6 @@ lang_mother_tidy
 > *to read clearly. About 80 characters per line is recommended and when doing this, it is important to end the line with a comma `,` so that R*
 > *knows the function should continue to the next line.*
 
-Figure \@ref(fig:img-pivot-longer-with-table) summarizes how we reshaped our data to go from wide to long with the `pivot_longer` function. 
-```{r img-pivot-longer-with-table, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from wide to long with the pivot_longer function", out.width="1100", fig.retina = 2}
-knitr::include_graphics("img/pivot_longer_with_table.jpeg")
-```
 The data above is now tidy because all three criteria for tidy data have now been met:
 
 1. All the variables (`category`, `language`, `region` and ``mother_tongue``) are now their own columns in the data frame. 
@@ -249,14 +252,20 @@ lang_long <- read_csv("data/region_lang_top5_cities_long.csv")
 lang_long
 ```
 
-What is wrong with this format above? In this example, each observation should be a language in a region. However, in the messy data set above, each observation is split across multiple rows. One where the count for `most_at_home` is recorded and the other where the count for `most_at_work` is recorded. Suppose we wanted to visualize the relationship between the number of Canadians reporting their primary language at home and work. It would be difficult to do that with the data in its current format. To fix this, we will use `pivot_wider`, and we need to specify the:
+What is wrong with this format above? In this example, each observation should be a language in a region. However, in the messy data set above, each observation is split across multiple rows. One where the count for `most_at_home` is recorded and the other where the count for `most_at_work` is recorded. Suppose we wanted to visualize the relationship between the number of Canadians reporting their primary language at home and work. It would be difficult to do that with the data in its current format.
 
-1. `data`: the data set
+We can see how we would like to transform the data from long to wide with `pivot_wider` in Figure \@ref(fig:img-pivot-wider-table).  
+```{r img-pivot-wider-table, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from long to wide with pivot_wider", out.width="1100", fig.retina = 2}
+knitr::include_graphics("img/pivot_wider_with_table.jpeg")
+```
 
-2. `names_from`: the name of the column from which to take the variable names
+To tidy this data, we will use `pivot_wider`, and Figure \@ref(fig:img-pivot-wider) details what we need to specify to use this function. 
 
-3. `values_from`: the name of the column from which to take the values
+```{r img-pivot-wider, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the pivot_wider function", out.width="1100", fig.retina = 2}
+knitr::include_graphics("img/pivot_longer.jpeg")
+```
 
+We will apply the function as detailed in Figure \@ref(fig:img-pivot-wider).
 ```{r , warning=FALSE, message=FALSE}
 lang_home_tidy <- pivot_wider(lang_long,
   names_from = type,
@@ -265,10 +274,6 @@ lang_home_tidy <- pivot_wider(lang_long,
 lang_home_tidy 
 ```
 
-We can see how we transformed the data from long to wide with `pivot_wider` in Figure \@ref(fig:img-pivot-wider-table).  
-```{r img-pivot-wider-table, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from long to wide with pivot_wider", out.width="1100", fig.retina = 2}
-knitr::include_graphics("img/pivot_wider_table.jpeg")
-```
 
 The data above is now tidy! We can go through the three criteria again to check that this data is a tidy data set. 
 
