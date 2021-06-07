@@ -73,12 +73,12 @@ knitr::include_graphics("img/vectors.jpeg")
 
 In R, **vectors** are objects that can contain one or more elements. The vector elements are ordered, and they must all be of the same *data type*. R has several different basic data types, as shown in table \@ref(tab:datatype-table).
 
+Lists, which are sometimes called recursive vectors because lists can contain other lists.
 In the vector shown in Figure \@ref(fig:02-vector), the elements are of integer type:
 
 ```{r 02-vector, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Example of a numeric type vector", fig.retina = 2, out.width = "700"}
 knitr::include_graphics("img/vector.jpeg")
 ```
-
 
 You can create vectors in R using the concatenate `c()` function. 
 To create the vector `year` in Figure \@ref(fig:02-vector) we write:
@@ -111,6 +111,9 @@ types (e.g., characters, numbers, logicals and even other lists can be elements 
 ```{r 02-vec-vs-list, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "A vector versus a list", fig.retina = 2, out.width = "650"}
 knitr::include_graphics("img/vec_vs_list.jpeg")
 ```
+
+> Note that there are actually two types of vectors in R: *atomic vectors* and *lists*.
+Though when people say “vector”, they are *usually* referring to atomic vectors. Confusing, we know! You can think of **atom**ic vectors as the “atoms” of R since they are built from R’s most fundamental data types.
 
 
 ### What does this have to do with data frames?
@@ -339,8 +342,7 @@ We can see that this data now satisfies all three criteria, making it easier to 
 
 Is there only one shape for tidy data for a given data set? Not necessarily! It depends on the statistical question you are asking and what the variables are for that question. For tidy data, each variable should be its own column. So, just as it's essential to match your statistical question with the appropriate data analysis tool (classification, clustering, hypothesis testing, etc.). It's important to match your statistical question with the appropriate variables and ensure they are represented as individual columns to make the data tidy.
 
-## Single table manipulation functions
-### Using `select` to extract a range of columns
+## Using `select` to extract a range of columns
 
 Chapter 1 discussed two `tidyverse` functions: `select` and `filter` to select columns and filter rows from a data frame. We will now learn more ways we can use these functions. Recall, the `select` function creates a subset of the *columns* of a data frame, while the `filter` subsets *rows* with specific values.
 
@@ -351,8 +353,7 @@ column_range <- select(lang_no_delimiter, language:most_at_work)
 column_range
 ```
 
-
-
+## Using `filter` to extract rows
 
 ### Using `filter` to extract rows with `==`
 
@@ -363,9 +364,17 @@ official_langs <- filter(lang_no_delimiter, category == "Official languages")
 official_langs
 ```
 
+### Using `filter` to extract rows with `!=`
+
+What if we want all the other language categories in the data set *except* for those in the "Official languages" category? We can accomplish this with the `!=` logical operator, which means "NOT EQUAL TO". So if we want to find all the rows where the `category` does NOT equal "Official languages" we write the code below. 
+
+```{r}
+filter(lang_no_delimiter, category != "Official languages")
+```
+
 ### Using `filter` to extract rows with `&` 
 
-Let's suppose we want to look at only the rows for English in Vancouver. We are looking for the rows, where `region == "Vancouver"` AND `language == "English"`. Here we want to filter the data set to find rows that satisfy multiple conditions simultaneously. We can do this with the `&` logical operator, as we show below.
+Let's suppose we want to look at only the rows for English in Vancouver. Here we want to filter the data set to find rows that satisfy multiple conditions simultaneously. We can do this with `&`, which is a logical operator meaning "AND". We are filtering the `official_langs` data frame where the `region` equals "Vancouver" AND the `language` equals "English".  
 
 ```{r}
 filter(official_langs, region == "Vancouver" & language == "English")
@@ -373,7 +382,7 @@ filter(official_langs, region == "Vancouver" & language == "English")
 
 ### Using `filter` to extract rows with `|`
 
-Suppose we were interested in the rows for only the Albertan cities (Edmonton and Calgary) in our data set. We can't use `&` as we did above because `region` cannot be both Edmonton and Calgary at once. Instead, we can use the `|` logical operator, which gives us the cases where one condition OR another condition is satisfied. In the code below, we ask R to return the rows where the `region` columns are equal to "Calgary" OR "Edmonton".
+Suppose we were interested in the rows for only the Albertan cities in our data set (Edmonton and Calgary). We can't use `&` as we did above because `region` cannot be both Edmonton and Calgary simultaneously. Instead, we can use the `|` logical operator, which gives us the cases where one condition OR another condition is satisfied OR both. In the code below, we ask R to return the rows where the `region` columns are equal to "Calgary" OR "Edmonton".
 
 ```{r}
 filter(official_langs, region == "Calgary" | region == "Edmonton")
@@ -426,7 +435,7 @@ filter(official_langs, most_at_home > 2669195)
 
 When we look at the table we got from `filter` above, it isn't quite doing what we'd expect. We see numbers in the table in the `most_at_home` column that are less than `r format(most_french, scientific = FALSE, big.mark = ",")`. What's going on here? 
 
-
+## Using `mutate` to modify or add columns
 ### Using `mutate` to modify columns
 
 Notice in the table above the word `<chr>` appears beneath each of the column names. The word under the column name indicates the data type of each column. Here all of our variables are "character" data types. Recall, a character data type is a letter or a number surrounded by quotes. In the previous example in section 
@@ -508,7 +517,7 @@ toronto_fr <- filter(official_langs, region == "Toronto" & language == "French")
 ```
 
 Instead, let's use the `case_when` function. When used inside the `mutate` function, `case_when` will allow us to mutate a variable *when* a particular condition is met.
-We write the condition on the left side of the tilde (`~`) symbol and the mutation on the right side. Let's consider just Toronto to start. We want to take the `most_at_home` value for English in Toronto  (`r format(toronto_eng, scientific = FALSE, big.mark = ",")`) and divide it by Toronto's population  (`r format(toronto_popn, scientific = FALSE, big.mark = ",")`). We also want to divide the `most_at_home` value for French in Toronto  (`r format(toronto_fr, scientific = FALSE, big.mark = ",")`) and divide it by Toronto's population. So when `region == Toronto` (condition), we want to apply `most_at_home/5928040` (mutation). We do the same for the other cities, which is what you see in the code below. 
+We write the condition on the left side of the tilde (`~`) symbol and the mutation on the right side. Let's consider just Toronto to start. We want to take the `most_at_home` value for English in Toronto  (`r format(toronto_eng, scientific = FALSE, big.mark = ",")`) and divide it by Toronto's population  (`r format(toronto_popn, scientific = FALSE, big.mark = ",")`). We also want to divide the `most_at_home` value for French in Toronto  (`r format(toronto_fr, scientific = FALSE, big.mark = ",")`) and divide it by Toronto's population. So when `region == Toronto` (the *condition*), we want to apply `most_at_home/5928040` (the *mutation*). We do the same for the other cities, which is what you see in the code below. 
 
 ```{r 02-case-when}
 mutate(official_langs,
@@ -525,7 +534,7 @@ mutate(official_langs,
 If you compare the proportions in these two tables, we get the same values with both methods.
 That is the beauty (and sometimes downfall) of R -- there are usually multiple ways to accomplish the same thing!
 
-### Creating a visualization with tidy data
+## Creating a visualization with tidy data
 
 Now that we have cleaned and wrangled our data, we can visualize how many people speak each of Canada's two 
 official languages (English and French) as their primary language at home in 
