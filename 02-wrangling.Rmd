@@ -50,7 +50,6 @@ From a data perspective, a data frame is a rectangle where the rows are the obse
 ```{r 02-setup, include=FALSE}
 library(tidyverse)
 library(canlang)
-write_csv(region_lang, "data/region_lang.csv")
 ```
 
 ```{r 02-obs, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Rows are observations in a data frame", fig.retina = 2, out.width = "650"}
@@ -360,6 +359,32 @@ official_langs <- filter(lang_no_delimiter, category == "Official languages")
 official_langs
 ```
 
+### Using `filter` to extract rows with `%in%`
+
+Suppose we want to see the populations of the five cities by filtering the data
+using the `%in%` operator. The `%in%` operator is used to see if an element 
+belongs to a vector. Here we are filtering if any of the five cities 
+("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton") match the rows in the `region`
+column.
+```{r}
+filter(region_data, region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton")) 
+```
+
+> **What's the difference between `==` and `%in%`?**
+> Let's suppose we have two vectors, `vector1` and `vector2`. If you type 
+> `vector1 == vector2` into R it
+will compare the vectors element by element. R checks if the first element of 
+`vector1` equals the first element of `vector2`, the second element of `vector1`
+equals the second element of `vector2` etc. 
+> On the other hand, `vector1 %in% vector2`
+compares the first element of `vector1` to all the elements in `vector2`. 
+Then the second element of `vector1` is then compared to all the elements in `vector2` etc. Notice the difference between `==` and `%in%` in the example below. 
+ 
+```{r}
+c("Vancouver", "Toronto") == c("Toronto", "Vancouver")
+c("Vancouver", "Toronto") %in% c("Toronto", "Vancouver")
+```
+
 
 ### Using `filter` to extract rows with values above or below a threshold
 
@@ -375,6 +400,7 @@ filter(official_langs, most_at_home > 2669195)
 ```
 
 When we look at the table we got from `filter` above, it isn't quite doing what we'd expect. We see numbers in the table in the `most_at_home` column that are less than `r format(most_french, scientific = FALSE, big.mark = ",")`. What's going on here? 
+
 
 ### Using `mutate` to modify columns
 
@@ -424,30 +450,6 @@ toronto_popn <- region_data |> filter(region == "Toronto") |>
 
 
 We can see in the table that `r format(number_most_home, scientific = FALSE, big.mark = ",")` people reported speaking English in Toronto as their primary language at home according to the 2016 Canadian census. What does this number mean to us? To understand this number, we need context. In particular, how many people were in Toronto when this data was collected? From the 2016 Canadian census profile, the population of Toronto was reported to be `r format(toronto_popn, scientific = FALSE, big.mark = ",")` people. The number of people who report that English as their primary language at home is much more meaningful when we report it in this context. We can even go a step further and transform this count to a relative frequency or proportion. We can do this by dividing the number of people reporting a given language as their primary language at home by the number of people who live in Toronto. For example, the proportion of people who reported that their primary language at home was English in the 2016 Canadian census was `r format(round(number_most_home/toronto_popn, 2), scientific = FALSE, big.mark = ",")` in Toronto.
-
-We can see the populations of the five cities by filtering the data
-using the `%in%` operator. The `%in%` operator is used to see if an element 
-belongs to a vector. Here we are filtering if any of the five cities 
-("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton") match the rows in the `region`
-column.
-```{r}
-filter(region_data, region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton")) 
-```
-
-> **What's the difference between `==` and `%in%`?**
-> Let's suppose we have two vectors, `vector1` and `vector2`. If you type 
-> `vector1 == vector2` into R it
-will compare the vectors element by element. R checks if the first element of 
-`vector1` equals the first element of `vector2`, the second element of `vector1`
-equals the second element of `vector2` etc. 
-> On the other hand, `vector1 %in% vector2`
-compares the first element of `vector1` to all the elements in `vector2`. 
-Then the second element of `vector1` is then compared to all the elements in `vector2` etc. Notice the difference between `==` and `%in%` in the example below. 
- 
-```{r}
-c("Vancouver", "Toronto") == c("Toronto", "Vancouver")
-c("Vancouver", "Toronto") %in% c("Toronto", "Vancouver")
-```
 
 ```{r, include = FALSE}
 city_popn <- region_data |> filter(region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton")) |> arrange(desc(population) ) |> pull(population)
