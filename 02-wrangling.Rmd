@@ -174,6 +174,7 @@ data cleaning/wrangling tools to help you easily tidy your data. Let's explore
 them below!
 
 ### Going from wide to long (or tidy!) using `pivot_longer`
+
 One common step to get data into a tidy format is to combine columns stored in
 separate columns but are really part of the same variable. Data is often stored
 in a wider, not tidy, format because this format is usually more intuitive for
@@ -189,14 +190,17 @@ when the values are not in their own column. We can reshape this data set to a l
 ```{r 02-wide-to-long, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from wide to long data", fig.retina = 2, out.width = "1150"}
 knitr::include_graphics("img/wide_to_long.jpeg")
 ```
-We can use the function `pivot_longer`, which combines columns, making the data frame longer and narrower. To learn how to use `pivot_longer`, we will work with the `region_lang_top5_cities_wide.csv` data set. This data set contains contains the counts of how many Canadians cited each language as their mother tongue for five major Canadian cities (Toronto, Montréal, Vancouver, Calgary and Edmonton) from the 2016 Canadian census. Our data set is stored in an untidy format, as shown below:
+We can use the function `pivot_longer`, which combines columns, making the data frame longer and narrower. To learn how to use `pivot_longer`, we will work with the `region_lang_top5_cities_wide.csv` data set. This data set contains contains the counts of how many Canadians cited each language as their mother tongue for five major Canadian cities (Toronto, Montréal, Vancouver, Calgary and Edmonton) from the 2016 Canadian census. We will load the `tidyverse` packing so we can use our wrangling functions and the `canlang` package
+since it contains the `region_lang` and `region_data` data sets that we will use later in the chapter.  
+
+Our data set is stored in an untidy format, as shown below:
 
 ```{r 02-tidyverse, warning=FALSE, message=FALSE}
 library(tidyverse)
+library(canlang)
 lang_wide <- read_csv("data/region_lang_top5_cities_wide.csv")
 lang_wide
 ```
-
 
 
 What is wrong with our untidy format above? From a data analysis perspective, this format is not ideal because the values of the variable *region* (Toronto, Montréal, Vancouver, Calgary and Edmonton) are stored as column names. Thus they are not easily accessible to the data analysis functions we will want to apply to our data set. Additionally, the values of the *mother tongue* variable are spread across multiple columns, which will prevent us from doing any desired visualization or statistical tasks until we combine them into one column. For instance, suppose we want to know the languages with the highest number of Canadians reporting it as their mother tongue among all five regions. This question would be tough to answer with the data in its current format. It would be much easier to answer if we tidy our data first. 
@@ -270,7 +274,7 @@ lang_home_tidy <- pivot_wider(lang_long,
   names_from = type,
   values_from = count
 )
-lang_home_tidy 
+lang_home_tidy
 ```
 
 
@@ -361,13 +365,18 @@ official_langs
 
 ### Using `filter` to extract rows with `%in%`
 
-Suppose we want to see the populations of the five cities by filtering the data
+Suppose we want to see the populations of our five cities. The `region_data` data set from the `canlang` package contains statistics for number of households, land area, population and number of dwellings for different regions according to the 2016 Canadian census.
+```{r}
+region_data
+```
+
+To get the population of our five cities we can filter the data set
 using the `%in%` operator. The `%in%` operator is used to see if an element 
 belongs to a vector. Here we are filtering if any of the five cities 
 ("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton") match the rows in the `region`
 column.
 ```{r}
-filter(region_data, region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton")) 
+filter(region_data, region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton"))
 ```
 
 > **What's the difference between `==` and `%in%`?**
@@ -441,18 +450,18 @@ In this case, we see that `filter` returns a data frame with only one row; this 
 
 ```{r , include = FALSE}
 census_popn <- 35151728
-number_most_home <- filter(official_langs, language == "English" & region == "Toronto") |> 
-  pull(most_at_home)
+number_most_home <- filter(official_langs, language == "English" & region == "Toronto") |>
+pull(most_at_home)
 
-toronto_popn <- region_data |> filter(region == "Toronto") |> 
-  pull(population) 
+toronto_popn <- region_data |> filter(region == "Toronto") |>
+pull(population)
 ```
 
 
 We can see in the table that `r format(number_most_home, scientific = FALSE, big.mark = ",")` people reported speaking English in Toronto as their primary language at home according to the 2016 Canadian census. What does this number mean to us? To understand this number, we need context. In particular, how many people were in Toronto when this data was collected? From the 2016 Canadian census profile, the population of Toronto was reported to be `r format(toronto_popn, scientific = FALSE, big.mark = ",")` people. The number of people who report that English as their primary language at home is much more meaningful when we report it in this context. We can even go a step further and transform this count to a relative frequency or proportion. We can do this by dividing the number of people reporting a given language as their primary language at home by the number of people who live in Toronto. For example, the proportion of people who reported that their primary language at home was English in the 2016 Canadian census was `r format(round(number_most_home/toronto_popn, 2), scientific = FALSE, big.mark = ",")` in Toronto.
 
 ```{r, include = FALSE}
-city_popn <- region_data |> filter(region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton")) |> arrange(desc(population) ) |> pull(population)
+city_popn <- region_data |> filter(region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton")) |> arrange(desc(population)) |> pull(population)
 rep_popn <- rep(city_popn, 2)
 ```
 
@@ -463,19 +472,43 @@ the proportion of people reporting a given language as their primary language at
 city_populations <- c(5928040, 4098927, 2463431, 1392609, 1321426)
 
 official_langs <- mutate(official_langs,
-                           most_at_home_proportion = most_at_home / city_populations)
+  most_at_home_proportion = most_at_home / city_populations
+)
 
 official_langs
 ```
 
-> Notice that we divided a vector with 10 elements (`most_at_home`) by a vector with 
+Notice that we divided a vector with 10 elements (`most_at_home`) by a vector with 
 only 5 elements (`city_populations`). What gives? Arithmetic operations of vectors are performed *memberwise* meaning the first element of `most_at_home` will be divided by the first element 
 of `city_populations`, the second element of `most_at_home` will be divided by the second element of `city_populations` and so on. When two vectors have different lengths, the 
 shorter one will be recycled to match the longer one. Here the elements of
 `city_populations` will be repeated once to match the length of `most_at_home`.
 
+You *can* do this in R, however we can very easily introduce errors using this method without realizing. For example, suppose we only listed four city populations, but still had ten elements of five cities in the `most_at_home column`. Then the first two city populations listed in the `city_populations` vector (Toronto and Montréal) would be repeated at the end and our calculated proportions would be wrong in our final data table. 
 
+```{r include = F}
+toronto_eng <- filter(official_langs, region == "Toronto" & language == "English") %>% pull(most_at_home)
+toronto_fr <- filter(official_langs, region == "Toronto" & language == "French") %>% pull(most_at_home)
+toronto_pop <- city_populations[1]
+```
 
+Instead, let's use the `case_when` function. When used inside the `mutate` function, `case_when` will allow us to mutate a variable *when* a particular condition is met.
+We write the condition on the left side of the tilde (`~`) symbol and the mutation on the right side. Let's consider just Toronto to start. We want to take the `most_at_home` value for English in Toronto  (`r format(toronto_eng, scientific = FALSE, big.mark = ",")`) and divide it by Toronto's population  (`r format(toronto_pop, scientific = FALSE, big.mark = ",")`). We also want to divide the `most_at_home` value for French in Toronto  (`r format(toronto_fr, scientific = FALSE, big.mark = ",")`) and divide it by Toronto's population. So when `region == Toronto` (condition), we want to apply `most_at_home/5928040` (mutation). We do the same for the other cities, which is what you see in the code below. 
+
+```{r 02-case-when}
+mutate(official_langs,
+  most_at_home_proportion = case_when(
+    region == "Toronto" ~ most_at_home / 5928040,
+    region == "Montréal" ~ most_at_home / 4098927,
+    region == "Vancouver" ~ most_at_home / 2463431,
+    region == "Calgary" ~ most_at_home / 1392609,
+    region == "Edmonton" ~ most_at_home / 1321426
+  )
+)
+```
+
+If you compare the proportions in these two tables, we get the same values with both methods.
+That is the beauty (and sometimes downfall) of R -- there are usually multiple ways to accomplish the same thing!
 
 ### Creating a visualization with tidy data
 
@@ -486,12 +519,16 @@ these 5 regions. We can use
 represent the proportions for each region, and colour the proportions by language. 
 
 ```{r 02-plot}
-ggplot(official_langs, 
-       aes(x = most_at_home_proportion, 
-           y = region,
-           fill = language)) +
+ggplot(
+  official_langs,
+  aes(
+    x = most_at_home_proportion,
+    y = region,
+    fill = language
+  )
+) +
   geom_bar(stat = "identity") +
-  xlab("Proportion of residents reporting their primary language at home") + 
+  xlab("Proportion of residents reporting their primary language at home") +
   ylab("Region")
 ```
 
@@ -535,10 +572,10 @@ to read in one go.
 The *pipe operator* `|>` solves this problem, resulting in cleaner and easier-to-follow code. `|>` in built into R so you don't need to load any packages to use it. The code below accomplishes the same thing as the previous two code blocks:
 
 ```{r eval = F}
-output <- data |> 
-            mutate(new_col = old_col * 2) |>
-            filter(other_col > 5) |>
-            select(new_col)
+output <- data |>
+mutate(new_col = old_col * 2) |>
+filter(other_col > 5) |>
+select(new_col)
 ```
 
 > Note: The `|>` pipe operator was inspired by a previous version of the pipe operator, `%>%`. The `%>%` pipe operator is not built into R and needs to be loaded via an external R package. There are some other drawbacks to using `%>%`, which are beyond the scope of this textbook. However, be aware that `%>%` exists since you may see it used in some books or other sources. In this textbook, we will be using the base R pipe operator syntax, `|>`. 
@@ -573,7 +610,7 @@ output of `filter` to the input of `select`:
 
 ```{r}
 van_data_selected <- filter(lang_home_tidy, region == "Vancouver") |>
-  select(language, most_at_home)
+select(language, most_at_home)
 van_data_selected
 ```
 
@@ -601,8 +638,8 @@ in reverse order, you can pair a function called `desc` with `arrange` (e.g.,
 
 ```{r}
 large_region_lang <- filter(lang_home_tidy, most_at_home > 10000) |>
-  select(region, language, most_at_home) |>
-  arrange(most_at_home)
+select(region, language, most_at_home) |>
+arrange(most_at_home)
 large_region_lang
 ```
 
@@ -641,10 +678,10 @@ The `group_by` function takes at least two arguments. The first is the data fram
 
 ```{r}
 lang_summary_by_region <- group_by(lang_home_tidy, region) |>
-  summarize(
-    min_most_at_home = min(most_at_home),
-    max_most_at_home = max(most_at_home)
-  )
+summarize(
+  min_most_at_home = min(most_at_home),
+  max_most_at_home = max(most_at_home)
+)
 lang_summary_by_region
 ```
 
@@ -664,7 +701,7 @@ as discussed above. However, this becomes inconvenient when you have many column
 transformation for each summary statistic you want to calculate.
 
 In cases like this, where you want to apply the same data transformation to all columns, it is more efficient to use `purrr`'s `map` function to 
-apply it to each column. For example, let's find the maximum value of each column of the complete `region_lang` data frame by using `map` with the `max` function. First, let’s peak at the data to familiarize ourselves with it:
+apply it to each column. For example, let's find the maximum value of each column of the `region_lang` data frame by using `map` with the `max` function. First, let’s peak at the data to familiarize ourselves with it:
 ```{r 02-preview-data}
 region_lang <- read_csv("data/region_lang.csv")
 region_lang
@@ -673,7 +710,7 @@ Next, we will select only the numeric columns of the data frame:
 
 ```{r 02-numeric-data}
 region_lang_numeric <- region_lang |>
-  select(mother_tongue:lang_known)
+select(mother_tongue:lang_known)
 region_lang_numeric
 ```
 Next, we use `map` to apply the `max` function to each column. `map` takes two arguments, an object (a vector, data frame or list) that you want 
@@ -720,9 +757,9 @@ What if you need to add other arguments to the functions you want to map? For ex
 
 ```{r 02-making-NAs, include = F}
 region_with_nas <- region_lang_numeric |>
-  add_row(mother_tongue = 5, most_at_home = 5, most_at_work = NA, lang_known = NA) |>
-  arrange(!is.na(lang_known), lang_known) |>
-  write_csv("data/region_lang_with_nas.csv")
+add_row(mother_tongue = 5, most_at_home = 5, most_at_work = NA, lang_known = NA) |>
+arrange(!is.na(lang_known), lang_known) |>
+write_csv("data/region_lang_with_nas.csv")
 ```
 
 ```{r 02-read-in-na}
