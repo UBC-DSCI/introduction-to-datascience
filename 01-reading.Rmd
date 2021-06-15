@@ -122,7 +122,8 @@ language data from the 2016 Canadian census. We put `data/` before the file's
 name when we are loading the data set because this data set is located in a
 sub-folder, named `data`, relative to where we are running our R code.
 
-Here is what the file would look like in a plain text editor:
+Here is what the file would look like in a plain text editor (a program that removes
+all formatting):
 
 ```{bash, echo=FALSE, comment=NA}
 head -n 10 data/can_lang.csv
@@ -205,6 +206,7 @@ head -n 10 data/can_lang.tsv
 
 To get this into R using the `read_delim()` function, we specify the first argument as the path to the file (as done with `read_csv`), and then provide values to the `delim` argument (here a tab, which we represent by `"\t"`) and the `col_names` argument (here we specify that there are no column names to assign, and give it the value of `FALSE`). Both `read_csv()` and `read_delim()` have a `col_names` argument and the default is `TRUE`. 
 
+> `\t` is an example of an *escape character*, typically used to represent nonprinting characters (like the tab) or characters with special meanings (such as quotation marks). 
 
 ```{r}
 canlang_data <- read_delim("data/can_lang.tsv", 
@@ -213,7 +215,7 @@ canlang_data <- read_delim("data/can_lang.tsv",
 canlang_data
 ```
 
-Data frames in R need to have column names, thus if you read data into R as a data frame without column names then R assigns column names for them. If you used the `read_*` functions to read the data into R, then R gives each column a name of `X1, X2, ..., XN`, where N is the number of columns in the data set.
+Data frames in R need to have column names, thus if you read data into R as a data frame without column names then R assigns column names for them. If you used the `read_*` functions (e.g. `read_csv`, `read_delim` etc.) to read the data into R, then R gives each column a name of `X1, X2, ..., XN`, where N is the number of columns in the data set.
 
 It is best to rename your columns to help differentiate between them (e.g. `X1, X2`, etc., are not very descriptive names and will make it more confusing as you code). To rename your columns, you can use the `rename` function from the `dplyr` package, one of the packages loaded with `tidyverse`, so we don't need to load it separately. The first argument is the data set, and in the subsequent arguments you write `new_name = old_name` for the selected variables to rename. We rename the `X1, X2, ..., X6` columns in the `canlang_data` data frame to more descriptive names below. 
 
@@ -241,7 +243,8 @@ canlang_data
 ### Previewing a data file before reading it into R
 
 In all the examples above, we gave you previews of the data file before we read it into R. This is essential so that you can see whether or not there are column names, what the 
-delimiters are, and if there are lines you need to skip. You should do this yourself when trying to read in data files.
+delimiters are, and if there are lines you need to skip. You should do this yourself when trying to read in data files. You can preview files in a plain text editor by right clicking on the file, selecting "Open With" and choosing a plain text editor (e.g Notepad etc.). 
+
 
 ## Reading tabular data from a Microsoft Excel file
 
@@ -286,6 +289,7 @@ X?a??4VT?,D?Jq
 5`????6A ?
 ```
 
+
 This type of file representation allows Excel files to store additional things that you cannot store in a `.csv` file, such as fonts, text formatting, graphics, multiple sheets 
 and more. And despite looking odd in a plain text editor, we can read Excel spreadsheets into R using the `readxl` package developed 
 specifically for this purpose.
@@ -325,6 +329,8 @@ to analyze data from a database;
 several packages have been written 
 that allows R to connect to relational databases and use the R programming language as the front end (what the user types in) to pull data from them. These different relational database management systems have their own advantages, limitations, and excels in particular scenarios. In this book, we will 
 give examples of how to do this using R with SQLite and PostgreSQL databases.
+
+
 
 ### Connecting to a database
 
@@ -390,7 +396,7 @@ tail(aboriginal_lang_db)
 ```
 Additionally, some operations will not work to extract columns or single values from the reference given by the `tbl` function. Thus, once you have finished your data wrangling of the `tbl` database reference object, it is advisable to bring it into your local machine's memory using `collect` as a data frame. 
 
-> Warning: Usually, databases are very big! Reading the object into your local machine may give an error or take a lot of time to run so be careful if you plan to do this! This is why we may want to filter rows or select columns first before reading it in!
+> Warning: Usually, databases are very big! Reading the object into your local machine may give an error or take a lot of time to run so be careful if you plan to do this! This is one reason we may want to filter rows or select columns first before reading it in!
  
 #### Reading data from a PostgreSQL database 
 
@@ -407,7 +413,7 @@ function is listed below:
 
 
 Additionally, we must use the `RPostgres` package instead of `RSQLite` in the `dbConnect` function call.
-Below we demonstrate how to connect to a version of the `can_mov_db` database, which contains information about Canadian movies (*note - this is a synthetic, or artificial, database*).
+Below we demonstrate how to connect to a version of the `can_mov_db` database, which contains information about Canadian movies (*note - this is a synthetic database*).
 
 ```{r, eval = FALSE}
 library(RPostgres)
@@ -504,7 +510,8 @@ min(avg_rating_data)
 We see the lowest rating given to a movie is 1, indicating that it must have been a really bad movie...
 
 
-**Why should we bother with databases at all?**
+
+### Why should we bother with databases at all?
 
 Opening a database stored in a `.db` file involved a lot more effort than just opening a `.csv`, `.tsv`, or any of the other plain text or Excel formats. It was a bit of a pain to use a database in that setting since we had to use `dbplyr` to translate `tidyverse`-like commands (`filter`, `select`, `head`, etc.) into SQL commands that the database understands. Not all `tidyverse` commands can currently be translated with SQLite databases. For example, we can compute a mean with an SQLite database but can't easily compute a median. So you might be wondering why should we use databases at all? 
 
@@ -704,9 +711,9 @@ The selector gadget returns them to us as a comma separated list (here
 `.housing , .result-price`), which is exactly the format we need to provide to
 R if we are using more than one CSS selector.
 
-**STOP! Are you allowed to scrape that website?**
+**Stop! Are you allowed to scrape that website?**
 
-Before scraping data from the web, you should always check whether or not
+*Before* scraping data from the web, you should always check whether or not
 you are *allowed* to scrape it! There are two documents that are important
 for this: the `robots.txt` file and the Terms of Service
 document. Let's take a look at Craigslist's Terms of Service document:
@@ -716,7 +723,7 @@ document. Let's take a look at Craigslist's Terms of Service document:
 source: https://www.craigslist.org/about/terms.of.use
 
 > Want to learn more about the legalities of web scraping and crawling? Read
-> this interesting blog post titled ["Web Scraping and Crawling Are Perfectly
+> this blog post titled ["Web Scraping and Crawling Are Perfectly
 > Legal, Right?" by Benoit
 > Bernard](https://benbernardblog.com/web-scraping-and-crawling-are-perfectly-legal-right/).
 
