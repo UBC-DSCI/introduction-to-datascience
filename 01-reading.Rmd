@@ -384,21 +384,21 @@ lang_db
 ```
 
 
-Although it looks like we just got a data frame from the database, we didn't! It's a *reference*, showing us data that is still in the SQLite database. It does this because databases are often more efficient at selecting, filtering and joining large data sets than R. And typically, the database will not even be stored on your computer but rather a more powerful machine somewhere on the web. So R is lazy and waits to bring this data into memory until you explicitly tell it to using the `collect` function from the `dbplyr` package. Figure \@ref(fig:01-ref-vs-tibble) highlights the difference between a `tibble` object in R and the output we just got. Notice for the table on the left, the first two lines of the output indicate the source. The last line doesn't show how many rows there are (R is trying to avoid performing expensive query operations), whereas the output for the `tibble` object does. 
+Although it looks like we just got a data frame from the database, we didn't! It's a *reference*, showing us data that is still in the SQLite database. It does this because databases are often more efficient at selecting, filtering and joining large data sets than R. And typically, the database will not even be stored on your computer but rather a more powerful machine somewhere on the web. So R is lazy and waits to bring this data into memory until you explicitly tell it to using the `collect` function from the `dbplyr` package. Figure \@ref(fig:01-ref-vs-tibble) highlights the difference between a `tibble` object in R and the output we just got. Notice in the table on the right, the first two lines of the output indicate the source is SQL. The last line doesn't show how many rows there are (R is trying to avoid performing expensive query operations), whereas the output for the `tibble` object does. 
 
 ```{r 01-ref-vs-tibble, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparison of a reference to data in a database and a tibble in R", fig.retina = 2, out.width="800"}
 knitr::include_graphics("img/ref_vs_tibble.jpeg")
 ```
 
+We can look at the SQL commands that are sent to the database when we write 
+` tbl(con_lang_data, "lang")` in R with the `show_query` function from the `dbplyr` package.
 
-The `show_query` function from the `dbplyr` package shows the SQL commands that are sent to the database. 
 
 ```{r}
 show_query(tbl(con_lang_data, "lang"))
 ```
 
-From the output above, we can see the SQL command that is sent to the database.
-So instead of needing to know the SQL code ourselves, we can use `dbplyr` to do that for us. In the background, the `dbplyr` functions are translating the R code into SQL, submitting it to the database and then translating the response back for us. 
+From the output above, we can see the SQL code sent to the database. When we write `tbl(con_lang_data, "lang")` in R, in the background, the function is translating the R code into SQL, asking the database, and then translating the response back to us. So instead of us needing to know the SQL code ourselves and switching back and forth between R and SQL code, the `dbplyr` package does that for us. 
 
 Now we will filter for only rows in the Aboriginal languages category according to the 2016 Canada Census, and then use `collect` to finally bring this data into R as a data frame. 
 
