@@ -380,7 +380,7 @@ We only get one table name returned from calling `dbListTables`, which tells us 
 ```{r}
 library(dbplyr)
 lang_db <- tbl(con_lang_data, "lang")
-lang_db
+lang_db 
 ```
 
 
@@ -389,12 +389,22 @@ Although it looks like we just got a data frame from the database, we didn't! It
 ```{r 01-ref-vs-tibble, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparison of a reference to data in a database and a tibble in R", fig.retina = 2, out.width="800"}
 knitr::include_graphics("img/ref_vs_tibble.jpeg")
 ```
+
 Here we will filter for only rows in the Aboriginal languages category according to the 2016 Canada Census, and then use `collect` to finally bring this data into R as a data frame. 
 
 ```{r}
 aboriginal_lang_db <- filter(lang_db, category == "Aboriginal languages")
-aboriginal_lang_db
+aboriginal_lang_db 
 ```
+
+The `show_query` function from the `dbplyr` package shows the SQL commands that are sent to the database. 
+
+```{r}
+show_query(filter(lang_db, category == "Aboriginal languages"))
+```
+From the output above, we can see the SQL query that is sent to the database. Instead of us needing to know the SQL code ourselves, we can use `dbplyr` to do that for us. So in the background, `dbplyr` functions are translated your R code into SQL, submitting it to the database and translating the response back for us. 
+
+Now we can use `collect` to bring this filtered data into R as a data frame. 
 
 ```{r}
 aboriginal_lang_data <- collect(aboriginal_lang_db)
