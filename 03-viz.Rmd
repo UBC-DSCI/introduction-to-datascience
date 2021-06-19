@@ -10,7 +10,9 @@ charts, line graphs, and histograms) for data using R.
 
 ## Chapter learning objectives
 
-- Describe when to use the following kinds of visualizations to answer specific questions using a dataset:
+By the end of the chapter, readers will be able to:
+
+- Describe when to use the following kinds of visualizations to answer specific questions using a data set:
     - scatter plots
     - line plots
     - bar plots 
@@ -29,7 +31,6 @@ charts, line graphs, and histograms) for data using R.
     - aesthetic mappings: `x`, `y`, `fill`, `colour`, `shape`
     - labelling: `xlab`, `ylab`, `labs`
     - font control and legend positioning: `theme`
-    - flipping axes: `coord_flip`
     - subplots: `facet_grid`
 - Describe the difference in raster and vector output formats
 - Use `ggsave` to save visualizations in `.png` and `.svg` format
@@ -110,7 +111,7 @@ records the atmospheric concentration of carbon dioxide (CO2, in parts per milli
 **Question:** Does the concentration of atmospheric CO2 change over time, and are there any interesting patterns to note?
 ```{r 03-data-co2, warning=FALSE, message=FALSE}
 # mauna loa carbon dioxide data
-co2_df <- read_csv("data/mauna_loa.csv") %>%
+co2_df <- read_csv("data/mauna_loa.csv") |>
   filter(ppm > 0, date_decimal < 2000)
 co2_df
 ```
@@ -214,15 +215,13 @@ islands_bar <- ggplot(islands_df, aes(x = landmass, y = size)) +
 islands_bar
 ```
 
-Alright, not bad! The plot in Figure \@ref(fig:03-data-islands-bar) is definitely the right kind of visualization, as we can clearly see and compare sizes of landmasses. The major issues are that the smaller landmasses' sizes are hard to distinguish, and the names of the landmasses are obscuring each other as they have been squished into too little space. But remember that the question we asked was only about the largest landmasses; let's make the plot a little bit clearer by keeping only the largest 12 landmasses. We do this using the `top_n` function.
-Then to help us make sure the labels have enough space, we'll use horizontal bars instead of vertical ones. We do this using the 
-`coord_flip` function, which swaps the `x` and `y` coordinate axes:
+Alright, not bad! The plot in Figure \@ref(fig:03-data-islands-bar) is definitely the right kind of visualization, as we can clearly see and compare sizes of landmasses. The major issues are that the smaller landmasses' sizes are hard to distinguish, and the names of the landmasses are obscuring each other as they have been squished into too little space. But remember that the question we asked was only about the largest landmasses; let's make the plot a little bit clearer by keeping only the largest 12 landmasses. We do this using the `slice_max` function.
+Then to help us make sure the labels have enough space, we'll use horizontal bars instead of vertical ones. We do this by swapping the `x` and `y` variables:
 
 ```{r 03-data-islands-bar-2, warning=FALSE, message=FALSE, fig.cap = "Bar plot of size for Earth's largest 12 landmasses"}
-islands_top12 <- top_n(islands_df, 12, size)
-islands_bar <- ggplot(islands_top12, aes(x = landmass, y = size)) +
-  geom_bar(stat = "identity") +
-  coord_flip()
+islands_top12 <- slice_max(islands_df, order_by = size, n = 12)
+islands_bar <- ggplot(islands_top12, aes(x = size, y = landmass)) +
+  geom_bar(stat = "identity") 
 islands_bar
 ```
 
@@ -232,7 +231,7 @@ but by size, and to colour them based on whether they are a continent. To do thi
 use `mutate` to add a column to the data regarding whether or not the landmass is a continent:
 
 ```{r 03-data-islands-bar-3, warning=FALSE, message=FALSE}
-islands_top12 <- top_n(islands_df, 12, size)
+islands_top12 <- slice_max(islands_df, order_by = size, n = 12)
 continents <- c("Africa", "Antarctica", "Asia", "Australia", "Europe", "North America", "South America")
 islands_ct <- mutate(islands_top12, is_continent = ifelse(landmass %in% continents, "Continent", "Other"))
 islands_ct
@@ -243,10 +242,9 @@ function in the aesthetic mapping to organize the landmasses by their `size` var
 Finally, we use the `labs` and `theme` functions to add labels, change the font size, and position the legend:
 
 ```{r 03-data-islands-bar-4, warning=FALSE, message=FALSE, fig.cap = "Bar plot of size for Earth's largest 12 landmasses coloured by whether its a continent with clearer axes and labels"}
-islands_bar <- ggplot(islands_ct, aes(x = reorder(landmass, size), y = size, fill = is_continent)) +
+islands_bar <- ggplot(islands_ct, aes(x = size, y = reorder(landmass, size), fill = is_continent)) +
   geom_bar(stat = "identity") +
-  labs(x = "Landmass", y = "Size (1000 square mi)", fill = "Type") +
-  coord_flip() +
+  labs(x = "Size (1000 square mi)", y = "Landmass",  fill = "Type") +
   theme(text = element_text(size = 18), legend.position = c(0.75, 0.45))
 islands_bar
 ```
@@ -320,7 +318,7 @@ ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
 Most of the data points from the 214 observations in this data set are bunched up in the lower left-handside of the visualization in Figure \@ref(fig:03-mother-tongue-vs-most-at-home-labs). The data is clumped because many more people in Canada speak the two languages represented by the points in the upper right corner. By filtering the data, we can confirm these two points correspond to the two official languages (English and French):
 
 ```{r english-mother-tongue}
-can_lang %>%
+can_lang |>
   filter(language == "English" | language == "French")
 ```
 
@@ -346,8 +344,8 @@ is moving big values closer together and moving small values farther apart.
 From the visualization in Figure \@ref(fig:03-mother-tongue-vs-most-at-home-scale), we see that for the 214 languages in this data set, as the number of people who have a language as their mother tongue increases, so does the number of people who speak that language at home. When we see two variables do this, we call this a *positive relationship*. Because the points are fairly close together, we can say that the relationship is strong. Because drawing a straight line through these  points would fit the pattern we observe quite well, we say that it's linear.
 
 ```{r 03-changing_the_units, include = FALSE}
-english_mother_tongue <- can_lang %>%
-  filter(language == "English") %>%
+english_mother_tongue <- can_lang |>
+  filter(language == "English") |>
   pull(mother_tongue)
 census_popn <- 35151728
 ```
@@ -359,12 +357,12 @@ Similar to our example in chapter 1, we can convert the counts to percentages to
 Below we use `mutate` to calculate the percentage of people reporting a given language as their mother tongue and primary language at home for all the languages in the `can_lang` data set. Since the new columns are appended to the end of the data table, we selected the new columns after the transformation so you can clearly see the mutated output from the table.
 
 ```{r}
-can_lang <- can_lang %>%
+can_lang <- can_lang |>
   mutate(
     mother_tongue_percent = (mother_tongue / 35151728)*100,
     most_at_home_percent = (most_at_home / 35151728)*100
   )
-can_lang %>% 
+can_lang |> 
   select(mother_tongue_percent, most_at_home_percent)
 ```
 
@@ -379,7 +377,7 @@ ggplot(can_lang, aes(x = most_at_home_percent, y = mother_tongue_percent)) +
   scale_y_log10(labels = scales::comma)
 ```
 
-Now we'll move onto the second part of our exploratory data analysis question: when considering the relationship between the number of people who have a language as their mother tongue and the number of people who speak that language at home, is there a pattern in the strength of this relationship in the higher-level language categories (Official languages, Aboriginal languages, or non-official and non-Aboriginal languages)? One common way to explore this is to colour the data points on the scatter plot we have already created by group/category. For example, given that we have the higher-level language category for each language recorded in the 2016 Canadian census, we can colour the points in our previous 
+Now we'll move onto the second part of our exploratory data analysis question: when considering the relationship between the number of people who have a language as their mother tongue and the number of people who speak that language at home, is there a pattern in the strength of this relationship in the higher-level language categories (Official languages, Aboriginal languages, or non-official and non-Aboriginal languages)? One common way to explore this is to colour the data points on the scatter plot we have already created by group. For example, given that we have the higher-level language category for each language recorded in the 2016 Canadian census, we can colour the points in our previous 
 scatter plot to represent each language's higher-level language category.
 
 Here we want to distinguish the values according to the `category` group with which they belong.  
@@ -394,7 +392,7 @@ ggplot(can_lang, aes(x = most_at_home_percent, y = mother_tongue_percent, color 
   scale_y_log10(labels = scales::comma)
 ```
 
-In Figure \@ref(fig:scatter-colour-by-category), the points are coloured with the default `ggplot2` colour palette. But what if you want to use different colours? In R, one package that provides alternative colour palettes is `RColorBrewer` [@RColorBrewer]. You can visualize the list of colour palettes that `RColorBrewer` has to offer with the `display.brewer.all()` function. You can also print a list of colour blind friendly palettes by adding `colorblindFriendly = T` to the function.
+In Figure \@ref(fig:03-scatter-colour-by-category), the points are coloured with the default `ggplot2` colour palette. But what if you want to use different colours? In R, one package that provides alternative colour palettes is `RColorBrewer` [@RColorBrewer]. You can visualize the list of colour palettes that `RColorBrewer` has to offer with the `display.brewer.all()` function. You can also print a list of colour blind friendly palettes by adding `colorblindFriendly = T` to the function.
 
 ```{r}
 library(RColorBrewer)
@@ -421,13 +419,13 @@ What do we see when considering the second part of our exploratory question? Do 
 
 For each higher-level language category, there appears to be a positive relationship between the number of people who speak a language as their mother tongue and the number of people who speak a language as their primary spoken language at home. This relationship looks similar, regardless of the category. 
 
-Does this mean that this relationship is positive for all languages in the world? Can we use this data visualization on its own to predict how many people have a given language as their mother tongue if we know how many people speak it as their primary language at home? The answer to both these questions is "no." However, with exploratory data analysis, we can create new hypotheses, ideas, and questions (like the ones at the beginning of this paragraph). Answering those questions would likely involve gathering additional data and doing more complex analyses, which we will see more of later in this course.  
+Does this mean that this relationship is positive for all languages in the world? Can we use this data visualization on its own to predict how many people have a given language as their mother tongue if we know how many people speak it as their primary language at home? The answer to both these questions is "no." However, with exploratory data analysis, we can create new hypotheses, ideas, and questions (like the ones at the beginning of this paragraph). Answering those questions would likely involve gathering additional data and doing more complex analyses, which we will see more of later in this book.   
 
 Now, we can go one step further and distinguish English and French languages with different colours in our visualization. To separate these languages, we will filter the rows where the language is either English or French and mutate the `category` column to equal the corresponding language. 
 
 ```{r 03-separate-English-French}
-english_and_french <- can_lang %>%
-  filter(language == "English" | language == "French") %>%
+english_and_french <- can_lang |>
+  filter(language == "English" | language == "French") |>
   mutate(category = language)
 english_and_french
 ```
@@ -436,13 +434,11 @@ Next we will bind the mutated data set `english_and_french` that we just created
 ```{r 03-bind-english-french}
 can_lang <- bind_rows(
   english_and_french,
-  can_lang %>%
+  can_lang |>
     filter(language != "English" & language != "French")
 )
 ```
 
-> `!=` in R is a logical operator that means "NOT EQUAL TO".
-> `&` is a logical operator meaning "AND". We are filtering the `can_lang` data frame where the rows do not equal "English" and do not equal "French".  
 
 We have added a few more layers to make the data visualization in Figure \@ref(fig:03-nachos-to-cheesecake) even more effective. Specifically, we used have improved the visualizations accessibility by choosing colours that are easier to distinguish, mapped category to shape, and handled the problem of overlapping data points by making them slightly transparent. 
 ```{r 03-nachos-to-cheesecake, fig.width=7.75, fig.height=4, warning=FALSE, message=FALSE, fig.cap = "Scatter plot of percentage of Canadians reporting a language as their mother tongue vs the primary language at home coloured by language category"}

@@ -23,7 +23,7 @@ This chapter provides an introduction to clustering using the *K-means* algorith
 including techniques to choose the number of clusters.
 
 ## Chapter learning objectives 
-By the end of the chapter, students will be able to:
+By the end of the chapter, readers will be able to:
 
 * Describe a case where clustering is appropriate, and what insight it might extract from the data.
 * Explain the K-means clustering algorithm.
@@ -81,7 +81,7 @@ collected by [Dr. Kristen Gorman](https://www.uaf.edu/cfos/people/faculty/detail
 the [Palmer Station, Antarctica LTER](https://lternet.edu/) and includes
 measurements for adult penguins near Palmer Station [@palmerpenguins]. We have
 modified the data set for use in this chapter. Here we will focus on using two
-variables---penguin bill and flipper length, both in mm---to determine whether 
+variables---penguin bill and flipper length, both in millimeters---to determine whether 
 there are distinct types of penguins in our data.
 Understanding this might help us with species discovery and classification in a data-driven
 way.
@@ -93,11 +93,11 @@ Below we will work with `penguin_data`, a subset of 18 observations of the origi
 ```{r 10-toy-example-data, echo = FALSE, message = FALSE, warning = FALSE}
 library(tidyverse)
 
-data <- read_csv("data/toy_penguins.csv") %>%
-  mutate(cluster = as_factor(cluster)) %>%
+data <- read_csv("data/toy_penguins.csv") |>
+  mutate(cluster = as_factor(cluster)) |>
   mutate(flipper_length_scaled = scale(flipper_length_mm), bill_length_scaled = scale(bill_length_mm))
 
-penguin_data <- data %>% select(flipper_length_scaled, bill_length_scaled)
+penguin_data <- data |> select(flipper_length_scaled, bill_length_scaled)
 ```
 
 ```{r 10-clustering, warning = F, message=F}
@@ -158,10 +158,10 @@ library(tidyverse)
 # clus1 <- tibble(loyalty = c(7, 7.5, 8, 7, 8),
 #               csat = c(1, 1, 2, 2, 3),
 #               )
-clus1 <- filter(data, cluster == 2) %>%
+clus1 <- filter(data, cluster == 2) |>
   select(bill_length_scaled, flipper_length_scaled)
 
-# clus1_center <- clus1 %>% summarize(csat = mean(csat), loyalty = mean(loyalty))
+# clus1_center <- clus1 |> summarize(csat = mean(csat), loyalty = mean(loyalty))
 ```
 
 The K-means algorithm is a procedure that groups data into K clusters.
@@ -215,7 +215,7 @@ base <- ggplot(clus1) +
   labs(x = "Flipper Length (scaled)", y = "Bill Length (scaled)") +
   theme(legend.position = "none") 
 
-mn <- clus1 %>% summarize(flipper_length_scaled = mean(flipper_length_scaled), bill_length_scaled = mean(bill_length_scaled))
+mn <- clus1 |> summarize(flipper_length_scaled = mean(flipper_length_scaled), bill_length_scaled = mean(bill_length_scaled))
 for (i in 1:nrow(clus1)) {
   base <- base + geom_segment(
     x = unlist(mn[1, "flipper_length_scaled"]), y = unlist(mn[1, "bill_length_scaled"]),
@@ -264,8 +264,8 @@ and the right column depicts the reassignment of data to clusters):
 ```{r 10-toy-kmeans-iter, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 8}
 for (i in 1:4) {
   # compute centers
-  centers <- penguin_data %>%
-    group_by(label) %>%
+  centers <- penguin_data |>
+    group_by(label) |>
     summarize_all(funs(mean))
   nclus <- nrow(centers)
   # replot with centers
@@ -278,12 +278,12 @@ for (i in 1:4) {
     geom_point(data = centers, aes(y = bill_length_scaled, x = flipper_length_scaled, fill = label), size = 5, shape = 21, stroke = 2, colour = "black", fill = cbpalette)
 
   # reassign labels
-  dists <- rbind(centers, penguin_data) %>%
-    select("flipper_length_scaled", "bill_length_scaled") %>%
-    dist() %>%
+  dists <- rbind(centers, penguin_data) |>
+    select("flipper_length_scaled", "bill_length_scaled") |>
+    dist() |>
     as.matrix()
   dists <- as_tibble(dists[-(1:nclus), 1:nclus])
-  penguin_data <- penguin_data %>% mutate(label = apply(dists, 1, function(x) names(x)[which.min(x)]))
+  penguin_data <- penguin_data |> mutate(label = apply(dists, 1, function(x) names(x)[which.min(x)]))
 
   plt_lbl <- ggplot(penguin_data, aes(y = bill_length_scaled, x = flipper_length_scaled, colour = label)) +
     geom_point(size = 2) +
@@ -338,8 +338,8 @@ Then the iterations of K-means would look like:
 ```{r 10-toy-kmeans-bad-iter, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 8}
 for (i in 1:5) {
   # compute centers
-  centers <- penguin_data %>%
-    group_by(label) %>%
+  centers <- penguin_data |>
+    group_by(label) |>
     summarize_all(funs(mean))
   nclus <- nrow(centers)
   # replot with centers
@@ -352,12 +352,12 @@ for (i in 1:5) {
     geom_point(data = centers, aes(y = bill_length_scaled, x = flipper_length_scaled, fill = label), size = 5, shape = 21, stroke = 2, colour = "black", fill = cbpalette)
 
   # reassign labels
-  dists <- rbind(centers, penguin_data) %>%
-    select("flipper_length_scaled", "bill_length_scaled") %>%
-    dist() %>%
+  dists <- rbind(centers, penguin_data) |>
+    select("flipper_length_scaled", "bill_length_scaled") |>
+    dist() |>
     as.matrix()
   dists <- as_tibble(dists[-(1:nclus), 1:nclus])
-  penguin_data <- penguin_data %>% mutate(label = apply(dists, 1, function(x) names(x)[which.min(x)]))
+  penguin_data <- penguin_data |> mutate(label = apply(dists, 1, function(x) names(x)[which.min(x)]))
 
   plt_lbl <- ggplot(penguin_data, aes(y = bill_length_scaled, x = flipper_length_scaled, colour = label)) +
     geom_point(size = 2) +
@@ -393,7 +393,7 @@ ranging from 1 to 9.
 library(broom)
 set.seed(3)
 
-kclusts <- tibble(k = 1:9) %>%
+kclusts <- tibble(k = 1:9) |>
   mutate(
     kclust = map(k, ~ kmeans(penguin_data[-3], .x)),
     tidied = map(kclust, tidy),
@@ -401,13 +401,13 @@ kclusts <- tibble(k = 1:9) %>%
     augmented = map(kclust, augment, penguin_data[-3])
   )
 
-clusters <- kclusts %>%
+clusters <- kclusts |>
   unnest(tidied)
 
-assignments <- kclusts %>%
+assignments <- kclusts |>
   unnest(augmented)
 
-clusterings <- kclusts %>%
+clusterings <- kclusts |>
   unnest(glanced, .drop = TRUE)
 
 assignments$k <- factor(assignments$k)
@@ -462,7 +462,7 @@ We show an example of how to use this function
 below using an unscaled version of data set in this chapter:
 
 ```{r 10-get-unscaled-data, echo = FALSE, message = FALSE, warning = FALSE}
-unscaled_data <- read_csv("data/toy_penguins.csv") %>%
+unscaled_data <- read_csv("data/toy_penguins.csv") |>
   select(bill_length_mm, flipper_length_mm)
 ```
 
@@ -559,7 +559,7 @@ Below, we execute this `map` call inside of a `mutate` call on the
 clustering object for each value of K we had:
 
 ```{r 10-choose-k-part2}
-penguin_clust_ks <- tibble(k = 1:9) %>%
+penguin_clust_ks <- tibble(k = 1:9) |>
   mutate(penguin_clusts = map(k, function(ks) kmeans(scaled_data, ks)))
 penguin_clust_ks
 ```
@@ -571,7 +571,7 @@ complex data frame with 3 columns, one for K, one for the
 K-means clustering objects, and one for the clustering statistics:
 
 ```{r 10-choose-k-part3}
-penguin_clust_ks <- tibble(k = 1:9) %>%
+penguin_clust_ks <- tibble(k = 1:9) |>
   mutate(
     penguin_clusts = map(k, ~ kmeans(scaled_data, .x)),
     glanced = map(penguin_clusts, glance)
@@ -584,7 +584,7 @@ item in this column is a data frame, we will need to use the `unnest` function
 to unpack the data frames into simpler column data types. 
 
 ```{r 10-get-total-within-sumsqs}
-clustering_statistics <- penguin_clust_ks %>%
+clustering_statistics <- penguin_clust_ks |>
   unnest(glanced)
 
 clustering_statistics
@@ -612,13 +612,13 @@ and found a bad clustering! We can help prevent finding a bad clustering by tryi
 few different random initializations via the `nstart` argument (here we use 10 restarts). 
 
 ```{r 10-choose-k-nstart, fig.height = 4, fig.width = 4.35, message= F, warning = F}
-penguin_clust_ks <- tibble(k = 1:9) %>%
+penguin_clust_ks <- tibble(k = 1:9) |>
   mutate(
     penguin_clusts = map(k, ~ kmeans(scaled_data, nstart = 10, .x)),
     glanced = map(penguin_clusts, glance)
   )
 
-clustering_statistics <- penguin_clust_ks %>%
+clustering_statistics <- penguin_clust_ks |>
   unnest(glanced)
 
 elbow_plot <- ggplot(clustering_statistics, aes(x = k, y = tot.withinss)) +

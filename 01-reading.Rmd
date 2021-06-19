@@ -9,15 +9,15 @@ knitr::opts_chunk$set(message = FALSE)
 
 ## Overview 
 
-In this chapter, you’ll learn to read spreadsheet-like data of various formats into R from your local device and the web. “Reading” (or “loading”) is the process of converting data (stored as plain text, a database, HTML, etc.) into an object (e.g., a data frame) that R can easily access and manipulate. Thus reading data is the gateway to any data analysis; you won’t be able to analyze data unless you’ve loaded it first. And because there are many ways to store data, there are similarly many ways to read data into R. The more time you spend upfront matching the data reading method to the type of data you have, the less time you will have to devote to re-formatting, cleaning and wrangling your data (the second step to all data analyses). It’s like making sure your shoelaces are tied well before going for a run so that you don’t trip later on!
+In this chapter, you’ll learn to read tabular data of various formats into R from your local device (e.g. your laptop) and the web. “Reading” (or “loading”) is the process of converting data (stored as plain text, a database, HTML, etc.) into an object (e.g., a data frame) that R can easily access and manipulate. Thus reading data is the gateway to any data analysis; you won’t be able to analyze data unless you’ve loaded it first. And because there are many ways to store data, there are similarly many ways to read data into R. The more time you spend upfront matching the data reading method to the type of data you have, the less time you will have to devote to re-formatting, cleaning and wrangling your data (the second step to all data analyses). It’s like making sure your shoelaces are tied well before going for a run so that you don’t trip later on!
 
 ## Chapter learning objectives
-By the end of the chapter, students will be able to:
+By the end of the chapter, readers will be able to:
 
 - define the following:
     - absolute file path
     - relative file path
-    - **u**niform **r**esource **l**ocator (URL)
+    - **U**niform **R**esource **L**ocator (URL)
 - read data into R using a relative path and a URL
 - compare and contrast the following functions:
     - `read_csv` 
@@ -45,37 +45,36 @@ By the end of the chapter, students will be able to:
 
 ## Absolute and relative file paths
 
-When you load a data set into R, you first need to tell R where those files live. The file could live on your 
-computer (*local*) or somewhere on the internet (*remote*). In this section, we will discuss the case where the file lives on your computer.
+This chapter will discuss the different functions we can use to import data into R, but before we can talk about *how* we read the data into R with these functions, we first need to talk about *where* the data lives. When you load a data set into R, you first need to tell R where those files live. The file could live on your 
+computer (*local*) or somewhere on the internet (*remote*). 
 
 The place where the file lives on your computer is called the "path". You can think of the path as directions to the file. There are two kinds of 
-paths: relative paths and absolute paths. A relative path is where the file is with respect to where you currently are on the computer (e.g., where the 
-Jupyter notebook file that you're working in is). On the other hand, an absolute path is where the file is in respect to the base (or root) folder of 
-the computer's filesystem.
+paths: *relative* paths and *absolute* paths. A relative path is where the file is with respect to where you currently are on the computer (e.g., where the file you're working in is). On the other hand, an absolute path is where the file is in respect to the computer's filesystem's base (or root) folder.
 
-Suppose our computer's filesystem looks like the picture below, and we are working in the Jupyter notebook titled `worksheetk_02.ipynb`. If we want to 
-read in the `.csv` file named `happiness_report.csv` into our Jupyter notebook using R, we could do this using either a relative or an absolute path. 
+Suppose our computer's filesystem looks like the picture in Figure \@ref(fig:file-system-for-export-to-intro-datascience), and we are working in a file titled `worksheet_02.ipynb`. If we want to 
+read in the `.csv` file named `happiness_report.csv` into R, we could do this using either a relative or an absolute path. 
 We show both choices below.
 
 ```{r file-system-for-export-to-intro-datascience, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Example file system", fig.retina = 2, out.width="840"}
-knitr::include_graphics("img/file-system-for-export-to-intro-datascience.svg")
+knitr::include_graphics("img/filesystem.jpeg")
 ```
 
 **Reading `happiness_report.csv` using a relative path:**
 
-```
+```{r eval = FALSE}
 happiness_data <- read_csv("data/happiness_report.csv")
 ```
 
 **Reading `happiness_report.csv` using an absolute path:**
 
-```
-happiness_data <- read_csv("/home/jupyter/dsci-100/worksheet_02/data/happiness_report.csv")
+```{r eval = FALSE}
+happiness_data <- read_csv("/home/dsci-100/worksheet_02/data/happiness_report.csv")
 ```
 
 So which one should you use? Generally speaking, to ensure your code can be run 
 on a different computer, you should use relative paths. An added bonus is that 
-it's also less typing! This is because the absolute path of a file (the names of 
+it's also less typing! Generally, you should use relative paths because the file's 
+absolute path (the names of 
 folders between the computer's root `/` and the file) isn't usually the same 
 across different computers. For example, suppose Fatima and Jayden are working on a 
 project together on the `happiness_report.csv` data. Fatima's file is stored at 
@@ -90,27 +89,41 @@ Even though Fatima and Jayden stored their files in the same place on their comp
 If Jayden has code that loads the `happiness_report.csv` data using an absolute path, the code won't work on Fatima's computer.
 But the relative path from inside the `project` folder (`data/happiness_report.csv`) is the same on both computers; any code that uses relative paths will work on both!
 
+In the additional resources section, we include a link to a short video on the difference between absolute and relative paths. You can also check out the `here` package, which provides methods for finding and constructing file paths in R.  
+
 <!--Why would the absolute path not work on a different computer? The reason for this is that the names and the folder structure of the path between a computer's root 
 folder (named `/`) and any files and folders you are usually working with will be different depending on who owns the computer (usually there is a different user name 
 on each computer) and where the files and folders happen to be located on that particular computer. -->
 
-See this video for another explanation: 
-
-<iframe width="840" height="473" src="https://www.youtube.com/embed/ephId3mYu9o" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
-*Source: [Udacity course "Linux Command Line Basics"](https://www.udacity.com/course/linux-command-line-basics--ud595)*
+Your file could be stored locally, as we discussed, or it could also be somewhere on the internet (remotely). A *Uniform Resource Locator (URL)* (web address) indicates the location of a resource on the internet and helps us retrieve that resource. Next, we will discuss how to get either locally or remotely stored data into R. 
 
 ## Reading tabular data from a plain text file into R
 
-Now we will learn more about reading tabular data from a plain text file into R, as well as how to write tabular data to a file. 
-Last chapter, we learned about using the `tidyverse` `read_csv` function when reading files that match that function's expected defaults 
-(column names are present, and commas are used as the delimiter/separator between columns). In this section, we will learn how to read 
-files that do not satisfy the default expectations of `read_csv`. 
+### `read_csv` to read in comma-separated files {#readcsv}
 
-Before we jump into the cases where the data aren't in the expected default format for `tidyverse` and `read_csv`, let's revisit the more straightforward
-case where the defaults hold, and the only argument we need to give to the function is the path to the file, `data/can_lang.csv`. The `can_lang` data set contains language data from the 2016 Canadian census. We put `data/` before the file's name when we are loading the data set because this data set is located in a sub-folder, named `data`, relative to where we are running our R code.
+Now that we have learned about *where* data could be, we will learn about *how*
+to import data into R using various functions. Specifically, we will learn how 
+to *read* tabular data from a plain text file (a document containing only text)
+*into* R and *write* tabular data to a file *out of* R. The function we use to do this
+depends on the file's format. For example, the last chapter, we learned about using
+the `tidyverse` `read_csv` function when reading .csv (**c**omma-**s**eparated **v**alues)
+files. In that case, the separator or *delimiter* that divided our columns was a
+comma (`,`). We only learned the case where the data matched the expected defaults 
+of the `read_csv` function 
+(column names are present, and commas are used as the delimiter between columns). 
+In this section, we will learn how to read 
+files that do not satisfy the default expectations of `read_csv`.
 
-Here is what the file would look like in a plain text editor:
+Before we jump into the cases where the data aren't in the expected default format 
+for `tidyverse` and `read_csv`, let's revisit the more straightforward
+case where the defaults hold, and the only argument we need to give to the function
+is the path to the file, `data/can_lang.csv`. The `can_lang` data set contains 
+language data from the 2016 Canadian census. We put `data/` before the file's
+name when we are loading the data set because this data set is located in a
+sub-folder, named `data`, relative to where we are running our R code.
+
+Here is what the file would look like in a plain text editor (a program that removes
+all formatting, like bolding or different fonts):
 
 ```{bash, echo=FALSE, comment=NA}
 head -n 10 data/can_lang.csv
@@ -120,20 +133,9 @@ And here is a review of how we can use `read_csv` to load it into R. First we
 load the `tidyverse` package to gain access to useful functions for reading the 
 data. 
 
-```{r, message = TRUE}
+```{r, message = FALSE}
 library(tidyverse)
 ```
-
-> Note: it is normal and expected that a message is printed out after 
-loading the `tidyverse` and some packages. Generally, this message let's you
-know if functions from the different packages were loaded share the same name
-(which is confusing to R), and if so, which one you can access using just it's
-name (and which one you need to refer the package name and the function name to
-refer to it, this is called masking). Additionally, the `tidyverse` is a special
-R package - it is a meta-package that bundles together several
-related and commonly used packages. Because of this it lists the packages it 
-does the job of loading. In future when we load this package in this book we 
-will silence these messages to help with readability of the book.
 
 Next we use `read_csv` to load the data into R, and in that call we specify the
 relative path to the file.
@@ -176,16 +178,42 @@ our data is being read in.
 canlang_data
 ```
 
-To successfully read data like this into R, the `skip` argument can be useful to tell R how many lines to skip before it should start reading in the data. In the example above, we would set this value to 3:
+To successfully read data like this into R, the `skip` argument can be useful to tell R how many lines to skip before it should start reading in the data. In the example above, we would set this value to 3.
 
 ```{r}
-canlang_data <- read_csv("data/can_lang_meta-data.csv", skip = 3)
+canlang_data <- read_csv("data/can_lang_meta-data.csv", 
+                         skip = 3)
 canlang_data
 ```
 
+How did we know to skip 3 lines? We looked at the data! The first three lines of the data had information we didn't need to import: 
+
+```{bash, echo=FALSE, comment=NA}
+head -n 3 data/can_lang_meta-data.csv
+```
+
+The column names began at line 4, so we skipped the first three lines. 
+
+### `read_tsv` to read in tab-separated files
+
+Another common way data is stored is with tabs as the delimiter. Notice the data file, `can_lang_tab.tsv`, has tabs in between the columns instead of commas. 
+
+```{bash, echo=FALSE, comment=NA}
+head -n 10 data/can_lang_tab.tsv
+```
+
+To read in this type of data, we can use the `read_tsv` to read in .tsv (**t**ab **s**eparated **v**alues) files. 
+
+```{r 01-read-tab}
+canlang_data <- read_tsv("data/can_lang_tab.tsv")
+canlang_data
+```
+
+Let's compare the data frame here to the resulting data frame in section \@ref(readcsv) after using `read_csv`. Notice anything? They look the same! The same number of columns/rows and column names! So we needed to use different tools for the job depending on the file format and our resulting table (`canlang_data`) in both cases was the same! 
+
 ### `read_delim` as a more flexible method to get tabular data into R
 
-When our tabular data comes in a different format, we can use the `read_delim` function instead. For example, a different version of this same data set has no column names and uses tabs as the delimiter instead of commas. 
+`read_csv` and `read_tsv` are actually just special cases of the more general `read_delim` function. We can use `read_delim` to import both comma and tab-separated files (and more), we just have to specify the delimiter. The `can_lang.tsv` is a different version of this same data set with no column names and uses tabs as the delimiter instead of commas. 
 
 Here is how the file would look in a plain text editor:
 
@@ -193,51 +221,56 @@ Here is how the file would look in a plain text editor:
 head -n 10 data/can_lang.tsv
 ```
 
-To get this into R using the `read_delim()` function, we specify the first argument as the path to the file (as done with `read_csv`), and then provide values to the `delim` argument (here a tab, which we represent by `"\t"`) and the `col_names` argument (here we specify that there are no column names to assign, and give it the value of `FALSE`). Both `read_csv()` and `read_delim()` have a `col_names` argument and the default is `TRUE`. 
+To get this into R using the `read_delim` function, we specify the first argument as the path to the file (as done with `read_csv`), and then provide values to the `delim` argument (here a tab, which we represent by `"\t"`) and the `col_names` argument (here we specify that there are no column names to assign, and give it the value of `FALSE`). `read_csv`, `read_tsv` and `read_delim` have a `col_names` argument and the default is `TRUE`. 
 
+> `\t` is an example of an *escape character*, typically used to represent non-printing characters (like the tab) or characters with special meanings (such as quotation marks). 
 
 ```{r}
-canlang_data <- read_delim("data/can_lang.tsv", delim = "\t", col_names = FALSE)
+canlang_data <- read_delim("data/can_lang.tsv", 
+                           delim = "\t", 
+                           col_names = FALSE)
 canlang_data
 ```
 
-Data frames in R need to have column names, thus if you read data into R as a data frame without column names then R assigns column names for them. If you used the `read_*` functions to read the data into R, then R gives each column a name of X1, X2, ..., XN, where N is the number of columns in the data set.
+
+Data frames in R need to have column names.  Thus if you read in data that 
+don't have column names, R will assign names automatically. In the example above, R assigns each column a name of `X1, X2, X3, X4, X5, X6`.
+
+It is best to rename your columns to help differentiate between them (e.g. `X1, X2`, etc., are not very descriptive names and will make it more confusing as you code). To rename your columns, you can use the `rename` function from the `dplyr` package (one of the packages loaded with `tidyverse`, so we don't need to load it separately). The first argument is the data set, and in the subsequent arguments you write `new_name = old_name` for the selected variables to rename. We rename the `X1, X2, ..., X6` columns in the `canlang_data` data frame to more descriptive names below. 
+
+```{r 01-rename-columns}
+canlang_data <- rename(canlang_data,
+       category = X1, 
+       language = X2, 
+       mother_tongue = X3,
+       most_at_home = X4, 
+       most_at_work = X5, 
+       lang_known = X6)
+canlang_data
+```
 
 ### Reading tabular data directly from a URL
-We can also use `read_csv()` or `read_delim()` (and related functions) to read in tabular data directly from a **u**niform **r**esource **l**ocator (URL) that contains tabular data. In this case, we provide the URL to `read_csv()` as the path to the file instead of a path to a local file on our computer. Similar to when we specify a path on our local computer, here we need to surround the URL by quotes. All other arguments that we use are the same as when using these functions with a local file on our computer.
+We can also use `read_csv`, `read_tsv` or `read_delim` (and related functions)
+to read in data directly from a **U**niform **R**esource **L**ocator (URL) that 
+contains tabular data. Here, we provide the URL to `read_*` as the path to the file
+instead of a path to a local file on our computer. We need to surround the URL with
+quotes similar to when we specify a path on our local computer. All other arguments
+that we use are the same as when using these functions with a local file on our computer.
 
 ```{r}
-canlang_data <- read_csv("https://raw.githubusercontent.com/UBC-DSCI/introduction-to-datascience/master/data/can_lang.csv")
+canlang_data <- read_csv(
+    "https://raw.githubusercontent.com/UBC-DSCI/
+    introduction-to-datascience/master/data/can_lang.csv")
 canlang_data
 ```
 
 ### Previewing a data file before reading it into R
 
-In all the examples above, we gave you previews of the data file before we read it into R. This is essential so that you can see whether or not there are column names, what the 
-delimiters are, and if there are lines you need to skip. You should do this yourself when trying to read in data files. In Jupyter, you preview data as a plain text file by right-clicking
-on the file's name in the Jupyter home menu and selecting "Open with" and then selecting "Editor". 
-
-```{r open-data-w-editor-01, echo = FALSE, fig.cap = "Opening data files with an editor in Jupyter", fig.retina = 2, out.width="100%"}
-image_read("img/open_data_w_editor_01.png") %>% 
-  image_crop("3632x2000")
-```
-
-```{r open-data-w-editor-02, echo = FALSE, fig.cap = "A data file as viewed in an editor in Jupyter", fig.retina = 2, out.width="100%"}
-image_read("img/open_data_w_editor_02.png") %>% 
-  image_crop("3632x2000")
-```
-
-If you do not specify to open the data file with an editor, then Jupyter will 
-render a nice table for you and you will not be able to see the column
-delimiters, and therefore you will not know which function to use, nor
-which arguments to use and values to specify for them. 
-
-This is also demonstrated in the video below:
-
-<iframe width="840" height="473" src="https://www.youtube.com/embed/6orO4YMAyeQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+In all the examples above, we gave you previews of the data file before we read it into R. Previewing data is essential to see whether or not there are column names, what the 
+delimiters are, and if there are lines you need to skip. You should do this yourself when trying to read in data files. You can preview files in a plain text editor by right-clicking on the file, selecting "Open With," and choosing a plain text editor (e.g. Notepad). 
 
 
-## Reading data from an Microsoft Excel file
+## Reading tabular data from a Microsoft Excel file
 
 There are many other ways to store tabular data sets beyond plain text files, and similarly, many ways to load those data sets into R. For example, it is very common to encounter,
 and need to load into R, data stored as a Microsoft Excel spreadsheet (with the filename extension `.xlsx`). 
@@ -280,6 +313,7 @@ X?a??4VT?,D?Jq
 5`????6A ?
 ```
 
+
 This type of file representation allows Excel files to store additional things that you cannot store in a `.csv` file, such as fonts, text formatting, graphics, multiple sheets 
 and more. And despite looking odd in a plain text editor, we can read Excel spreadsheets into R using the `readxl` package developed 
 specifically for this purpose.
@@ -290,18 +324,36 @@ canlang_data <- read_excel("data/can_lang.xlsx")
 canlang_data
 ```
 
-If the `.xlsx` file has multiple sheets, you have to use the `sheet` argument to specify the sheet number or name. You can also specify cell ranges using the `range` argument. This functionality is useful when a single sheet contains multiple tables (a sad thing that happens to many Excel spreadsheets).
+If the `.xlsx` file has multiple sheets, you have to use the `sheet` argument to specify the sheet number or name. You can also specify cell ranges using the `range` argument. This functionality is useful when a single sheet contains multiple tables (a sad thing that happens to many Excel spreadsheets since this makes reading in data more difficult). 
 
 As with plain text files, you should always explore the data file before importing it into R. Exploring the data beforehand helps you decide which arguments you need to to load the data into R successfully. If you do not have the Excel program on your computer, you can use other programs to preview the file. Examples include Google Sheets and Libre Office. 
 
+In Table \@ref(tab:read-table) we summarize the `read_*` functions we covered in this chapter. We also include the `read_csv2` function for data separated by semicolons `;`, which you may run into with data sets where the decimal is represented by a comma instead of a period (as with some data sets from European countries).
+
+
+Table: (\#tab:read-table) Summary of `read_*` functions
+
+Data File Type | R Function | R Package
+-- | -- | --
+Comma (`,`) separated files | `read_csv` | `readr`
+Tab (`\t`) separated files  | `read_tsv` | `readr`
+Semicolon (`;`) separated files |  `read_csv2` | `readr`
+Various formats (`.csv`, `.tsv`)   | `read_delim` | `readr`
+Excel files (`.xlsx`) | `read_excel` | `readxl`
+
+> Note: `readr` is a part of the `tidyverse` package so we did not need to load this package separately since we loaded `tidyverse`.
+
+
 ## Reading data from a database
 
-Another very common form of data storage is the relational database. There are many relational database management systems, such as
-[SQLite](https://www.sqlite.org/index.html), [MySQL](https://www.mysql.com/), [PostgreSQL](https://www.postgresql.org/), [Oracle](https://www.oracle.com/ca-en/index.html), and many more. These different relational database management systems each have their own advantages and limitations. Almost all employ SQL (*structured query language*) to pull data from the database. Thankfully, you don't need to know SQL
+Another very common form of data storage is the relational database. Databases are great when you have large datasets or multiple users working on a project. There are many relational database management systems, such as
+[SQLite](https://www.sqlite.org/index.html), [MySQL](https://www.mysql.com/), [PostgreSQL](https://www.postgresql.org/), [Oracle](https://www.oracle.com/ca-en/index.html), and many more. These different relational database management systems each have their own advantages and limitations. Almost all employ SQL (*structured query language*) to pull data from the database. Though, you don't need to know SQL
 to analyze data from a database; 
 several packages have been written 
 that allows R to connect to relational databases and use the R programming language as the front end (what the user types in) to pull data from them. These different relational database management systems have their own advantages, limitations, and excels in particular scenarios. In this book, we will 
 give examples of how to do this using R with SQLite and PostgreSQL databases.
+
+
 
 ### Connecting to a database
 
@@ -328,19 +380,31 @@ We only get one table name returned from calling `dbListTables`, which tells us 
 ```{r}
 library(dbplyr)
 lang_db <- tbl(con_lang_data, "lang")
-lang_db
+lang_db 
 ```
 
-Although it looks like we just got a data frame from the database, we didn't! It's a *reference*, showing us data that is still in the SQLite database (note the first two lines of the output). 
-It does this because databases are often more efficient at selecting, filtering and joining large data sets than R. And typically, the database will not even be 
-stored on your computer, but rather a more powerful machine somewhere on the web. So R is lazy and waits to bring this data into memory until you explicitly tell 
-it to do so using the `collect` function from the `dbplyr` package. 
 
-Here we will filter for only rows in the Aboriginal languages category according to the 2016 Canada Census, and then use `collect` to finally bring this data into R as a data frame. 
+Although it looks like we just got a data frame from the database, we didn't! It's a *reference*, showing us data that is still in the SQLite database. It does this because databases are often more efficient at selecting, filtering and joining large data sets than R. And typically, the database will not even be stored on your computer but rather a more powerful machine somewhere on the web. So R is lazy and waits to bring this data into memory until you explicitly tell it to using the `collect` function from the `dbplyr` package. Figure \@ref(fig:01-ref-vs-tibble) highlights the difference between a `tibble` object in R and the output we just got. Notice in the table on the right, the first two lines of the output indicate the source is SQL. The last line doesn't show how many rows there are (R is trying to avoid performing expensive query operations), whereas the output for the `tibble` object does. 
+
+```{r 01-ref-vs-tibble, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparison of a reference to data in a database and a tibble in R", fig.retina = 2, out.width="800"}
+knitr::include_graphics("img/ref_vs_tibble.jpeg")
+```
+
+We can look at the SQL commands that are sent to the database when we write 
+` tbl(con_lang_data, "lang")` in R with the `show_query` function from the `dbplyr` package.
+
+
+```{r}
+show_query(tbl(con_lang_data, "lang"))
+```
+
+From the output above, we can see the SQL code sent to the database. When we write `tbl(con_lang_data, "lang")` in R, in the background, the function is translating the R code into SQL, asking the database, and then translating the response back to us. So instead of us needing to know the SQL code ourselves and switching back and forth between R and SQL code, the `dbplyr` package does that for us. 
+
+Now we will filter for only rows in the Aboriginal languages category according to the 2016 Canada Census, and then use `collect` to finally bring this data into R as a data frame. 
 
 ```{r}
 aboriginal_lang_db <- filter(lang_db, category == "Aboriginal languages")
-aboriginal_lang_db
+aboriginal_lang_db 
 ```
 
 ```{r}
@@ -359,15 +423,13 @@ nrow(aboriginal_lang_db)
  
 or `tail` to preview the last 6 rows of a data frame:
 
-```
+```{r, eval = FALSE}
 tail(aboriginal_lang_db)
 ```
 ```
 ## Error: tail() is not supported by sql sources
 ```
-Additionally, some operations will not work to extract columns or single values from the reference given by the `tbl` function. Thus, once you have finished your data wrangling of the `tbl` database reference object, it is advisable to bring it into your local machine's memory using `collect` as a data frame. 
-
-> Warning: Usually, databases are very big! Reading the object into your local machine may give an error or take a lot of time to run so be careful if you plan to do this! 
+Additionally, some operations will not work to extract columns or single values from the reference given by the `tbl` function. Thus, once you have finished your data wrangling of the `tbl` database reference object, it is advisable to bring it into your local machine's memory using `collect` as a data frame. Usually, databases are very big! Reading the object into your local machine may give an error or take a lot of time to run so be careful if you plan to do this. This is one reason we may want to filter rows or select columns first before reading it in!
  
 #### Reading data from a PostgreSQL database 
 
@@ -384,9 +446,9 @@ function is listed below:
 
 
 Additionally, we must use the `RPostgres` package instead of `RSQLite` in the `dbConnect` function call.
-Below we demonstrate how to connect to a version of the `can_mov_db` database, which contains information about Canadian movies (*note - this is a synthetic, or artificial, database*).
+Below we demonstrate how to connect to a version of the `can_mov_db` database, which contains information about Canadian movies (*note - this is a synthetic database*).
 
-```
+```{r, eval = FALSE}
 library(RPostgres)
 can_mov_db_con <- dbConnect(RPostgres::Postgres(), dbname = "can_mov_db",
                         host = "r7k3-mds1.stat.ubc.ca", port = 5432,
@@ -398,7 +460,7 @@ can_mov_db_con <- dbConnect(RPostgres::Postgres(), dbname = "can_mov_db",
 After opening the connection, everything looks and behaves almost identically to when we were using an SQLite database in R. For example, we can again 
 use `dbListTables` to find out what tables are in the `can_mov_db` database:
 
-```
+```{r, eval = FALSE}
 dbListTables(can_mov_db_con)
 ```
 
@@ -409,7 +471,7 @@ dbListTables(can_mov_db_con)
 
 We see that there are 10 tables in this database. Let's first look at the `"ratings"` table to find the lowest rating that exists in the `can_mov_db` database:
 
-```
+```{r, eval = FALSE}
 ratings_db <- tbl(can_mov_db_con, "ratings")
 ratings_db
 ```
@@ -434,7 +496,7 @@ ratings_db
 
 To find the lowest rating that exists in the data base, we first need to extract the `average_rating` column using `select`:
 
-```
+```{r, eval = FALSE}
 avg_rating_db <- select(ratings_db, average_rating)
 avg_rating_db
 ```
@@ -459,7 +521,7 @@ avg_rating_db
 
 Next we use `min` to find the minimum rating in that column:
 
-```
+```{r, eval = FALSE}
 min(avg_rating_db)
 ```
 
@@ -469,7 +531,7 @@ Error in min(avg_rating_db) : invalid 'type' (list) of argument
 
 Instead of the minimum, we get an error! This is another example of when we need to use the `collect` function to bring the data into R for further computation:
 
-```
+```{r, eval = FALSE}
 avg_rating_data <- collect(avg_rating_db)
 min(avg_rating_data)
 ```
@@ -481,7 +543,8 @@ min(avg_rating_data)
 We see the lowest rating given to a movie is 1, indicating that it must have been a really bad movie...
 
 
-**Why should we bother with databases at all?**
+
+### Why should we bother with databases at all?
 
 Opening a database stored in a `.db` file involved a lot more effort than just opening a `.csv`, `.tsv`, or any of the other plain text or Excel formats. It was a bit of a pain to use a database in that setting since we had to use `dbplyr` to translate `tidyverse`-like commands (`filter`, `select`, `head`, etc.) into SQL commands that the database understands. Not all `tidyverse` commands can currently be translated with SQLite databases. For example, we can compute a mean with an SQLite database but can't easily compute a median. So you might be wondering why should we use databases at all? 
 
@@ -500,7 +563,7 @@ At the middle and end of a data analysis, we often want to write a data frame th
 to share it with others or use it for another step in the analysis. The most straightforward way to do this is to use the `write_csv` function from the `tidyverse` package. 
 The default arguments for this file are to use a comma (`,`) as the delimiter and include column names. Below we demonstrate creating a new version of the Canadian languages data set without the official languages category according to the Canadian 2016 Census, and then writing this to a `.csv` file:
 
-```
+```{r, eval = FALSE}
 no_official_lang_data <- filter(can_lang, category != "Official languages")
 write_csv(no_official_lang_data, "data/no_official_languages.csv")
 ```
@@ -534,7 +597,10 @@ information to gather. So instead of asking your browser to translate the inform
 web server provides into something you can see, you can collect
 that data programmatically---in the form of **h**yper**t**ext **m**arkup **l**anguage (HTML) 
 and **c**ascading **s**tyle **s**heet (CSS) code---and
-process it to extract useful information.
+process it to extract useful information. HTML provides the basic structure of a site
+and tells the webpage how to display the content (e.g. titles, 
+paragraphs, bullet lists etc.). Whereas CSS helps style the content and tells the webpage
+how the HTML elements should be presented (e.g. colours, layouts, fonts etc.). 
 
 This subsection will show you the basics of both web scraping
 with the [`rvest` R package](https://github.com/hadley/rvest)
@@ -624,7 +690,7 @@ and more. So this source code most likely contains all the information we are in
 Let's dig into that line above a bit more. You can see that that bit of code
 has an *opening tag* (words between `<` and `>`, like `<span>`) and a *closing tag* 
 (the same with a slash, like `</span>`). HTML source code generally stores
-its data between opening and closing tags like these. Above you can see that
+its data between opening and closing tags like these. Tags are keywords which tell the web browser how to display or format the content. Above you can see that
 the information we want (`$800`) is stored between an opening and closing 
 tag (`<span>` and `</span>`). In the opening tag, you can also see a very useful
 "class" (a special word that is sometimes included with opening tags): 
@@ -644,21 +710,22 @@ are looking for---a dollar amount between opening and closing tags that have the
 matching patterns from the source code to obtain our data. This sort of "pattern"
 is known as a *CSS selector* (where CSS stands for **c**ascading **s**tyle **s**heet).
 
-The above was a particularly simple example of "finding the pattern to look for"; many 
+The above was a simple example of "finding the pattern to look for"; many 
 websites are quite a bit larger and more complex, and so is their website
-source code. Fortunately there are tools available to make this process
+source code. Fortunately, there are tools available to make this process
 easier. For example, 
 [SelectorGadget from the Chrome Web Store](https://chrome.google.com/webstore/detail/SelectorGadget/mhjhnkcfbdhnjickkkdbjoemdmbfginb) is 
-an open source tool that simplifies identifying the generating and finding CSS selectors. 
+an open-source tool that simplifies identifying the generating and finding CSS selectors. 
 At the end of the chapter in the additional resources section, we include a link to
 a short video on how to install and use the SelectorGadget tool to 
 obtain CSS selectors for use in web scraping. 
-After installing and enabling the tool, you can simply click the 
+After installing and enabling the tool, you can click the 
 website element for which you want an appropriate selector. For 
 example, if we click the price of an apartment listing, we
 find that SelectorGadget shows us the selector `.result-price`
 in its toolbar, and highlights all the other apartment
 prices that would be obtained using that selector.
+
 
 ![](img/sg1.png)
 
@@ -681,9 +748,9 @@ The selector gadget returns them to us as a comma separated list (here
 `.housing , .result-price`), which is exactly the format we need to provide to
 R if we are using more than one CSS selector.
 
-**STOP! Are you allowed to scrape that website?**
+**Stop! Are you allowed to scrape that website?**
 
-Before scraping data from the web, you should always check whether or not
+*Before* scraping data from the web, you should always check whether or not
 you are *allowed* to scrape it! There are two documents that are important
 for this: the `robots.txt` file and the Terms of Service
 document. Let's take a look at Craigslist's Terms of Service document:
@@ -693,7 +760,7 @@ document. Let's take a look at Craigslist's Terms of Service document:
 source: https://www.craigslist.org/about/terms.of.use
 
 > Want to learn more about the legalities of web scraping and crawling? Read
-> this interesting blog post titled ["Web Scraping and Crawling Are Perfectly
+> this blog post titled ["Web Scraping and Crawling Are Perfectly
 > Legal, Right?" by Benoit
 > Bernard](https://benbernardblog.com/web-scraping-and-crawling-are-perfectly-legal-right/).
 
@@ -722,6 +789,8 @@ td:nth-child(7),
 .infobox td:nth-child(3)
 ```
 
+Now that we have the CSS selectors that describe the properties of the elements that we want to target (e.g. has a tag name `price`), we can use it to find certain elements in web pages and extract data. 
+
 **Using `rvest`**
 
 Now that we have our CSS selectors we can use the `rvest` R package to scrape our
@@ -743,10 +812,10 @@ instead of  displaying the website to you, the `read_html` function just returns
 the HTML source code itself, which we have
 stored in the `page` variable. Next, we send the page object to the `html_nodes`
 function, along with the CSS selectors we obtained from
-the SelectorGadget tool. Make sure to surround the selectors with quotations; `html_nodes` expects that
-argument to be a string. The `html_nodes` function then selects *nodes* from the HTML document that 
+the SelectorGadget tool. Make sure to surround the selectors with quotations; the function, `html_nodes`, expects that
+argument is a string. The `html_nodes` function then selects *nodes* from the HTML document that 
 match the CSS selectors you specified.
-A *node* is an HTML tag pair combined with the content stored between the tags. For our
+A *node* is an HTML tag pair (e.g. `<td>` and `</td>` which defines the cell of a table) combined with the content stored between the tags. For our
 CSS selector `td:nth-child(5)`, an example node that would be selected would
 be: 
 ```html
@@ -757,7 +826,7 @@ be:
 
 We store the result of the `html_nodes` function in the `population_nodes` variable.
 Note that below we use the `paste` function with a comma separator (`sep=","`)
-to build the list of selectors while maintaining code readability; this avoids
+to build the list of selectors. The `paste` function converts elements to character and combines the values into a list. We use this function to build the list of selectors to maintain code readability; this avoids
 having one very long line of code with the string
 `"td:nth-child(5),td:nth-child(7),.infobox:nth-child(122) td:nth-child(1),.infobox td:nth-child(3)"`
 as the second argument of `html_nodes`:
@@ -788,7 +857,7 @@ data frame with one character column for city and one numeric column for
 population (like a spreadsheet).
 Additionally, the populations contain commas (not useful for programmatically
 dealing with numbers), and some even contain a line break character at the end
-(`\n`). In the next chapter, we will learn more about how to *wrangle* data
+(`\n`). In chapter \@ref(wrangling), we will learn more about how to *wrangle* data
 such as this into a more useful format for data analysis using R.
 
 ### Using an API
@@ -820,7 +889,7 @@ are shown below.
 knitr::include_graphics("img/tidyverse_twitter.png")
 ```
 
-**STOP! Think about your API usage carefully!**
+**Stop! Think about your API usage carefully!**
 
 When you access an API, you are initiating a transfer of data from a web server
 to your computer. Web servers are expensive to run and do not have infinite resources.
@@ -837,7 +906,7 @@ we should abide by when using the API.
 
 **Using `rtweet`**
 
-After checking the website, it seems like asking for 400 tweets one time is acceptable.
+After checking the Twitter website, it seems like asking for 400 tweets one time is acceptable.
 So we can use the `get_timelines` function to ask for the last 400 tweets from the Tidyverse account.
 ```r
 tidyverse_tweets <- get_timelines('tidyverse', n=400)
@@ -845,6 +914,7 @@ tidyverse_tweets <- get_timelines('tidyverse', n=400)
 
 When you call the `get_timelines` for the first time (or any other `rtweet` function that accesses the API), 
 you will see a browser pop-up that looks something like this:
+
 ```{r 01-tidyverse-authorize, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "The rtweet authorization prompt.", fig.retina = 2, out.width="800"}
 knitr::include_graphics("img/authorize_question.png")
 ```
@@ -875,7 +945,7 @@ tidyverse_tweets
 tidyverse_tweets <- read_csv("data/tweets.csv")
 tidyverse_tweets
 ```
-The data has quite a few variables! Let's reduce this down to a few variables of interest: `created_at`,  `retweet_screen_name`, `is_retweet`, and `text`,.
+The data has quite a few variables! (Notice that the output above shows that we have a data table with 293 rows and 71 columns). Let's reduce this down to a few variables of interest: `created_at`,  `retweet_screen_name`, `is_retweet`, and `text`.
 ```{r 01-select-tweets, message = FALSE, warning = FALSE}
 tidyverse_tweets <- tidyverse_tweets %>% select(created_at, retweet_screen_name, 
                                                 is_retweet, text)
@@ -902,7 +972,11 @@ data you are requesting and how frequently you are making requests.
 - The [`readr` page on the tidyverse website](https://readr.tidyverse.org/) is where you should look if you want to learn more about the functions in this chapter, the full set of arguments you can use, and other related functions. The site also provides a very nice cheat sheet that summarizes many of the data wrangling functions from this chapter.
 - Sometimes you might run into data in such poor shape that none of the reading functions we cover in this chapter works. In that case, you can consult the [data import chapter](https://r4ds.had.co.nz/data-import.html) from [R for Data Science](https://r4ds.had.co.nz/), which goes into a lot more detail about how R parses text from files into data frames.
 - The documentation for many of the reading functions we cover in this chapter can be found [on the tidyverse website](https://readr.tidyverse.org/reference/read_delim.html). This site shows you the full set of arguments available for each function.
-- The [rio package](https://github.com/leeper/rio) provides an alternative set of tools for reading and writing data in R. It aims to be a "Swiss army knife" for data reading/writing/converting, and supports a wide variety of data types (including data formats generated by other statistical software like SPSS and SAS).
+- The [`here` package](https://cran.r-project.org/web/packages/here/index.html) provides a way for you to contruct or find your files' paths. 
+- The [`readxl` documentation](https://readxl.tidyverse.org/) provides more details on reading data from Excel, such as reading in data with multiple sheets, or specifying the cells to read in. 
+- The [`rio` package](https://github.com/leeper/rio) provides an alternative set of tools for reading and writing data in R. It aims to be a "Swiss army knife" for data reading/writing/converting, and supports a wide variety of data types (including data formats generated by other statistical software like SPSS and SAS).
+- This [video](https://www.youtube.com/embed/ephId3mYu9o) from the [Udacity course "Linux Command Line Basics"](https://www.udacity.com/course/linux-command-line-basics--ud595)* provides a good explanation of absolute versus relative paths.
 - If you read the subsection on obtaining data from the web via scraping and APIs, we provide two companion tutorial video links:
     - [A brief video tutorial](https://www.youtube.com/embed/YdIWI6K64zo) on using the SelectorGadget tool to obtain desired CSS selectors for extracting the price and size data for apartment listings on CraigsList
     - [Another brief video tutorial](https://www.youtube.com/embed/O9HKbdhqYzk) on using the SelectorGadget tool to obtain desired CSS selectors for extracting Canadian city names and 2016 census populations from Wikipedia
+- The [`polite` package](https://cran.r-project.org/web/packages/polite/index.html) provides a set of tools for responsibly scraping data from websites. 
