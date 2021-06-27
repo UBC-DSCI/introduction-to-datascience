@@ -183,17 +183,21 @@ separate columns but are really part of the same variable. Data is often stored
 in a wider, not tidy, format because this format is usually more intuitive for
 human readability and understanding, and humans create data sets.
 
-For example, in Figure \@ref(fig:02-wide-to-long), the table on the left is an
-untidy format because the year values (2011, 2016) are listed as the column headers. 
-One problem with using data in this format is that we don't know what the values
-under each year represent in the table. Also, we can't easily access the year
-values, so if we wanted to find the maximum year, for example, it's hard to do 
-when the values are not in their own column. We can reshape this data set to a long format by creating a column called "year" and a column called "population," which is the table on the right.
+For example, in Figure \@ref(fig:02-wide-to-long), the table on the left is in an
+untidy, wide format because the year values (2006, 2011, 2016) are listed as the column headers. 
+For humans, this table is easy to read thus you will often find data stored in this wide format. 
+However, for computers, to do any visualization or analysis this format is difficult to work with. 
+For example, if we wanted to find the maximum year it's hard to do 
+when the year values are not in their own column.
+Another problem with data in this format is that we don't know what the numbers
+under each year actually represent. Do those numbers represent population size? Land area? It's not clear.
+We can reshape this data set to a long format by creating a column called "year" and a column called "population," which is the table on the right.
 
 ```{r 02-wide-to-long, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from wide to long data", fig.retina = 2, out.width = "1150"}
 knitr::include_graphics("img/wide_to_long.jpeg")
 ```
-We can use the function `pivot_longer`, which combines columns, making the data frame longer and narrower. To learn how to use `pivot_longer`, we will work with the `region_lang_top5_cities_wide.csv` data set. This data set contains contains the counts of how many Canadians cited each language as their mother tongue for five major Canadian cities (Toronto, Montréal, Vancouver, Calgary and Edmonton) from the 2016 Canadian census. We will load the `tidyverse` packing so we can use our wrangling functions and the `canlang` package
+
+The function `pivot_longer`, which combines columns, makes the data frame longer and narrower. To learn how to use `pivot_longer`, we will work with the `region_lang_top5_cities_wide.csv` data set. This data set contains contains the counts of how many Canadians cited each language as their mother tongue for five major Canadian cities (Toronto, Montréal, Vancouver, Calgary and Edmonton) from the 2016 Canadian census. We will load the `tidyverse` packing so we can use our wrangling functions and the `canlang` package
 since it contains the `region_lang` and `region_data` data sets that we will use later in the chapter.  
 
 Our data set is stored in an untidy format, as shown below:
@@ -211,6 +215,7 @@ What is wrong with our untidy format above? From a data analysis perspective, th
 To accomplish this data transformation, we will use the `tidyverse` function
 `pivot_longer`. Figure \@ref(fig:img-pivot-longer-with-table) summarizes how we want to
 reshape our data from wide to long with using the `pivot_longer` function. 
+
 ```{r img-pivot-longer-with-table, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from wide to long with the pivot_longer function", out.width="1100", fig.retina = 2}
 knitr::include_graphics("img/pivot_longer_with_table.jpeg")
 ```
@@ -246,7 +251,7 @@ The data above is now tidy because all three criteria for tidy data have now bee
 ### Going from long to wide using `pivot_wider` {#pivot-wider}
 
 Suppose we have observations spread across multiple rows rather than in a single row. For example, in Figure \@ref(fig:long-to-wide), the table on the left is an
-untidy format because the `count` column contains two variables (population and commuter count) and each observation is split across two rows.
+untidy, long format because the `count` column contains two variables (population and commuter count) and each observation is split across two rows.
 Using data in this format means it's harder to apply functions when the values are not in their own column. For example, finding the maximum number of commuters is possible to do with the untidy table but requires a few more steps and is cumbersome. We can reshape this data set to a wider format by creating a column called "population" and a column called "commuters", which is the table on the right.
 
 ```{r long-to-wide, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from long to wide data", fig.retina = 2, out.width = "1150"}
@@ -258,6 +263,9 @@ lang_long <- read_csv("data/region_lang_top5_cities_long.csv")
 lang_long
 ```
 
+```{r}
+flextable::flextable(lang_long, cwidth = c(0.5,7,0.5))
+```
 What is wrong with this format above? In this example, each observation should be a language in a region. However, in the messy data set above, each observation is split across multiple rows. One where the count for `most_at_home` is recorded and the other where the count for `most_at_work` is recorded. Suppose we wanted to visualize the relationship between the number of Canadians reporting their primary language at home and work. It would be difficult to do that with the data in its current format.
 
 We can see how we would like to transform the data from long to wide with `pivot_wider` in Figure \@ref(fig:img-pivot-wider-table).  
@@ -679,7 +687,7 @@ large_region_lang
 > piped function calls would create a long line of code. Doing this makes your code more readable. When you do this it is important 
 > to end each line with the pipe operator `|>` to tell R that your code is continuing onto the next line. 
 
-## Iterating over data with `group_by` + `summarize`
+## Aggregating data with `group_by` + `summarize`
 
 ### Calculating summary statistics:
 
@@ -724,7 +732,7 @@ the dplyr function (`select`, `filter`, `mutate`, `arrange`, `summarize`, and `g
 useful functions, we recommend you checkout [this chapter](http://stat545.com/block010_dplyr-end-single-table.html#where-were-we) of the Stat 545 book.
 
 
-## Using `purrr`'s `map*` functions to iterate
+## Iterating data using `purrr`'s `map*` functions 
 
 Where should you turn when you discover the next step in your data wrangling/cleaning process requires you to apply a function to 
 each column in a data frame? For example, if you wanted to know the maximum value of each column in a data frame? Well, you could use `summarize` 
