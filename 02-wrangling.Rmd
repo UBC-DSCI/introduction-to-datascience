@@ -343,7 +343,7 @@ Is this data set now tidy? If we recall the three criteria for tidy data:
 - each value is a single cell.
 
 We can see that this data now satisfies all three criteria, making it easier to analyze. However, we aren't done yet! 
-Notice in the table above the word `<chr>` appears beneath each of the column names. The word under the column name indicates the data type of each column. Here all of our variables are "character" data types. Recall, a character data type is a letter or a number surrounded by quotes. In the previous example in section 
+Notice in the table above the word `<chr>` appears beneath each of the column names. The word under the column name indicates the data type of each column. Here all of our variables are "character" data types. Recall, character data types are letter(s) or digits(s) surrounded by quotes. In the previous example in section 
 \@ref(pivot-wider), the `most_at_home` and `most_at_work` variables were `<dbl>` (double) (you can verify this by looking at the tables in the previous sections), which is a numeric data type. This change is due to the delimiter "/" when we read in this messy data set. R read the columns in as character types, and by default, `separate` will return columns as character data types. 
 
 It makes sense for `region`, `category`, and `language` to be stored as a character type. However, if we want to apply any functions that treat the `most_at_home` and `most_at_work` columns as a number (e.g. finding rows that are above numeric threshold of a column), it won't be possible to do if the variable is stored as a `character`. We can set `convert = TRUE` to convert the `most_at_home` and `most_at_work` columns to the correct data type. 
@@ -364,7 +364,7 @@ Now we see `<int>` appears under our columns, `most_at_home` and `most_at_work`,
 
 ### Notes on defining tidy data
 
-Is there only one shape for tidy data for a given data set? Not necessarily! It depends on the statistical question you are asking and what the variables are for that question. For tidy data, each variable should be its own column. So, just as it's essential to match your statistical question with the appropriate data analysis tool (classification, clustering, hypothesis testing, etc.). It's important to match your statistical question with the appropriate variables and ensure they are represented as individual columns to make the data tidy.
+Is there only one shape for tidy data for a given data set? Not necessarily! It depends on the statistical question you are asking and what the variables are for that question. For tidy data, each variable should be its own column. So, just as it's essential to match your statistical question with the appropriate data analysis tool (classification, clustering, hypothesis testing, etc.) it's important to match your statistical question with the appropriate variables and ensure they are represented as individual columns to make the data tidy.
 
 ## Using `select` to extract a range of columns
 
@@ -510,7 +510,7 @@ official_langs <- mutate(official_langs,
 )
 official_langs
 ```
-Now we see `<dbl>` appears under our columns, `most_at_home` and `most_at_work`, indicating they are double data types (which is one of the sub-types of numeric)!
+Now we see `<dbl>` appears under our columns, `most_at_home` and `most_at_work`, indicating they are double data types (which is a type of numeric data type)!
 
 Now when we filter we get what we expect: 
 ```{r}
@@ -702,15 +702,12 @@ columns. Here we use only one column for sorting (`most_at_home`), but more than
 one can also be used. To do this, list additional columns separated by commas. 
 The order they are listed in indicates the order in which they will be used for 
 sorting. This is much like how an English dictionary sorts words: first by the 
-first letter, then by the second letter, and so on. *Remember: If you want to sort 
-in reverse order, you can pair a function called `desc` with `arrange` (e.g., 
-`arrange(desc(column_name))`).*
-
+first letter, then by the second letter, and so on.
 
 ```{r}
 large_region_lang <- filter(lang_home_tidy, most_at_home > 10000) |>
-select(region, language, most_at_home) |>
-arrange(most_at_home)
+  select(region, language, most_at_home) |>
+  arrange(most_at_home)
 large_region_lang
 ```
 
@@ -719,7 +716,8 @@ large_region_lang
 > piped function calls would create a long line of code. Doing this makes your code more readable. When you do this it is important 
 > to end each line with the pipe operator `|>` to tell R that your code is continuing onto the next line. 
 
-We can also write the same sequence of functions with the data frame outside of the first function and we get the same result: 
+We can also pipe the data frame into the same sequence of functions rather than using it 
+as the first argument of the first function and we get the same result: 
 ```{r}
 large_region_lang <- lang_home_tidy |> 
   filter(most_at_home > 10000) |>
@@ -727,8 +725,11 @@ large_region_lang <- lang_home_tidy |>
   arrange(most_at_home)
 large_region_lang
 ```
+
+Generally, piping in the data frame like this makes it easier to read the function sequence and makes it easier to change the data sets if needed.
+
 Now that we've shown you the pipe operator as an alternative to storing temporary objects,
-does this mean you should *never* store intermediate objects? Not necessarily! There are times when you will still want to store intermediate objects. For example, 
+does this mean you should *never* store temporary objects? Not necessarily! There are times when you will still want to store intermediate objects. For example, 
 you might want to save your prepared data before feeding it into a plot function so you can iteratively change the plot without having to redo all of your data transformations each time you create a new plot. 
 Additionally, piping many functions can be overwhelming, so you may also want to store a temporary object midway through and pipe that into more functions after that. 
 
@@ -771,13 +772,13 @@ lang_summary_by_region
 
 ### Additional reading on the `dplyr` functions
 
-As we briefly mentioned earlier in a note, the `tidyverse` is actually a *meta R package*: it installs and loads a collection of R packages that all follow 
+As we briefly mentioned earlier in a note, the `tidyverse` is actually a *R meta package*: it installs and loads a collection of R packages that all follow 
 the tidy data philosophy we discussed above. One of the `tidyverse` packages is `dplyr` - a data wrangling workhorse. You have already met six of 
 the dplyr function (`select`, `filter`, `mutate`, `arrange`, `summarize`, and `group_by`). To learn more about those six and meet a few more 
-useful functions, we recommend you checkout [this chapter](http://stat545.com/block010_dplyr-end-single-table.html#where-were-we) of the Stat 545 book.
+useful functions, we recommend you checkout [this chapter](http://stat545.com/block010_dplyr-end-single-table.html#where-were-we) of the Data wrangling, exploration, and analysis with R book.
 
 
-## Iterating data using `purrr`'s `map*` functions 
+## Using `purrr`'s `map*` functions to iterate
 
 Where should you turn when you discover the next step in your data wrangling/cleaning process requires you to apply a function to 
 each column in a data frame? For example, if you wanted to know the maximum value of each column in a data frame? Well, you could use `summarize` 
@@ -809,7 +810,7 @@ max_of_columns
 > do not need to load the `purrr` package separately.
 
 Our output looks a bit weird... we passed in a data frame, but our output doesn't look like a data frame. As it so happens, it is *not* a 
-data frame, but rather a plain vanilla list:
+data frame, but rather a plain list:
 
 ```{r 02-type-out-of-map}
 typeof(max_of_columns)
@@ -858,7 +859,7 @@ map_df(region_with_nas, max, na.rm = TRUE)
 ```
 Now `map_df()` returns the maximum count for each column ignoring the NAs in the data set! 
 
-The `map_*` functions are generally quite useful for solving problems involving iteration/repetition. Additionally, their use is not limited to columns 
+The `map_*` functions are generally quite useful for solving problems involving iteration. Additionally, their use is not limited to columns 
 of a data frame; `map_*` functions can be used to apply functions to elements of a vector or list, and even to lists of data frames, or nested data frames.
 
 ## Additional resources
