@@ -258,14 +258,13 @@ Using data in this format means it's harder to apply functions when the values a
 knitr::include_graphics("img/long_to_wide.jpeg")
 ```
 To tidy this type of data in R, we can use the function `pivot_wider`, which generally increases the number of columns (widens) and decreases the number of rows in a data set. The data set `region_lang_top5_cities_long.csv` contains the number of Canadians reporting the primary language at home and work for five major cities (Toronto, Montréal, Vancouver, Calgary and Edmonton). 
+
+
 ```{r 02-reading-long, warning=FALSE, message=FALSE}
 lang_long <- read_csv("data/region_lang_top5_cities_long.csv")
 lang_long
 ```
 
-```{r}
-flextable::flextable(lang_long, cwidth = c(0.5,7,0.5))
-```
 What is wrong with this format above? In this example, each observation should be a language in a region. However, in the messy data set above, each observation is split across multiple rows. One where the count for `most_at_home` is recorded and the other where the count for `most_at_work` is recorded. Suppose we wanted to visualize the relationship between the number of Canadians reporting their primary language at home and work. It would be difficult to do that with the data in its current format.
 
 We can see how we would like to transform the data from long to wide with `pivot_wider` in Figure \@ref(fig:img-pivot-wider-table).  
@@ -343,7 +342,24 @@ Is this data set now tidy? If we recall the three criteria for tidy data:
 - each column is a single variable, and
 - each value is a single cell.
 
-We can see that this data now satisfies all three criteria, making it easier to analyze. However, we aren't done yet! We have a few more tasks we need to do to get this data in a more usable format, which we will see in the sections below. 
+We can see that this data now satisfies all three criteria, making it easier to analyze. However, we aren't done yet! 
+Notice in the table above the word `<chr>` appears beneath each of the column names. The word under the column name indicates the data type of each column. Here all of our variables are "character" data types. Recall, a character data type is a letter or a number surrounded by quotes. In the previous example in section 
+\@ref(pivot-wider), the `most_at_home` and `most_at_work` variables were `<dbl>` (double) (you can verify this by looking at the tables in the previous sections), which is a numeric data type. This change is due to the delimiter "/" when we read in this messy data set. R read the columns in as character types, and by default, `separate` will return columns as character data types. 
+
+It makes sense for `region`, `category`, and `language` to be stored as a character type. However, if we want to apply any functions that treat the `most_at_home` and `most_at_work` columns as a number (e.g. finding rows that are above numeric threshold of a column), it won't be possible to do if the variable is stored as a `character`. We can set `convert = TRUE` to convert the `most_at_home` and `most_at_work` columns to the correct data type. 
+
+
+```{r}
+lang_no_delimiter <- separate(lang_messy_longer,
+  col = value,
+  into = c("most_at_home", "most_at_work"),
+  sep = "/", 
+  convert = TRUE
+)
+lang_no_delimiter
+```
+
+Now we see `<int>` appears under our columns, `most_at_home` and `most_at_work`, indicating they are integer data types (which is one of the sub-types of numeric)!
 
 
 ### Notes on defining tidy data
@@ -380,9 +396,9 @@ What if we want all the other language categories in the data set *except* for t
 filter(lang_no_delimiter, category != "Official languages")
 ```
 
-### Using `filter` to extract rows with `,` &` 
+### Using `filter` to extract rows with `&` or `,`
 
-Let's suppose we want to look at only the rows for English in Vancouver. Here we want to filter the data set to find rows that satisfy multiple conditions simultaneously. We can do this with `&`, which is a logical operator meaning "AND". We are filtering the `official_langs` data frame where the `region` equals "Vancouver" AND the `language` equals "English".  
+Let's suppose we want to look at only the rows for English in Vancouver. Here we want to filter the data set to find rows that satisfy multiple conditions simultaneously. We can do this with `&` (AND), which is a logical operator meaning "AND". We are filtering the `official_langs` data frame where the `region` equals "Vancouver" AND the `language` equals "English".  
 
 ```{r}
 filter(official_langs, region == "Vancouver" & language == "English")
@@ -395,9 +411,9 @@ The `filter` function treats the comma `,` between the logical statements as an 
 filter(official_langs, region == "Vancouver" , language == "English")
 ```
 
-### Using `filter` to extract rows with `|`
+### Using `filter` to extract rows with `|` 
 
-Suppose we were interested in the rows for only the Albertan cities in our data set (Edmonton and Calgary). We can't use `&` as we did above because `region` cannot be both Edmonton and Calgary simultaneously. Instead, we can use the `|` logical operator, which gives us the cases where one condition OR another condition is satisfied OR both. In the code below, we ask R to return the rows where the `region` columns are equal to "Calgary" OR "Edmonton".
+Suppose we were interested in the rows for only the Albertan cities in our data set (Edmonton and Calgary). We can't use `&` as we did above because `region` cannot be both Edmonton and Calgary simultaneously. Instead, we can use the `|` (OR) logical operator, which gives us the cases where one condition OR another condition is satisfied OR both. In the code below, we ask R to return the rows where the `region` columns are equal to "Calgary" OR "Edmonton".
 
 ```{r}
 filter(official_langs, region == "Calgary" | region == "Edmonton")
@@ -448,43 +464,11 @@ We see that `r format(most_french, scientific = FALSE, big.mark = ",")` people r
 filter(official_langs, most_at_home > 2669195)
 ```
 
-When we look at the table we got from `filter` above, it isn't quite doing what we'd expect. We see numbers in the table in the `most_at_home` column that are less than `r format(most_french, scientific = FALSE, big.mark = ",")`. What's going on here? 
+`filter` returns a data frame with only one row indicating that only English in Toronto is reported by more people as their primary language at home than French in Montréal according to the 2016 Canadian census.
+
+> `==`, `!=`, `&`, `|` and `>` are examples of logical operators. These operators don't only have be used with the `filter` function. For example, you can type `1 > 2` or `"Vancouver" == "Calgary"` into R and it will give you a response (`FALSE` in both cases). 
 
 ## Using `mutate` to modify or add columns
-### Using `mutate` to modify columns
-
-Notice in the table above the word `<chr>` appears beneath each of the column names. The word under the column name indicates the data type of each column. Here all of our variables are "character" data types. Recall, a character data type is a letter or a number surrounded by quotes. In the previous example in section 
-\@ref(pivot-wider), the `most_at_home` and `most_at_work` variables were `<dbl>` (double) (you can verify this by looking at the tables in the previous sections), which is a numeric data type. This change is due to the delimiter "/" when we read in this messy data set. R read the columns in as character types, and it stayed that way after we separated the columns. 
-
-Here it makes sense for `region`, `category`, and `language` to be stored as a character type. However, if we want to apply any functions that treat the `most_at_home` and `most_at_work` columns as a number (e.g. finding rows that are above a numeric threshold of a column), it won't be possible to do if the variable is stored as a `character`. R has a variety of data types, but here we will use the function `mutate` to convert these two columns to a "numeric" data type. `mutate` is a function that will allow us to create a new variable or transform existing ones in our data set. We specify the data set in the first argument, and in the proceeding arguments, we specify the function we want to apply (`as.numeric`) to which columns (`most_at_home`, `most_at_work`). Then we give the mutated variable a new name. Here we are naming the columns the same names ("most_at_home", "most_at_work"), but you can call these mutated variables anything you'd like. 
-
-`mutate`'s general syntax is detailed in Figure \@ref(fig:img-mutate). 
-
-```{r img-mutate, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the mutate function", out.width="1100", fig.retina = 2}
-knitr::include_graphics("img/mutate_function.jpeg")
-```
-
-
-Below we use `mutate` to convert the columns `most_at_home` and `most_at_home`
-to numeric data types in the `official_langs` data set as described in figure 
-\@ref(fig:img-mutate):
-
-```{r}
-official_langs <- mutate(official_langs,
-  most_at_home = as.numeric(most_at_home),
-  most_at_work = as.numeric(most_at_work)
-)
-official_langs
-```
-Now we see `<dbl>` appears under our columns, `most_at_home` and `most_at_work`, indicating they are double data types (which is one of the sub-types of numeric)!
-
-Now when we filter we get what we expect: 
-```{r}
-filter(official_langs, most_at_home > 2669195)
-```
-
-In this case, we see that `filter` returns a data frame with only one row; this indicates that only English in Toronto is reported by more people as their primary language at home than French in Montréal.
-
 
 ### Using `mutate` to create new columns
 
@@ -506,6 +490,7 @@ rep_popn <- rep(city_popn, 2)
 ```
 
 We can create a vector of the city populations. 
+
 Then we use `mutate` to calculate
 the proportion of people reporting a given language as their primary language at home for all the languages in the `official_langs` data set by dividing the column by our vector of city populations. We give the mutated column a new name `most_at_home_proportion`, which will create a new column in our data set. 
 ```{r}
@@ -547,7 +532,7 @@ mutate(official_langs,
 ```
 
 If you compare the proportions in these two tables, we get the same values with both methods.
-That is the beauty (and sometimes downfall) of R -- there are usually multiple ways to accomplish the same thing!
+That is the beauty of R -- there are usually multiple ways to accomplish the same thing!
 
 ## Creating a visualization with tidy data
 
@@ -686,6 +671,7 @@ large_region_lang
 > when we did this earlier in the chapter for long function calls. Again this is allowed and recommeded, especially when the 
 > piped function calls would create a long line of code. Doing this makes your code more readable. When you do this it is important 
 > to end each line with the pipe operator `|>` to tell R that your code is continuing onto the next line. 
+
 
 ## Aggregating data with `group_by` + `summarize`
 
