@@ -490,15 +490,14 @@ If we want to apply any functions that treat the `most_at_home` and `most_at_wor
 filter(official_langs, most_at_home > 2669195)
 ```
 
-Notice we are not getting the expected results in the table above because we have values less than 
-R has a variety of data types, but here we will use the function `mutate` to convert these two columns to a "numeric" data type. `mutate` is a function that will allow us to create a new variable or transform existing ones in our data set. We specify the data set in the first argument, and in the proceeding arguments, we specify the function we want to apply (`as.numeric`) to which columns (`most_at_home`, `most_at_work`). Then we give the mutated variable a new name. Here we are naming the columns the same names ("most_at_home", "most_at_work"), but you can call these mutated variables anything you'd like. 
+
+When we look at the table we got from `filter` above, it isn't quite doing what we'd expect. We see numbers in the table in the `most_at_home` column that are less than `r format(most_french, scientific = FALSE, big.mark = ",")`. Therefore we will use the function `mutate` to convert these two columns to a "numeric" data type. `mutate` is a function that will allow us to create a new variable or transform existing ones in our data set. We specify the data set in the first argument, and in the proceeding arguments, we specify the function we want to apply (`as.numeric`) to which columns (`most_at_home`, `most_at_work`). Then we give the mutated variable a new name. Here we are naming the columns the same names ("most_at_home", "most_at_work"), but you can call these mutated variables anything you'd like. 
 
 `mutate`'s general syntax is detailed in Figure \@ref(fig:img-mutate). 
 
 ```{r img-mutate, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the mutate function", out.width="1100", fig.retina = 2}
 knitr::include_graphics("img/mutate_function.jpeg")
 ```
-
 
 Below we use `mutate` to convert the columns `most_at_home` and `most_at_home`
 to numeric data types in the `official_langs` data set as described in figure 
@@ -517,8 +516,6 @@ Now when we filter we get what we expect:
 ```{r}
 filter(official_langs, most_at_home > 2669195)
 ```
-
-In this case, we see that `filter` returns a data frame with only one row; this indicates that only English in Toronto is reported by more people as their primary language at home than French in Montréal.
 
 
 ### Using `mutate` to create new columns
@@ -621,7 +618,6 @@ a data frame `data`:
 2) filter for rows where another column, `other_col`, is more than 5, and
 3) select only the new column `new_col` for those rows.
 
-
 One way of doing is to just write multiple lines of code, storing temporary objects as you go:
 
 ```{r eval = FALSE}
@@ -723,6 +719,18 @@ large_region_lang
 > piped function calls would create a long line of code. Doing this makes your code more readable. When you do this it is important 
 > to end each line with the pipe operator `|>` to tell R that your code is continuing onto the next line. 
 
+We can also write the same sequence of functions with the data frame outside of the first function and we get the same result: 
+```{r}
+large_region_lang <- lang_home_tidy |> 
+  filter(most_at_home > 10000) |>
+  select(region, language, most_at_home) |>
+  arrange(most_at_home)
+large_region_lang
+```
+Now that we've shown you the pipe operator as an alternative to storing temporary objects,
+does this mean you should *never* store intermediate objects? Not necessarily! There are times when you will still want to store intermediate objects. For example, 
+you might want to save your prepared data before feeding it into a plot function so you can iteratively change the plot without having to redo all of your data transformations each time you create a new plot. 
+Additionally, piping many functions can be overwhelming, so you may also want to store a temporary object midway through and pipe that into more functions after that. 
 
 ## Aggregating data with `group_by` + `summarize`
 
