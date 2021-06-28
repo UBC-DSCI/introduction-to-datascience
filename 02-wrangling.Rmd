@@ -296,7 +296,7 @@ The data above is now tidy! We can go through the three criteria again to check 
 
 You might notice that we have the same number of columns in our tidy data set as we did in our messy one. Therefore `pivot_wider` didn't really "widen" our data as the name suggests. However, if we had more than two categories in the original `type` column, then we would see the data set "widen."  
 
-### Using `separate` to deal with multiple delimiters
+### Using `separate` to deal with multiple delimiters  {#separate}
 
 Data are also not considered tidy when multiple values are stored in the same cell. The data set we show below is even messier than the ones we dealt with above: the `Toronto`, `Montréal`, `Vancouver`, `Calgary` and `Edmonton` columns contain the number of Canadians reporting their primary language at home and work in one column separated by the delimiter "/". The column names are the values of a variable, AND each value does not have its own cell! To turn this messy data into tidy data, we'll have to fix these issues.
 
@@ -469,6 +469,57 @@ filter(official_langs, most_at_home > 2669195)
 > `==`, `!=`, `&`, `|` and `>` are examples of logical operators. These operators don't only have be used with the `filter` function. For example, you can type `1 > 2` or `"Vancouver" == "Calgary"` into R and it will give you a response (`FALSE` in both cases). 
 
 ## Using `mutate` to modify or add columns
+
+```{r 02-character-official-langs, echo = FALSE}
+official_langs <- mutate(official_langs,
+  most_at_home = as.character(most_at_home),
+  most_at_work = as.character(most_at_work)
+)
+```
+
+In section \@ref(separate), when we first read in our data and separated our columns the variables were "character" data types. We used the `convert` argument to convert our columns to the desired data types. However, suppose we read a data set into R and wanted to convert the data types, but didn't need to separate it first. For example, suppose the `most_at_home` and `most_at_work` columns in our `official_langs` data frame were character data types. 
+
+
+```{r}
+official_langs 
+```
+
+If we want to apply any functions that treat the `most_at_home` and `most_at_work` columns as a number (e.g. finding rows that are above a numeric threshold of a column), it won't be possible to do if the variable is stored as a `character`.
+
+```{r}
+filter(official_langs, most_at_home > 2669195)
+```
+
+Notice we are not getting the expected results in the table above because we have values less than 
+R has a variety of data types, but here we will use the function `mutate` to convert these two columns to a "numeric" data type. `mutate` is a function that will allow us to create a new variable or transform existing ones in our data set. We specify the data set in the first argument, and in the proceeding arguments, we specify the function we want to apply (`as.numeric`) to which columns (`most_at_home`, `most_at_work`). Then we give the mutated variable a new name. Here we are naming the columns the same names ("most_at_home", "most_at_work"), but you can call these mutated variables anything you'd like. 
+
+`mutate`'s general syntax is detailed in Figure \@ref(fig:img-mutate). 
+
+```{r img-mutate, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the mutate function", out.width="1100", fig.retina = 2}
+knitr::include_graphics("img/mutate_function.jpeg")
+```
+
+
+Below we use `mutate` to convert the columns `most_at_home` and `most_at_home`
+to numeric data types in the `official_langs` data set as described in figure 
+\@ref(fig:img-mutate):
+
+```{r}
+official_langs <- mutate(official_langs,
+  most_at_home = as.numeric(most_at_home),
+  most_at_work = as.numeric(most_at_work)
+)
+official_langs
+```
+Now we see `<dbl>` appears under our columns, `most_at_home` and `most_at_work`, indicating they are double data types (which is one of the sub-types of numeric)!
+
+Now when we filter we get what we expect: 
+```{r}
+filter(official_langs, most_at_home > 2669195)
+```
+
+In this case, we see that `filter` returns a data frame with only one row; this indicates that only English in Toronto is reported by more people as their primary language at home than French in Montréal.
+
 
 ### Using `mutate` to create new columns
 
