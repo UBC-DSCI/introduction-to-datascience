@@ -376,27 +376,28 @@ Is there only one shape for tidy data for a given data set? Not necessarily! It 
 Chapter 1 discussed two `tidyverse` functions: `select` and `filter` to select columns and filter rows from a data frame. We will now learn more ways we can use these functions. Recall, the `select` function creates a subset of the *columns* of a data frame, while the `filter` subsets *rows* with specific values.
 
 ### Using `select` helpers to extract columns 
-Suppose we wanted to select only the columns `language`, `region`, `most_at_home` and `most_at_work`. We can use the `select` function to choose the columns that we want and assign it to a data frame. 
+Suppose we wanted to select only the columns `language`, `region`, `most_at_home` and `most_at_work` from the `lang_no_delimiter` data set. We can use the `select` function to choose the columns that we want and assign it to a data frame:
 
 ```{r}
 selected_columns <- select(lang_no_delimiter, language, region, most_at_home, most_at_work)
 selected_columns
 ```
-Here we wrote out the names of each of the columns we wanted. However, this method is time-consuming, especially if you have a lot of columns! Another approach is to use a "`select` helper".  `select` helpers are operators that make it easier for us to select columns. For instance, we can use a `select` helper to choose a range of columns rather than typing each column name out. To do this, we use the colon (`:`) operator to denote the range. For example, to get all the columns in the `lang_no_delimiter` data frame from `language` to `most_at_work` we pass `language:most_at_work` as the second argument to the `select` function.
+
+Here we wrote out the names of each of the columns However, this method is time-consuming, especially if you have a lot of columns! Another approach is to use a "`select` helper".  `select` helpers are operators that make it easier for us to select columns. For instance, we can use a `select` helper to choose a range of columns rather than typing each column name out. To do this, we use the colon (`:`) operator to denote the range. For example, to get all the columns in the `lang_no_delimiter` data frame from `language` to `most_at_work` we pass `language:most_at_work` as the second argument to the `select` function.
 
 ```{r}
 column_range <- select(lang_no_delimiter, language:most_at_work)
 column_range
 ```
+Notice that we get the exact same output as we did above, but with less typing! This type of operator is handy especially for large data sets. 
 
-
-Suppose we wanted to extract columns that followed a certain pattern. Let's say we wanted to only select the columns `most_at_home` and `most_at_work`. There are some helpers, which allow us to select variables based on their names. Here we can use the `select` helper `starts_with` to choose only the columns that start with the word "most": 
+Suppose instead we wanted to extract columns that followed a certain pattern rather than just selecting a range. Let's say we wanted to only select the columns `most_at_home` and `most_at_work`. There are some helpers, which allow us to select variables based on their names. Here we can use the `select` helper `starts_with` to choose only the columns that start with the word "most": 
 
 ```{r 02-select-helpers}
 select(lang_no_delimiter, starts_with("most"))
 ```
 
-We could also have also chosen the columns that contain an underscore `_` since we notice in this data set the columns we want to select contain underscores and the others don't. 
+We could also have also chosen the columns that contain an underscore `_` using `contains` since we notice in this data set the columns we want to select contain underscores and the others don't. 
 
 ```{r 02-select-helper-contains}
 select(lang_no_delimiter, contains("_"))
@@ -799,7 +800,8 @@ summarize_if(lang_home_tidy,
              max)
 ```
 Notice that we get the same output as we did above! From the table, we see that the most commonly spoken 
-primary language at home is spoken by  `r format(lang_summary_max$most_most_at_home[1], scientific = FALSE, big.mark = ",")` people and at work is spoken by  `r format(lang_summary_max$most_most_at_work[1], scientific = FALSE, big.mark = ",")` people. 
+primary language at home is spoken by  `r format(lang_summary_max$most_most_at_home[1], scientific = FALSE, big.mark = ",")` people and the most commonly spoken language at work is spoken by  `r format(lang_summary_max$most_most_at_work[1], scientific = FALSE, big.mark = ",")` people. 
+
 ### Calculating group summary statistics:
 
 A common pairing with `summarize` is `group_by`. Pairing these functions together can let you summarize values for subgroups within a data set. For example, here, we can use `group_by` to group the regions and then calculate the minimum and maximum number of Canadians reporting the language as the primary language at home for each of the groups.
@@ -836,49 +838,40 @@ region_lang <- read_csv("data/region_lang.csv")
 region_lang
 ```
 
-Next, we will select only the numeric columns of the data frame:
 
+Next, we use `summarize` and `across` to apply the `max` function to the columns `mother_tongue` up to `lang_known`. In the first argument of `across` we specify the columns and in the second argument we indicate the function we want to apply.
 ```{r 02-across-data}
-region_lang |>
+max_of_columns <- region_lang |>
   summarize(across(mother_tongue:lang_known, max))
 
+max_of_columns
 ```
-Next, we use `map` to apply the `max` function to each column. `map` takes two arguments, an object (a vector, data frame or list) that you want 
-to apply the function to, and the function that you would like to apply. Here our arguments will be `region_lang_numeric` and `max`:
-
-> **Note:** `purrr` is part of the tidyverse, and so like the `dplyr` and `ggplot` functions, once we call `library(tidyverse)` we 
-> do not need to load the `purrr` package separately.
-
-Our output looks a bit weird... we passed in a data frame, but our output doesn't look like a data frame. As it so happens, it is *not* a 
-data frame, but rather a plain list:
 
 
-So what do we do? Should we convert this to a data frame? We could, but a simpler alternative is to just use a different `map_*` function from 
-the `purrr` package. There are quite a few to choose from, they all work similarly, and their name reflects the type of output you want from 
-the mapping operation:
+What if you need to add other arguments to the functions you want to use? For example, what if there were NA values in our columns that we wanted to know the maximum of? 
 
-| `map` function | Output |
-|----------|--------|
-| `map()` | list |
-| `map_lgl()` | logical vector |
-| `map_int()` | integer vector |
-| `map_dbl()` | double vector |
-| `map_chr()` | character vector |
-| `map_df()` | data frame |
+```{r 02-making-NAs-data, include = F}
+region_with_nas <- region_lang |> 
+  select_if(is.numeric) |>
+add_row(mother_tongue = 5, most_at_home = 5, most_at_work = NA, lang_known = NA) |>
+arrange(!is.na(lang_known), lang_known) |>
+write_csv("data/region_lang_with_nas.csv")
+```
 
-Let's get the columns' maximums again, but this time use the `map_df` function to return the output as a data frame:
+```{r 02-read-in-nas}
+region_with_nas <- read_csv("data/region_lang_with_nas.csv")
+region_with_nas
+```
+Notice `summarize` returns `NA` for the `most_at_work` and `lang_known` variables since those columns contained NAs in the data frame. This is what happens with many of the built-in R statistical functions when NA's are present (it is not solely a problem with `summarize` and `across`). Thus, we also need to add the argument `na.rm  = TRUE` (`na.rm` means "NA remove") to the `across` function so that we get a more useful value than `NA` returned. An example of this is shown below:
+```{r 02-across-data}
+max_of_columns <- region_with_nas |>
+  summarize(across(mother_tongue:lang_known, max, na.rm = TRUE))
 
-Which `map_*` function you choose depends on what you want to do with the output; you don't always have to pick `map_df`!
-
-What if you need to add other arguments to the functions you want to map? For example, what if there were NA values in our columns that we wanted to know the maximum of? 
-
-Notice `map_df()` returns `NA` for the `most_at_work` and `lang_known` variables since those columns contained NAs in the data frame. Thus, we also need to add the argument `na.rm  = TRUE` to the `max` function so that we get a more useful value than `NA` returned (remember that is what happens with many of the built-in R statistical functions when NA's are present...). What we need to do in that case is add these additional arguments to the end of our call to to `map` and they will be passed to the function that we are mapping. An example of this is shown below:
+max_of_columns
+```
 
 
-Now `map_df()` returns the maximum count for each column ignoring the NAs in the data set! 
-
-The `map_*` functions are generally quite useful for solving problems involving iteration. Additionally, their use is not limited to columns 
-of a data frame; `map_*` functions can be used to apply functions to elements of a vector or list, and even to lists of data frames, or nested data frames.
+Now we get the maximum count for each column ignoring the NAs in the data set! 
 
 
 ## Using `purrr`'s `map*` functions to iterate 
