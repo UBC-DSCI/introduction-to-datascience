@@ -132,7 +132,12 @@ knitr::include_graphics("img/dataframe.jpeg")
 
 The functions from the `tidyverse` package that we are using often give us a special class of data frame called a *tibble*. Tibbles have some additional features and benefits over the built-in data frame object. These include the ability to add grouping (and other useful) attributes and more predictable type preservation when subsetting. Because a tibble is just a data frame with some added features, we will collectively refer to both built-in R data frames and tibbles as data frames in this book.
 
-> You can use the function `class` on a data object to assess whether a data frame is a built-in R data frame or a tibble. If the data object is a data frame `class` will return `"data.frame"`, whereas if the data object is a tibble it  will return `"tbl_df" "tbl" "data.frame"`. You can easily convert built-in R  data frames to tibbles using the `tidyverse` `as_tibble` function.
+> You can use the function `class` on a data object to assess whether a data frame is a built-in R data frame or a tibble. If the data object is a data frame `class` will return `"data.frame"`, whereas if the data object is a tibble it  will return `"tbl_df" "tbl" "data.frame"`. You can easily convert built-in R data frames to tibbles using the `tidyverse` `as_tibble` function. For example we can check the class of the Canadian languages data set, `can_lang`, we worked with in the previous chapters and we see it is a tibble.
+
+```{r 02-load-can-land, warning=F, message=F}
+class(can_lang)
+```
+
 
 Vectors, data frames and lists are basic types of *data structures* in R which are core to most data analyses. We summarize them in table \@ref(tab:datastructure-table).
 
@@ -183,17 +188,21 @@ separate columns but are really part of the same variable. Data is often stored
 in a wider, not tidy, format because this format is usually more intuitive for
 human readability and understanding, and humans create data sets.
 
-For example, in Figure \@ref(fig:02-wide-to-long), the table on the left is an
-untidy format because the year values (2011, 2016) are listed as the column headers. 
-One problem with using data in this format is that we don't know what the values
-under each year represent in the table. Also, we can't easily access the year
-values, so if we wanted to find the maximum year, for example, it's hard to do 
-when the values are not in their own column. We can reshape this data set to a long format by creating a column called "year" and a column called "population," which is the table on the right.
+For example, in Figure \@ref(fig:02-wide-to-long), the table on the left is in an
+untidy, "wide" format because the year values (2006, 2011, 2016) are listed as the column headers. 
+For humans, this table is easy to read thus you will often find data stored in this wide format. 
+However, for R, to do any visualization or analysis this format is difficult to work with. 
+For example, if we wanted to find the maximum year it's hard to do 
+when the year values are not in their own column. 
+Another problem with data in this format is that we don't know what the numbers
+under each year actually represent. Do those numbers represent population size? Land area? It's not clear.
+We can reshape this data set to a "long" format by creating a column called "year" and a column called "population," which is the table on the right.
 
 ```{r 02-wide-to-long, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from wide to long data", fig.retina = 2, out.width = "1150"}
 knitr::include_graphics("img/wide_to_long.jpeg")
 ```
-We can use the function `pivot_longer`, which combines columns, making the data frame longer and narrower. To learn how to use `pivot_longer`, we will work with the `region_lang_top5_cities_wide.csv` data set. This data set contains contains the counts of how many Canadians cited each language as their mother tongue for five major Canadian cities (Toronto, Montréal, Vancouver, Calgary and Edmonton) from the 2016 Canadian census. We will load the `tidyverse` packing so we can use our wrangling functions and the `canlang` package
+
+The function `pivot_longer`, which combines columns, makes the data frame longer and narrower. To learn how to use `pivot_longer`, we will work with the `region_lang_top5_cities_wide.csv` data set. This data set contains contains the counts of how many Canadians cited each language as their mother tongue for five major Canadian cities (Toronto, Montréal, Vancouver, Calgary and Edmonton) from the 2016 Canadian census. We will load the `tidyverse` package so we can use our wrangling functions and the `canlang` package
 since it contains the `region_lang` and `region_data` data sets that we will use later in the chapter.  
 
 Our data set is stored in an untidy format, as shown below:
@@ -209,19 +218,19 @@ lang_wide
 What is wrong with our untidy format above? From a data analysis perspective, this format is not ideal because the values of the variable *region* (Toronto, Montréal, Vancouver, Calgary and Edmonton) are stored as column names. Thus they are not easily accessible to the data analysis functions we will want to apply to our data set. Additionally, the values of the *mother tongue* variable are spread across multiple columns, which will prevent us from doing any desired visualization or statistical tasks until we combine them into one column. For instance, suppose we want to know the languages with the highest number of Canadians reporting it as their mother tongue among all five regions. This question would be tough to answer with the data in its current format. It would be much easier to answer if we tidy our data first. 
 
 To accomplish this data transformation, we will use the `tidyverse` function
-`pivot_longer`. Figure \@ref(fig:img-pivot-longer-with-table) summarizes how we want to
-reshape our data from wide to long with using the `pivot_longer` function. 
+`pivot_longer`. The table on the left in Figure \@ref(fig:img-pivot-longer-with-table) represents the data in the "wide" format and the table on the right represents how we want the data to look after we've applied the `pivot_longer` function. 
+
 ```{r img-pivot-longer-with-table, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from wide to long with the pivot_longer function", out.width="1100", fig.retina = 2}
 knitr::include_graphics("img/pivot_longer_with_table.jpeg")
 ```
 
-Figure \@ref(fig:img-pivot-longer) details what we need to specify to use `pivot_longer`.
+Figure \@ref(fig:img-pivot-longer) details what arguments we need to specify to use `pivot_longer`.
 
 ```{r img-pivot-longer, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the pivot_longer function", out.width="1100", fig.retina = 2}
 knitr::include_graphics("img/pivot_longer.jpeg")
 ```
 
-For the above example, we use `pivot_longer` to combine the Toronto, Montréal, Vancouver, Calgary and Edmonton columns into a single column called `region`, and create a column called `mother_tongue` that contains the count of how many Canadians report each language as their mother tongue for each metropolitan area. We use a colon `,` between Toronto, and Edmonton tells R to select all the columns in between Toronto and Edmonton: 
+For the above example, we use `pivot_longer` to combine the Toronto, Montréal, Vancouver, Calgary and Edmonton columns into a single column called `region`, and create a column called `mother_tongue` that contains the count of how many Canadians report each language as their mother tongue for each metropolitan area. We use a colon `:` between Toronto, and Edmonton to tell R to select all the columns in between Toronto and Edmonton: 
 ```{r}
 lang_mother_tidy <- pivot_longer(lang_wide,
   cols = Toronto:Edmonton,
@@ -246,19 +255,22 @@ The data above is now tidy because all three criteria for tidy data have now bee
 ### Going from long to wide using `pivot_wider` {#pivot-wider}
 
 Suppose we have observations spread across multiple rows rather than in a single row. For example, in Figure \@ref(fig:long-to-wide), the table on the left is an
-untidy format because the `count` column contains two variables (population and commuter count) and each observation is split across two rows.
+untidy, long format because the `count` column contains two variables (population and commuter count) and each observation is split across two rows.
 Using data in this format means it's harder to apply functions when the values are not in their own column. For example, finding the maximum number of commuters is possible to do with the untidy table but requires a few more steps and is cumbersome. We can reshape this data set to a wider format by creating a column called "population" and a column called "commuters", which is the table on the right.
 
 ```{r long-to-wide, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from long to wide data", fig.retina = 2, out.width = "1150"}
 knitr::include_graphics("img/long_to_wide.jpeg")
 ```
+
 To tidy this type of data in R, we can use the function `pivot_wider`, which generally increases the number of columns (widens) and decreases the number of rows in a data set. The data set `region_lang_top5_cities_long.csv` contains the number of Canadians reporting the primary language at home and work for five major cities (Toronto, Montréal, Vancouver, Calgary and Edmonton). 
-```{r 02-reading-long, warning=FALSE, message=FALSE}
+
+
+```{r 02-reading-long, warning=FALSE, message=FALSE, R.options = list(width = 90)}
 lang_long <- read_csv("data/region_lang_top5_cities_long.csv")
 lang_long
 ```
 
-What is wrong with this format above? In this example, each observation should be a language in a region. However, in the messy data set above, each observation is split across multiple rows. One where the count for `most_at_home` is recorded and the other where the count for `most_at_work` is recorded. Suppose we wanted to visualize the relationship between the number of Canadians reporting their primary language at home and work. It would be difficult to do that with the data in its current format.
+What is wrong with this format above? In this example, each observation should be a language in a region. However, in the messy data set above, each observation is split across multiple rows. One where the count for `most_at_home` is recorded and the other where the count for `most_at_work` is recorded. Suppose we wanted to visualize the relationship between the number of Canadians reporting their primary language at home and work. It would be difficult to do that with the data in its current format since these two variables are stored in the same column.
 
 We can see how we would like to transform the data from long to wide with `pivot_wider` in Figure \@ref(fig:img-pivot-wider-table).  
 ```{r img-pivot-wider-table, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from long to wide with pivot_wider", out.width="1100", fig.retina = 2}
@@ -284,12 +296,12 @@ lang_home_tidy
 The data above is now tidy! We can go through the three criteria again to check that this data is a tidy data set. 
 
 1. All the variables are their own columns in the data frame, i.e., `most_at_home`, and `most_at_work` have been separated into their own columns in the data frame. 
-2. Each observation, i.e., each `category`, `language`, `region`, `most_at_home` and `most_at_work`, are in a single row.
+2. Each observation, i.e., each language in a region is in a single row.
 3. Each value is a single cell, i.e., its row, column position in the data frame is not shared with another value.
 
 You might notice that we have the same number of columns in our tidy data set as we did in our messy one. Therefore `pivot_wider` didn't really "widen" our data as the name suggests. However, if we had more than two categories in the original `type` column, then we would see the data set "widen."  
 
-### Using `separate` to deal with multiple delimiters
+### Using `separate` to deal with multiple delimiters  {#separate}
 
 Data are also not considered tidy when multiple values are stored in the same cell. The data set we show below is even messier than the ones we dealt with above: the `Toronto`, `Montréal`, `Vancouver`, `Calgary` and `Edmonton` columns contain the number of Canadians reporting their primary language at home and work in one column separated by the delimiter "/". The column names are the values of a variable, AND each value does not have its own cell! To turn this messy data into tidy data, we'll have to fix these issues.
 
@@ -335,23 +347,63 @@ Is this data set now tidy? If we recall the three criteria for tidy data:
 - each column is a single variable, and
 - each value is a single cell.
 
-We can see that this data now satisfies all three criteria, making it easier to analyze. However, we aren't done yet! We have a few more tasks we need to do to get this data in a more usable format, which we will see in the sections below. 
+We can see that this data now satisfies all three criteria, making it easier to analyze. However, we aren't done yet! 
+Notice in the table above the word `<chr>` appears beneath each of the column names. The word under the column name indicates the data type of each column. Here all of our variables are "character" data types. Recall, character data types are letter(s) or digits(s) surrounded by quotes. In the previous example in section 
+\@ref(pivot-wider), the `most_at_home` and `most_at_work` variables were `<dbl>` (double) (you can verify this by looking at the tables in the previous sections), which is a type of numeric data. This change is due to the delimiter "/" when we read in this messy data set. R read the columns in as character types, and by default, `separate` will return columns as character data types. 
+
+It makes sense for `region`, `category`, and `language` to be stored as a character type. However, if we want to apply any functions that treat the `most_at_home` and `most_at_work` columns as a number (e.g. finding rows that are above numeric threshold of a column), it won't be possible to do if the variable is stored as a `character`. We can set `convert = TRUE` to convert the `most_at_home` and `most_at_work` columns to the correct data type. 
+
+
+```{r}
+lang_no_delimiter <- separate(lang_messy_longer,
+  col = value,
+  into = c("most_at_home", "most_at_work"),
+  sep = "/", 
+  convert = TRUE
+)
+lang_no_delimiter
+```
+
+Now we see `<int>` appears under our columns, `most_at_home` and `most_at_work`, indicating they are integer data types (which is one of the sub-types of numeric)!
 
 
 ### Notes on defining tidy data
 
-Is there only one shape for tidy data for a given data set? Not necessarily! It depends on the statistical question you are asking and what the variables are for that question. For tidy data, each variable should be its own column. So, just as it's essential to match your statistical question with the appropriate data analysis tool (classification, clustering, hypothesis testing, etc.). It's important to match your statistical question with the appropriate variables and ensure they are represented as individual columns to make the data tidy.
+Is there only one shape for tidy data for a given data set? Not necessarily! It depends on the statistical question you are asking and what the variables are for that question. For tidy data, each variable should be its own column. So, just as it's essential to match your statistical question with the appropriate data analysis tool (classification, clustering, hypothesis testing, etc.) it's important to match your statistical question with the appropriate variables and ensure they are represented as individual columns to make the data tidy.
 
 ## Using `select` to extract a range of columns
 
 Chapter 1 discussed two `tidyverse` functions: `select` and `filter` to select columns and filter rows from a data frame. We will now learn more ways we can use these functions. Recall, the `select` function creates a subset of the *columns* of a data frame, while the `filter` subsets *rows* with specific values.
 
-We can use `select` to obtain a subset of the data frame constructed from a range of columns rather than typing each column name out. To do this, we use the colon (`:`) operator to denote the range. For example, to get all the columns in the `lang_no_delimiter` data frame from `language` to `most_at_work` we pass `language:most_at_work` as the second argument to the `select` function.
+### Using `select` helpers to extract columns 
+Suppose we wanted to select only the columns `language`, `region`, `most_at_home` and `most_at_work` from the `lang_no_delimiter` data set. We can use the `select` function to choose the columns that we want and assign it to a data frame:
+
+```{r}
+selected_columns <- select(lang_no_delimiter, language, region, most_at_home, most_at_work)
+selected_columns
+```
+
+Here we wrote out the names of each of the columns. However, this method is time-consuming, especially if you have a lot of columns! Another approach is to use a "`select` helper".  `select` helpers are operators that make it easier for us to select columns. For instance, we can use a `select` helper to choose a range of columns rather than typing each column name out. To do this, we use the colon (`:`) operator to denote the range. For example, to get all the columns in the `lang_no_delimiter` data frame from `language` to `most_at_work` we pass `language:most_at_work` as the second argument to the `select` function.
 
 ```{r}
 column_range <- select(lang_no_delimiter, language:most_at_work)
 column_range
 ```
+Notice that we get the same output as we did above, but with less typing! This type of operator is handy, especially for large data sets. 
+
+Suppose instead we wanted to extract columns that followed a particular pattern rather than just selecting a range. Let's say we wanted only to select the columns `most_at_home` and `most_at_work`. There are some helpers, which allow us to select variables based on their names. Here we can use the `select` helper `starts_with` to choose only the columns that start with the word "most": 
+
+```{r 02-select-helpers}
+select(lang_no_delimiter, starts_with("most"))
+```
+
+We could also have chosen the columns containing an underscore `_` by adding `contains("_")` as the second argument in the `select` function since we notice the columns we want contain underscores and the others don't. 
+
+```{r 02-select-helper-contains}
+select(lang_no_delimiter, contains("_"))
+```
+
+There are many different `select` helpers, which are very handy for selecting variables based on certain criteria. Check out the resource in the additional resources section for a complete list of `select` helpers. 
 
 ## Using `filter` to extract rows
 
@@ -372,24 +424,24 @@ What if we want all the other language categories in the data set *except* for t
 filter(lang_no_delimiter, category != "Official languages")
 ```
 
-### Using `filter` to extract rows with `,` &` 
+### Using `filter` to extract rows with `&` or `,`
 
-Let's suppose we want to look at only the rows for English in Vancouver. Here we want to filter the data set to find rows that satisfy multiple conditions simultaneously. We can do this with `&`, which is a logical operator meaning "AND". We are filtering the `official_langs` data frame where the `region` equals "Vancouver" AND the `language` equals "English".  
+Let's suppose we want to look at only the rows for English in Vancouver. Here we want to filter the data set to find rows that satisfy multiple conditions simultaneously. We can do this with `&`, which is a logical operator meaning "AND". We are filtering the `official_langs` data frame where the `region == "Vancouver"` AND the `language == "English"`.  
 
 ```{r}
 filter(official_langs, region == "Vancouver" & language == "English")
 ```
 
 Notice that we can accomplish the same thing using a comma `,` instead of the ampersand sign `&`. 
-The `filter` function treats the comma `,` between the logical statements as an "AND". 
+The function treats the comma `,` between the logical statements as an "AND". 
 
 ```{r}
 filter(official_langs, region == "Vancouver" , language == "English")
 ```
 
-### Using `filter` to extract rows with `|`
+### Using `filter` to extract rows with `|` 
 
-Suppose we were interested in the rows for only the Albertan cities in our data set (Edmonton and Calgary). We can't use `&` as we did above because `region` cannot be both Edmonton and Calgary simultaneously. Instead, we can use the `|` logical operator, which gives us the cases where one condition OR another condition is satisfied OR both. In the code below, we ask R to return the rows where the `region` columns are equal to "Calgary" OR "Edmonton".
+Suppose we were interested in the rows for only the Albertan cities in our data set (Edmonton and Calgary). We can't use `&` as we did above because `region` cannot be both Edmonton and Calgary simultaneously. Instead, we can use the `|` logical operator, which gives us the cases where one condition OR another condition OR both are satisfied. In the code below, we ask R to return the rows where the `region` columns are equal to "Calgary" OR "Edmonton".
 
 ```{r}
 filter(official_langs, region == "Calgary" | region == "Edmonton")
@@ -412,14 +464,14 @@ filter(region_data, region %in% c("Toronto", "Montréal", "Vancouver", "Calgary"
 ```
 
 > **What's the difference between `==` and `%in%`?**
-> Let's suppose we have two vectors, `vector1` and `vector2`. If you type 
-> `vector1 == vector2` into R it
+> Let's suppose we have two vectors, `vectorA` and `vectorB`. If you type 
+> `vectorA == vectorB` into R it
 will compare the vectors element by element. R checks if the first element of 
-`vector1` equals the first element of `vector2`, the second element of `vector1`
-equals the second element of `vector2` etc. 
-> On the other hand, `vector1 %in% vector2`
-compares the first element of `vector1` to all the elements in `vector2`. 
-Then the second element of `vector1` is then compared to all the elements in `vector2` etc. Notice the difference between `==` and `%in%` in the example below. 
+`vectorA` equals the first element of `vectorB`, the second element of `vectorA`
+equals the second element of `vectorB` etc. 
+> On the other hand, `vectorA %in% vectorB`
+compares the first element of `vectorA` to all the elements in `vectorB`. 
+Then the second element of `vectorA` is then compared to all the elements in `vectorB` etc. Notice the difference between `==` and `%in%` in the example below. 
  
 ```{r}
 c("Vancouver", "Toronto") == c("Toronto", "Vancouver")
@@ -440,22 +492,40 @@ We see that `r format(most_french, scientific = FALSE, big.mark = ",")` people r
 filter(official_langs, most_at_home > 2669195)
 ```
 
-When we look at the table we got from `filter` above, it isn't quite doing what we'd expect. We see numbers in the table in the `most_at_home` column that are less than `r format(most_french, scientific = FALSE, big.mark = ",")`. What's going on here? 
+`filter` returns a data frame with only one row indicating that only English in Toronto is reported by more people as their primary language at home than French in Montréal according to the 2016 Canadian census.
+
+> `==`, `!=`, `&`, `|` and `>` are examples of logical operators. These operators don't only have be used with the `filter` function. For example, you can type `1 > 2` or `"Vancouver" == "Calgary"` into R and it will give you a response (`FALSE` in both cases). 
 
 ## Using `mutate` to modify or add columns
-### Using `mutate` to modify columns
 
-Notice in the table above the word `<chr>` appears beneath each of the column names. The word under the column name indicates the data type of each column. Here all of our variables are "character" data types. Recall, a character data type is a letter or a number surrounded by quotes. In the previous example in section 
-\@ref(pivot-wider), the `most_at_home` and `most_at_work` variables were `<dbl>` (double) (you can verify this by looking at the tables in the previous sections), which is a numeric data type. This change is due to the delimiter "/" when we read in this messy data set. R read the columns in as character types, and it stayed that way after we separated the columns. 
+```{r 02-character-official-langs, echo = FALSE}
+official_langs <- mutate(official_langs,
+  most_at_home = as.character(most_at_home),
+  most_at_work = as.character(most_at_work)
+)
+```
 
-Here it makes sense for `region`, `category`, and `language` to be stored as a character type. However, if we want to apply any functions that treat the `most_at_home` and `most_at_work` columns as a number (e.g. finding rows that are above a numeric threshold of a column), it won't be possible to do if the variable is stored as a `character`. R has a variety of data types, but here we will use the function `mutate` to convert these two columns to a "numeric" data type. `mutate` is a function that will allow us to create a new variable or transform existing ones in our data set. We specify the data set in the first argument, and in the proceeding arguments, we specify the function we want to apply (`as.numeric`) to which columns (`most_at_home`, `most_at_work`). Then we give the mutated variable a new name. Here we are naming the columns the same names ("most_at_home", "most_at_work"), but you can call these mutated variables anything you'd like. 
+In section \@ref(separate), when we first read in our data and separated our columns the variables were "character" data types. We used the `convert` argument to convert our columns to the desired data types. However, suppose we read a data set into R and wanted to convert the data types, but didn't need to separate it first. For example, suppose the `most_at_home` and `most_at_work` columns in our `official_langs` data frame were character data types. 
+
+
+```{r}
+official_langs 
+```
+
+If we want to apply any functions that treat the `most_at_home` and `most_at_work` columns as a number (e.g. finding rows that are above a numeric threshold of a column), it won't be possible to do if the variable is stored as a `character`.
+
+```{r}
+filter(official_langs, most_at_home > 2669195)
+```
+
+
+When we look at the table we got from `filter` above, it isn't quite doing what we'd expect. We see numbers in the table in the `most_at_home` column that are less than `r format(most_french, scientific = FALSE, big.mark = ",")`. Therefore we will use the function `mutate` to convert these two columns to a "numeric" data type. `mutate` is a function that will allow us to create a new variable or transform existing ones in our data set. We specify the data set in the first argument, and in the proceeding arguments, we specify the function we want to apply (`as.numeric`) to which columns (`most_at_home`, `most_at_work`). Then we give the mutated variable a new name. Here we are naming the columns the same names ("most_at_home", "most_at_work"), but you can call these mutated variables anything you'd like. 
 
 `mutate`'s general syntax is detailed in Figure \@ref(fig:img-mutate). 
 
 ```{r img-mutate, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the mutate function", out.width="1100", fig.retina = 2}
 knitr::include_graphics("img/mutate_function.jpeg")
 ```
-
 
 Below we use `mutate` to convert the columns `most_at_home` and `most_at_home`
 to numeric data types in the `official_langs` data set as described in figure 
@@ -468,14 +538,12 @@ official_langs <- mutate(official_langs,
 )
 official_langs
 ```
-Now we see `<dbl>` appears under our columns, `most_at_home` and `most_at_work`, indicating they are double data types (which is one of the sub-types of numeric)!
+Now we see `<dbl>` appears under our columns, `most_at_home` and `most_at_work`, indicating they are double data types (which is a type of numeric data type)!
 
 Now when we filter we get what we expect: 
 ```{r}
 filter(official_langs, most_at_home > 2669195)
 ```
-
-In this case, we see that `filter` returns a data frame with only one row; this indicates that only English in Toronto is reported by more people as their primary language at home than French in Montréal.
 
 
 ### Using `mutate` to create new columns
@@ -497,8 +565,7 @@ city_popn <- region_data |> filter(region %in% c("Toronto", "Montréal", "Vancou
 rep_popn <- rep(city_popn, 2)
 ```
 
-We can create a vector of the city populations. 
-Then we use `mutate` to calculate
+We can create a vector of the city populations. Then we use `mutate` to calculate
 the proportion of people reporting a given language as their primary language at home for all the languages in the `official_langs` data set by dividing the column by our vector of city populations. We give the mutated column a new name `most_at_home_proportion`, which will create a new column in our data set. 
 ```{r}
 city_populations <- c(5928040, 4098927, 2463431, 1392609, 1321426)
@@ -539,7 +606,7 @@ mutate(official_langs,
 ```
 
 If you compare the proportions in these two tables, we get the same values with both methods.
-That is the beauty (and sometimes downfall) of R -- there are usually multiple ways to accomplish the same thing!
+That is the beauty of R -- there are usually multiple ways to accomplish the same thing!
 
 ## Creating a visualization with tidy data
 
@@ -577,7 +644,6 @@ a data frame `data`:
 2) filter for rows where another column, `other_col`, is more than 5, and
 3) select only the new column `new_col` for those rows.
 
-
 One way of doing is to just write multiple lines of code, storing temporary objects as you go:
 
 ```{r eval = FALSE}
@@ -609,7 +675,7 @@ filter(other_col > 5) |>
 select(new_col)
 ```
 
-> Note: The `|>` pipe operator was inspired by a previous version of the pipe operator, `%>%`. The `%>%` pipe operator is not built into R and needs to be loaded via an external R package. There are some other drawbacks to using `%>%`, which are beyond the scope of this textbook. However, be aware that `%>%` exists since you may see it used in some books or other sources. In this textbook, we will be using the base R pipe operator syntax, `|>`. 
+> Note: The `|>` pipe operator was inspired by a previous version of the pipe operator, `%>%`. The `%>%` pipe operator is not built into R and needs to be loaded via an external R package. There are some other drawbacks to using `%>%`, which are beyond the scope of this textbook. Be aware that `%>%` exists since you may see it used in some books or other sources. However, in this textbook, we will be using the base R pipe operator syntax, `|>`. 
 
 You can think of the pipe as a physical pipe. It takes the output from the function on the left-hand side of the pipe, and
 passes it as the first argument to the function on the right-hand side of the pipe. Note here that we have again split the 
@@ -662,15 +728,12 @@ columns. Here we use only one column for sorting (`most_at_home`), but more than
 one can also be used. To do this, list additional columns separated by commas. 
 The order they are listed in indicates the order in which they will be used for 
 sorting. This is much like how an English dictionary sorts words: first by the 
-first letter, then by the second letter, and so on. *Remember: If you want to sort 
-in reverse order, you can pair a function called `desc` with `arrange` (e.g., 
-`arrange(desc(column_name))`).*
-
+first letter, then by the second letter, and so on.
 
 ```{r}
 large_region_lang <- filter(lang_home_tidy, most_at_home > 10000) |>
-select(region, language, most_at_home) |>
-arrange(most_at_home)
+  select(region, language, most_at_home) |>
+  arrange(most_at_home)
 large_region_lang
 ```
 
@@ -679,11 +742,26 @@ large_region_lang
 > piped function calls would create a long line of code. Doing this makes your code more readable. When you do this it is important 
 > to end each line with the pipe operator `|>` to tell R that your code is continuing onto the next line. 
 
-## Iterating over data with `group_by` + `summarize`
+We can also pipe the data frame into the same sequence of functions rather than using it 
+as the first argument of the first function and we get the same result: 
+```{r}
+large_region_lang <- lang_home_tidy |> 
+  filter(most_at_home > 10000) |>
+  select(region, language, most_at_home) |>
+  arrange(most_at_home)
+large_region_lang
+```
+
+Now that we've shown you the pipe operator as an alternative to storing temporary objects,
+does this mean you should *never* store temporary objects? Not necessarily! There are times when you will still want to store intermediate objects. For example, 
+you might want to save your prepared data before feeding it into a plot function so you can iteratively change the plot without having to redo all of your data transformations each time you create a new plot. 
+Additionally, piping many functions can be overwhelming, so you may also want to store a temporary object midway through and pipe that into more functions after that. 
+
+## Aggregating data with `group_by` + `summarize`
 
 ### Calculating summary statistics:
 
-As a part of many data analyses, we need to calculate a summary value for the data (a summary statistic). A useful `dplyr` function for doing this is 
+As a part of many data analyses, we need to calculate a summary value for the data (a *summary statistic*). A useful `dplyr` function for doing this is 
 `summarize`. Examples of summary statistics we might want to calculate are the number of observations, the average/mean value 
 for a column, the minimum value for a column, etc. Below we show how to use the `summarize` function to calculate the minimum and maximum 
 number of Canadians reporting a particular language as their primary language at home:
@@ -698,8 +776,27 @@ lang_summary
 
 From this we see that there are some languages in the data set the no one speaks
 as their primary language at home, as well as that the most commonly spoken 
-primary language at home is spoken by  `r format(lang_summary$most_most_at_home[1], scientific = FALSE, big.mark = ",")` 
-people.
+primary language at home is spoken by  `r format(lang_summary$most_most_at_home[1], scientific = FALSE, big.mark = ",")`  people. 
+
+<!-- Suppose we wanted to find the maximum value for all the numeric columns in the `lang_home_tidy` data set.  -->
+<!-- We could apply `summarize` in the same way that we did above to find the maximum values:  -->
+
+<!-- ```{r} -->
+<!-- lang_summary_max <- summarize(lang_home_tidy,  -->
+<!--              most_most_at_home = max(most_at_home),  -->
+<!--              most_most_at_work = max(most_at_work)) -->
+<!-- lang_summary_max -->
+<!-- ``` -->
+
+<!-- The approach above is a valid way to do this, but if we had many numeric columns in our data set then this method would take a lot of time since we would have to explicitly write out the name of each column! A faster and less error-prone way to apply function(s) to columns that satisfy a certain condition is to use the `summarize_if` function. The first argument is the data set we want to summarize (`lang_home_tidy`). The second argument is the required condition, here if a particular column is numeric then the function will be applied. The third argument is the function we want to summarize with, here `max`. Therefore we write: -->
+
+<!-- ```{r 02-summarize-if} -->
+<!-- summarize_if(lang_home_tidy,  -->
+<!--              is.numeric,  -->
+<!--              max) -->
+<!-- ``` -->
+<!-- Notice that we get the same output as we did above! From the table, we see that the most commonly spoken  -->
+<!-- primary language at home is spoken by X people and the most commonly spoken language at work is spoken by X people.  -->
 
 ### Calculating group summary statistics:
 
@@ -718,16 +815,82 @@ lang_summary_by_region
 
 ### Additional reading on the `dplyr` functions
 
-As we briefly mentioned earlier in a note, the `tidyverse` is actually a *meta R package*: it installs and loads a collection of R packages that all follow 
+As we briefly mentioned earlier in a note, the `tidyverse` is actually a *R meta package*: it installs and loads a collection of R packages that all follow 
 the tidy data philosophy we discussed above. One of the `tidyverse` packages is `dplyr` - a data wrangling workhorse. You have already met six of 
 the dplyr function (`select`, `filter`, `mutate`, `arrange`, `summarize`, and `group_by`). To learn more about those six and meet a few more 
-useful functions, we recommend you checkout [this chapter](http://stat545.com/block010_dplyr-end-single-table.html#where-were-we) of the Stat 545 book.
+useful functions, we recommend you checkout [this chapter](http://stat545.com/block010_dplyr-end-single-table.html#where-were-we) of the Data wrangling, exploration, and analysis with R book.
 
-
-## Using `purrr`'s `map*` functions to iterate
+## Using `summarize` and `across` to iterate 
 
 Where should you turn when you discover the next step in your data wrangling/cleaning process requires you to apply a function to 
-each column in a data frame? For example, if you wanted to know the maximum value of each column in a data frame? Well, you could use `summarize` 
+each column in a data frame? The process of repeating a function on different columns or different data sets is called **iteration**. For example, suppose you wanted to know the maximum value of each column in a data frame. You could use `summarize` 
+as discussed above. However, this becomes inconvenient when you have many columns, as `summarize` requires you to type out a column name and a data 
+transformation for each summary statistic you want to calculate. 
+
+In cases like this, where you want to apply the same data transformation to all columns, it is more efficient to use `dplyr`'s `across` function to 
+apply a transformation to each column. For example, let's find the maximum value of each column of the `region_lang`. First, let’s peek at the data to familiarize ourselves with it:
+```{r 02-preview-region-data}
+region_lang <- read_csv("data/region_lang.csv")
+region_lang
+```
+
+We could apply `summarize` in the same way that we did above to find the maximum values:
+```{r} 
+lang_summary_max <- summarize(region_lang,  
+                              mother_tongue = max(mother_tongue), 
+                              most_at_home = max(most_at_home),
+                              most_at_work = max(most_at_work), 
+                              lang_known = max(lang_known)) 
+lang_summary_max 
+``` 
+
+The approach above is a valid way to do this, but if we had many columns in our data set then this method would take a lot of time since we would have to explicitly write out the name of each column! A faster and less error-prone way to apply function(s) to many columns is to use `summarize` and `across`. In the first argument of `across` we specify the columns we want to summarize and in the second argument we indicate the function we want to apply.
+
+```{r 02-across-data}
+max_of_columns <- region_lang |>
+  summarize(across(mother_tongue:lang_known, max))
+
+max_of_columns
+```
+We get the same output as we did above and we didn't have to write out each and every column name! 
+
+What if you need to add other arguments to the functions you want to use? For example, what if there were NA values in our columns that we wanted to know the maximum of? 
+
+```{r 02-making-NAs-data, include = F}
+region_with_nas <- region_lang |> 
+  select_if(is.numeric) |>
+add_row(mother_tongue = 5, most_at_home = 5, most_at_work = NA, lang_known = NA) |>
+arrange(!is.na(lang_known), lang_known) |>
+write_csv("data/region_lang_with_nas.csv")
+```
+
+```{r 02-read-in-nas}
+region_with_nas <- read_csv("data/region_lang_with_nas.csv")
+region_with_nas
+```
+Notice `summarize` returns `NA` for the `most_at_work` and `lang_known` variables since those columns contained NAs in the data frame. This is what happens with many of the built-in R statistical functions when NA's are present (it is not solely a problem with `summarize` and `across`).
+
+```{r 02-nas-region}
+region_with_nas |>
+  summarize(across(mother_tongue:lang_known, max))
+```
+
+Thus, we also need to add the argument `na.rm  = TRUE` (`na.rm` means "NA remove") to the `across` function so that we get a more useful value than `NA` returned. An example of this is shown below:
+
+```{r 02-across-data-nas}
+max_of_columns <- region_with_nas |>
+  summarize(across(mother_tongue:lang_known, max, na.rm = TRUE))
+
+max_of_columns
+```
+
+Now we get the maximum count for each column ignoring the NAs in the data set! 
+
+
+## Using `purrr`'s `map*` functions to iterate 
+
+Where should you turn when you discover the next step in your data wrangling/cleaning process requires you to apply a function to 
+each column in a data frame? The process of repeating a function on different columns or different data sets is called **iteration**. For example, suppose you wanted to know the maximum value of each column in a data frame. You could use `summarize` 
 as discussed above. However, this becomes inconvenient when you have many columns, as `summarize` requires you to type out a column name and a data 
 transformation for each summary statistic you want to calculate.
 
@@ -756,7 +919,7 @@ max_of_columns
 > do not need to load the `purrr` package separately.
 
 Our output looks a bit weird... we passed in a data frame, but our output doesn't look like a data frame. As it so happens, it is *not* a 
-data frame, but rather a plain vanilla list:
+data frame, but rather a plain list:
 
 ```{r 02-type-out-of-map}
 typeof(max_of_columns)
@@ -786,16 +949,8 @@ Which `map_*` function you choose depends on what you want to do with the output
 
 What if you need to add other arguments to the functions you want to map? For example, what if there were NA values in our columns that we wanted to know the maximum of? 
 
-```{r 02-making-NAs, include = F}
-region_with_nas <- region_lang_numeric |>
-add_row(mother_tongue = 5, most_at_home = 5, most_at_work = NA, lang_known = NA) |>
-arrange(!is.na(lang_known), lang_known) |>
-write_csv("data/region_lang_with_nas.csv")
-```
 
-```{r 02-read-in-na}
-region_with_nas <- read_csv("data/region_lang_with_nas.csv")
-region_with_nas
+```{r 02-map-na}
 map_df(region_with_nas, max)
 ```
 Notice `map_df()` returns `NA` for the `most_at_work` and `lang_known` variables since those columns contained NAs in the data frame. Thus, we also need to add the argument `na.rm  = TRUE` to the `max` function so that we get a more useful value than `NA` returned (remember that is what happens with many of the built-in R statistical functions when NA's are present...). What we need to do in that case is add these additional arguments to the end of our call to to `map` and they will be passed to the function that we are mapping. An example of this is shown below:
@@ -805,10 +960,11 @@ map_df(region_with_nas, max, na.rm = TRUE)
 ```
 Now `map_df()` returns the maximum count for each column ignoring the NAs in the data set! 
 
-The `map_*` functions are generally quite useful for solving problems involving iteration/repetition. Additionally, their use is not limited to columns 
+The `map_*` functions are generally quite useful for solving problems involving iteration. Additionally, their use is not limited to columns 
 of a data frame; `map_*` functions can be used to apply functions to elements of a vector or list, and even to lists of data frames, or nested data frames.
 
 ## Additional resources
 - The [`dplyr` page on the tidyverse website](https://dplyr.tidyverse.org/) is where you should look if you want to learn more about the functions in this chapter, the full set of arguments you can use, and other related functions. The site also provides a very nice cheat sheet that summarizes many of the data wrangling functions from this chapter.
+- Check out the [tidyselect page](https://tidyselect.r-lib.org/reference/select_helpers.html) for a comprehensive list of `select` helpers. 
 - [R for Data Science](https://r4ds.had.co.nz/) has a few chapters related to data wrangling that go into more depth than this book. For example, the [tidy data](https://r4ds.had.co.nz/tidy-data.html) chapter covers tidy data, `pivot_longer`/`pivot_wider` and `separate`, but also covers missing values and additional wrangling functions (like `unite`). The [data transformation](https://r4ds.had.co.nz/transform.html) chapter covers `select`, `filter`, `arrange`, `mutate`, and `summarize`. And the [`map_*` functions](https://r4ds.had.co.nz/iteration.html#the-map-functions) chapter provides more about the `map_*` functions.
 - You will occasionally encounter a case where you need to iterate over items in a data frame, but none of the above functions are flexible enough to do what you want. In that case, you may consider using [a for loop](https://r4ds.had.co.nz/iteration.html#iteration).
