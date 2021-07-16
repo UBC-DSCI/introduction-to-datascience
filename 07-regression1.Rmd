@@ -22,12 +22,12 @@ response variable of interest, but the end of the chapter shows how to perform
 By the end of the chapter, students will be able to:
 
 * Recognize situations where a simple regression analysis would be appropriate for making predictions.
-* Explain the K-nearest neighbour (K-NN) regression algorithm and describe how it differs from K-NN classification.
-* Interpret the output of a K-NN regression.
+* Explain the K-nearest neighbour (KNN) regression algorithm and describe how it differs from KNN classification.
+* Interpret the output of a KNN regression.
 * In a dataset with two or more variables, perform K-nearest neighbour regression in R using a `tidymodels` workflow
 * Execute cross-validation in R to choose the number of neighbours.
-* Evaluate K-NN regression prediction accuracy in R using a test data set and an appropriate metric (*e.g.*, root means square prediction error).
-* In the context of K-NN regression, compare and contrast goodness of fit and prediction properties (namely RMSE vs RMSPE).
+* Evaluate KNN regression prediction accuracy in R using a test data set and an appropriate metric (*e.g.*, root means square prediction error).
+* In the context of KNN regression, compare and contrast goodness of fit and prediction properties (namely RMSE vs RMSPE).
 * Describe the advantages and disadvantages of the K-nearest neighbour regression approach.
 
 ## The regression problem
@@ -125,7 +125,7 @@ neighbours-based approach in regression to make predictions. Let's take a small
 sample of the data above and walk through how K-nearest neighbours (knn) works
 in a regression context before we dive in to creating our model and assessing
 how well it predicts house sale price. This subsample is taken to allow us to
-illustrate the mechanics of K-NN regression with a few data points; later in
+illustrate the mechanics of KNN regression with a few data points; later in
 this chapter we will use all the data.
 
 To take a small random sample of size 30, we'll use the function `sample_n`.
@@ -204,10 +204,10 @@ Our predicted price is \$`r format(round(prediction[[1]]), big.mark=",", nsmall=
 (shown as a red point in Figure \@ref(fig:07-predictedViz-knn)), which is much less than \$350,000; perhaps we
 might want to offer less than the list price at which the house is advertised.
 But this is only the very beginning of the story. We still have all the same
-unanswered questions here with K-NN regression that we had with K-NN
+unanswered questions here with KNN regression that we had with KNN
 classification: which $K$ do we choose, and is our model any good at making
 predictions? In the next few sections, we will address these questions in the
-context of K-NN regression.
+context of KNN regression.
 
 ## Training, evaluating, and tuning the model
 
@@ -222,9 +222,9 @@ sacramento_train <- training(sacramento_split)
 sacramento_test <- testing(sacramento_split)
 ```
 
-Next, we'll use cross-validation to choose $K$. In K-NN classification, we used
+Next, we'll use cross-validation to choose $K$. In KNN classification, we used
 accuracy to see how well our predictions matched the true labels. Here in the
-context of K-NN regression we will use root mean square prediction error
+context of KNN regression we will use root mean square prediction error
 (RMSPE) instead. The mathematical formula for calculating RMSPE is: 
 
 $$\text{RMSPE} = \sqrt{\frac{1}{n}\sum\limits_{i=1}^{n}(y_i - \hat{y}_i)^2}$$
@@ -247,7 +247,7 @@ us the smallest RMSPE.
 > **RMSPE versus RMSE**
 When using many code packages (`tidymodels` included), the evaluation output 
 we will get to assess the prediction quality of
-our K-NN regression models is labelled "RMSE", or "root mean squared
+our KNN regression models is labelled "RMSE", or "root mean squared
 error". Why is this so, and why not just RMSPE? 
 In statistics, we try to be very precise with our
 language to indicate whether we are calculating the prediction error on the
@@ -334,12 +334,12 @@ sacr_tunek_plot
 
 Figure \@ref(fig:07-howK) visualizes the effect of different settings of $K$ on the
 regression model. Each plot shows the predicted values for house sale price from
-our K-NN regression model for 6 different values for $K$: 1, 3, `r kmin`, 41, 250, and 932 (i.e., the entire dataset).
+our KNN regression model for 6 different values for $K$: 1, 3, `r kmin`, 41, 250, and 932 (i.e., the entire dataset).
 For each model, we predict a price for every possible home size across the range of home sizes we
 observed in the data set (here 500 to 5,000 square feet) and we plot the
 predicted prices as a blue line.
 
-```{r 07-howK, echo = FALSE, fig.height = 12, fig.width = 10,fig.cap = "Predicted values for house price (represented as a blue line) from K-NN regression models for six different values for $K$"}
+```{r 07-howK, echo = FALSE, fig.height = 12, fig.width = 10,fig.cap = "Predicted values for house price (represented as a blue line) from KNN regression models for six different values for $K$"}
 gridvals <- c(1, 3, kmin, 41, 250, 932)
 
 plots <- list()
@@ -425,7 +425,7 @@ chapter.
 
 To assess how well our model might do at predicting on unseen data, we will
 assess its RMSPE on the test data. To do this, we will first
-re-train our K-NN regression model on the entire training data set, 
+re-train our KNN regression model on the entire training data set, 
 using $K =$ `r sacr_min %>% pull(neighbors)` neighbours. Then we will
 use `predict` to make predictions on the test data, and use the `metrics`
 function again to compute the summary of regression quality. Because
@@ -452,7 +452,7 @@ sacr_summary
 ```
 Our final model's test error as assessed by RMSPE 
 is `r format(round(sacr_summary %>% filter(.metric == 'rmse') %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`. 
-But what does this RMSPE score mean? When we calculated test set prediction accuracy in K-NN
+But what does this RMSPE score mean? When we calculated test set prediction accuracy in KNN
 classification, the highest possible value was 1 and the lowest possible value was 0. 
 If we got a value close to 1, our model was "good;" and otherwise,
 the model was "not good." What about RMSPE? Unfortunately there is no default scale 
@@ -471,7 +471,7 @@ the range of house sizes we might encounter in the Sacramento area&mdash;from 50
 You have already seen a few plots like this in this chapter, but here we also provide the code that generated it
 as a learning challenge.
 
-```{r 07-predict-all, fig.height = 4, fig.width = 5, fig.cap = "Predicted values of house price (blue line) for the final K-NN regression model"}
+```{r 07-predict-all, fig.height = 4, fig.width = 5, fig.cap = "Predicted values of house price (blue line) for the final KNN regression model"}
 sacr_preds <- tibble(sqft = seq(from = 500, to = 5000, by = 10))
 
 sacr_preds <- sacr_fit %>%
@@ -489,9 +489,9 @@ plot_final <- ggplot() +
 plot_final
 ```
 
-## Strengths and limitations of K-NN regression
+## Strengths and limitations of KNN regression
 
-As with K-NN classification (or any prediction algorithm for that manner), K-NN regression has both strengths and weaknesses. Some are listed here:
+As with KNN classification (or any prediction algorithm for that manner), KNN regression has both strengths and weaknesses. Some are listed here:
 
 **Strengths:**
 
@@ -509,9 +509,9 @@ K-nearest neighbours regression:
 2. may not perform well with a large number of predictors
 3. may not predict well beyond the range of values input in your training data
 
-## Multivariate K-NN regression
+## Multivariate KNN regression
 
-As in K-NN classification, we can use multiple predictors in K-NN regression.
+As in KNN classification, we can use multiple predictors in KNN regression.
 In this setting, we have the same concerns regarding the scale of the predictors. Once again, 
  predictions are made by identifying the $K$
 observations that are nearest to the new point we want to predict; any
@@ -520,13 +520,13 @@ variables on a small scale. But since the `recipe` we built above scales and cen
 all predictor variables, this is handled for us.
 
 Note that we also have the same concern regarding the selection of predictors
-in K-NN regression as in K-NN classification: more predictors is **not** always
+in KNN regression as in KNN classification: more predictors is **not** always
 better, and the choice of which predictors to use has a potentially large influence
 on the quality of predictions. Fortunately, we can use the predictor selection 
-algorithm from the classification chapter in K-NN regression as well.
+algorithm from the classification chapter in KNN regression as well.
 As the algorithm is the same, we will not cover it again in this chapter.
 
-We will now demonstrate a multivariate K-NN regression analysis of the 
+We will now demonstrate a multivariate KNN regression analysis of the 
 Sacramento real estate data using `tidymodels`. This time we will use
 house size (measured in square feet) as well as number of bedrooms as our
 predictors, and continue to use house sale price as our outcome/target variable
@@ -548,7 +548,7 @@ Figure \@ref(fig:07-bedscatter) shows that as the number of bedrooms increases,
 the house sale price tends to increase as well, but that the relationship
 is quite weak. Does adding the number of bedrooms
 to our model improve our ability to predict price? To answer that
-question, we will have to create a new K-NN regression
+question, we will have to create a new KNN regression
 model using house size and number of bedrooms, and then we can compare it to
 the model we previously came up with that only used house
 size. Let's do that now!
@@ -580,7 +580,7 @@ sacr_k <- sacr_multi %>%
 sacr_multi
 ```
 Here we see that the smallest estimated RMSPE from cross-validation occurs when $K =$ `r sacr_k`.
-If we want to compare this multivariate K-NN regression model to the model with only a single
+If we want to compare this multivariate KNN regression model to the model with only a single
 predictor *as part of the model tuning process* (e.g., if we are running forward selection as described
 in the chapter on evaluating and tuning classification models),
 then we must compare the accuracy estimated using only the training data via cross-validation.
@@ -591,7 +591,7 @@ The estimated cross validation accuracy for the multivariate model is
 Thus in this case, we did not improve the model 
 by a large amount by adding this additional predictor.
 
-In order to evaluate the quality of the multivariate K-NN model on the test data,
+In order to evaluate the quality of the multivariate KNN model on the test data,
 we need to re-train the model on the entire
 training data set, and then use that model to make predictions
 on the test data.
@@ -612,13 +612,13 @@ knn_mult_preds <- knn_mult_fit %>%
 knn_mult_mets <- metrics(knn_mult_preds, truth = price, estimate = .pred)
 knn_mult_mets
 ```
-This time when we performed K-NN regression on the same data set, but also
+This time when we performed KNN regression on the same data set, but also
 included number of bedrooms as a predictor, we obtained a RMSPE test error 
 of `r format(round(knn_mult_mets %>% filter(.metric == 'rmse') %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`.
 Figure \@ref(fig:07-knn-mult-viz) visualizes the model's predictions overlaid on top of the data. This 
 time the predictions are a surface in 3-D space, instead of a line in 2-D space, as we have 2
 predictors instead of 1.  
-```{r 07-knn-mult-viz, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "K-NN regression model’s predictions represented as a surface in 3-D space overlaid on top of the data using three predictors (price, house size, and the number of bedrooms)"}
+```{r 07-knn-mult-viz, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "KNN regression model’s predictions represented as a surface in 3-D space overlaid on top of the data using three predictors (price, house size, and the number of bedrooms)"}
 library(plotly)
 
 xvals <- seq(from = min(sacramento_train$sqft), to = max(sacramento_train$sqft), length = 50)
