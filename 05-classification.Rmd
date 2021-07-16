@@ -265,13 +265,13 @@ To predict the label of a new observation (here, classify it as either benign
 or malignant), the K-nearest neighbours classifier generally finds the $K$
 "nearest" or "most similar" observations in our training set, and then uses
 their diagnoses to make a prediction for the new observation's diagnosis. $K$ 
-is a number that we must choose; for now, we will assume that someone has chosen
+is a number that we must choose in advance; for now, we will assume that someone has chosen
 $K$ for us. We will cover how to choose $K$ ourselves in the next chapter. 
 
 To illustrate the concept of K-nearest neighbours classification, we 
 will walk through an example.  Suppose we have a
 new observation, with perimeter of `r new_point[1]` and concavity of `r new_point[2]`, whose 
-diagnosis "Class" is unknown. This new observation is the red scatter point in
+diagnosis "Class" is unknown. This new observation is depicted by the red scatter point in
 Figure \@ref(fig:05-knn-1).
 
 
@@ -283,7 +283,7 @@ perim_concav +
 
 Figure \@ref(fig:05-knn-2) shows that the nearest point to this new observation is **malignant** and
 located at the coordinates (`r round(neighbours[1, c(attrs[1], attrs[2])],
-1)`). The idea here is that if a point is close to another in the scatterplot,
+1)`). The idea here is that if a point is close to another in the scatter plot,
 then the perimeter and concavity values are similar, and so we may expect that
 they would have the same diagnosis. 
 
@@ -310,11 +310,11 @@ neighbours <- cancer[order(my_distances$Distance), ]
 ```
 
 Suppose we have another new observation with perimeter `r new_point[1]` and
-concavity of `r new_point[2]`. Looking at the scatterplot in Figure \@ref(fig:05-knn-4), how would you
+concavity of `r new_point[2]`. Looking at the scatter plot in Figure \@ref(fig:05-knn-4), how would you
 classify this red observation? The nearest neighbour to this new point is a
 **benign** observation at (`r round(neighbours[1, c(attrs[1], attrs[2])], 1)`).
-Does this seem like the right prediction to make? Probably not, if you consider
-the other nearby points...
+Does this seem like the right prediction to make for the red observation? Probably 
+not, if you consider the other nearby points...
 
 
 ```{r 05-knn-4, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter, with benign nearest neighbour to a new observation highlighted"}
@@ -331,7 +331,7 @@ perim_concav + geom_point(aes(x = new_point[1], y = new_point[2]),
 ```
 </center>
 
-So instead of just using the one nearest neighbour, we can consider several
+To improve the prediction we can consider several
 neighbouring points, say $K = 3$, that are closest to the new red observation
 to predict its diagnosis class. Among those 3 closest points, we use the
 *majority class* as our prediction for the new observation. As shown in Figure \@ref(fig:05-knn-5), we
@@ -373,24 +373,26 @@ next chapter.
 
 We decide which points are the $K$ "nearest" to our new observation
 using the *straight-line distance* (we will often just refer to this as *distance*). 
-The straight-line distance between any pair of points $(x_a, y_a)$ 
-and $(x_b, y_b)$ on the x-y plane can be computed using the following
-formula: 
+Suppose we have two observations $a$ and $b$, each having two predictor variables, $x$ and $y$.
+Denote $a_x$ and $a_y$ to be the values of variables $x$ and $y$ for observation $a$;
+$b_x$ and $b_y$ have similar definitions for observaiton $b$.
+Then the straight-line distance between observation $a$ and $b$ on the x-y plane can 
+be computed using the following formula: 
 
-$$\mathrm{Distance} = \sqrt{(x_a -x_b)^2 + (y_a - y_b)^2}$$
+$$\mathrm{Distance} = \sqrt{(a_x -b_x)^2 + (a_y - b_y)^2}$$
 ```{r 05-multiknn-0, echo = FALSE}
 new_point <- c(0, 3.5)
 ```
 
 To find the $K$ nearest neighbours to our new observation, we compute the distance
-to each observation in our training data, and take the $K$ observations corresponding to the
-$K$ *smallest* distance values. For example, suppose we want to classify a new 
+from that new observation to each observation in our training data, and select the $K$ observations corresponding to the
+$K$ *smallest* distance values. For example, suppose we want to use $K=5$ neighbours to classify a new 
 observation with perimeter of `r new_point[1]` and 
-concavity of `r new_point[2]`, shown in \@ref(fig:05-multiknn-1). Let's calculate the distances
+concavity of `r new_point[2]`, shown in red in Figure \@ref(fig:05-multiknn-1). Let's calculate the distances
 between our new point and each of the observations in the training set to find
-the $K=5$ training observations that are nearest to our new point. 
+the $K=5$ neighbours that are nearest to our new point. 
 You will see in the `mutate` step below, we compute the straight-line
-distance using the formula: we square the differences between the two observations' perimeter 
+distance using the formula above: we square the differences between the two observations' perimeter 
 and concavity coordinates, add the squared differences, and then take the square root.
 
 ```{r 05-multiknn-1, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with new observation labelled in red"}
@@ -412,7 +414,8 @@ new_obs_Perimeter <- 0
 new_obs_Concavity <- 3.5
 cancer %>%
   select(ID, Perimeter, Concavity, Class) %>%
-  mutate(dist_from_new = sqrt((Perimeter - new_obs_Perimeter)^2 + (Concavity - new_obs_Concavity)^2)) %>%
+  mutate(dist_from_new = sqrt((Perimeter - new_obs_Perimeter)^2 + 
+                              (Concavity - new_obs_Concavity)^2)) %>%
   arrange(dist_from_new) %>%
   slice(1:5) # subset the first 5 rows
 ```
@@ -463,14 +466,14 @@ have a higher number of predictor variables (i.e., a higher-dimensional
 predictor space).  Each predictor variable may give us new
 information to help create our classifier.  The only difference is the formula
 for the distance between points. In particular, let's say we have $m$ predictor
-variables for two observations $u$ and $v$, i.e., 
-$u = (u_{1}, u_{2}, \dots, u_{m})$ and
-$v = (v_{1}, v_{2}, \dots, v_{m})$.
+variables for two observations $a$ and $b$, i.e., 
+$a = (a_{1}, a_{2}, \dots, a_{m})$ and
+$b = (b_{1}, b_{2}, \dots, b_{m})$.
 Previously, when we had two variables, we added up the squared difference between each of our (two) variables,
 and then took the square root. Now we will do the same, except for *all* of our
 $m$ variables.  In other words, the distance formula becomes
 
-$$\mathrm{Distance} = \sqrt{(u_{1} -v_{1})^2 + (u_{2} - v_{2})^2 + \dots + (u_{m} - v_{m})^2}.$$
+$$\mathrm{Distance} = \sqrt{(a_{1} -b_{1})^2 + (a_{2} - b_{2})^2 + \dots + (a_{m} - b_{m})^2}.$$
 
 This formula still corresponds to a straight-line distance, just in a space with 
 more dimensions. For example, suppose we decide to use 3 predictor variables (so, a 3-dimensional space):
@@ -479,7 +482,7 @@ the data look like when we visualize them as a 3-dimensional scatter.
 In this case, the formula above is just the straight line distance in this 3-dimensional space.
 
 
-```{r 05-more, echo = FALSE, fig.cap = "3D scatterplot of the symmetry, concavity, and perimeter variables."}
+```{r 05-more, echo = FALSE, fig.cap = "3D scatter plot of the symmetry, concavity, and perimeter variables."}
 library(plotly)
 cancer %>%
   plot_ly(
@@ -516,12 +519,12 @@ In order to classify a new observation using a K-nearest neighbour classifier, w
 
 ## K-nearest neighbours with `tidymodels`
 
-Coding the K-nearest neighbour algorithm in R ourselves would get complicated
-if we might have to predict the label/class for multiple new observations, or
-when there are multiple classes and more than two variables. Thankfully, in R,
+Coding the K-nearest neighbours algorithm in R ourselves can get complicated,
+especially if we want to handle multiple classes, more than two variables,
+or predicting the class for multiple new observations. Thankfully, in R,
 the K-nearest neighbour algorithm is implemented in the `parsnip` package 
 included in the 
-[`tidymodels` package collection](https://www.tidymodels.org/), along with 
+[`tidymodels` meta package](https://www.tidymodels.org/), along with 
 many [other models](https://www.tidymodels.org/find/parsnip/)
  that you will encounter in this and future classes. The `tidymodels` collection
 provides tools to help make and use models, such as classifiers.  Using the packages
@@ -585,7 +588,8 @@ R is just repeating those settings to us here. In the next chapter, we will actu
 let R tune the model for us. 
 
 Finally, we make the prediction on the new observation by calling the `predict` function,
-passing the fit object we just created. As above when we ran the K-nearest neighbours
+passing both the fit object we just created and the new observation itself. As above 
+when we ran the K-nearest neighbours
 classification algorithm manually, the `knn_fit` object classifies the new observation as 
 malignant ("M"). Note that the `predict` function outputs a data frame with a single 
 variable named `.pred_class`.
@@ -623,11 +627,9 @@ of education variable is in the single digits. Although this doesn't affect the
 K-nearest neighbour classification algorithm, this large shift can change the
 outcome of using many other predictive models. 
 
-**Standardization:** when all variables in a data set have a mean (center) of 0
+When all variables in a data set have a mean (center) of 0
 and a standard deviation (scale) of 1, we say that the data have been
-*standardized*.
-
-To illustrate the effect that standardization can have on the K-nearest
+*standardized*. To illustrate the effect that standardization can have on the K-nearest
 neighbour algorithm, we will read in the original, unscaled Wisconsin breast
 cancer data set; we have been using a standardized version of the data set up
 until now. To keep things simple, we will just use the `Area`, `Smoothness`, and `Class`
@@ -659,7 +661,8 @@ So far, there is not much in the recipe; just a statement about the number of ta
 and predictors. Let's add scaling (`step_scale`) and centering (`step_center`) steps for 
 all of the predictors so that they each have a mean of 0 and standard deviation of 1.
 Note that `tidyverse` actually provides `step_normalize`, which does both centering and scaling in
-a single recipe step; in this book we will use the separate `step_scale` and `step_center` steps. 
+a single recipe step; in this book we will keep `step_scale` and `step_center` separate
+to emphasize conceptually that there are two steps happening. 
 The `prep` function finalizes the recipe by using the data (here, `unscaled_cancer`) 
 to compute anything necessary to run the recipe (in this case, the column means and standard
 deviations):
