@@ -118,8 +118,6 @@ small_plot +
   geom_point(aes(x = 2000, y = prediction[[1]], color = "red", size = 2.5)) +
   annotate("text", x = 2350, y = prediction[[1]]-30000, label=paste("$", format(round(prediction[[1]]), big.mark=",", nsmall=0, scientific = FALSE), sep=""))+
   theme(legend.position = "none")
-
-print(prediction[[1]])
 ```
 
 By using simple linear regression on this small data set to predict the sale price
@@ -225,10 +223,9 @@ sale price across all possible house sizes we might encounter superimposed on a 
 plot of the original housing price data. There is a plotting function in 
 the `tidyverse`, `geom_smooth`, that
 allows us to add a layer on our plot with the simple
-linear regression predicted line of best fit. The default for this adds a
-plausible range to this line that we are not interested in at this point, so to
-avoid plotting it, we provide the argument `se = FALSE` in our call to
-`geom_smooth`. Figure \@ref(fig:08-lm-predict-all) displays the result.
+linear regression predicted line of best fit. By default `geom_smooth` adds some other information
+to the plot that we are not interested in at this point; we provide the argument `se = FALSE` to
+tell `geom_smooth` not to show that information. Figure \@ref(fig:08-lm-predict-all) displays the result.
 
 ```{r 08-lm-predict-all, fig.height = 4, fig.width = 5, warning = FALSE, message = FALSE, fig.cap = "Scatter plot of sale price versus size with line of best fit for the full Sacramento housing data"}
 
@@ -247,7 +244,9 @@ it from the workflow using the `pull_workflow_fit` function, and then apply
 the `tidy` function to convert the result into a data frame:
 
 ```{r 08-lm-get-coeffs}
-coeffs <- tidy(pull_workflow_fit(lm_fit))
+coeffs <- lm_fit %>%
+             pull_workflow_fit() %>%
+             tidy()
 coeffs
 ```
 
@@ -385,22 +384,22 @@ changing the formula in the recipe to
 include both the `sqft` and `beds` variables as predictors:
 
 ```{r 08-lm-mult-test-train-split}
-lm_recipe <- recipe(price ~ sqft + beds, data = sacramento_train)
+mlm_recipe <- recipe(price ~ sqft + beds, data = sacramento_train)
 ```
 
 Now we can build our workflow and fit the model:
 ```{r 08-fitlm}
-lm_fit <- workflow() %>%
-  add_recipe(lm_recipe) %>%
+mlm_fit <- workflow() %>%
+  add_recipe(mlm_recipe) %>%
   add_model(lm_spec) %>%
   fit(data = sacramento_train)
-lm_fit
+mlm_fit
 ```
 
 And finally, we predict on the test data set to assess how well our model does:
 
 ```{r 08-assessFinal-multi}
-lm_mult_test_results <- lm_fit %>%
+lm_mult_test_results <- mlm_fit %>%
   predict(sacramento_test) %>%
   bind_cols(sacramento_test) %>%
   metrics(truth = price, estimate = .pred)
@@ -415,7 +414,7 @@ library(plotly)
 xvals <- seq(from = min(sacramento_train$sqft), to = max(sacramento_train$sqft), length = 50)
 yvals <- seq(from = min(sacramento_train$beds), to = max(sacramento_train$beds), length = 50)
 
-zvals <- lm_fit %>%
+zvals <- mlm_fit %>%
   predict(crossing(xvals, yvals) %>% mutate(sqft = xvals, beds = yvals)) %>%
   pull(.pred)
 
@@ -449,8 +448,10 @@ predictor, we can get slopes/intercept from linear regression, and thus describe
 plane mathematically. We can extract those slope values from our model object
 as shown below:
 ```{r 08-lm-multi-get-coeffs}
-coeffs <- tidy(pull_workflow_fit(lm_fit))
-coeffs
+mcoeffs <- mlm_fit %>%
+             pull_workflow_fit() %>%
+             tidy()
+mcoeffs
 ```
 And then use those slopes to write a mathematical equation to describe the prediction plane:
 
@@ -464,9 +465,9 @@ where:
 Finally, we can fill in the values for $\beta_0$, $\beta_1$ and $\beta_2$ from the model output above
 to create the equation of the plane of best fit to the data: 
 ```{r 08-lm-multi-get-coeffs-hidden, echo = FALSE}
-icept <- format(round(coeffs %>% filter(term == "(Intercept)") %>% pull(estimate)), scientific = FALSE)
-sqftc <- format(round(coeffs %>% filter(term == "sqft") %>% pull(estimate)), scientific = FALSE)
-bedsc <- format(round(coeffs %>% filter(term == "beds") %>% pull(estimate)), scientific = FALSE)
+icept <- format(round(mcoeffs %>% filter(term == "(Intercept)") %>% pull(estimate)), scientific = FALSE)
+sqftc <- format(round(mcoeffs %>% filter(term == "sqft") %>% pull(estimate)), scientific = FALSE)
+bedsc <- format(round(mcoeffs %>% filter(term == "beds") %>% pull(estimate)), scientific = FALSE)
 ```
 
 $$\text{house sale price} = `r icept` + `r sqftc`\cdot (\text{house size})  `r bedsc` \cdot (\text{number of bedrooms})$$
