@@ -24,8 +24,7 @@ predictions from our classifier are, as well as how to improve our classifier
 - Compute, by hand, the straight-line (Euclidean) distance between points on a graph when there are two predictor variables
 - Explain the K-nearest neighbour classification algorithm
 - Perform K-nearest neighbour classification in R using `tidymodels`  
-- Explain why one should center, scale, and balance data in predictive modelling
-- Preprocess data to center, scale, and balance a dataset using a `recipe` 
+- Use a `recipe` to preprocess data to be centered, scaled, and balanced
 - Combine preprocessing and model training using a Tidymodels `workflow`
 
 
@@ -34,8 +33,9 @@ In many situations, we want to make predictions based on the current situation
 as well as past experiences. For instance, a doctor may want to diagnose a
 patient as either diseased or healthy based on their symptoms and the doctor's
 past experience with patients; an email provider might want to tag a given
-email as "spam" or "not spam" depending on past email text data; or an online
-store may want to predict whether an order is fraudulent or not. 
+email as "spam" or "not spam" based on the email's text and past email text data; 
+or a credit card company may want to predict whether a purchase is fraudulent based
+on the current purchase item, amount, and location as well as past purchases.
 These tasks are all examples of **classification**, i.e., predicting a
 categorical class (sometimes called a *label*) for an observation given its
 other variables (sometimes called *features*). 
@@ -180,7 +180,7 @@ cancer %>%
 **Exploring the data**
 
 Before we start doing any modelling, let's explore our data set. Below we use
-the `group_by` + `summarize` code pattern we used before to see that we have
+the `group_by` and `summarize` functions we used before to see that we have
 357 (63\%) benign and 212 (37\%) malignant tumour observations.
 
 ```{r 05-tally}
@@ -217,11 +217,11 @@ the the upper right-hand corner of the plot area. By contrast, benign
 observations typically fall in lower left-hand corner of the plot. Suppose we
 obtain a new observation not in the current data set that has all the variables
 measured *except* the label (i.e., an image without the physician's diagnosis
-for the tumour class). We could compute the perimeter and concavity values,
-resulting in values of, say, 1 and 1. Could we use this information to classify
-that observation as benign or malignant? What about a new observation with
-perimeter value of -1 and concavity value of -0.5? What about 0 and 1? It seems
-like the *prediction of an unobserved label* might be possible, based on our
+for the tumour class), and we find a perimeter of 1 and concavity of 1.
+Could we use this information to classify
+that observation as benign or malignant? What about another new observation with
+perimeter value of -1 and concavity value of -0.5? And another with values of 0 and 1? 
+It seems like the *prediction of an unobserved label* might be possible, based on our
 visualization.  
 
 ## Classification with K-nearest neighbours
@@ -257,8 +257,8 @@ neighbours <- cancer[order(my_distances$Distance), ]
 ```
 
 In order to actually make predictions for new observations in practice, we
-will need a classification algorithm. Here we will use the K-nearest neighbours
-classification algorithm.
+will need a classification algorithm. 
+In this book we will use the K-nearest neighbours classification algorithm.
 To predict the label of a new observation (here, classify it as either benign
 or malignant), the K-nearest neighbours classifier generally finds the $K$
 "nearest" or "most similar" observations in our training set, and then uses
@@ -893,7 +893,7 @@ In other words, we will replicate rare observations multiple times in our data s
 voting power in the K-nearest neighbour algorithm. In order to do this, we will add an oversampling
 step to the earlier `uc_recipe` recipe with the `step_upsample` function.
 We show below how to do this, and also
-use the `group_by + summarize` pattern we've seen before to see that our classes are now balanced:
+use the `group_by` and `summarize` functions to see that our classes are now balanced:
 
 ```{r 05-upsample-cancer}
 ups_recipe <- recipe(Class ~ ., data = rare_cancer) %>%
