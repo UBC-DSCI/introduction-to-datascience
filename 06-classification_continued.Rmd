@@ -296,10 +296,15 @@ for the application.
 ## Tuning the classifier
 
 The vast majority of predictive models in statistics and machine learning have
-*parameters* that you have to pick. For example, in the K-nearest neighbour
-classification algorithm we have been using in the past two chapters, we have
-had to pick the number of neighbours $K$ for the class vote. Is it possible to
-make this selection, i.e., *tune* the model, in a principled way?  Ideally what
+*parameters*. A *parameter* is a number that you have to pick in advance that determines
+some aspect of how the model behaves. For example, in the K-nearest neighbours
+classification algorithm, $K$ is a parameter that we have to pick
+that determines how many neighbours participate in the class vote. 
+By picking different values of $K$, we create different classifiers 
+that make different predictions.
+
+So then how do we pick the *best* value of $K$, i.e., *tune* the model? 
+And is it possible to make this selection in a principled way?  Ideally what
 we want is to somehow maximize the performance of our classifier on data *it
 hasn't seen yet*. So we will play the same trick we did before when evaluating
 our classifier: we'll split our **overall training data set** further into two
@@ -328,6 +333,7 @@ overall set of training data.
 > training data. If we do multiple train / test splits, we will end up with
 > multiple classifiers, each with their own accuracy evaluated on different
 > test data.
+
 
 Let's investigate this idea in R! In particular, we will use different seed
 values in the `set.seed` function to generate five different train / validation
@@ -385,18 +391,18 @@ validation set only a single time. The name for this strategy is called
 data** into $C$ evenly-sized chunks, and then iteratively use $1$ chunk as the
 **validation set** and combine the remaining $C-1$ chunks 
 as the **training set**. 
-
+This procedure is shown in Figure \@ref(fig:06-cv-image).
+Here, $C=5$ different chunks of the data set are used,
+resulting in 5 different choices for the **validation set**; we call this
+*5-fold* cross-validation. 
 
 ```{r 06-cv-image, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "5-fold cross validation", fig.retina = 2, out.width = "800"}
 knitr::include_graphics("img/cv.png")
 ```
 
-This procedure is shown in Figure \@ref(fig:06-cv-image).
-Here, $C=5$ different chunks of the data set are used,
-resulting in 5 different choices for the **validation set**; we call this
-*5-fold* cross-validation. To do 5-fold cross-validation in R with `tidymodels`, we
+To perform 5-fold cross-validation in R with `tidymodels`, we
 use another function: `vfold_cv`. This function splits our training data into
-`v` folds automatically:
+`v` folds automatically.
 ```{r 06-vfold}
 cancer_vfold <- vfold_cv(cancer_train, v = 5, strata = Class)
 cancer_vfold
