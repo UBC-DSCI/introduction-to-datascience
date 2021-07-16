@@ -3,9 +3,9 @@
 ## Overview 
 This chapter continues the introduction to predictive modelling through
 classification. While the previous chapter covered training and data
-preprocessing, this chapter focuses on how to split data, how to evaluate
-prediction accuracy, and how to choose model parameters to maximize
-performance.
+preprocessing, this chapter focuses on how to evaluate the accuracy of
+a classifier, as well as how to improve the classifier (where possible)
+to maximize its accuracy.
 
 ## Chapter learning objectives 
 By the end of the chapter, students will be able to:
@@ -31,14 +31,13 @@ accurate predictions on data *not seen during training*. But then how can we
 evaluate our classifier without having to visit the hospital to collect more
 tumour images? 
 
-The trick is to split up the data set into a **training set** and **test set**&mdash;as
-shown in Figure \@ref(fig:06-training-test)&mdash;and 
-only show the classifier the **training set** when building the classifier.
-Then to evaluate the accuracy of the classifier, we can use it to predict the
-labels (which we know) in the **test set**. If our predictions match the true
-labels for the observations in the **test set** very well, then we have some
-confidence that our classifier might also do a good job of predicting the class
-labels for new observations that we do not have the class labels for.
+The trick is to split the data into a **training set** and **test set** (Figure \@ref(fig:06-training-test))
+and use only the **training set** when building the classifier.
+Then to evaluate the accuracy of the classifier, we first set aside the true labels from the **test set**,
+and then use the classifier to predict the labels in the **test set**. If our predictions match the true
+labels for the observations in the **test set**, then we have some
+confidence that our classifier might also accurately predict the class
+labels for new observations without known class labels.
 
 > Note: if there were a golden rule of machine learning, it might be this: *you cannot use the test data to build the model!* 
 > If you do, the model gets to "see" the test data in advance, making it look more accurate than it really is. Imagine
@@ -96,8 +95,8 @@ perim_concav
 
 Once we have decided on a predictive question to answer and done some
 preliminary exploration, the very next thing to do is to split the data into
-the training and test sets. Typically, the training set is between 50 - 100% of
-the data, while the test set is the remaining 0 - 50%; the intuition is that
+the training and test sets. Typically, the training set is between 50 - 95% of
+the data, while the test set is the remaining 5 - 50%; the intuition is that
 you want to trade off between training an accurate model (by using a larger
 training data set) and getting an accurate evaluation of its performance (by
 using a larger test data set).  Here, we will use 75% of the data for training,
@@ -125,7 +124,7 @@ a train / test split of 75% / 25%, as desired.
 
 **2. Pre-process the data**
 
-As we mentioned last chapter, K-NN is sensitive to the scale of the predictors,
+As we mentioned last chapter, KNN is sensitive to the scale of the predictors,
 and so we should perform some preprocessing to standardize them. An
 additional consideration we need to take when doing this is that we should
 create the standardization preprocessor using **only the training data**. This ensures that
@@ -224,7 +223,8 @@ confu22 <- (confusionmt %>% filter(name == "cell_2_2"))$value
 
 This table shows that the classifier labelled 
 `r confu11`+`r confu22` = `r confu11+confu22` observations 
-correctly, `r confu21` observations as benign when they were truly malignant,
+correctly. It also shows that the classifier made some mistakes; in particular,
+it classified  `r confu21` observations as benign when they were truly malignant,
 and `r confu12` observations as malignant when they were truly benign. 
 
 **6. Critically analyze performance**
@@ -287,7 +287,8 @@ the K-nearest neighbours classifier improved quite a bit on the basic
 majority classifier. Hooray! But we still need to be cautious; in 
 this application, it is likely very important not to miss-diagnose any malignant tumours to avoid missing
 patients who actually need medical care. The confusion matrix above shows
-that the classifier does indeed miss-diagnose a non-negligible number malignant tumours as benign.
+that the classifier does indeed miss-diagnose a significant number of malignant tumours as benign (`r confu21`
+out of `r confu11+confu21` malignant tumours, or `r round(100*(confu21)/(confu11+confu21))`%!).
 Therefore, even though the accuracy improved upon the majority classifier,
 our critical analysis suggests that this classifier may not have appropriate performance
 for the application.
@@ -483,15 +484,19 @@ knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = tune()) %>
   set_mode("classification")
 ```
 Then instead of using `fit` or `fit_resamples`, we will use the `tune_grid` function
-to fit the model for each value in a range of parameter values. Here the `grid = 10`
-argument specifies that the tuning should try 10 values of the number of neighbours
-$K$ when tuning. We set the seed prior to tuning to ensure results are reproducible:
+to fit the model for each value in a range of parameter values. 
+In particular, we first create a data frame with a `neighbors`
+variable that contains the sequence of values of $K$ to try; below we create the `k_vals`
+data frame with the `neighbors` variable containing each value from $K=1$ to $K=15$.
+Then we pass that data frame to the `grid` argument of `tune_grid`.
+We set the seed prior to tuning to ensure results are reproducible:
 ```{r 06-range-cross-val-2}
 set.seed(1)
+k_vals <- tibble(neighbors = seq(from = 1, to = 15, by = 1))
 knn_results <- workflow() %>%
   add_recipe(cancer_recipe) %>%
   add_model(knn_spec) %>%
-  tune_grid(resamples = cancer_vfold, grid = 10) %>%
+  tune_grid(resamples = cancer_vfold, grid = k_vals) %>%
   collect_metrics()
 knn_results
 ```
@@ -511,7 +516,7 @@ Figure \@ref(fig:06-find-k) suggests that setting the number of
 neighbours to $K =$ `r (accuracies %>% arrange(desc(mean)) %>% head(1))$neighbors`
 provides the highest accuracy.
 But as you can see, there is no exact or perfect answer here; 
- any selection from $K = 2$ and $15$ would be reasonably justified, as all
+ any selection from $K = 3$ and $15$ would be reasonably justified, as all
 of these differ in classifier accuracy by a small amount. Remember: the
 values you see on this plot are *estimates* of the true accuracy of our
 classifier. Although the 
@@ -525,13 +530,19 @@ models), we are looking for a value where:
 - changing the value to a nearby one (e.g. adding or subtracting 1) doesn't decrease accuracy too much, so that our choice is reliable in the presence of uncertainty
 - the cost of training the model is not prohibitive (e.g., in our situation, if $K$ is too large, predicting becomes expensive!)
 
+We know that $K =$ `r (accuracies %>% arrange(desc(mean)) %>% head(1))$neighbors` 
+provides the highest estimated accuracy. Further, Figure \@ref(fig:06-find-k) shows that the estimated accuracy 
+changes by only a small amount if we increase or decrease $K$ near $K =$ `r (accuracies %>% arrange(desc(mean)) %>% head(1))$neighbors`.
+And finally, $K =$ `r (accuracies %>% arrange(desc(mean)) %>% head(1))$neighbors` does not create a prohibitively expensive
+computational cost of training. Considering these three points, we would indeed select
+$K =$ `r (accuracies %>% arrange(desc(mean)) %>% head(1))$neighbors` for the classifier.
+
 ### Under/Overfitting
 
 To build a bit more intuition, what happens if we keep increasing the number of
-neighbours $K$? In fact, the accuracy actually starts to decrease! Rather than
-setting `grid = 10` and letting `tidymodels` decide what values of $K$ to try,
-let's specify the values explicitly by creating a data frame with a `neighbors`
-variable. Figure \@ref(fig:06-lots-of-ks) shows a plot of estimated accuracy as 
+neighbours $K$? In fact, the accuracy actually starts to decrease! 
+Let's specify a much larger range of values of $K$ to try in the `grid` 
+argument of `tune_grid`. Figure \@ref(fig:06-lots-of-ks) shows a plot of estimated accuracy as 
 we vary $K$ from 1 to almost the number of observations in the data set.
 
 ```{r 06-lots-of-ks, fig.height = 4, fig.width = 5, fig.cap="Plot of accuracy estimate versus number of neighbours for many K values"}
@@ -577,12 +588,12 @@ completely different.  In general, if the model *is influenced too much* by the
 training data, it is said to **overfit** the data.
 
 You can see these two effects in Figure \@ref(fig:06-decision-grid-K),
-which shows how the classifier changes as we set the number of neighbours $K$ to 1, 7, 20, and 200.
+which shows how the classifier changes as we set the number of neighbours $K$ to 1, 7, 20, and 300.
 
 <center>
 ```{r 06-decision-grid-K, echo = FALSE, fig.height = 7, fig.width = 10, fig.cap = "Effect of K in overfitting and underfitting"}
 library(gridExtra)
-ks <- c(1, 7, 20, 200)
+ks <- c(1, 7, 20, 300)
 plots <- list()
 
 for (i in 1:length(ks)) {
@@ -640,7 +651,7 @@ classifier, and using the test set to estimate its accuracy. To tune the
 classifier (e.g., select the K in K-nearest neighbours), we maximize accuracy
 estimates from cross-validation. This process is summarized in Figure \@ref(fig:06-overview).
 
-```{r 06-overview, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Overview of K-nn classification", fig.retina = 2, out.width = "660"}
+```{r 06-overview, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Overview of KNN classification", fig.retina = 2, out.width = "660"}
 knitr::include_graphics("img/train-test-overview.jpeg")
 ```
 
@@ -652,20 +663,18 @@ The overall workflow for performing K-nearest neighbour classification using `ti
 4. Create a `nearest_neighbors` model specification, with `neighbors = tune()`.
 5. Add the recipe and model specification to a `workflow()`, and use the `tune_grid` function on the train/validation splits to estimate the classifier accuracy for a range of $K$ values.
 6. Pick a value of $K$ that yields a high accuracy estimate that doesn't change much if you change $K$ to a nearby value.
-7. Make a new model specification for the best parameter value, and retrain the classifier using the `fit` function.
+7. Make a new model specification for the best parameter value (i.e., $K$), and retrain the classifier using the `fit` function.
 8. Evaluate the estimated accuracy of the classifier on the test set using the `predict` function.
 
-**Strengths:**
+All algorithms have strengths and weaknesses. We summarize these for the K-nearest neighbours algorithm here.
 
-The K-nearest neighbours classifier:
+**Strengths:** The K-nearest neighbours classifier
 
 1. is a simple, intuitive algorithm
 2. requires few assumptions about what the data must look like 
 3. works for binary (two-class) and multi-class (more than 2 classes) classification problems
 
-**Weaknesses:**
-
-The K-nearest neighbours classifier:
+**Weaknesses:** The K-nearest neighbours classifier
 
 1. becomes very slow as the training data gets larger
 2. may not perform well with a large number of predictors
@@ -682,13 +691,13 @@ variables from your data will be treated as predictor variables. Technically, yo
 anything from using a single predictor variable to using every variable in your
 data; the K-nearest neighbours algorithm accepts any number of
 predictors. However, it is **not** the case that using more predictors always
-yields better predictions! In fact, including irrelevant predictors can
+yields better predictions! In fact, sometimes including irrelevant predictors can
 actually negatively affect classifier performance.
 
 **The effect of irrelevant predictors**
 
 Let's take a look at an example where K-nearest neighbours performs
-worse when given more predictors to work with. Here we have modified
+worse when given more predictors to work with. In this example we have modified
 the breast cancer data to have only the `Smoothness`, `Concavity`, and `Perimeter` variables from the original data,
 and then added irrelevant variables that we created ourselves using a random number generator.
 The irrelevant variables each take a value of 0 or 1 with equal probability for each observation, regardless
@@ -712,7 +721,7 @@ cancer_irrelevant %>%
       select(Class, Smoothness, Concavity, Perimeter, Irrelevant1, Irrelevant2)
 ```
 
-Next, we build a sequence of K-NN classifiers that include `Smoothness`,
+Next, we build a sequence of KNN classifiers that include `Smoothness`,
 `Concavity`, and `Perimeter` as predictor variables, but also increasingly many irrelevant
 variables (from 0 to 40 of them). Each model is tuned via 5-fold
 cross-validation. Figure \@ref(fig:06-performance-irrelevant-features) shows
@@ -787,7 +796,7 @@ res <- tibble(ks = ks, accs = accs, fixedaccs = fixedaccs, nghbrs = nghbrs)
 #res <- res %>% mutate(base_acc = base_acc)
 #plt_irrelevant_accuracies <- res %>%
 #  ggplot() +
-#  geom_line(mapping = aes(x=ks, y=accs, linetype="Tuned K-NN")) +
+#  geom_line(mapping = aes(x=ks, y=accs, linetype="Tuned KNN")) +
 #  geom_hline(data=res, mapping=aes(yintercept=base_acc, linetype="Always Predict Benign")) +
 #  labs(x = "Number of Irrelevant Predictors", y = "Model Accuracy Estimate") + 
 #  scale_linetype_manual(name="Method", values = c("dashed", "solid"))
@@ -829,7 +838,7 @@ plt_irrelevant_nghbrs
 
 **Finding a good subset of predictors**
 
-So then if we can't just use all of our variables as predictors without consideration, how 
+So then if it is not ideal to use all of our variables as predictors without consideration, how 
 do we choose which variables we *should* use?  A simple method is to rely on your scientific understanding
 of the data to tell you which variables are not likely to be useful predictors. For example, in the cancer
 data that we have been studying, the `ID` variable is just a unique identifier for the observation.
@@ -842,28 +851,30 @@ this process is both time-consuming and error-prone when there are many variable
 We therefore need a more systematic and programmatic way of choosing variables. 
 This is a very difficult problem to solve in
 general, and there are a number of methods that have been developed that apply
-in particular cases of interest; see the additional resources at the end of
-this chapter to find out where you can learn more about variable selection.
+in particular cases of interest. Here we will discuss two basic
+selection methods as an introduction to the topic. See the additional resources at the end of
+this chapter to find out where you can learn more about variable selection, including more advanced methods.
 
 The first idea you might think of for a systematic way to select predictors
-is *best subset selection*. Best subset selection essentially involves trying
-all possible subsets of variables and picking the "best" one. In particular, you
+is to try all possible subsets of predictors and then pick the set that results in the "best" classifier.
+This procedure is indeed a well-known variable selection method referred to as *best subset selection*. 
+In particular, you
 
 1. create a separate model for every possible subset of predictors
 2. tune each one using cross validation
 3. pick the subset of predictors that gives you the highest estimated prediction accuracy  
 
-Best subset selection is applicable to any  classification method (K-NN or otherwise).
+Best subset selection is applicable to any  classification method (KNN or otherwise).
 However, it becomes very slow when you have even a moderate
 number of predictors to choose from (say, around 10). This is because the number of possible predictor subsets
 grows very quickly with the number of predictors, and you have to train the model (itself
-a slow process!) for each one. For example, if we have $m=2$ predictors---let's call
+a slow process!) for each one. For example, if we have $2$ predictors---let's call
 them A and B---then we have 3 variable sets to try: A alone, B alone, and finally A
-and B together. If we have $m=3$ predictors---A, B, and C---then we have 7
+and B together. If we have $3$ predictors---A, B, and C---then we have 7
 to try: A, B, C, AB, BC, AC, and ABC. In general, the number of models
 we have to train for $m$ predictors is $2^m-1$; in other words, when we 
-get to $m=10$ predictors we have over *one thousand* models to train, and 
-at $m=20$ predictors we have over *one million* models to train! 
+get to $10$ predictors we have over *one thousand* models to train, and 
+at $20$ predictors we have over *one million* models to train! 
 So although it is a simple method, best subset selection is usually too computationally 
 expensive to use in practice.
 
@@ -884,9 +895,10 @@ $m$ candidate models, each with 1 predictor. Then in the second iteration, you h
 to make $m-1$ candidate models, each with 2 predictors (the one you chose before and a new one).
 This pattern continues for as many iterations as you want. If you run the method
 all the way until you run out of predictors to choose, you will end up training
-approximately $m^2$ separate models. This is a *big* improvement from the $2^m-1$
-models that best subset selection requires you to train! Therefore we will
-continue the rest of this section using forward selection.
+$\frac{1}{2}m(m+1)$ separate models. This is a *big* improvement from the $2^m-1$
+models that best subset selection requires you to train! For example, while best subset selection requires
+training over 1000 models with $m=10$ predictors, forward selection requires training only 55 candidate models.
+ Therefore we will continue the rest of this section using forward selection.
 
 > One word of caution before we move on. Every additional model that you train 
 > increases the likelihood that you will get unlucky and stumble 
@@ -940,7 +952,7 @@ one over increasing predictor set sizes
 and another to check which predictor to add in each round (where you see `for (j in 1:length(names))` below).
 For each set of predictors to try, we construct a model formula,
 pass it into a `recipe`, build a `workflow` that tunes
-a K-NN classifier using 5-fold cross-validation, 
+a KNN classifier using 5-fold cross-validation, 
 and finally records the estimated accuracy.
 
 ```{r 06-fwdsel-2, warning = FALSE}
@@ -978,7 +990,7 @@ for (i in 1:n_total) {
                           step_scale(all_predictors()) %>%
                           step_center(all_predictors())
 
-        # tune the K-NN classifier with these predictors, and collect the accuracy for the best K
+        # tune the KNN classifier with these predictors, and collect the accuracy for the best K
         acc <- workflow() %>%
           add_recipe(cancer_recipe) %>%
           add_model(knn_spec) %>%
@@ -1002,12 +1014,12 @@ accuracies
 
 Interesting! The forward selection procedure first added the three meaningful variables `Perimeter`,
 `Concavity`, and `Smoothness`, followed by the irrelevant variables. Figure \@ref(fig:06-fwdsel-3)
-visualizes the accuracy as a function of the number of predictors in the model. You can see that
+visualizes the accuracy versus the number of predictors in the model. You can see that
 as meaningful predictors are added, the estimated accuracy increases substantially; and as you add irrelevant
 variables, the accuracy either exhibits small fluctuations or decreases as the model attempts to tune the number
 of neighbours to account for the extra noise. In order to pick the right model from the sequence, you have 
-to trade off the desiderata to have a high accuracy, but also a simple model with few predictors (which has 
-a lower chance of overfitting). The way to perform that trade-off is to look for the *elbow*
+to balance high accuracy and model simplicity (i.e., having fewer predictors and a lower chance of overfitting). The 
+way to find that balance is to look for the *elbow*
 in Figure \@ref(fig:06-fwdsel-3), i.e., the place on the plot where the accuracy stops increasing dramatically and
 levels off or begins to decrease. The elbow in Figure \@ref(fig:06-fwdsel-3) appears to occur at the model with 
 3 predictors; after that point the accuracy levels off. So here the right trade-off of accuracy and number of predictors
@@ -1020,7 +1032,7 @@ where the elbow occurs, and whether adding a variable provides a meaningful incr
 > part of tuning your classifier, you *cannot use your test data* for this
 > process! 
 
-```{r 06-fwdsel-3, warning = FALSE, fig.retina = 2, out.width = "600", fig.cap = "Estimated accuracy versus the number of predictors for the sequence of models built using forward selection"}
+```{r 06-fwdsel-3, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "600", fig.cap = "Estimated accuracy versus the number of predictors for the sequence of models built using forward selection"}
 fwd_sel_accuracies_plot <- accuracies %>%
   ggplot(aes(x = size, y = accuracy)) +
   geom_line() +
