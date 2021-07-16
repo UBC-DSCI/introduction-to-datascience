@@ -4,19 +4,19 @@
 
 This chapter continues our foray into answering predictive questions.
 Here we will focus on *regression*, which is the process of predicting
-*numerical* response variables.
+*numerical* variables.
 This is unlike the past two chapters, which focused on predicting categorical
 variables via classification. However, regression does have many similarities
 to classification: for example, just as in the case of classification,
 we will split our data into training, validation, and test sets, we will 
-use `tidymodels` workflows, we will use a K-nearest neighbours 
+use `tidymodels` workflows, we will use a K-nearest neighbours (KNN) 
 approach to make predictions, and we will use cross-validation to choose K.
 Because of how similar these procedures are, make sure to read Chapters
 6 and 7 before reading this one---we will move a little bit faster here with the
 concepts that have already been covered.
 This chapter will primarily focus on the case where there is a single predictor and single
 response variable of interest, but the end of the chapter shows how to perform
-*multivariate regression*, i.e., regression with more than one predictor variable.
+regression with more than one predictor variable, i.e., *multivariate regression*.
 
 ## Chapter learning objectives 
 By the end of the chapter, students will be able to:
@@ -68,12 +68,11 @@ is that we are now predicting numerical variables instead of categorical variabl
 > numbers in your data (e.g. "1" represents "benign", and "0" represents "malignant"). In these cases
 > you have to ask the question about the *meaning* of the labels ("benign" and "malignant"), not their values ("1" and "0"). 
 
-## Exploring a labelled data set
+## Exploring a data set
 
 In this chapter and the next, we will study the Sacramento real estate data
 set. This data set contains 932 real estate transactions in Sacramento,
-California from a five day 
-period [originally reported in the Sacramento Bee newspaper](https://support.spatialkey.com/spatialkey-sample-csv-data/).
+California [originally reported in the Sacramento Bee newspaper](https://support.spatialkey.com/spatialkey-sample-csv-data/).
 
 ```{r 07-load, message = FALSE}
 library(tidyverse)
@@ -217,7 +216,7 @@ now. Note that for the remainder of the chapter we'll be working with the
 entire Sacramento data set, as opposed to the smaller sample of 30 points above.
 
 ```{r 07-test-train-split}
-sacramento_split <- initial_split(sacramento, prop = 0.6, strata = price)
+sacramento_split <- initial_split(sacramento, prop = 0.75, strata = price)
 sacramento_train <- training(sacramento_split)
 sacramento_test <- testing(sacramento_split)
 ```
@@ -491,7 +490,8 @@ plot_final
 
 ## Strengths and limitations of KNN regression
 
-As with KNN classification (or any prediction algorithm for that manner), KNN regression has both strengths and weaknesses. Some are listed here:
+As with KNN classification (or any prediction algorithm for that matter), KNN 
+regression has both strengths and weaknesses. Some are listed here:
 
 **Strengths:**
 
@@ -591,9 +591,9 @@ The estimated cross validation accuracy for the multivariate model is
 Thus in this case, we did not improve the model 
 by a large amount by adding this additional predictor.
 
-In order to evaluate the quality of the multivariate KNN model on the test data,
-we need to re-train the model on the entire
-training data set, and then use that model to make predictions
+Regardless, let's continue the analysis to see how we can make predictions with a multivariate KNN regression model
+and evaluate its performance on test data. We first need to re-train the model on the entire
+training data set with $K =$ `r sacr_k`, and then use that model to make predictions
 on the test data.
 ```{r 07-re-train}
 sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = sacr_k) %>%
