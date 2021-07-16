@@ -420,7 +420,7 @@ cancer %>%
   slice(1:5) # subset the first 5 rows
 ```
 
-Below we show in mathematical detail how the `mutate` step was used to compute the `dist_from_new` 
+In Table \@ref(tab:05-multiknn-mathtable) we show in mathematical detail how the `mutate` step was used to compute the `dist_from_new` 
 variable (the distance to the new observation) for each of the 5 nearest neighbours in the training
 data.
 
@@ -430,16 +430,23 @@ my_distances <- table_with_distances(cancer[, attrs], new_point)
 neighbours <- my_distances[order(my_distances$Distance), ]
 k <- 5
 tab <- data.frame(neighbours[1:k, ], cancer[order(my_distances$Distance), ][1:k, c("ID", "Class")])
+
+
+math_table <- tibble(Perimeter = round(tab[1:5,1],2), 
+                     Concavity = round(tab[1:5,2],2), 
+                          dist = round(neighbours[1:5, "Distance"], 2)
+                    )
+math_table <- math_table %>% 
+                    mutate(Distance = paste0("$\\sqrt{(", new_obs_Perimeter, " - ", ifelse(Perimeter < 0, "(", ""), Perimeter, ifelse(Perimeter < 0,")",""), ")^2",
+                                             " + ",
+                                             "(", new_obs_Concavity, " - ", ifelse(Concavity < 0,"(",""), Concavity, ifelse(Concavity < 0,")",""), ")^2} = ", dist, "$")) %>%
+                    select(-dist) %>%
+                    mutate(Class= tab[1:5, "Class"])
 ```
 
-|Perimeter | Concavity | Distance          | Class          |
- |----------------- | -----------------    | ---------------| ----------------- |
-| `r round(tab[1,1],2) `              	| `r round(tab[1,2],2) `             |$\sqrt{0  - 0.241)^2 + (3.5 - 2.65)^2}=$ `r round(neighbours[1, "Distance"],2)` |	`r tab[1, "Class"]`  | 
-|`r round(tab[2,1],2) `              |`r round(tab[2,2],2) `               |$\sqrt{(0 - 0.750)^2 + (3.5 - 2.87)^2} =$ `r round(neighbours[2, "Distance"],2)`	|`r tab[2, "Class"]`  |
-|`r round(tab[3,1],2) `              |`r round(tab[3,2],2) `        | $\sqrt{(0 - 0.623)^2 + (3.5 - 2.54)^2} =$ `r round(neighbours[3, "Distance"],2)` | `r tab[3, "Class"]`|
-|`r round(tab[4,1],2) `              |`r round(tab[4,2],2) `        | $\sqrt{(0 - 0.417)^2 + (3.5 - 2.31)^2} =$ `r round(neighbours[4, "Distance"],2)` | `r tab[4, "Class"]`|
-|`r round(tab[5,1],2) `              |`r round(tab[5,2],2) `        | $\sqrt{(0 - (-1.16))^2 + (3.5 - 4.04)^2} =$ `r round(neighbours[5, "Distance"],2)` | `r tab[5, "Class"]`|
------------------     ----------------- ----------------- 
+```{r 05-multiknn-mathtable, echo = FALSE}
+kable(math_table, booktabs = TRUE, caption = "Evaluating the distances from the new observation to each of its 5 nearest neighbours", escape = FALSE)
+```
 
 The result of this computation shows that 3 of the 5 nearest neighbours to our new observation are
 malignant (`M`); since this is the majority, we classify our new observation as malignant. 
