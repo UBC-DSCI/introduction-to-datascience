@@ -17,7 +17,7 @@ By the end of the chapter, students will be able to:
 * Use R and `tidymodels` to fit a linear regression model on training data.
 * Evaluate the linear regression model on test data.
 * Compare and contrast predictions obtained from K-nearest neighbour regression to those obtained using linear regression from the same dataset.
-* In R, overlay regression lines from `geom_smooth` on a single plot. 
+* In R, overlay predictions from linear regression on a scatter plot of data using `geom_smooth`.
 
 ## Simple linear regression
 
@@ -27,16 +27,17 @@ predict well beyond the range of the predictors in the training data, and
 the method gets significantly slower as the training dataset grows.
 Fortunately, there is an alternative to KNN regression---*linear regression*---that addresses
 both of these limitations. Linear regression is also much more commonly used in practice, especially
-in scientific applications. In this first part of the chapter, we will focus on *simple* linear regression,
+in scientific applications, because it provides an interpretable mathematical equation that describes
+the relationship between the predictor and response variables. In this first part of the chapter, we will focus on *simple* linear regression,
 which involves only one predictor variable and one response variable; later on, we will consider
 *multivariate* linear regression, which involves multiple predictor variables.
 Like KNN regression, simple linear regression involves
 predicting a numerical response variable (like race time, house price, or height);
 but *how* it makes those predictions for a new observation is quite different from KNN regression.
  Instead of looking at the K nearest neighbours and averaging
-over their values for a prediction, in simple linear regression, all the
-training data points are used to create a straight line of best fit, and then
-the line is used to "look up" the prediction. 
+over their values for a prediction, in simple linear regression, we create a 
+straight line of best fit through the training data and then
+"look up" the prediction using the line.
 
 > **Note:** although we did not cover it in earlier chapters, there 
 > is another popular method for classification called *logistic
@@ -45,7 +46,8 @@ the line is used to "look up" the prediction.
 > "fit" the model to the training data and then "look up" the prediction for each new observation.
 > Logistic regression and KNN classification have an advantage/disadvantage comparison 
 > similar to that of linear regression and KNN
-> regression. See the "Additional Resources" section at the end of the
+> regression. It is useful to have a good understanding of linear regression before learning about
+> logistic regression. After reading this chapter, see the "Additional Resources" section at the end of the
 > classification chapters to learn more about logistic regression.
 
 Let's return to the Sacramento housing data from the previous chapter to learn
@@ -396,7 +398,7 @@ mlm_fit <- workflow() %>%
 mlm_fit
 ```
 
-And finally, we predict on the test data set to assess how well our model does:
+And finally, we make predictions on the test data set to assess the quality of our model:
 
 ```{r 08-assessFinal-multi}
 lm_mult_test_results <- mlm_fit %>%
@@ -405,6 +407,9 @@ lm_mult_test_results <- mlm_fit %>%
   metrics(truth = price, estimate = .pred)
 lm_mult_test_results
 ```
+Our model's test error as assessed by RMSPE
+is `r format(round(lm_mult_test_results %>% filter(.metric == 'rmse') %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`,
+  
 
 In the case of two predictors, our linear regression creates a *plane* of best fit, as
 shown in Figure \@ref(fig:08-3DlinReg).

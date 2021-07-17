@@ -1,7 +1,8 @@
 # Classification I: training & predicting {#classification}
 
-```{r 05-setup, include=FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = TRUE)
+```{r 05-setup, message = FALSE, warning = FALSE, echo = FALSE}
+# colour palette
+cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")
 ```
 
 ## Overview 
@@ -197,20 +198,18 @@ cancer %>%
 
 Next, let's draw a scatter plot to visualize the relationship between the
 perimeter and concavity variables. Rather than use `ggplot's` default palette,
-we define our own here (`cbPalette`) and pass it as the `values` argument to
-the `scale_color_manual` function. We also make the category labels ("B" and
-"M") more readable by changing them to "Benign" and "Malignant" using the
-`labels` argument.
+we define our own two colours here using hexadecimal 
+colour codes&mdash;`E69F00` for orange and `56B4E9` for light blue&mdash;and
+ pass them as the `values` argument to the `scale_color_manual` function. 
+We also make the category labels ("B" and "M") more readable by 
+changing them to "Benign" and "Malignant" using the `labels` argument.
 
 ```{r 05-scatter, fig.height = 4, fig.width = 5, fig.cap= "Scatter plot of concavity versus perimeter coloured by diagnosis label"}
-# colour palette
-cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")
-
 perim_concav <- cancer %>%
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
   geom_point(alpha = 0.5) +
   labs(color = "Diagnosis") +
-  scale_color_manual(labels = c("Malignant", "Benign"), values = cbPalette)
+  scale_color_manual(labels = c("Malignant", "Benign"), values = c("#E69F00", "#56B4E9"))
 perim_concav
 ```
 
@@ -529,7 +528,7 @@ In order to classify a new observation using a K-nearest neighbour classifier, w
 Coding the K-nearest neighbours algorithm in R ourselves can get complicated,
 especially if we want to handle multiple classes, more than two variables,
 or predicting the class for multiple new observations. Thankfully, in R,
-the K-nearest neighbour algorithm is implemented in the `parsnip` package 
+the K-nearest neighbours algorithm is implemented in the `parsnip` package 
 included in the 
 [`tidymodels` meta package](https://www.tidymodels.org/), along with 
 many [other models](https://www.tidymodels.org/find/parsnip/)
@@ -537,16 +536,17 @@ many [other models](https://www.tidymodels.org/find/parsnip/)
 provides tools to help make and use models, such as classifiers.  Using the packages
 in this collection will help keep our code simple, readable and accurate; the 
 less we have to code ourselves, the fewer mistakes we are likely to make. We 
-start off by loading `tidymodels`:
+start off by loading `tidymodels`.
 
 ```{r 05-tidymodels}
 library(tidymodels)
 ```
 
-Let's again suppose we have a new observation with perimeter 0 and concavity
-3.5, but its diagnosis is unknown (as in our example above). Suppose we 
-want to use the perimeter and concavity predictor variables to
-predict the diagnosis class of this observation. Let's pick out our 2 desired
+Let's walk through how to use `tidymodels` to perform K-nearest neighbours classification. 
+We will use the cancer data set from above, using
+perimeter and concavity as predictors and $K = 5$ neighbours to build our classifier. Then
+we will use the classifier to predict the diagnosis label for a new observation with
+perimeter 0, concavity 3.5, and an unknown diagnosis label. Let's pick out our 2 desired
 predictor variables and class label and store it as a new dataset named `cancer_train`:
 
 ```{r 05-tidymodels-2}
@@ -576,11 +576,21 @@ knn_spec
 
 In order to fit the model on the breast cancer data, we need to pass the model specification
 and the dataset to the `fit` function. We also need to specify what variables to use as predictors
-and what variable to use as the target. Below, the `Class ~ .` argument specifies 
+and what variable to use as the target. Below, the `Class ~ Perimeter + Concavity` argument specifies 
 that `Class` is the target variable (the one we want to predict),
-and `.` (everything *except* `Class`) is to be used as the predictor.
+and both `Perimeter` and `Concavity` are to be used as the predictors.
 
 ```{r 05-tidymodels-4}
+knn_fit <- knn_spec %>%
+  fit(Class ~ Perimeter + Concavity, data = cancer_train)
+```
+We can also use a convenient shorthand syntax using a period, `Class ~ .`, to indicate
+that we want to use every variable *except* `Class` as a predictor in the model.
+In this particular setup, since `Concavity` and `Perimeter` are the only two predictors in the `cancer_train`
+data frame, `Class ~ Perimeter + Concavity` and `Class ~ .` are equivalent.
+In general, you can choose individual predictors using the `+` symbol, or you can specify to
+use *all* predictors using the `.` symbol.
+```{r 05-tidymodels-4b}
 knn_fit <- knn_spec %>%
   fit(Class ~ ., data = cancer_train)
 knn_fit
@@ -700,6 +710,19 @@ scaled_cancer <- bake(uc_recipe, unscaled_cancer)
 scaled_cancer
 ```
 
+At this point, you may wonder why we are doing so much work just to center and
+scale our variables.  Can't we just manually scale and center the `Area` and
+`Smoothness` variables ourselves before building our KNN model? Well,
+technically *yes*; but doing so is error-prone.  In particular, we might
+accidentally forget to apply the same centering / scaling when making
+predictions, or accidentally apply a *different* centering / scaling than what
+we used while training. Proper use of a `recipe` helps keep our code simple,
+readable, and error-free. Furthermore, note that using `prep` and `bake` is
+required only when you want to inspect the result of the preprocessing steps
+yourself. You will see further on in Section
+\@ref(puttingittogetherworkflow) that `tidymodels` provides tools to
+automatically apply `prep` and `bake` as necessary without additional coding effort.
+
 Figure \@ref(fig:05-scaling-plt) shows the two scatter plots side-by-side&mdash;one for `unscaled_cancer` and one for
 `scaled_cancer`. Each has the same new observation annotated with its $K=3$ nearest neighbours.
 In the plot for the nonstandardized original data, you can see some odd choices
@@ -817,7 +840,7 @@ rare_plot <- rare_cancer %>%
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
   geom_point(alpha = 0.5) +
   labs(color = "Diagnosis") +
-  scale_color_manual(labels = c("Malignant", "Benign"), values = cbPalette)
+  scale_color_manual(labels = c("Malignant", "Benign"), values = c("#E69F00", "#56B4E9"))
 rare_plot
 ```
 
@@ -954,7 +977,7 @@ upsampled_plot
 </center>
 
 
-## Putting it together in a `workflow`
+## Putting it together in a `workflow` {#puttingittogetherworkflow}
 
 The `tidymodels` package collection also provides the `workflow`, a simple way to chain
 together multiple data analysis steps without a lot of otherwise necessary code for intermediate steps.
@@ -999,15 +1022,27 @@ As before, the fit object lists the function that trains the model as well as th
 for the number of neighbours and weight function (for now, these are just the values we chose
  manually when we created `knn_spec` above). But now the fit object also includes information about
 the overall workflow, including the centering and scaling preprocessing steps.
-
-Figure \@ref(fig:05-workflow-plot-show) visualizes the predictions that this 
-trained K-nearest neighbour model will make on new observations.
+In other words, when we use the `predict` function with the `knn_fit` object to make a prediction for a new
+observation, it will first apply the same recipe steps to the new observation. 
+As an example, we will predict the class label of a two new observations:
+one with `Area = 500` and `Smoothness = 0.075`, and one with `Area = 1500` and `Smoothness = 0.1`.
+```{r 05-workflow-predict}
+new_observation <- tibble(Area = c(500, 1500), Smoothness = c(0.075, 0.1))
+prediction <- predict(knn_fit, new_observation)
+prediction
+```
+The classifier predicts that the first observation is benign ("B"), while the second is
+malignant ("M"). Figure \@ref(fig:05-workflow-plot-show) visualizes the predictions that this 
+trained K-nearest neighbour model will make on a large range of new observations.
 Although you have seen coloured prediction map visualizations like this a few times now,
 we have not included the code to generate them, as it is a little bit complicated.
 For the interested reader who wants a learning challenge, we now include it below. 
 The basic idea is to create a grid of synthetic new observations using the `expand.grid` function, 
 predict the label of each, and visualize the predictions with a coloured scatter having a very high transparency 
 (low `alpha` value) and large point radius. See if you can figure out what each line is doing!
+
+> *Understanding this code is not required for the remainder of the textbook. It is included
+> for those readers who would like to use similar visualizations in their own data analyses.* 
 
 ```{r 05-workflow-fit-plot} 
 # create the grid of area/smoothness vals, and arrange in a data frame
@@ -1029,7 +1064,7 @@ wkflw_plot <-
   geom_point(data = unscaled_cancer, mapping = aes(x = Area, y = Smoothness, color = Class), alpha = 0.75) +
   geom_point(data = prediction_table, mapping = aes(x = Area, y = Smoothness, color = Class), alpha = 0.02, size = 5.) +
   labs(color = "Diagnosis") +
-  scale_color_manual(labels = c("Malignant", "Benign"), values = cbPalette)
+  scale_color_manual(labels = c("Malignant", "Benign"), values = c("#E69F00", "#56B4E9"))
 ```
 
 ```{r 05-workflow-plot-show, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of smoothness versus area where background colour indicates the decision of the classifier"}

@@ -445,12 +445,13 @@ sacr_fit <- workflow() %>%
 sacr_summary <- sacr_fit %>%
   predict(sacramento_test) %>%
   bind_cols(sacramento_test) %>%
-  metrics(truth = price, estimate = .pred)
+  metrics(truth = price, estimate = .pred) %>%
+  filter(.metric == 'rmse')
 
 sacr_summary
 ```
 Our final model's test error as assessed by RMSPE 
-is `r format(round(sacr_summary %>% filter(.metric == 'rmse') %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`. 
+is `r format(round(sacr_summary %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`. 
 But what does this RMSPE score mean? When we calculated test set prediction accuracy in KNN
 classification, the highest possible value was 1 and the lowest possible value was 0. 
 If we got a value close to 1, our model was "good;" and otherwise,
@@ -605,12 +606,13 @@ knn_mult_preds <- knn_mult_fit %>%
   predict(sacramento_test) %>%
   bind_cols(sacramento_test)
 
-knn_mult_mets <- metrics(knn_mult_preds, truth = price, estimate = .pred)
+knn_mult_mets <- metrics(knn_mult_preds, truth = price, estimate = .pred) %>%
+                     filter(.metric == 'rmse')
 knn_mult_mets
 ```
 This time when we performed KNN regression on the same data set, but also
 included number of bedrooms as a predictor, we obtained a RMSPE test error 
-of `r format(round(knn_mult_mets %>% filter(.metric == 'rmse') %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`.
+of `r format(round(knn_mult_mets %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`.
 Figure \@ref(fig:07-knn-mult-viz) visualizes the model's predictions overlaid on top of the data. This 
 time the predictions are a surface in 3-D space, instead of a line in 2-D space, as we have 2
 predictors instead of 1.  
