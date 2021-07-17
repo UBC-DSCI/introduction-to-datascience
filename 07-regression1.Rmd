@@ -14,8 +14,8 @@ approach to make predictions, and we will use cross-validation to choose K.
 Because of how similar these procedures are, make sure to read Chapters
 6 and 7 before reading this one---we will move a little bit faster here with the
 concepts that have already been covered.
-This chapter will primarily focus on the case where there is a single predictor and single
-response variable of interest, but the end of the chapter shows how to perform
+This chapter will primarily focus on the case where there is a single predictor, 
+but the end of the chapter shows how to perform
 regression with more than one predictor variable, i.e., *multivariate regression*.
 
 ## Chapter learning objectives 
@@ -35,6 +35,7 @@ By the end of the chapter, students will be able to:
 Regression, like classification, is a predictive problem setting where we want
 to use past information to predict future observations. But in the case of
 regression, the goal is to predict *numerical* values instead of *categorical* values. 
+The variable that you want to predict is often called the *response variable*.
 For example, we could try to use the number of hours a person spends on
 exercise each week to predict their race time in the annual Boston marathon. As 
 another example, we could try to use the size of a house to
@@ -384,9 +385,12 @@ This happens because our
 predicted values for a given region depend on just a single observation. 
 In general, when $K$ is too small, the line follows the training data quite
 closely, even if it does not match it perfectly.
-The problem is that if we used a different training data set of house prices and sizes
+If we used a different training data set of house prices and sizes
 from the Sacramento real estate market, we would end up with completely different
 predictions. In other words, the model is *influenced too much* by the data.
+Because the model follows the training data so closely, it will not make accurate
+predictions on new observations which, generally, will not have the same fluctuations
+as the original training data.
 Recall from the classification
 chapters that this behaviour&mdash;where the model is influenced too much
 by the noisy data&mdash;is called *overfitting*; we use this same term 
@@ -452,19 +456,15 @@ sacr_summary
 ```
 Our final model's test error as assessed by RMSPE 
 is `r format(round(sacr_summary %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`. 
-But what does this RMSPE score mean? When we calculated test set prediction accuracy in KNN
-classification, the highest possible value was 1 and the lowest possible value was 0. 
-If we got a value close to 1, our model was "good;" and otherwise,
-the model was "not good." What about RMSPE? Unfortunately there is no default scale 
-for RMSPE. Instead,  it is measured in
-the units of the target/response variable, and so it is a bit hard to
-interpret. For now, let's consider this approach to thinking about RMSPE from
-our testing data set: as long as its not significantly worse than the cross-validation
-RMSPE of our best model, then we can say that we're not doing too much worse on
-the test data than we did on the training data. So the model appears to be
-generalizing well to a new data set it has never seen before. In future courses
-on statistical/machine learning, you will learn more about how to interpret RMSPE
-from testing data and other ways to assess models.
+Note that RMSPE is measured in the same units as the response variable.
+In other words, on new observations, we expect the error in our prediction to be 
+*roughly* $`r format(round(sacr_summary %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`. 
+From one perspective, this is good news: this is about the same as the cross-validation
+RMSPE estimate of our tuned model, so we can say that the model appears to generalize well
+to new data that it has never seen before.
+However, much like in the case of KNN classification, whether this value for RMSPE is *good*&mdash;i.e.,
+whether an error of around $`r format(round(sacr_summary %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`
+is acceptable&mdash;depends entirely on the application. 
 
 Finally, Figure \@ref(fig:07-predict-all) shows the predictions that our final model makes across
 the range of house sizes we might encounter in the Sacramento area&mdash;from 500 to 5000 square feet. 
