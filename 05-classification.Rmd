@@ -24,7 +24,7 @@ By the end of the chapter, readers will be able to:
 - Explain the K-nearest neighbour classification algorithm
 - Perform K-nearest neighbour classification in R using `tidymodels`  
 - Use a `recipe` to preprocess data to be centered, scaled, and balanced
-- Combine preprocessing and model training using a Tidymodels `workflow`
+- Combine preprocessing and model training using a `workflow`
 
 
 ## The classification problem
@@ -91,7 +91,7 @@ in order to better understand the data we are working with.  We start by
 loading the necessary packages for our analysis. Below you'll see (in addition
 to the usual `tidyverse`) a new package: `forcats`. 
 The `forcats` package enables us to easily
-manipulate factors in R. As we learned in chapter \@ref(viz), factors are a special categorical type of variable in
+manipulate factors in R. As we learned in Chapter \@ref(viz), factors are a special categorical type of variable in
 R that are often used for class label data. 
 
 
@@ -365,7 +365,7 @@ about $K=3$. We could have used $K=4, 5$ or more (though we may want to choose
 an odd number to avoid ties). We will discuss more about choosing $K$ in the
 next chapter. 
 
-**Distance between points** 
+### Distance between points
 
 We decide which points are the $K$ "nearest" to our new observation
 using the *straight-line distance* (we will often just refer to this as *distance*). 
@@ -461,10 +461,10 @@ perim_concav + annotate("path",
 </center>
 
 
-###More than two explanatory variables 
+### More than two explanatory variables 
 
 Although the above description is directed toward two predictor variables, 
-exactly the same K-nearest neighbour algorithm applies when you
+exactly the same K-nearest neighbours algorithm applies when you
 have a higher number of predictor variables (i.e., a higher-dimensional
 predictor space).  Each predictor variable may give us new
 information to help create our classifier.  The only difference is the formula
@@ -510,7 +510,7 @@ general we recommend against using 3D visualizations; here we show the data in
 3D only to illustrate what "higher dimensions" and "nearest neighbours" look like,
 for learning purposes.*
 
-## Summary of K-nearest neighbours algorithm
+### Summary of K-nearest neighbours algorithm
 
 In order to classify a new observation using a K-nearest neighbour classifier, we have to:
 
@@ -540,7 +540,7 @@ library(tidymodels)
 ```
 
 Let's walk through how to use `tidymodels` to perform K-nearest neighbours classification. 
-We will use the cancer data set from above, using
+We will use the cancer data set from above, with
 perimeter and concavity as predictors and $K = 5$ neighbours to build our classifier. Then
 we will use the classifier to predict the diagnosis label for a new observation with
 perimeter 0, concavity 3.5, and an unknown diagnosis label. Let's pick out our 2 desired
@@ -701,7 +701,7 @@ For example:
 
 You can find [a full set of all the steps and variable selection functions](https://tidymodels.github.io/recipes/reference/index.html)
 on the recipes home page.
-We finally use the `bake` function to apply the recipe.
+We finally use the `bake` function to apply the recipe to the unscaled data.
 ```{r 05-scaling-4}
 scaled_cancer <- bake(uc_recipe, unscaled_cancer)
 scaled_cancer
@@ -750,7 +750,7 @@ unscaled_cancer <- bind_rows(unscaled_cancer, new_obs)
 unscaled <- ggplot(unscaled_cancer, aes(x = Area, y = Smoothness, color = Class)) +
   geom_point(alpha = 0.6) +
   labs(color = "Diagnosis") +
-  scale_color_manual(labels = c("Benign", "Malignant"), values = c("#56B4E9", "#E69F00", "red")) +
+  scale_color_manual(labels = c("Benign", "Malignant"), values = c("steelblue2", "orange2", "red")) +
   labs(color = "Diagnosis") +
   ggtitle("Nonstandardized Data") +
   geom_segment(aes(
@@ -781,7 +781,7 @@ scaled_cancer <- bind_rows(scaled_cancer, new_obs_scaled)
 scaled <- ggplot(scaled_cancer, aes(x = Area, y = Smoothness, color = Class)) +
   geom_point(alpha = 0.6) +
   labs(color = "Diagnosis") +
-  scale_color_manual(labels = c("Benign", "Malignant"), values = c("#56B4E9", "#E69F00", "red")) +
+  scale_color_manual(labels = c("Benign", "Malignant"), values = c("steelblue2", "orange2", "red")) +
   labs(color = "Diagnosis") +
   ggtitle("Standardized Data") +
   # coord_equal(ratio = 1) +
@@ -828,16 +828,16 @@ of the benign observations. The new imbalanced data is shown in Figure \@ref(fig
 ```{r 05-unbalanced, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data"}
 set.seed(3)
 rare_cancer <- bind_rows(
-  filter(cancer, Class == "B"),
-  cancer |> filter(Class == "M") |> slice_sample(n = 3)
-) |>
+    filter(cancer, Class == "B"),
+    cancer |> filter(Class == "M") |> slice_sample(n = 3)
+    ) |>
   select(Class, Perimeter, Concavity)
 
 rare_plot <- rare_cancer |>
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
   geom_point(alpha = 0.5) +
   labs(color = "Diagnosis") +
-  scale_color_manual(labels = c("Malignant", "Benign"), values = c("#E69F00", "#56B4E9"))
+  scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2"))
 rare_plot
 ```
 > The `slice_sample` function takes two arguments: a data frame-like object to sample from and the number of rows to be randomly selected (`n`).
@@ -1062,7 +1062,7 @@ wkflw_plot <-
   geom_point(data = unscaled_cancer, mapping = aes(x = Area, y = Smoothness, color = Class), alpha = 0.75) +
   geom_point(data = prediction_table, mapping = aes(x = Area, y = Smoothness, color = Class), alpha = 0.02, size = 5.) +
   labs(color = "Diagnosis") +
-  scale_color_manual(labels = c("Malignant", "Benign"), values = c("#E69F00", "#56B4E9"))
+  scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2"))
 ```
 
 ```{r 05-workflow-plot-show, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of smoothness versus area where background colour indicates the decision of the classifier"}
