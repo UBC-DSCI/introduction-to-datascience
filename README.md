@@ -3,9 +3,32 @@ This is the source for the Introduction to Data Science textbook.
 
 ## Setup and Build
 
-1. Install Docker (instructions here: [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/))
+In order to build the book, you need to first install Docker 
+(instructions here: [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/)).
+Then obtain the build image via
+```
+docker pull ubcdsci/intro-to-ds
+```
+From this point you have two options:
 
-2. Run RStudio inside the `ubcdsci/intro-to-ds` docker container:
+- use whatever text editor you want, and build the book on the command line
+- use RStudio to both edit and build the book
+
+We provide instructions for both methods here.
+
+### Without RStudio
+
+Once you are done editing, navigate to the repository root folder and run
+```
+./build.sh
+``` 
+from the command line. This command automatically spawns a docker container
+with the `ubcdsci/intro-to-ds` image, runs the script `build.R` from within the container,
+and then stops the container.
+
+### With RStudio
+
+1. Run RStudio inside the `ubcdsci/intro-to-ds` docker container:
     - in terminal, navigate to the root of this project repo
     - type the following in terminal:
 
@@ -31,18 +54,6 @@ This is the source for the Introduction to Data Science textbook.
     ```
     bookdown::render_book('index.Rmd', 'bookdown::gitbook')
     ```
-
-> ### Usage without RStudio
-> You can use this docker container to edit the files without RStudio using either vim or emacs. This can be done via:
->
-> ```
-> docker-compose run --rm book-env bash
-> ```
-> 
-> or via:
-> ```
-> docker run --rm -it -v $PWD:/introduction-to-datascience ubcdsci/intro-to-ds /bin/bash
-> ```
 
 ### Updating the textbook data
 Data sets are collected and curated by `data/retrieve_data.ipynb`. To run that notebook in the Docker container type the following in the terminal:
