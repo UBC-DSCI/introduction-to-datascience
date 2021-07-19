@@ -1,11 +1,5 @@
 # Classification I: training & predicting {#classification}
 
-```{r 05-setup, include = FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = TRUE)
-# colour palette
-cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")
-```
-
 ## Overview 
 In previous chapters, we focused solely on descriptive and exploratory
 data analysis questions. 
@@ -72,9 +66,8 @@ In this chapter and the next, we will study a data set of
 [digitized breast cancer image features](http://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29),
 created by Dr. William H. Wolberg, W. Nick Street, and Olvi L. Mangasarian at
 the University of Wisconsin, Madison. Each row in the data set represents an
-image of a tumour sample&mdash;such as the one shown in Figure \@ref(fig:05-bc-cells)&mdash;including 
-the diagnosis (benign or malignant) and
-several other measurements (e.g., nucleus texture, perimeter, area, etc.).
+image of a tumour sample including the diagnosis (benign or malignant) and
+several other measurements (nucleus texture, perimeter, area, and more).
 Diagnosis for each image was conducted by physicians. 
 
 As with all data analyses, we first need to formulate a precise question that
@@ -145,7 +138,10 @@ total set of variables per image in this data set is:
 12. Fractal Dimension: a measurement of how "rough" the perimeter is 
 
 
-Below we use `glimpse` to preview the data frame. This function can make it easier to inspect the data when we have a lot of columns:
+Below we use `glimpse` to preview the data frame. This function can 
+make it easier to inspect the data when we have a lot of columns, 
+as it prints the data such that the columns go down 
+the page (instead of across).
 
 ```{r 05-glimpse}
 glimpse(cancer)
@@ -196,8 +192,8 @@ cancer |>
 
 Next, let's draw a scatter plot to visualize the relationship between the
 perimeter and concavity variables. Rather than use `ggplot's` default palette,
-we define our own colourblind friendly palette using hexadecimal 
-colour codes&mdash;`E69F00` for orange and `56B4E9` for light blue&mdash;and
+we define our own colourblind-friendly palette using two colours&mdash;`"orange2"` 
+for light orange and `"steelblue2"` for light blue&mdash;and
  pass them as the `values` argument to the `scale_color_manual` function. 
 We also make the category labels ("B" and "M") more readable by 
 changing them to "Benign" and "Malignant" using the `labels` argument.
@@ -207,7 +203,7 @@ perim_concav <- cancer %>%
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
   geom_point(alpha = 0.5) +
   labs(color = "Diagnosis") +
-  scale_color_manual(labels = c("Malignant", "Benign"), values = c("#E69F00", "#56B4E9"))
+  scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2"))
 perim_concav
 ```
 
@@ -402,7 +398,7 @@ perim_concav <- cancer |>
   scale_x_continuous(name = "Perimeter", breaks = seq(-2, 4, 1)) +
   scale_y_continuous(name = "Concavity", breaks = seq(-2, 4, 1)) +
   labs(color = "Diagnosis") +
-  scale_color_manual(labels = c("Malignant", "Benign"), values = cbPalette) +
+  scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2")) +
   geom_point(aes(x = new_point[1], y = new_point[2]), color = "red", size = 2.5)
 perim_concav
 ```
@@ -499,7 +495,7 @@ cancer |>
     color = ~Class,
     opacity = 0.4,
     size = 150,
-    colors = c(cbPalette[1], cbPalette[2])
+    colors = c("orange2", "steelblue2")
   ) |>
   add_markers() |>
   layout(scene = list(
@@ -871,9 +867,9 @@ my_distances <- bind_cols(my_distances, select(rare_cancer, Class))
 neighbours <- rare_cancer[order(my_distances$Distance), ]
 
 for (i in 1:7) {
-  clr <- cbPalette[2]
+  clr <- "steelblue2"
   if (neighbours$Class[i] == "M") {
-    clr <- cbPalette[1]
+    clr <- "orange2"
   }
   rare_plot <- rare_plot +
     geom_segment(
@@ -917,7 +913,7 @@ rare_plot <-
   geom_point(data = rare_cancer, mapping = aes(x = Perimeter, y = Concavity, color = Class), alpha = 0.75) +
   geom_point(data = prediction_table, mapping = aes(x = Perimeter, y = Concavity, color = Class), alpha = 0.02, size = 5.) +
   labs(color = "Diagnosis") +
-  scale_color_manual(labels = c("Malignant", "Benign"), values = cbPalette)
+  scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2"))
 
 rare_plot
 ```
@@ -972,7 +968,7 @@ upsampled_plot <-
   geom_point(data = prediction_table, mapping = aes(x = Perimeter, y = Concavity, color = Class), alpha = 0.02, size = 5.) +
   geom_point(data = rare_cancer, mapping = aes(x = Perimeter, y = Concavity, color = Class), alpha = 0.75) +
   labs(color = "Diagnosis") +
-  scale_color_manual(labels = c("Malignant", "Benign"), values = cbPalette)
+  scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2"))
 
 upsampled_plot
 ```
