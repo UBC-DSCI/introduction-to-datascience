@@ -13,8 +13,8 @@ By the end of the chapter, readers will be able to:
 - Describe what training, validation, and test data sets are and how they are used in classification
 - Split data into training, validation, and test data sets
 - Evaluate classification accuracy in R using a validation data set and appropriate metrics
-- Execute cross-validation in R to choose the number of neighbours in a K-nearest neighbour classifier
-- Describe advantages and disadvantages of the K-nearest neighbour classification algorithm
+- Execute cross-validation in R to choose the number of neighbours in a K-nearest neighbours classifier
+- Describe advantages and disadvantages of the K-nearest neighbours classification algorithm
 
 ## Evaluating accuracy
 
@@ -61,7 +61,7 @@ books on this topic.
 knitr::include_graphics("img/ML-paradigm-test.png")
 ```
 
-In R, we can use the `tidymodels` library collection not only to perform K-nearest neighbour
+In R, we can use the `tidymodels` library collection not only to perform K-nearest neighbours
 classification, but also to assess how well our classification worked. Let's
 work through an example of this process using the breast cancer dataset.
 We start by loading the necessary libraries, reading in the breast cancer data
@@ -88,7 +88,7 @@ perim_concav <- cancer |>
 perim_concav
 ```
 
-**Create the train / test split**
+### Create the train / test split
 
 Once we have decided on a predictive question to answer and done some
 preliminary exploration, the very next thing to do is to split the data into
@@ -107,7 +107,8 @@ in the data does not influence the data that ends up in the training and testing
 Second, it **stratifies** the data by the class label, to ensure that roughly
 the same proportion of each class ends up in both the training and testing sets. For example, if roughly 65% of the
 observations are from the benign class (`B`) and 35% are from the malignant class (`M`),
-then we would hope that roughly 65% of the training data are benign, 35% are malignant,
+then `initial_split` ensures that roughly 65% of the training data are benign, 
+35% of the training data are malignant,
 and the same proportions exist in the testing data.
 
 Let's use the `initial_split` function to create the training and testing sets.
@@ -135,13 +136,13 @@ glimpse(cancer_train)
 glimpse(cancer_test)
 ```
 
-We can see from `glimpse` in the code above that the training set contains 427
-observations, while the test set contains 142 observations. This corresponds to
+We can see from `glimpse` in the code above that the training set contains `r nrow(cancer_train)`
+observations, while the test set contains `r nrow(cancer_test)` observations. This corresponds to
 a train / test split of 75% / 25%, as desired. Recall from Chapter \@ref(classification)
 that we use the `glimpse` function to view data with a large number of columns,
 as it prints the data such that the columns go down the page (instead of across).
 
-**Pre-process the data**
+### Preprocess the data
 
 As we mentioned last chapter, KNN is sensitive to the scale of the predictors,
 and so we should perform some preprocessing to standardize them. An
@@ -161,10 +162,10 @@ cancer_recipe <- recipe(Class ~ Smoothness + Concavity, data = cancer_train) |>
   step_center(all_predictors())
 ```
 
-**Train the classifier**
+### Train the classifier
 
 Now that we have split our original data set into training and test sets, we
-can create our K-nearest neighbour classifier with only the training set using
+can create our K-nearest neighbours classifier with only the training set using
 the technique we learned in the previous chapter. For now, we will just choose
 the number $K$ of neighbours to be 3, and use concavity and smoothness as the
 predictors. As before we need to create a model specification, combine
@@ -185,15 +186,15 @@ knn_fit <- workflow() |>
 knn_fit
 ```
 
-> Note: Here again you see the `set.seed` function. In the K-nearest neighbour algorithm, 
+> Note: Here again you see the `set.seed` function. In the K-nearest neighbours algorithm, 
 > there is a tie for the majority neighbour class, the winner is randomly selected. Although there is no chance
 > of a tie when $K$ is odd (here $K=3$), it is possible that the code may be changed in the future to have an even value of $K$. 
 > Thus, to prevent potential issues with reproducibility, we have set the seed. Note that in your own code,
 > you only have to set the seed once at the beginning of your analysis. 
 
-**Predict the labels in the test set**
+### Predict the labels in the test set
 
-Now that we have a K-nearest neighbour classifier object, we can use it to
+Now that we have a K-nearest neighbours classifier object, we can use it to
 predict the class labels for our test set.  We use the `bind_cols` to add the
 column of predictions to the original test data, creating the
 `cancer_test_predictions` data frame.  The `Class` variable contains the true
@@ -206,7 +207,7 @@ cancer_test_predictions <- predict(knn_fit, cancer_test) |>
 cancer_test_predictions
 ```
 
-**Compute the accuracy**
+### Compute the accuracy
 
 Finally we can assess our classifier's accuracy. To do this we use the `metrics` function
 from `tidymodels` to get the statistics about the quality of our model, specifying
@@ -251,7 +252,7 @@ correctly. It also shows that the classifier made some mistakes; in particular,
 it classified  `r confu21` observations as benign when they were truly malignant,
 and `r confu12` observations as malignant when they were truly benign. 
 
-**Critically analyze performance**
+### Critically analyze performance
 
 We now know that the classifier was `r round(100*cancer_acc_1$.estimate,0)`% accurate
 on the test dataset. That sounds pretty good!...Wait, *is* it good? 
@@ -364,7 +365,7 @@ overall set of training data.
 
 Let's investigate this idea in R! In particular, we will use different seed
 values in the `set.seed` function to generate five different train/validation
-splits of our overall training data, train five different K-nearest neighbour
+splits of our overall training data, train five different K-nearest neighbours
 models, and evaluate their accuracy. We will start with just a single
 split generated by using `set.seed(1)`.
 ```{r 06-five-splits}
@@ -700,7 +701,7 @@ grid.arrange(grobs = plots)
 ## Summary
 
 Classification algorithms use one or more quantitative variables to predict the
-value of another, categorical variable. The K-nearest neighbour algorithm in
+value of another, categorical variable. The K-nearest neighbours algorithm in
 particular does this by first finding the $K$ points in the training data nearest
 to the new observation, and then returning the majority class vote from those
 training observations. We can evaluate a classifier by splitting the data
@@ -714,7 +715,7 @@ process is summarized in Figure \@ref(fig:06-overview).
 knitr::include_graphics("img/train-test-overview.jpeg")
 ```
 
-The overall workflow for performing K-nearest neighbour classification using `tidymodels` is as follows:
+The overall workflow for performing K-nearest neighbours classification using `tidymodels` is as follows:
 
 1. Use the `initial_split` function to split the data into a training and test set. Set the `strata` argument to the class label variable. Put the test set aside for now.
 2. Use the `vfold_cv` function to split up the training data for cross validation.
@@ -753,7 +754,7 @@ predictors. However, it is **not** the case that using more predictors always
 yields better predictions! In fact, sometimes including irrelevant predictors can
 actually negatively affect classifier performance.
 
-**The effect of irrelevant predictors**
+### The effect of irrelevant predictors
 
 Let's take a look at an example where K-nearest neighbours performs
 worse when given more predictors to work with. In this example we have modified
@@ -896,7 +897,7 @@ plt_irrelevant_nghbrs <- ggplot(res_tmp) +
 plt_irrelevant_nghbrs
 ```
 
-**Finding a good subset of predictors**
+### Finding a good subset of predictors
 
 So then if it is not ideal to use all of our variables as predictors without consideration, how 
 do we choose which variables we *should* use?  A simple method is to rely on your scientific understanding
@@ -970,7 +971,7 @@ training over 1000 candidate models with $m=10$ predictors, forward selection re
 > problem as much; see the additional resources at the end of this chapter for
 > where to learn more about advanced predictor selection methods. 
 
-**Forward selection in R**
+### Forward selection in R
  
 We now turn to implementing forward selection in R.
 Unfortunately there is no built-in way to do this using the `tidymodels` framework,
