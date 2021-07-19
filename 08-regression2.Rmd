@@ -12,7 +12,7 @@ concludes with an example using *multivariate linear regression* when there is m
 predictor.
 
 ## Chapter learning objectives 
-By the end of the chapter, students will be able to:
+By the end of the chapter, readers will be able to:
 
 * Use R and `tidymodels` to fit a linear regression model on training data.
 * Evaluate the linear regression model on test data.
@@ -145,7 +145,7 @@ accuracy of a simple linear regression model,
 we use RMSPE&mdash;the same measure of predictive performance we used with KNN regression.
 
 ```{r 08-verticalDistToMin,  echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of sale price versus size with red lines denoting the vertical distances between the predicted values and the observed data points"}
-small_sacramento <- small_sacramento %>%
+small_sacramento <- small_sacramento |>
   mutate(predicted = predict(small_model))
 small_plot +
   geom_segment(data = small_sacramento, aes(xend = sqft, yend = predicted), colour = "red")
@@ -184,15 +184,15 @@ sacramento_test <- testing(sacramento_split)
 Now that we have our training data, we will create the model specification
 and recipe, and fit our simple linear regression model:
 ```{r 08-fitLM, fig.height = 4, fig.width = 5}
-lm_spec <- linear_reg() %>%
-  set_engine("lm") %>%
+lm_spec <- linear_reg() |>
+  set_engine("lm") |>
   set_mode("regression")
 
 lm_recipe <- recipe(price ~ sqft, data = sacramento_train)
 
-lm_fit <- workflow() %>%
-  add_recipe(lm_recipe) %>%
-  add_model(lm_spec) %>%
+lm_fit <- workflow() |>
+  add_recipe(lm_recipe) |>
+  add_model(lm_spec) |>
   fit(data = sacramento_train)
 lm_fit
 ```
@@ -206,15 +206,15 @@ start at \$`r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), 
 every extra square foot increases the cost of the house by \$`r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`. Finally, we predict on the test data set to assess how well our model does:
 
 ```{r 08-assessFinal}
-lm_test_results <- lm_fit %>%
-  predict(sacramento_test) %>%
-  bind_cols(sacramento_test) %>%
+lm_test_results <- lm_fit |>
+  predict(sacramento_test) |>
+  bind_cols(sacramento_test) |>
   metrics(truth = price, estimate = .pred)
 lm_test_results
 ```
 
 Our final model's test error as assessed by RMSPE
-is `r format(round(lm_test_results %>% filter(.metric == 'rmse') %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`. 
+is `r format(round(lm_test_results |> filter(.metric == 'rmse') |> pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`. 
 Remember that this is in units of the target/response variable, and here that
 is US Dollars (USD). Does this mean our model is "good" at predicting house
 sale price based off of the predictor of home size? Again, answering this is
@@ -263,38 +263,37 @@ obtained from the same problem, shown in Figure \@ref(fig:08-compareRegression).
 
 ```{r 08-compareRegression, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 4, fig.width = 10, fig.cap = "Comparison of simple linear regression and KNN regression"}
 set.seed(1234)
-sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 30) %>%
-  set_engine("kknn") %>%
+sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 30) |>
+  set_engine("kknn") |>
   set_mode("regression")
 
-
-sacr_recipe <- recipe(price ~ sqft, data = sacramento_train) %>%
-  step_scale(all_predictors()) %>%
+sacr_recipe <- recipe(price ~ sqft, data = sacramento_train) |>
+  step_scale(all_predictors()) |>
   step_center(all_predictors())
 
-sacr_wkflw <- workflow() %>%
-  add_recipe(sacr_recipe) %>%
+sacr_wkflw <- workflow() |>
+  add_recipe(sacr_recipe) |>
   add_model(sacr_spec)
 
-sacr_fit <- sacr_wkflw %>%
+sacr_fit <- sacr_wkflw |>
   fit(data = sacramento_train)
 
-sacr_preds <- sacr_fit %>%
-  predict(sacramento_train) %>%
+sacr_preds <- sacr_fit |>
+  predict(sacramento_train) |>
   bind_cols(sacramento_train)
 
-sacr_rmse <- sacr_preds %>%
-  metrics(truth = price, estimate = .pred) %>%
-  filter(.metric == "rmse") %>%
-  pull(.estimate) %>%
+sacr_rmse <- sacr_preds |>
+  metrics(truth = price, estimate = .pred) |>
+  filter(.metric == "rmse") |>
+  pull(.estimate) |>
   round(2)
 
-sacr_rmspe <- sacr_fit %>%
-  predict(sacramento_test) %>%
-  bind_cols(sacramento_test) %>%
-  metrics(truth = price, estimate = .pred) %>%
-  filter(.metric == "rmse") %>%
-  pull(.estimate) %>%
+sacr_rmspe <- sacr_fit |>
+  predict(sacramento_test) |>
+  bind_cols(sacramento_test) |>
+  metrics(truth = price, estimate = .pred) |>
+  filter(.metric == "rmse") |>
+  pull(.estimate) |>
   round()
 
 
@@ -307,9 +306,9 @@ knn_plot_final <- ggplot(sacr_preds, aes(x = sqft, y = price)) +
   ggtitle("KNN regression") +
   annotate("text", x = 3500, y = 100000, label = paste("RMSPE =", sacr_rmspe))
 
-lm_rmspe <- lm_test_results %>%
-  filter(.metric == "rmse") %>%
-  pull(.estimate) %>%
+lm_rmspe <- lm_test_results |>
+  filter(.metric == "rmse") |>
+  pull(.estimate) |>
   round()
 
 lm_plot_final <- lm_plot_final +
@@ -340,7 +339,7 @@ match the actual observed values very well. Such a model would probably have a
 quite high RMSE when assessing model goodness of fit on the training data and
 a quite high RMPSE when assessing model prediction quality on a test data
 set. On such a data set, KNN regression may fare better. Additionally, there
-are other types of regression you can learn about in future courses that may do
+are other types of regression you can learn about in future books that may do
 even better at predicting with such data.
 
 How do these two models compare on the Sacramento house prices data set? In
@@ -391,9 +390,9 @@ mlm_recipe <- recipe(price ~ sqft + beds, data = sacramento_train)
 
 Now we can build our workflow and fit the model:
 ```{r 08-fitlm}
-mlm_fit <- workflow() %>%
-  add_recipe(mlm_recipe) %>%
-  add_model(lm_spec) %>%
+mlm_fit <- workflow() |>
+  add_recipe(mlm_recipe) |>
+  add_model(lm_spec) |>
   fit(data = sacramento_train)
 mlm_fit
 ```
@@ -401,9 +400,9 @@ mlm_fit
 And finally, we make predictions on the test data set to assess the quality of our model:
 
 ```{r 08-assessFinal-multi}
-lm_mult_test_results <- mlm_fit %>%
-  predict(sacramento_test) %>%
-  bind_cols(sacramento_test) %>%
+lm_mult_test_results <- mlm_fit |>
+  predict(sacramento_test) |>
+  bind_cols(sacramento_test) |>
   metrics(truth = price, estimate = .pred)
 lm_mult_test_results
 ```
@@ -417,25 +416,25 @@ library(plotly)
 xvals <- seq(from = min(sacramento_train$sqft), to = max(sacramento_train$sqft), length = 50)
 yvals <- seq(from = min(sacramento_train$beds), to = max(sacramento_train$beds), length = 50)
 
-zvals <- mlm_fit %>%
-  predict(crossing(xvals, yvals) %>% mutate(sqft = xvals, beds = yvals)) %>%
+zvals <- mlm_fit |>
+  predict(crossing(xvals, yvals) |> mutate(sqft = xvals, beds = yvals)) |>
   pull(.pred)
 
 zvalsm <- matrix(zvals, nrow = length(xvals))
 
-plot_ly() %>%
+plot_ly() |>
   add_markers(
     data = sacramento_train,
     x = ~sqft,
     y = ~beds,
     z = ~price,
     marker = list(size = 5, opacity = 0.4, color = "red")
-  ) %>%
+  ) |>
   layout(scene = list(
     xaxis = list(title = "House size (square feet)"),
     zaxis = list(title = "Price (USD)"),
     yaxis = list(title = "Number of bedrooms")
-  )) %>%
+  )) |>
   add_surface(
     x = ~xvals,
     y = ~yvals,
@@ -468,9 +467,9 @@ where:
 Finally, we can fill in the values for $\beta_0$, $\beta_1$ and $\beta_2$ from the model output above
 to create the equation of the plane of best fit to the data: 
 ```{r 08-lm-multi-get-coeffs-hidden, echo = FALSE}
-icept <- format(round(mcoeffs %>% filter(term == "(Intercept)") %>% pull(estimate)), scientific = FALSE)
-sqftc <- format(round(mcoeffs %>% filter(term == "sqft") %>% pull(estimate)), scientific = FALSE)
-bedsc <- format(round(mcoeffs %>% filter(term == "beds") %>% pull(estimate)), scientific = FALSE)
+icept <- format(round(mcoeffs |> filter(term == "(Intercept)") |> pull(estimate)), scientific = FALSE)
+sqftc <- format(round(mcoeffs |> filter(term == "sqft") |> pull(estimate)), scientific = FALSE)
+bedsc <- format(round(mcoeffs |> filter(term == "beds") |> pull(estimate)), scientific = FALSE)
 ```
 
 $$\text{house sale price} = `r icept` + `r sqftc`\cdot (\text{house size})  `r bedsc` \cdot (\text{number of bedrooms})$$
@@ -493,13 +492,14 @@ error of the methods on the test data.
 lm_mult_test_results
 ```
 
+
 We obtain an RMSPE for the multivariate linear regression model 
-of `r format(lm_mult_test_results %>% filter(.metric == 'rmse') %>% pull(.estimate), big.mark=",", nsmall=0, scientific = FALSE)`. This prediction error
+of `r format(lm_mult_test_results |> filter(.metric == 'rmse') |> pull(.estimate), big.mark=",", nsmall=0, scientific = FALSE)`. This prediction error
 is less than the prediction error for the multivariate KNN regression model,
 indicating that we should likely choose linear regression for predictions of
 house sale price on this data set. Revisiting the simple linear regression model
 with only a single predictor from earlier in this chapter, we see that the RMSPE for that model was 
-`r format(lm_test_results %>% filter(.metric == 'rmse') %>% pull(.estimate), big.mark=",", nsmall=0, scientific = FALSE)`, 
+`r format(lm_test_results |> filter(.metric == 'rmse') |> pull(.estimate), big.mark=",", nsmall=0, scientific = FALSE)`, 
 which is slightly higher than that of our more complex model. Our model with two predictors
 provided a slightly better fit on test data than our model with just one. 
 As mentioned earlier, this is not always the case: sometimes including more
@@ -532,7 +532,7 @@ is from the blue line, which is entirely caused by that one extra outlier data p
 
 ```{r 08-lm-outlier, fig.height = 4, fig.width = 5, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of a subset of the data, with outlier highlighted in red"}
 
-sacramento_train_small <- sacramento_train %>% sample_n(100)
+sacramento_train_small <- sacramento_train |> sample_n(100)
 
 sacramento_outlier <- tibble(sqft = 5000, price = 50000)
 
@@ -543,7 +543,7 @@ lm_plot_outlier <- ggplot(sacramento_train_small, aes(x = sqft, y = price)) +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
   geom_smooth(method = "lm", se = FALSE) + 
-  geom_smooth(data = sacramento_train_small %>% add_row(sqft = 5000, price = 50000), method = "lm", se = FALSE, color = "red")
+  geom_smooth(data = sacramento_train_small |> add_row(sqft = 5000, price = 50000), method = "lm", se = FALSE, color = "red")
 lm_plot_outlier
 ```
 
@@ -568,7 +568,7 @@ lm_plot_outlier_large <- ggplot(sacramento_train, aes(x = sqft, y = price)) +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
   geom_smooth(method = "lm", se = FALSE) + 
-  geom_smooth(data = sacramento_train %>% add_row(sqft = 5000, price = 50000), method = "lm", se = FALSE, color = "red")
+  geom_smooth(data = sacramento_train |> add_row(sqft = 5000, price = 50000), method = "lm", se = FALSE, color = "red")
 lm_plot_outlier_large
 ```
 
@@ -584,7 +584,7 @@ but they are very strongly linearly related to each other, as shown in Figure \@
 
 ```{r 08-lm-multicol, fig.height = 4, fig.width = 5, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of the with possible outlier highlighted in red"}
 
-sacramento_train <- sacramento_train %>%
+sacramento_train <- sacramento_train |>
                           mutate(sqft1 = sqft + 100*sample(1000000, size=nrow(sacramento_train), replace=TRUE)/1000000) %>%
                           mutate(sqft2 = sqft + 100*sample(1000000, size=nrow(sacramento_train), replace=TRUE)/1000000) %>%
                           mutate(sqft3 = sqft + 100*sample(1000000, size=nrow(sacramento_train), replace=TRUE)/1000000) 
@@ -598,34 +598,34 @@ lm_plot_multicol_1
 
 ```{r 08-lm-multicol-2, echo = FALSE, warning = FALSE}
 lm_recipe1 <- recipe(price ~ sqft + sqft1, data = sacramento_train)
-lm_fit1 <- workflow() %>%
-  add_recipe(lm_recipe1) %>%
-  add_model(lm_spec) %>%
+lm_fit1 <- workflow() |>
+  add_recipe(lm_recipe1) |>
+  add_model(lm_spec) |>
   fit(data = sacramento_train)
 coeffs <- tidy(pull_workflow_fit(lm_fit1))
-icept1 <- format(round(coeffs %>% filter(term == "(Intercept)") %>% pull(estimate)), scientific = FALSE)
-sqft1 <- format(round(coeffs %>% filter(term == "sqft") %>% pull(estimate)), scientific = FALSE)
-sqft11 <- format(round(coeffs %>% filter(term == "sqft1") %>% pull(estimate)), scientific = FALSE)
+icept1 <- format(round(coeffs |> filter(term == "(Intercept)") %>% pull(estimate)), scientific = FALSE)
+sqft1 <- format(round(coeffs |> filter(term == "sqft") %>% pull(estimate)), scientific = FALSE)
+sqft11 <- format(round(coeffs |> filter(term == "sqft1") %>% pull(estimate)), scientific = FALSE)
 
 lm_recipe2 <- recipe(price ~ sqft + sqft2, data = sacramento_train)
-lm_fit2 <- workflow() %>%
-  add_recipe(lm_recipe2) %>%
-  add_model(lm_spec) %>%
+lm_fit2 <- workflow() |>
+  add_recipe(lm_recipe2) |>
+  add_model(lm_spec) |>
   fit(data = sacramento_train)
 coeffs <- tidy(pull_workflow_fit(lm_fit2))
-icept2 <- format(round(coeffs %>% filter(term == "(Intercept)") %>% pull(estimate)), scientific = FALSE)
-sqft2 <- format(round(coeffs %>% filter(term == "sqft") %>% pull(estimate)), scientific = FALSE)
-sqft22 <- format(round(coeffs %>% filter(term == "sqft2") %>% pull(estimate)), scientific = FALSE)
+icept2 <- format(round(coeffs |> filter(term == "(Intercept)") |> pull(estimate)), scientific = FALSE)
+sqft2 <- format(round(coeffs |> filter(term == "sqft") |> pull(estimate)), scientific = FALSE)
+sqft22 <- format(round(coeffs |> filter(term == "sqft2") |> pull(estimate)), scientific = FALSE)
 
 lm_recipe3 <- recipe(price ~ sqft + sqft3, data = sacramento_train)
-lm_fit3 <- workflow() %>%
-  add_recipe(lm_recipe3) %>%
-  add_model(lm_spec) %>%
+lm_fit3 <- workflow() |>
+  add_recipe(lm_recipe3) |>
+  add_model(lm_spec) |>
   fit(data = sacramento_train)
 coeffs <- tidy(pull_workflow_fit(lm_fit3))
-icept3 <- format(round(coeffs %>% filter(term == "(Intercept)") %>% pull(estimate)), scientific = FALSE)
-sqft3 <- format(round(coeffs %>% filter(term == "sqft") %>% pull(estimate)), scientific = FALSE)
-sqft33 <- format(round(coeffs %>% filter(term == "sqft3") %>% pull(estimate)), scientific = FALSE)
+icept3 <- format(round(coeffs |> filter(term == "(Intercept)") |> pull(estimate)), scientific = FALSE)
+sqft3 <- format(round(coeffs |> filter(term == "sqft") |> pull(estimate)), scientific = FALSE)
+sqft33 <- format(round(coeffs |> filter(term == "sqft3") |> pull(estimate)), scientific = FALSE)
 
 ```
 
@@ -665,7 +665,7 @@ will not be correctly captured by simple linear regression, as shown in Figure \
 ```{r 08-predictor-design, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Example of a dataset with a nonlinear relationship between the predictor and the response"}
 set.seed(1)
 df = tibble(x = sample(10000, 100, replace=TRUE)/10000)
-df <- df %>% mutate(y = x^3 + 0.2*sample(10000, 100, replace=TRUE)/10000 - 0.1)
+df <- df |> mutate(y = x^3 + 0.2*sample(10000, 100, replace=TRUE)/10000 - 0.1)
 curve_plt <- ggplot(df, aes(x = x, y = y)) +
   geom_point() +
   xlab("x") +
@@ -679,7 +679,7 @@ we might have some scientific background about our problem to suggest that `y`
 should be a cubic function of `x`. So before performing regression,
 we might *create a new predictor variable* `z` using the `mutate` function:
 ```{r 08-predictor-design-3, message = FALSE, warning = FALSE}
-df <- df %>%
+df <- df |>
         mutate(z = x^3)
 ```
 Then we can perform linear regression for `y` using the predictor variable `z`,

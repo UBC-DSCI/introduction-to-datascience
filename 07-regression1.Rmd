@@ -19,7 +19,7 @@ but the end of the chapter shows how to perform
 regression with more than one predictor variable, i.e., *multivariate regression*.
 
 ## Chapter learning objectives 
-By the end of the chapter, students will be able to:
+By the end of the chapter, readers will be able to:
 
 * Recognize situations where a simple regression analysis would be appropriate for making predictions.
 * Explain the K-nearest neighbour (KNN) regression algorithm and describe how it differs from KNN classification.
@@ -128,14 +128,11 @@ how well it predicts house sale price. This subsample is taken to allow us to
 illustrate the mechanics of KNN regression with a few data points; later in
 this chapter we will use all the data.
 
-To take a small random sample of size 30, we'll use the function `sample_n`.
-This function takes two arguments:
-
-1. `tbl` (a data frame-like object to sample from)
-2. `size` (the number of observations/rows to be randomly selected/sampled)
+To take a small random sample of size 30, we'll use the function `slice_sample`, and input the data frame to sample from and the number of rows to randomly select.
 
 ```{r 07-sacramento}
-small_sacramento <- sample_n(sacramento, size = 30)
+set.seed(1234)
+small_sacramento <- slice_sample(sacramento, n = 30)
 ```
 
 Next let's say we come across a  2,000 square-foot house in Sacramento we are
@@ -164,9 +161,9 @@ sale price might be. For the example above, we find and label the 5 nearest
 neighbours to our observation of a house that is 2,000 square feet.
 
 ```{r 07-find-k3}
-nearest_neighbours <- small_sacramento %>%
-  mutate(diff = abs(2000 - sqft)) %>%
-  arrange(diff) %>%
+nearest_neighbours <- small_sacramento |>
+  mutate(diff = abs(2000 - sqft)) |>
+  arrange(diff) |>
   slice(1:5) #subset the first 5 rows
 nearest_neighbours
 ```
@@ -190,7 +187,7 @@ average) of these 5 values as our predicted value, as illustrated by
 the red point in Figure \@ref(fig:07-predictedViz-knn).
 
 ```{r 07-predicted-knn}
-prediction <- nearest_neighbours %>%
+prediction <- nearest_neighbours |>
   summarise(predicted = mean(price))
 prediction
 ```
@@ -335,18 +332,18 @@ Then we create a 5-fold cross validation object, and put the recipe and model sp
 in a workflow.
 
 ```{r 07-choose-k-knn}
-sacr_recipe <- recipe(price ~ sqft, data = sacramento_train) %>%
-  step_scale(all_predictors()) %>%
+sacr_recipe <- recipe(price ~ sqft, data = sacramento_train) |>
+  step_scale(all_predictors()) |>
   step_center(all_predictors())
 
-sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = tune()) %>%
-  set_engine("kknn") %>%
+sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = tune()) |>
+  set_engine("kknn") |>
   set_mode("regression")
 
 sacr_vfold <- vfold_cv(sacramento_train, v = 5, strata = price)
 
-sacr_wkflw <- workflow() %>%
-  add_recipe(sacr_recipe) %>%
+sacr_wkflw <- workflow() |>
+  add_recipe(sacr_recipe) |>
   add_model(sacr_spec)
 sacr_wkflw
 ```
@@ -365,9 +362,9 @@ as they do not provide any additional insight.
 
 gridvals <- tibble(neighbors = seq(from = 1, to = 200, by = 3))
 
-sacr_results <- sacr_wkflw %>%
-  tune_grid(resamples = sacr_vfold, grid = gridvals) %>%
-  collect_metrics() %>%
+sacr_results <- sacr_wkflw |>
+  tune_grid(resamples = sacr_vfold, grid = gridvals) |>
+  collect_metrics() |>
   filter(.metric == "rmse")
 
 # show the results
@@ -384,14 +381,14 @@ Figure \@ref(fig:07-choose-k-knn-plot) visualizes how the RMSPE varies with the 
 We take the *minimum* RMSPE to find the best setting for the number of neighbours:
 ```{r 07-choose-k-knn-results-2}
 # show only the row of minimum RMSPE
-sacr_min <- sacr_results %>%
+sacr_min <- sacr_results |>
   filter(mean == min(mean))
 sacr_min
 ```
-The smallest RMSPE occurs when $K =$ `r sacr_min %>% pull(neighbors)`.
+The smallest RMSPE occurs when $K =$ `r sacr_min |> pull(neighbors)`.
 
 ```{r 07-get-kmin, echo = FALSE, message = FALSE, warning = FALSE}
-kmin <- sacr_min %>% pull(neighbors)
+kmin <- sacr_min |> pull(neighbors)
 ```
 
 ## Underfitting and overfitting
@@ -414,16 +411,16 @@ plots <- list()
 for (i in 1:6) {
   if (i < 6){
       sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = gridvals[[i]]) %>%
-        set_engine("kknn") %>%
+        set_engine("kknn") |>
         set_mode("regression")
 
-      sacr_wkflw <- workflow() %>%
-        add_recipe(sacr_recipe) %>%
+      sacr_wkflw <- workflow() |>
+        add_recipe(sacr_recipe) |>
         add_model(sacr_spec)
 
-      sacr_preds <- sacr_wkflw %>%
-        fit(data = sacramento_train) %>%
-        predict(sacramento_train) %>%
+      sacr_preds <- sacr_wkflw |>
+        fit(data = sacramento_train) |>
+        predict(sacramento_train) |>
         bind_cols(sacramento_train)
 
       plots[[i]] <- ggplot(sacr_preds, aes(x = sqft, y = price)) +
@@ -483,7 +480,7 @@ we would like a model that (1) follows the overall "trend" in the training data,
 actually uses the training data to learn something useful, and (2) does not follow
 the noisy fluctuations, so that we can be confident that our model will transfer/generalize
 well to other new data. If we explore 
-the other values for $K$, in particular $K$ = `r sacr_min %>% pull(neighbors)`
+the other values for $K$, in particular $K$ = `r sacr_min |> pull(neighbors)`
 (as suggested by cross-validation),
 we can see it achieves this goal: it follows the increasing trend of house price
 versus house size, but is not influenced too much by the idiosyncratic variations
@@ -496,41 +493,41 @@ chapter.
 To assess how well our model might do at predicting on unseen data, we will
 assess its RMSPE on the test data. To do this, we will first
 re-train our KNN regression model on the entire training data set, 
-using $K =$ `r sacr_min %>% pull(neighbors)` neighbours. Then we will
+using $K =$ `r sacr_min |> pull(neighbors)` neighbours. Then we will
 use `predict` to make predictions on the test data, and use the `metrics`
 function again to compute the summary of regression quality. Because
 we specify that we are performing regression in `set_mode`, the `metrics`
 function knows to output a quality summary related to regression, and not, say, classification.
 
 ```{r 07-predict}
-kmin <- sacr_min %>% pull(neighbors)
-sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = kmin) %>%
-  set_engine("kknn") %>%
+kmin <- sacr_min |> pull(neighbors)
+sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = kmin) |>
+  set_engine("kknn") |>
   set_mode("regression")
 
-sacr_fit <- workflow() %>%
-  add_recipe(sacr_recipe) %>%
-  add_model(sacr_spec) %>%
+sacr_fit <- workflow() |>
+  add_recipe(sacr_recipe) |>
+  add_model(sacr_spec) |>
   fit(data = sacramento_train)
 
-sacr_summary <- sacr_fit %>%
-  predict(sacramento_test) %>%
-  bind_cols(sacramento_test) %>%
-  metrics(truth = price, estimate = .pred) %>%
+sacr_summary <- sacr_fit |>
+  predict(sacramento_test) |>
+  bind_cols(sacramento_test) |>
+  metrics(truth = price, estimate = .pred) |>
   filter(.metric == 'rmse')
 
 sacr_summary
 ```
 Our final model's test error as assessed by RMSPE 
-is `r format(round(sacr_summary %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`. 
+is `r format(round(sacr_summary |> pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`. 
 Note that RMSPE is measured in the same units as the response variable.
 In other words, on new observations, we expect the error in our prediction to be 
-*roughly* $`r format(round(sacr_summary %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`. 
+*roughly* $`r format(round(sacr_summary |> pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`. 
 From one perspective, this is good news: this is about the same as the cross-validation
 RMSPE estimate of our tuned model, so we can say that the model appears to generalize well
 to new data that it has never seen before.
 However, much like in the case of KNN classification, whether this value for RMSPE is *good*&mdash;i.e.,
-whether an error of around $`r format(round(sacr_summary %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`
+whether an error of around $`r format(round(sacr_summary |> pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`
 is acceptable&mdash;depends entirely on the application. 
 
 Finally, Figure \@ref(fig:07-predict-all) shows the predictions that our final model makes across
@@ -541,8 +538,8 @@ as a learning challenge.
 ```{r 07-predict-all, fig.height = 4, fig.width = 5, fig.cap = "Predicted values of house price (blue line) for the final KNN regression model"}
 sacr_preds <- tibble(sqft = seq(from = 500, to = 5000, by = 10))
 
-sacr_preds <- sacr_fit %>%
-  predict(sacr_preds) %>%
+sacr_preds <- sacr_fit |>
+  predict(sacr_preds) |>
   bind_cols(sacr_preds)
 
 plot_final <- ggplot() +
@@ -601,7 +598,7 @@ shows that the number of bedrooms might provide useful information
 to help predict the sale price of a house.
 
 ```{r 07-bedscatter, fig.height = 5, fig.width = 6, fig.cap = "Scatter plot of the sale price of houses versus the number of bedrooms"}
-plot_beds <- sacramento %>%
+plot_beds <- sacramento |>
              ggplot(aes(x = beds, y = price)) +
              geom_point(alpha = 0.4) +
              labs(x = 'Number of Bedrooms', y = 'Price (USD)')
@@ -621,25 +618,25 @@ First we'll build a new model specification and recipe for the analysis. Note th
 we use the formula `price ~ sqft + beds` to denote that we have two predictors,
 and set `neighbors = tune()` to tell `tidymodels` to tune the number of neighbours for us.
 ```{r 07-mult-setup}
-sacr_recipe <- recipe(price ~ sqft + beds, data = sacramento_train) %>%
-  step_scale(all_predictors()) %>%
+sacr_recipe <- recipe(price ~ sqft + beds, data = sacramento_train) |>
+  step_scale(all_predictors()) |>
   step_center(all_predictors())
 
-sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = tune()) %>%
-  set_engine("kknn") %>%
+sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = tune()) |>
+  set_engine("kknn") |>
   set_mode("regression")
 ```
 Next, we'll use 5-fold cross-validation to choose the number of neighbours via the minimum RMSPE:
 ```{r 07-mult-cv}
 gridvals <- tibble(neighbors = seq(1, 200))
-sacr_multi <- workflow() %>%
-  add_recipe(sacr_recipe) %>%
-  add_model(sacr_spec) %>%
-  tune_grid(sacr_vfold, grid = gridvals) %>%
-  collect_metrics() %>%
-  filter(.metric == "rmse") %>%
+sacr_multi <- workflow() |>
+  add_recipe(sacr_recipe) |>
+  add_model(sacr_spec) |>
+  tune_grid(sacr_vfold, grid = gridvals) |>
+  collect_metrics() |>
+  filter(.metric == "rmse") |>
   filter(mean == min(mean))
-sacr_k <- sacr_multi %>%
+sacr_k <- sacr_multi |>
               pull(neighbors)
 sacr_multi
 ```
@@ -660,26 +657,27 @@ and evaluate its performance on test data. We first need to re-train the model o
 training data set with $K =$ `r sacr_k`, and then use that model to make predictions
 on the test data.
 ```{r 07-re-train}
-sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = sacr_k) %>%
-  set_engine("kknn") %>%
+sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = sacr_k) |>
+  set_engine("kknn") |>
   set_mode("regression")
 
-knn_mult_fit <- workflow() %>%
-  add_recipe(sacr_recipe) %>%
-  add_model(sacr_spec) %>%
+knn_mult_fit <- workflow() |>
+  add_recipe(sacr_recipe) |>
+  add_model(sacr_spec) |>
   fit(data = sacramento_train)
 
-knn_mult_preds <- knn_mult_fit %>%
-  predict(sacramento_test) %>%
+knn_mult_preds <- knn_mult_fit |>
+  predict(sacramento_test) |>
   bind_cols(sacramento_test)
 
 knn_mult_mets <- metrics(knn_mult_preds, truth = price, estimate = .pred) %>%
                      filter(.metric == 'rmse')
 knn_mult_mets
 ```
+
 This time when we performed KNN regression on the same data set, but also
 included number of bedrooms as a predictor, we obtained a RMSPE test error 
-of `r format(round(knn_mult_mets %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`.
+of `r format(round(knn_mult_mets |> pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`.
 Figure \@ref(fig:07-knn-mult-viz) visualizes the model's predictions overlaid on top of the data. This 
 time the predictions are a surface in 3-D space, instead of a line in 2-D space, as we have 2
 predictors instead of 1.  
@@ -689,25 +687,25 @@ library(plotly)
 xvals <- seq(from = min(sacramento_train$sqft), to = max(sacramento_train$sqft), length = 50)
 yvals <- seq(from = min(sacramento_train$beds), to = max(sacramento_train$beds), length = 50)
 
-zvals <- knn_mult_fit %>%
-  predict(crossing(xvals, yvals) %>% mutate(sqft = xvals, beds = yvals)) %>%
+zvals <- knn_mult_fit |>
+  predict(crossing(xvals, yvals) |> mutate(sqft = xvals, beds = yvals)) |>
   pull(.pred)
 
 zvalsm <- matrix(zvals, nrow = length(xvals))
 
-plot_ly() %>%
+plot_ly() |>
   add_markers(
     data = sacramento_train,
     x = ~sqft,
     y = ~beds,
     z = ~price,
     marker = list(size = 5, opacity = 0.4, color = "red")
-  ) %>%
+  ) |>
   layout(scene = list(
     xaxis = list(title = "House size (square feet)"),
     zaxis = list(title = "Price (USD)"),
     yaxis = list(title = "Number of bedrooms")
-  )) %>%
+  )) |>
   add_surface(
     x = ~xvals,
     y = ~yvals,

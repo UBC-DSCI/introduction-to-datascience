@@ -34,7 +34,7 @@ with the fundamental ideas of sampling from populations and then introduce two c
 *interval estimation*. 
 
 ## Chapter learning objectives 
-By the end of the chapter, students will be able to:
+By the end of the chapter, readers will be able to:
 
 * Describe real-world examples of questions that can be answered with the statistical inference.
 * Define common population parameters (e.g. mean, proportion, standard deviation) that are often estimated using sampled data, and estimate these from a sample.
@@ -90,11 +90,11 @@ The population consists of all studio apartment rentals in Vancouver, and the po
 We will look at an example using data from [Inside Airbnb](http://insideAirbnb.com/) [@insideairbnb]. Airbnb is an online marketplace for arranging vacation rentals and places to stay. The data set, `airbnb`, contains listings for Vancouver, Canada, in September 2020. Our data includes an ID number, neighbourhood, type of room, the number of people the rental accommodates, number of bathrooms, bedrooms, beds, and the price per night. 
 
 ```{r 11-example-means1, echo = FALSE, message = FALSE, warning = FALSE}
-airbnb <- read_csv("data/listings.csv") %>%
-  select(id, neighbourhood = neighbourhood_cleansed, room_type, accommodates, bathrooms = bathrooms_text, bedrooms, beds, price) %>%
-  mutate(price = as.numeric(str_remove(price, "[$]"))) %>%
+airbnb <- read_csv("data/listings.csv") |>
+  select(id, neighbourhood = neighbourhood_cleansed, room_type, accommodates, bathrooms = bathrooms_text, bedrooms, beds, price) |>
+  mutate(price = as.numeric(str_remove(price, "[$]"))) |>
   na.omit()
-airbnb <- airbnb %>%
+airbnb <- airbnb |>
   mutate(id = 1:nrow(airbnb))
 ```
 
@@ -108,7 +108,7 @@ Suppose the city of Vancouver wants information about Airbnb rentals to help pla
 library(tidyverse)
 library(infer)
 
-airbnb %>%
+airbnb |>
   summarize(
     n =  sum(room_type == "Entire home/apt"),
     proportion = sum(room_type == "Entire home/apt") / nrow(airbnb)
@@ -116,11 +116,11 @@ airbnb %>%
 ```
 
 ```{r 11-population-parameter, echo = F}
-population_proportion <- airbnb %>%
+population_proportion <- airbnb |>
   summarize(
     n =  sum(room_type == "Entire home/apt"),
     proportion = sum(room_type == "Entire home/apt") / nrow(airbnb)
-  ) %>% 
+  ) |> 
   pull()
 ```
 
@@ -181,8 +181,8 @@ Notice the column `replicate` indicates the replicate, or sample, with which eac
 listing belongs. Since we took 20,000 samples of size 40, there are 20,000 replicates.
 Now that we have taken 20,000 samples, to create a sampling distribution of sample proportions for samples of size 40, we need to calculate the proportion of entire home/apartment listings for each sample:
 ```{r 11-example-proportions6, echo = TRUE, message = FALSE, warning = FALSE}
-sample_estimates <- samples %>%
-  group_by(replicate) %>%
+sample_estimates <- samples |>
+  group_by(replicate) |>
   summarise(sample_proportion = sum(room_type == "Entire home/apt") / 40)
 sample_estimates
 tail(sample_estimates)
@@ -204,7 +204,7 @@ about `r round(max(sample_estimates$sample_proportion), 1)`. In fact, we can cal
 the mean of the sample proportions. 
 
 ```{r 11-example-proportions8, echo = TRUE, message = FALSE, warning = FALSE}
-sample_estimates %>%
+sample_estimates |>
   summarise(mean = mean(sample_proportion))
 ```
 
@@ -237,7 +237,7 @@ than that, creating a long tail on the histogram's right side.
 
 Along with visualizing the population, we can calculate the population mean, the average price per night for all the Airbnb listings. 
 ```{r 11-example-means-popmean, echo = TRUE, message = FALSE, warning = FALSE}
-population_parameters <- airbnb %>%
+population_parameters <- airbnb |>
   summarize(pop_mean = mean(price))
 population_parameters
 ```
@@ -248,7 +248,7 @@ Suppose we did not have access to the population data (which is usually the case
 Let's take advantage of the fact that we do have access to the population data and simulate taking one random sample of 40 listings in R, again using `rep_sample_n`. 
 
 ```{r 11-example-means3, echo = TRUE, message = FALSE, warning = FALSE}
-one_sample <- airbnb %>%
+one_sample <- airbnb |>
   rep_sample_n(40)
 ```
 
@@ -259,7 +259,7 @@ sample_distribution <- ggplot(one_sample, aes(price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   xlab("Price per night ($)")
 sample_distribution
-estimates <- one_sample %>%
+estimates <- one_sample |>
   summarize(sample_mean = mean(price))
 estimates
 ```
@@ -283,8 +283,8 @@ samples
 
 Now we can calculate the sample mean for each replicate and plot the sampling distribution of sample means for samples of size 40.
 ```{r 11-example-means4, echo = TRUE, message = FALSE, warning = FALSE, fig.cap= "Sampling distribution of the sample means for sample size of 40",out.width = "60%"}
-sample_estimates <- samples %>%
-  group_by(replicate) %>%
+sample_estimates <- samples |>
+  group_by(replicate) |>
   summarise(sample_mean = mean(price))
 sample_estimates
 
@@ -311,7 +311,7 @@ original population distribution has a long right tail, and the sample distribut
 
 <!---
 ```{r 11-example-means4.5}
-sample_estimates %>%
+sample_estimates |>
   summarise(mean_of_sample_means = mean(sample_mean))
 ```
 Notice that the mean of the sample means is \$`r round(mean(sample_estimates$sample_mean),2)`. Recall that the population mean
@@ -338,20 +338,20 @@ One way to improve a point estimate is to take a *larger* sample. To illustrate 
 
 ```{r 11-example-means6, echo = FALSE, message = FALSE, warning = FALSE}
 ## Sampling n = 20, 50, 100, 500
-sample_estimates_20 <- rep_sample_n(airbnb, size = 20, reps = 20000) %>%
-  group_by(replicate) %>%
+sample_estimates_20 <- rep_sample_n(airbnb, size = 20, reps = 20000) |>
+  group_by(replicate) |>
   summarise(sample_mean = mean(price))
 
-sample_estimates_50 <- rep_sample_n(airbnb, size = 50, reps = 20000) %>%
-  group_by(replicate) %>%
+sample_estimates_50 <- rep_sample_n(airbnb, size = 50, reps = 20000) |>
+  group_by(replicate) |>
   summarise(sample_mean = mean(price))
 
-sample_estimates_100 <- rep_sample_n(airbnb, size = 100, reps = 20000) %>%
-  group_by(replicate) %>%
+sample_estimates_100 <- rep_sample_n(airbnb, size = 100, reps = 20000) |>
+  group_by(replicate) |>
   summarise(sample_mean = mean(price))
 
-sample_estimates_500 <- rep_sample_n(airbnb, size = 500, reps = 20000) %>%
-  group_by(replicate) %>%
+sample_estimates_500 <- rep_sample_n(airbnb, size = 500, reps = 20000) |>
+  group_by(replicate) |>
   summarise(sample_mean = mean(price))
 
 ## Sampling distribution n = 20
@@ -470,33 +470,33 @@ Here is the key idea. First, if you take a big enough sample, it *looks like* th
 
 ```{r 11-example-bootstrapping0, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparision of samples of different sizes from the population"}
 
-sample_10 <- airbnb %>%
+sample_10 <- airbnb |>
   rep_sample_n(10)
 sample_distribution_10 <- ggplot(sample_10, aes(price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   xlab("Price per night ($)") +
   ggtitle("n = 10")
 
-sample_20 <- airbnb %>%
+sample_20 <- airbnb |>
   rep_sample_n(20)
 sample_distribution_20 <- ggplot(sample_20, aes(price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   xlab("Price per night ($)") +
   ggtitle("n = 20")
-sample_50 <- airbnb %>%
+sample_50 <- airbnb |>
   rep_sample_n(50)
 sample_distribution_50 <- ggplot(sample_50, aes(price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   xlab("Price per night ($)") +
   ggtitle("n = 50")
-sample_100 <- airbnb %>%
+sample_100 <- airbnb |>
   rep_sample_n(100)
 sample_distribution_100 <- ggplot(sample_100, aes(price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   xlab("Price per night ($)") +
   ggtitle("n = 100")
 
-sample_200 <- airbnb %>%
+sample_200 <- airbnb |>
   rep_sample_n(200)
 sample_distribution_200 <- ggplot(sample_200, aes(price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
@@ -546,8 +546,8 @@ knitr::include_graphics("img/intro-bootstrap.jpeg")
 Let’s continue working with our Airbnb data. Once again, let’s say we are interested in estimating the population mean price per night of all Airbnb listings in Vancouver, Canada, using the single sample we collected of size 40. Recall our point estimate was \$`r round(estimates$sample_mean, 2)`, and the distribution of the sample is displayed in Figure \@ref(fig:11-bootstrapping1).
 
 ```{r, echo = F, message = F, warning = F}
-one_sample <- one_sample %>% 
-  ungroup() %>% select(-replicate)
+one_sample <- one_sample |> 
+  ungroup() |> select(-replicate)
 ```
 
 ```{r 11-bootstrapping1, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Histogram of price per night ($) for one sample of size 40", out.width = "60%"}
@@ -570,7 +570,7 @@ sampling distribution. Since we want to sample with replacement, we change the
 argument for `replace` from its default value of `FALSE` to `TRUE`.
 
 ```{r 11-bootstrapping3, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Bootstrap distribution", out.width = "60%"}
-boot1 <- one_sample %>%
+boot1 <- one_sample |>
   rep_sample_n(size = 40, replace = TRUE, reps = 1)
 boot1_dist <- ggplot(boot1, aes(price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
@@ -596,7 +596,7 @@ our original population; but since we do not have access to the population itsel
 this is often the best we can do.
 
 ```{r 11-bootstrapping4, echo = TRUE, message = FALSE, warning = FALSE}
-boot20000 <- one_sample %>%
+boot20000 <- one_sample |>
   rep_sample_n(size = 40, replace = TRUE, reps = 20000)
 boot20000
 tail(boot20000)
@@ -604,7 +604,7 @@ tail(boot20000)
 
 Let's take a look at histograms of the first six replicates of our bootstrap samples.
 ```{r 11-bootstrapping-six-bootstrap-samples, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Histograms of first six replicates of bootstrap samples"}
-six_bootstrap_samples <- boot20000 %>%
+six_bootstrap_samples <- boot20000 |>
   filter(replicate <= 6)
 ggplot(six_bootstrap_samples, aes(price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
@@ -614,16 +614,16 @@ ggplot(six_bootstrap_samples, aes(price)) +
 
 We see in Figure \@ref(fig:11-bootstrapping-six-bootstrap-samples) how the bootstrap samples differ. We can also calculate the sample mean for each of these six replicates. 
 ```{r 11-bootstrapping-six-bootstrap-samples-means, echo = TRUE, message = FALSE, warning = FALSE}
-six_bootstrap_samples %>%
-  group_by(replicate) %>%
+six_bootstrap_samples |>
+  group_by(replicate) |>
   summarize(mean = mean(price))
 ```
 
 We can see that the bootstrap sample distributions and the sample means are different. They are different because we are sampling *with replacement*. We will now calculate point estimates for our 20,000 bootstrap samples and generate a bootstrap distribution of our point estimates. The bootstrap distribution suggests how we might expect our point estimate to behave if we took another sample.
 
 ```{r 11-bootstrapping5, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Distribution of the bootstrap sample means"}
-boot20000_means <- boot20000 %>%
-  group_by(replicate) %>%
+boot20000_means <- boot20000 |>
+  group_by(replicate) |>
   summarize(mean = mean(price))
 boot20000_means
 tail(boot20000_means)
@@ -638,8 +638,8 @@ Let's compare our bootstrap distribution with the true sampling distribution (ta
 ```{r 11-bootstrapping6, echo = F, message = FALSE, warning = FALSE, fig.cap = "Comparison of distribution of the bootstrap sample means and sampling distribution", out.height="50%"}
 samples <- rep_sample_n(airbnb, size = 40, reps = 20000)
 
-sample_estimates <- samples %>%
-  group_by(replicate) %>%
+sample_estimates <- samples |>
+  group_by(replicate) |>
   summarise(sample_mean = mean(price))
 
 sampling_dist <- ggplot(sample_estimates, aes(x = sample_mean)) +
@@ -690,11 +690,11 @@ sam_dist <- one_sample_dist + ggtitle("Sample") + xlab("Price") +
     axis.text.y = element_blank()
   )
 set.seed(2)
-boot2 <- one_sample %>%
+boot2 <- one_sample |>
   rep_sample_n(size = 40, replace = TRUE, reps = 1)
 
 set.seed(3)
-boot3 <- one_sample %>%
+boot3 <- one_sample |>
   rep_sample_n(size = 40, replace = TRUE, reps = 1)
 
 boot1_dist <- boot1_dist + ggtitle("Samples with Replacement") +
@@ -820,9 +820,9 @@ To calculate our 95\% percentile bootstrap confidence interval, we will do the f
 To do this in R, we can use the `quantile()` function:
 
 ```{r 11-bootstrapping8, echo = T, message = FALSE, warning = FALSE}
-bounds <- boot20000_means %>%
-  select(mean) %>%
-  pull() %>%
+bounds <- boot20000_means |>
+  select(mean) |>
+  pull() |>
   quantile(c(0.025, 0.975))
 bounds
 ```
