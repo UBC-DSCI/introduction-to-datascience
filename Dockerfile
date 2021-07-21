@@ -88,3 +88,10 @@ RUN tlmgr install amsmath \
     sourcecodepro \
     amscls \
     natbib
+
+# increase the ImageMagick resource limits
+# this relies on the fact that there is only one place where each of these sizes are used in policy.xml
+# (256MiB is for memory, 512MiB is for map, 1GiB is for disk)
+RUN sed -i 's/256MiB/4GiB/' /etc/ImageMagick-6/policy.xml
+RUN sed -i 's/512MiB/4GiB/' /etc/ImageMagick-6/policy.xml
+RUN sed -i 's/1GiB/4GiB/' /etc/ImageMagick-6/policy.xml
