@@ -29,8 +29,8 @@ RUN conda install -y pip && \
     pip install rpy2
 ENV LD_LIBRARY_PATH /usr/local/lib/R/lib/:${LD_LIBRARY_PATH}
 
-# install libGLPK
-RUN apt-get install libglpk-dev
+# install libGLPK, gdal-config, libunits
+RUN apt-get install -y libglpk-dev gdal-bin libgdal-dev libudunits2-0 libudunits2-dev
 
 # install R packages
 RUN apt-get update -qq && install2.r --error \
