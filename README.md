@@ -40,7 +40,7 @@ and then stops the container.
 
     > Alternatively, you can type:
     > ```
-    > docker run --rm -it -p 8787:8787 -v $PWD:/home/rstudio/introduction-to-datascience -e PASSWORD=password ubcdsci/intro-to-ds:v0.1.0
+    > docker run --rm -it -p 8787:8787 -m 4g -v $PWD:/home/rstudio/introduction-to-datascience -e PASSWORD=password ubcdsci/intro-to-ds:v0.1.0
     > ```
     
     Next:
