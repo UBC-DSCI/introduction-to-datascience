@@ -20,111 +20,132 @@ By the end of the chapter, readers will be able to:
 - create and organize subsets of tabular data using `filter`, `select`, `arrange`, and `slice`
 - visualize data with a `ggplot` bar plot
 
-## Ask a question 
+## Canadian languages data set
 
-The second high-level goal in this book is to "identify and solve common
-problems in data science".  The four common data science methods that are
-useful for answering predictive, exploratory and inferential data analysis
-questions covered in this book are:
+In this chapter, we will walk through a full analysis of a data set relating to
+languages spoken at home by Canadians. Many Indigenous peoples exist in Canada 
+with their own cultures and languages; these languages are often unique to Canada and not spoken
+anywhere else in the world [@statcan2018mothertongue]. Sadly, colonization has
+led to the loss of many of these languages. For instance, generations of
+children were not allowed to speak their mother tongue (the first language an
+individual learns in childhood) in Canadian residential schools. Colonizers
+also renamed places they had "discovered" [@wilson2018].  Acts such as these
+have significantly harmed the continuity of Indigenous languages in Canada, and
+some languages are considered "endangered" as few people report speaking them. 
+To learn more, please see Canadian Geographic's article on 
+[Mapping Indigenous languages in Canada](https://www.canadiangeographic.ca/article/mapping-indigenous-languages-canada)
+[@walker2017], [They Came for the Children: Canada, Aboriginal peoples, and Residential Schools](http://publications.gc.ca/site/archivee-archived.html?url=http://publications.gc.ca/collections/collection_2012/cvrc-trcc/IR4-4-2012-eng.pdf) [@children2012] 
+and the Truth and Reconciliation Commission of 
+Canada's [Calls to Action](http://trc.ca/assets/pdf/Calls_to_Action_English2.pdf) [@calls2015].
 
-1. **Classification: predicting a class/category for a new observation.** This
-could answer a question such as whether a tumour is cancerous or benign given
-some tumour cell measurements?
+The data set we will study in this chapter is taken from 
+[the {canlang} R data package](https://ttimbers.github.io/canlang/) [@timbers2020canlang], which has
+population language data collected during the 2016 Canadian census [@cancensus2016]. 
+In this data there are 214 languages recorded, each having 6 different properties:
 
-2. **Regression: predicting a quantitative value for a new observation.** This
-could answer a question such as what will be the 10 km race time for a
-20-year-old woman with a BMI of 25 who trains four times a week?
+1. `category`: Higher-level language category, describing whether the language is an Official Canadian language, an Aboriginal (i.e., Indigenous) language, or a Non-Official and Non-Aboriginal language.
+2. `language`: The name of the language.
+3. `mother_tongue`: Number of Canadians who reported the language as their mother tongue. Mother tongue is generally defined as the language someone was exposed to since birth.
+4. `most_at_home`: Number of Canadians who reported the language as being spoken most often at home.
+5. `most_at_work`: Number of Canadians who reported the language as being used most often at work.
+6. `lang_known`: Number of Canadians who reported knowledge of the language.
 
-3. **Clustering: finding previously unknown/unlabelled subgroups in a
-dataset**. This could answer a question such as what products commonly bought
-together on Amazon?
+According to the census, more than 60 Indigenous languages were reported
+as being spoken in Canada. Suppose we want to know which are the most critically endangered;
+then we might ask the following question, which we wish to answer using our data: 
 
-4. **Estimation: make a good guess of an average or a proportion for the wider
-population from a representative sample (group of people or units), and
-quantify how good that guess is.** This could answer a question such as what is
-the proportion of undergraduate students that own an iPhone?
+*Which ten Indigenous languages were least often reported in 2016 as mother
+tongues in Canada, and how many people speak each of them?* 
 
-We will explain these methods in more detail later, and we will map each to the
-broader data analysis question (listed in Table \@ref(tab:questions-table))
-they help answer and discuss what kinds of data are needed to answer such
-questions [@leek2015question; @peng2015art]. 
+> **A note about the *data* in data science!** 
+> Data science cannot be done without a deep understanding of the data and
+> problem domain. In this book, we have simplified the data sets used in our
+> examples to concentrate on fundamental concepts. In real life, you cannot and should not
+> do data science without a domain expert. Alternatively, it is common to
+> practice data science in your own domain of expertise! Remember that when you work
+> with data, it is essential to think about *how* the data were collected,
+> which affects the conclusions you can draw. If your data are biased, then your
+> results will be biased!
 
+## Asking a question 
 
-Table: (\#tab:questions-table) Types of data analysis questions
+Every good data analysis begins with a *question*&mdash;like the
+above&mdash;that you aim to answer using data. As it turns out, there
+are actually a number of different *types* of question regarding data:
+descriptive, exploratory, inferential, predictive, causal, and mechanistic,
+all of which are defined in Table \@ref(tab:questions-table).
+Carefully formulating a question as early as possible in your analysis&mdash;and 
+correctly identifying which type of question it is&mdash;will guide your overall approach to 
+the analysis as well as the selection of appropriate tools.
+
+Table: (\#tab:questions-table) Types of data analysis question. From [What is the question?](https://science.sciencemag.org/content/347/6228/1314) [@leek2015question] and [The Art of Data Science](https://leanpub.com/artofdatascience) [@peng2015art].
 
 | Question type | Description | Example |
 |---------------|-------------|---------|
 | Descriptive | A question that asks about summarized characteristics of a data set without interpretation (i.e., report a fact). | How many people live in each province and territory in Canada? |
 | Exploratory | A question asks if there are patterns, trends, or relationships within a single data set. Often used to propose hypotheses for future study. | Does political party voting change with indicators of wealth in a set of data collected on 2,000 people living in Canada? |
-| Inferential | A question that looks for patterns, trends, or relationships in a single data set **and** also asks for quantification of how applicable these findings are to the wider population. | Does political party voting change with indicators of wealth for all people living in Canada? |
 | Predictive | A question that asks about predicting measurements or labels for individuals (people or things). The focus is on what things predict some outcome, but not what causes the outcome. | What political party will someone vote for in the next Canadian election? |
+| Inferential | A question that looks for patterns, trends, or relationships in a single data set **and** also asks for quantification of how applicable these findings are to the wider population. | Does political party voting change with indicators of wealth for all people living in Canada? |
 | Causal | A question that asks about whether changing one factor will lead to a change in another factor, on average, in the wider population. | Does wealth lead to voting for a certain political party in Canadian elections? |
 | Mechanistic | A question that asks about the underlying mechanism of the observed patterns, trends, or relationships (i.e., how does it happen?) | How does wealth lead to voting for a certain political party in Canadian elections? |
 
-Source: [What is the question?](https://science.sciencemag.org/content/347/6228/1314) by Jeffery T. Leek, Roger D. Peng & [The Art of Data Science](https://leanpub.com/artofdatascience) by Roger Peng & Elizabeth Matsui
+In this book, you will learn techniques to answer the 
+first four types of question: descriptive, exploratory, predictive, and inferential; 
+causal and mechanistic questions are beyond the scope of this book.
+In particular, you will learn how to apply the following analysis tools:
 
-> Causal or mechanistic questions in Table \@ref(tab:questions-table) are beyond the scope of this book.
+1. **Summarization:** computing and reporting aggregated
+values pertaining to a data set. 
+Summarization is most often used to answer descriptive questions,
+and can occasionally help with answering exploratory questions.
+For example, you might use summarization to answer the following question: 
+*what is the average race time for runners in this data set?*
+Tools for summarization are covered in detail in Chapters \@ref(reading)
+and \@ref(wrangling), but appear regularly throughout the text.
+2. **Visualization:** plotting data graphically. 
+Visualization is typically used to answer descriptive and exploratory questions,
+but plays a critical supporting role in answering all of the types of question in Table \@ref(tab:questions-table).
+For example, you might use visualization to answer the following question:
+*is there any relationship between race time and age for runners in this data set?* 
+This is covered in detail in Chapter \@ref(viz), but again appears regularly throughout the book.
+3. **Classification:** predicting a class or category for a new observation.
+Classification is used to answer predictive questions.
+For example, you might use classification to answer the following question:
+*given measurements of a tumour's average cell area and perimeter, is the tumour benign or malignant?*
+Classification is covered in Chapters \@ref(classification) and \@ref(classification\_continued).
+4. **Regression:** predicting a quantitative value for a new observation. 
+Regression is also used to answer predictive questions.
+For example, you might use regression to answer the following question:
+*what will be the race time for a 20-year-old runner who weighs 50kg?*
+Regression is covered in Chapters \@ref(regression1) and \@ref(regression2).
+5. **Clustering:** finding previously unknown/unlabelled subgroups in a
+dataset. Clustering is often used to answer exploratory questions.
+For example, you might use clustering to answer the following question:
+*what products are commonly bought together on Amazon?*
+Clustering is covered in Chapter \@ref(clustering).
+6. **Estimation:** taking a small number of items from a large group 
+ and making a good guess for the average or proportion 
+for the large group. Estimation is used to answer inferential questions.
+For example, you might use estimation to answer the following question:
+*Given a survey of cellphone ownership of 100 Canadians, what proportion
+of the entire Canadian population own Android phones?* 
+Estimation is covered in Chapter \@ref(inference).
 
-## Canadian languages data set question
-
-Now that we've learned about different types of questions. 
-We need some context with which to frame the question we want to ask. 
-
-Before the arrival of colonists, Indigenous peoples lived in Canada with their
-own cultures and many different languages. Many Aboriginal languages are unique
-to Canada and not spoken anywhere else in the world [@statcan2018mothertongue].
-Sadly, colonization has led to the loss of many Aboriginal languages. For instance,
-generations of children were not allowed to speak their mother tongue
-(the first language an individual learns in childhood) in Canadian residential 
-schools. Colonizers also renamed places they had "discovered" [@wilson2018]. 
-Acts such as these have significantly harmed the continuity of Aboriginal languages in Canada, and some languages are considered "endangered" as few people report speaking them. 
-
-> To learn more, please see Canadian Geographic's article on [Mapping
-> Indigenous languages in
-> Canada](https://www.canadiangeographic.ca/article/mapping-indigenous-languages-canada)
-> [@walker2017], [They Came for the Children: Canada, Aboriginal peoples, and residential
-schools](http://publications.gc.ca/site/archivee-archived.html?url=http://publications.gc.ca/collections/collection_2012/cvrc-trcc/IR4-4-2012-eng.pdf)
-[@children2012] and the Truth and Reconciliation Commission of Canada's [Calls
-to Action](http://trc.ca/assets/pdf/Calls_to_Action_English2.pdf) [@calls2015].
-
-According to the 2016 census, more than 60 Aboriginal languages were reported as being spoken. Suppose we want to ask the question:
-
-*What ten Aboriginal languages were most often reported in 2016 as mother tongues in Canada, and how many people speak each of them?* 
-
-This question is an example of a *descriptive question* since we are
+Referring to Table \@ref(tab:questions-table), our question about 
+rare languages is an example of a *descriptive question*: we are
 summarizing the characteristics of a data set without further interpretation.
-To answer descriptive questions, we often want to summarize data usings
-numbers, table or graphs. For our specific question, we could create a table or
-a visualization that shows us ten languages and their associated counts. Now
-that we have asked our question, the next step is collecting or identifying the
-data set with which we will be working.  In this chapter, we will be working
-with a data set originally from [{canlang} R data
-package](https://ttimbers.github.io/canlang/) [@timbers2020canlang], which has
-language data collected in the 2016 Canadian census [@cancensus2016]. 
-
-In this data frame there are 214 rows (corresponding to the 214 languages recorded on the 2016 Canadian census) and 6 columns: 
-
-1. `category`: Higher level language category (describing whether the language is an Official Canadian language, an Aboriginal language, or a Non-Official and Non-Aboriginal language).
-2. `language`: Language queried about on the Canadian Census.
-3. `mother_tongue`: Total count of Canadians from the Census who reported the language as their mother tongue. Mother tongue is generally defined as the language someone was exposed to since birth.
-4. `most_at_home`: Total count of Canadians from the Census who reported the language as spoken most often at home.
-5. `most_at_work`: Total count of Canadians from the Census who reported the language as used most often at work for the population.
-6. `lang_known`: Total count of Canadians from the Census who reported knowledge of language for the population in private households.
-
-> You can find the description of this data set above provided with the [{canlang} R data package](https://ttimbers.github.io/canlang/). 
-
-> **A note about the *data* in data science!** 
-> Data science cannot be done without a deep understanding of the data and problem domain. In this book, we have simplified the data sets used in our examples to concentrate on concepts. In real life, we cannot and should not do data science without a domain expert. Alternatively, it is common to practice data science in your domain of expertise! Remember that when we work with data, it is essential to think about *how* the data were collected, which affects the conclusions we can draw. If your data are biased, then your results will be biased!
-
-Now that we have asked our question and identified the data we are using, we will
-use R to load the data, do some wrangling (i.e. restructure the data into a usable format) and visualize the data to answer our question!
+And referring to the list above, it looks like we should use visualization
+and perhaps some summarization to answer the question. So in the remainder
+of this chapter, we will work towards making a visualization that shows 
+us the ten rarest Indigenous languages in Canada and their associated counts,
+according to the 2016 census. 
 
 ## Loading a tabular data set
-
-Almost always, the first step in data analysis is to load a data set into R.  A
-data set is a collection of numbers or values and can come in many different
-forms!  Tables in Microsoft Excel are an example of *tablular data*, which are
-rectangular-shaped, spreadsheet-like data as shown in Figure
+A data set is, at its core essence, a structured collection of numbers and characters.
+Aside from that, there are really no strict rules; data sets can come in 
+many different forms! Tables in Microsoft Excel are an example of perhaps
+the most common form of data set: *tablular data*. Tabular data are
+rectangular-shaped and spreadsheet-like, as shown in Figure
 \@ref(fig:img-spreadsheet-vs-dataframe).  When we load this type of data into
 R, it is represented as a *data frame* object. Figure
 \@ref(fig:img-spreadsheet-vs-dataframe) shows an R data frame is very similar
