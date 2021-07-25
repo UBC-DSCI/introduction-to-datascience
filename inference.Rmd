@@ -302,7 +302,7 @@ In the previous section, our variable of interest&mdash;`room_type`&mdash;was
 the chapter introduction, there are many choices of the population parameter
 for each type of variable. What if we wanted to infer something about a
 population of *quantitative* variables instead? For instance, a traveller
-visiting Vancouver, British Columbia may wish to estimate the
+visiting Vancouver, Canada may wish to estimate the
 population *mean* (or average) price per night of Airbnb listings. Knowing
 the average could help them tell whether a particular listing is overpriced.
 We can visualize the population distribution of the price per night with a histogram. 
@@ -568,32 +568,28 @@ estimate of the population parameter.
 
 *Why all this emphasis on sampling distributions?*
 
-
 We saw in the previous section that we could compute a **point estimate** of a
 population parameter using a sample of observations from the population. And
-since we had access to the population, we could evaluate how accurate the
-estimate was, and even get a sense of how much the estimate would vary for
-different samples from the population.  But in real data analysis settings, we
-usually have *just one sample* from our population and do not have access to
-the population itself. Therefore we cannot construct the sampling distribution
-as we did in the previous section. As we saw, our sample estimate's value will
-likely not equal the population parameter value exactly. We saw from the
-sampling distribution just how much our estimates can vary. So reporting a
-single *point estimate* for the population parameter alone may not be enough.
-Using simulations, we can see patterns of the sample estimate's sampling
-distribution would look like for a sample of a given size. We can use these
-patterns to approximate the sampling distribution when we only have one sample,
-which is the realistic case. If we can "predict" what the sampling distribution
-would look like for a sample, we could construct a range of values we think the
-population parameter's value might lie. We can use our single sample and its
-properties that influence sampling distributions, such as the spread and sample
-size, to approximate the sampling distribution as best as we can. There are
-several methods to do this; however, in this book, we will use the bootstrap
-method to do this, as we will see in this section.
+since we constructed examples where we had access to the population, we could
+evaluate how accurate the estimate was, and even get a sense of how much the
+estimate would vary for different samples from the population.  But in real
+data analysis settings, we usually have *just one sample* from our population
+and do not have access to the population itself. Therefore we cannot construct
+the sampling distribution as we did in the previous section. And as we saw, our
+sample estimate's value can vary significantly from the population parameter.
+So reporting the point estimate from a single sample alone may not be enough.
+We also need to report some notion of *uncertainty* in the value of the point
+estimate.
 
-We will discuss **interval estimation** and construct **confidence intervals**
-using just a single sample from a population. A confidence interval is a range
-of plausible values for our population parameter. 
+Unfortunately, we cannot construct the exact sampling distribution without
+full access to the population. However, if we could somehow *approximate* what 
+the sampling distribution would look like for a sample, we could 
+use that approximation to then report how uncertain our sample
+point estimate is (as we did above with the *exact* sampling
+distribution). There are several methods to accomplish this; in this book, we 
+will use the *bootstrap*. We will discuss **interval estimation** and 
+construct **confidence intervals** using just a single sample from a population. A 
+confidence interval is a range of plausible values for our population parameter. 
 
 Here is the key idea. First, if you take a big enough sample, it *looks like*
 the population. Notice the histograms' shapes for samples of different sizes
@@ -661,12 +657,12 @@ called **the bootstrap**.  Note that by taking many samples from our single, obs
 sample, we do not obtain the true sampling distribution, but rather an
 approximation that we call **the bootstrap distribution**. 
 
-> Note that we need to sample *with* replacement when using the bootstrap.
+> Note that we must sample *with* replacement when using the bootstrap.
 > Otherwise, if we had a sample of size $n$, and obtained a sample from it of
-> size $n$ *without* replacement, it would just return our original sample.
+> size $n$ *without* replacement, it would just return our original sample!
 
 This section will explore how to create a bootstrap distribution from a single
-sample using R.  The process is visualized in Figure \@ref(fig:11-intro-bootstrap-image).  
+sample using R.  The process is visualized in Figure \@ref(fig:11-intro-bootstrap-image). 
 For a sample of size $n$, you:
 
 1. Randomly select an observation from the original sample, which was drawn from the population
@@ -681,11 +677,13 @@ For a sample of size $n$, you:
 knitr::include_graphics("img/intro-bootstrap.jpeg")
 ```
 ### Bootstrapping in R 
-Let’s continue working with our Airbnb data. Once again, let’s say we are
+Let’s continue working with our Airbnb example to illustrate how we might create
+and use a bootstrap distribution using just a single sample from the population. 
+Once again, suppose we are
 interested in estimating the population mean price per night of all Airbnb
-listings in Vancouver, Canada, using the single sample we collected of size 40.
-Recall our point estimate was \$`r round(estimates$sample_mean, 2)`, and the
-distribution of the sample is displayed in Figure \@ref(fig:11-bootstrapping1).
+listings in Vancouver, Canada, using a single sample size 40.
+Recall our point estimate was \$`r round(estimates$sample_mean, 2)`. The
+histogram of prices in the sample is displayed in Figure \@ref(fig:11-bootstrapping1).
 
 ```{r, echo = F, message = F, warning = F}
 one_sample <- one_sample |> 
@@ -700,17 +698,18 @@ one_sample_dist <- ggplot(one_sample, aes(price)) +
 one_sample_dist
 ```
 
-The sample distribution is skewed with a few observations out to the right. The
+The histogram for the sample is skewed, with a few observations out to the right. The
 mean of the sample is \$`r round(estimates$sample_mean, 2)`.
-Remember, in practice, we usually only have one sample from the population. So
+Remember, in practice, we usually only have this one sample from the population. So
 this sample and estimate are the only data we can work with.
 
 We now perform steps (1) - (5) listed above to generate a single bootstrap
-sample in R using the sample we just took, and calculate the bootstrap estimate
-for that sample. We will use the `rep_sample_n` function as we did when we were
-creating our sampling distribution. Since we want to sample with replacement,
-we change the argument for `replace` from its default value of `FALSE` to
-`TRUE`.
+sample in R and calculate a point estimate from that bootstrap sample. We will 
+use the `rep_sample_n` function as we did when we were
+creating our sampling distribution. But critically, note that we now
+pass `one_sample`&mdash;our single sample of size 40&mdash;as the first argument.
+And since we need to sample with replacement,
+we change the argument for `replace` from its default value of `FALSE` to `TRUE`.
 
 ```{r 11-bootstrapping3, echo = TRUE, message = FALSE, warning = FALSE, fig.cap = "Bootstrap distribution", fig.retina = 2, out.width = "70%"}
 boot1 <- one_sample |>
@@ -724,17 +723,18 @@ boot1_dist
 summarize(boot1, mean = mean(price))
 ```
 
-Notice in Figure \@ref(fig:11-bootstrapping3) that our bootstrap distribution
-has a similar shape to the original sample distribution. Though the shapes of
+Notice in Figure \@ref(fig:11-bootstrapping3) that the histogram of our bootstrap sample
+has a similar shape to the original sample histogram. Though the shapes of
 the distributions are similar, they are not identical. You'll also notice that
 the original sample mean and the bootstrap sample mean differ. How might that
 happen? Remember that we are sampling with replacement from the original
-sample, so we don't end up with the same sample values again. We are trying to
-mimic drawing another sample from the population without actually having to do
-that.
+sample, so we don't end up with the same sample values again. We are *pretending*
+that our single sample is close to the population, and we are trying to
+mimic drawing another sample from the population by drawing one from our original
+sample.
 
-Let's now take 20,000 bootstrap samples from the original sample we drew from the
-population (`one_sample`)  using `rep_sample_n` and calculate the means for
+Let's now take 20,000 bootstrap samples from the original sample (`one_sample`)  
+using `rep_sample_n`, and calculate the means for
 each of those replicates. Recall that this assumes that `one_sample` *looks like*
 our original population; but since we do not have access to the population itself,
 this is often the best we can do.
@@ -784,8 +784,8 @@ boot_est_dist <- ggplot(boot20000_means, aes(x = mean)) +
 boot_est_dist
 ```
 
-Let's compare our bootstrap distribution with the true sampling distribution
-(taking many samples from the population). 
+Let's compare the bootstrap distribution&mdash;which we construct by taking many samples from our original sample of size 40&mdash;with 
+the true sampling distribution&mdash;which corresponds to taking many samples from the population.
 
 ```{r 11-bootstrapping6, echo = F, message = FALSE, warning = FALSE, fig.cap = "Comparison of distribution of the bootstrap sample means and sampling distribution", fig.retina = 2, out.height = "70%"}
 samples <- rep_sample_n(airbnb, size = 40, reps = 20000)
@@ -830,9 +830,10 @@ distribution is centred at the original sample's mean price per night,
 \$`r round(mean(boot20000_means$mean), 2)`. Because we are resampling from the
 original sample repeatedly, we see that the bootstrap distribution is centred
 at the original sample's mean value (unlike the sampling distribution of the
-sample mean, which is centred at the population parameter value). Figure
-\@ref(fig:11-bootstrapping7) summarizes the bootstrapping process.
+sample mean, which is centred at the population parameter value). 
 
+Figure
+\@ref(fig:11-bootstrapping7) summarizes the bootstrapping process.
 The idea here is that we can use this distribution of bootstrap sample means to
 approximate the sampling distribution of the sample means when we only have one
 sample. Since the bootstrap distribution pretty well approximates the sampling
@@ -994,7 +995,7 @@ instance, if our decision impacts human life and the implications of being
 wrong are deadly, we may want to be very confident and choose a higher
 confidence level.
 
-To calculate our 95\% percentile bootstrap confidence interval, we will do the following:
+To calculate a 95\% percentile bootstrap confidence interval, we will do the following:
 
 1. Arrange the observations in the bootstrap distribution in ascending order 
 2. Find the value such that 2.5\% of observations fall below it (the 2.5\% percentile). Use that value as the lower bound of the interval 
@@ -1034,7 +1035,6 @@ mean price-per-night of 40 Airbnb listings was
 \$`r round(mean(one_sample$price),2)`, and we are 95\% "confident" that the true
 population mean price-per-night for all Airbnb listings in Vancouver is between
 \$(`r round(bounds[1],2)`, `r round(bounds[2],2)`).
-
 Notice that our interval does indeed contain the true
 population mean value, \$`r round(mean(airbnb$price),2)`\! However, in
 practice, we would not know whether our interval captured the population
@@ -1045,7 +1045,7 @@ This chapter is only the beginning of the journey into statistical inference.
 We can extend the concepts learned here to do much more than report point
 estimates and confidence intervals, such as testing for real differences
 between populations, tests for associations between variables, and so much
-more! We have just scratched the surface of statistical inference; however, the
+more. We have just scratched the surface of statistical inference; however, the
 material presented here will serve as the foundation for more advanced
 statistical techniques you may learn about in the future!
 
