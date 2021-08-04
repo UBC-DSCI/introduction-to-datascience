@@ -99,7 +99,7 @@ manipulate factors in R. As we learned in Chapter \@ref(viz), factors are a spec
 R that are often used for class label data. 
 
 
-```{r 05-load-libraries}
+```{r 05-load-libraries, warning = FALSE, message = FALSE}
 library(tidyverse)
 library(forcats)
 ```
@@ -173,16 +173,17 @@ column of a data frame into a vector.
 
 ```{r 05-levels}
 cancer |>
-  select(Class) |>
-  pull() |> # turns a data frame into a vector
+  pull(Class) |> # turns a data frame into a vector
   levels()
 ```
 
 ### Exploring the cancer data
 
 Before we start doing any modelling, let's explore our data set. Below we use
-the `group_by` and `summarize` functions we used before to see that we have
-357 (63\%) benign and 212 (37\%) malignant tumour observations.
+the `group_by`, `summarize` and `n` functions to find the number and percentage 
+of benign and maligant tumour observations in our data set. The `n` function within
+the `summarize` function counts the number of observations in each `Class` group. 
+We have 357 (63\%) benign and 212 (37\%) malignant tumour observations.
 
 ```{r 05-tally}
 num_obs <- nrow(cancer)
@@ -277,7 +278,7 @@ Figure \@ref(fig:05-knn-1).
 
 ```{r 05-knn-1, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with new observation labelled in red"}
 perim_concav +
-  geom_point(aes(x = new_point[1], y = new_point[2]), color = "red", size = 2.5)
+  geom_point(aes(x = new_point[1], y = new_point[2]), color = "red", size = 2.5, pch = 17)
 ```
 </center>
 
@@ -291,7 +292,8 @@ they would have the same diagnosis.
 ```{r 05-knn-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter, with malignant nearest neighbour to a new observation highlighted"}
 perim_concav + geom_point(aes(x = new_point[1], y = new_point[2]),
   color = "red",
-  size = 2.5
+  size = 2.5, 
+  pch = 17
 ) +
   geom_segment(aes(
     x = new_point[1],
@@ -320,7 +322,8 @@ not, if you consider the other nearby points...
 ```{r 05-knn-4, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter, with benign nearest neighbour to a new observation highlighted"}
 perim_concav + geom_point(aes(x = new_point[1], y = new_point[2]),
   color = "red",
-  size = 2.5
+  size = 2.5, 
+  pch = 17
 ) +
   geom_segment(aes(
     x = new_point[1],
@@ -344,7 +347,8 @@ observation as malignant.
 ```{r 05-knn-5, echo =  FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with three nearest neighbours"}
 perim_concav + geom_point(aes(x = new_point[1], y = new_point[2]),
   color = "red",
-  size = 2.5
+  size = 2.5, 
+  pch = 17
 ) +
   geom_segment(aes(
     x = new_point[1], y = new_point[2],
@@ -403,7 +407,7 @@ perim_concav <- cancer |>
   scale_y_continuous(name = "Concavity", breaks = seq(-2, 4, 1)) +
   labs(color = "Diagnosis") +
   scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2")) +
-  geom_point(aes(x = new_point[1], y = new_point[2]), color = "red", size = 2.5)
+  geom_point(aes(x = new_point[1], y = new_point[2]), color = "red", size = 2.5, pch = 17)
 perim_concav
 ```
 </center>
@@ -445,7 +449,7 @@ math_table <- math_table %>%
 ```
 
 ```{r 05-multiknn-mathtable, echo = FALSE}
-kable(math_table, booktabs = TRUE, caption = "Evaluating the distances from the new observation to each of its 5 nearest neighbours", escape = FALSE)
+knitr::kable(math_table, booktabs = TRUE, caption = "Evaluating the distances from the new observation to each of its 5 nearest neighbours", escape = FALSE)
 ```
 
 The result of this computation shows that 3 of the 5 nearest neighbours to our new observation are
@@ -489,7 +493,7 @@ the data look like when we visualize them as a 3-dimensional scatter.
 In this case, the formula above is just the straight line distance in this 3-dimensional space.
 
 
-```{r 05-more, echo = FALSE, fig.cap = "3D scatter plot of the symmetry, concavity, and perimeter variables."}
+```{r 05-more, echo = FALSE, message = FALSE, fig.cap = "3D scatter plot of the symmetry, concavity, and perimeter variables."}
 library(plotly)
 cancer |>
   plot_ly(
@@ -539,7 +543,7 @@ in this collection will help keep our code simple, readable and accurate; the
 less we have to code ourselves, the fewer mistakes we are likely to make. We 
 start off by loading `tidymodels`.
 
-```{r 05-tidymodels}
+```{r 05-tidymodels, warning = FALSE, message = FALSE}
 library(tidymodels)
 ```
 
@@ -751,11 +755,14 @@ neighbours <- unscaled_cancer[order(my_distances$Distance), ]
 unscaled_cancer <- bind_rows(unscaled_cancer, new_obs)
 
 # plot the scatter
-unscaled <- ggplot(unscaled_cancer, aes(x = Area, y = Smoothness, color = Class)) +
-  geom_point(alpha = 0.6) +
-  labs(color = "Diagnosis") +
-  scale_color_manual(labels = c("Benign", "Malignant"), values = c("steelblue2", "orange2", "red")) +
-  labs(color = "Diagnosis") +
+unscaled <- ggplot(unscaled_cancer, aes(x = Area, y = Smoothness, group = Class, color = Class, shape = Class)) +
+  geom_point(alpha = 0.6) + 
+  scale_color_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"), 
+                     values = c("steelblue2", "orange2", "red")) +
+  scale_shape_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"),
+                     values= c(16, 16, 17)) +
   ggtitle("Nonstandardized Data") +
   geom_segment(aes(
     x = unlist(new_obs[1]), y = unlist(new_obs[2]),
@@ -782,11 +789,14 @@ neighbours_scaled <- scaled_cancer[order(my_distances_scaled$Distance), ]
 scaled_cancer <- bind_rows(scaled_cancer, new_obs_scaled)
 
 # plot the scatter
-scaled <- ggplot(scaled_cancer, aes(x = Area, y = Smoothness, color = Class)) +
-  geom_point(alpha = 0.6) +
-  labs(color = "Diagnosis") +
-  scale_color_manual(labels = c("Benign", "Malignant"), values = c("steelblue2", "orange2", "red")) +
-  labs(color = "Diagnosis") +
+scaled <- ggplot(scaled_cancer, aes(x = Area, y = Smoothness, group = Class, color = Class, shape = Class)) +
+  geom_point(alpha = 0.6) + 
+  scale_color_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"), 
+                     values = c("steelblue2", "orange2", "red")) +
+  scale_shape_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"),
+                     values= c(16, 16, 17)) +
   ggtitle("Standardized Data") +
   # coord_equal(ratio = 1) +
   geom_segment(aes(
@@ -889,7 +899,8 @@ for (i in 1:7) {
 }
 rare_plot + geom_point(aes(x = new_point[1], y = new_point[2]),
   color = "red",
-  size = 2.5
+  size = 2.5,
+  pch = 17
 )
 ```
 </center>
@@ -936,7 +947,7 @@ step to the earlier `uc_recipe` recipe with the `step_upsample` function.
 We show below how to do this, and also
 use the `group_by` and `summarize` functions to see that our classes are now balanced:
 
-```{r 05-upsample-cancer}
+```{r 05-upsample-cancer, warning=FALSE}
 ups_recipe <- recipe(Class ~ ., data = rare_cancer) |>
   step_upsample(Class, over_ratio = 1, skip = FALSE) |>
   prep()
