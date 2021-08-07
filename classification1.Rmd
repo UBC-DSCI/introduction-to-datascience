@@ -123,7 +123,7 @@ a unique ID and a diagnosis for malignance by a physician.  Therefore, the
 total set of variables per image in this data set is:
 
 1. ID: identification number 
-2. Class: the diagnosis of **M**alignant or **B**enign
+2. Class: the diagnosis (M = malignant or B = benign)
 3. Radius: the mean of distances from center to points on the perimeter
 4. Texture: the standard deviation of gray-scale values
 5. Perimeter: the length of the surrounding contour 
@@ -162,8 +162,8 @@ This function should return the name of each category in that column. Given
 that we only have 2 different values in our `Class` column (B for benign and M 
 for malignant), we only expect to get two names back.  Note that the `levels` function requires
 a *vector* argument, while the `select` function outputs a *data frame*; 
-so we use the `pull` function, which converts a single
-column of a data frame into a vector.
+so we use the `pull` function to convert the `Class`
+column into a vector.
 
 ```{r 05-levels}
 cancer |>
@@ -201,7 +201,7 @@ changing them to "Benign" and "Malignant" using the `labels` argument.
 perim_concav <- cancer %>%
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
   geom_point(alpha = 0.5) +
-  labs(color = "Diagnosis", x = "Perimeter (scaled)", y = "Concavity (scaled)") +
+  labs(color = "Diagnosis", x = "Perimeter (standardized)", y = "Concavity (standardized)") +
   scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2"))
 perim_concav
 ```
@@ -397,8 +397,8 @@ and concavity coordinates, add the squared differences, and then take the square
 perim_concav <- cancer |>
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
   geom_point(alpha = 0.5) +
-  scale_x_continuous(name = "Perimeter (scaled)", breaks = seq(-2, 4, 1)) +
-  scale_y_continuous(name = "Concavity (scaled)", breaks = seq(-2, 4, 1)) +
+  scale_x_continuous(name = "Perimeter (standardized)", breaks = seq(-2, 4, 1)) +
+  scale_y_continuous(name = "Concavity (standardized)", breaks = seq(-2, 4, 1)) +
   labs(color = "Diagnosis") +
   scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2")) +
   geom_point(aes(x = new_point[1], y = new_point[2]), color = "red", size = 2.5, pch = 17)
@@ -473,16 +473,17 @@ information to help create our classifier.  The only difference is the formula
 for the distance between points. 
 
 In particular, let's say we have three predictor
-variables, perimeter, concavity, and symmetry (so, a 3-dimensional space) for two observations.
+variables, perimeter, concavity, and symmetry (so, a 3-dimensional space) for two observations where
 $observation_1 = (0.417, 2.31, 0.837)$ and $observation_2 = (0, 3.5, 1)$.
 Previously, when we had two variables, we added up the squared difference between each of our (two) variables,
 and then took the square root. Now we will do the same, except for our
-three variables.  In other words, the distance formula becomes
+three variables.  We calculate the distance as follows
 
-$$\mathrm{Distance} =\sqrt{(0 - 0.417)^2 + (3.5 - 2.31)^2 + (1 - 0.837)^2} = 1.27$$
+$$\mathrm{Distance} =\sqrt{(0 - 0.417)^2 + (3.5 - 2.31)^2 + (1 - 0.837)^2} = 1.27$$.
+
 In this case, the formula above is just the straight line distance in this 3-dimensional space.
 Let's calculate the distances between our new observation and each of the observations in the training set to find
-the $K=5$ neighbors when we have three predictors, perimeter, concavity and symmetry. 
+the $K=5$ neighbors when we have three predictors: perimeter, concavity and symmetry. 
 ```{r}
 new_obs_Perimeter <- 0
 new_obs_Concavity <- 3.5
@@ -514,7 +515,7 @@ data <- neighbors_3 %>% select(Perimeter, Concavity, Symmetry) %>% slice(1:5)
 # add to the df
 scaled_cancer_3 <- bind_rows(cancer, new_obs_3) %>% 
   mutate(Class = fct_recode(Class, "Benign" = "B", "Malignant"= "M"))
-scaled_cancer_3
+
 scaled_cancer_3 |>
   plot_ly(
     x = ~Perimeter,
@@ -528,9 +529,9 @@ scaled_cancer_3 |>
   ) |>
   add_markers() |>
   layout(scene = list(
-    xaxis = list(title = "Perimeter (scaled)"),
-    yaxis = list(title = "Concavity (scaled)"),
-    zaxis = list(title = "Symmetry (scaled)")
+    xaxis = list(title = "Perimeter (standardized)"),
+    yaxis = list(title = "Concavity (standardized)"),
+    zaxis = list(title = "Symmetry (standardized)")
   )) 
 
 ```
@@ -541,7 +542,7 @@ general we recommend against using 3D visualizations; here we show the data in
 for learning purposes.*
 
 
-We can extend this formula beyond three predictors. Suppose we have $m$ predictor
+We can extend the distance formula beyond three predictors. Suppose we have $m$ predictor
 variables for two observations $a$ and $b$, i.e., 
 $a = (a_{1}, a_{2}, \dots, a_{m})$ and
 $b = (b_{1}, b_{2}, \dots, b_{m})$.
@@ -642,7 +643,7 @@ in the next chapter.
 Finally it shows (somewhat confusingly) that the "best" weight function 
 was "rectangular" and "best" setting of $K$ was 5; but since we specified these earlier,
 R is just repeating those settings to us here. In the next chapter, we will actually
-let R tune the model for us. 
+let R find the $K$ value for us. 
 
 Finally, we make the prediction on the new observation by calling the `predict` function,
 passing both the fit object we just created and the new observation itself. As above 
@@ -655,6 +656,10 @@ variable named `.pred_class`.
 new_obs <- tibble(Perimeter = 0, Concavity = 3.5)
 predict(knn_fit, new_obs)
 ```
+
+Is this predicted label the true label? We don't know, because we do not have the 
+label&mdash this is what we were trying to predict. In the next chapter we will 
+learn ways to quantify how accurate we think our predictions are.
 
 ## Data preprocessing with `tidymodels`
 
@@ -684,9 +689,12 @@ of education variable is in the single digits. Although this doesn't affect the
 K-nearest neighbor classification algorithm, this large shift can change the
 outcome of using many other predictive models. 
 
-When all variables in a data set have a mean (center) of 0
-and a standard deviation (scale) of 1, we say that the data have been
-*standardized*. To illustrate the effect that standardization can have on the K-nearest
+To scale and center our data, we need to find
+our variables' mean and standard deviation (a number measuring how spread out values are). 
+For each observed value of the variable, we subtract the mean (center the variable) 
+and divide by the standard deviation (scale the variable). When we do this, the data 
+is said to be *standardized*, and all variables in a data set will have a mean of 0 
+and a standard deviation of 1. To illustrate the effect that standardization can have on the K-nearest
 neighbor algorithm, we will read in the original, unscaled Wisconsin breast
 cancer data set; we have been using a standardized version of the data set up
 until now. To keep things simple, we will just use the `Area`, `Smoothness`, and `Class`
@@ -699,7 +707,7 @@ unscaled_cancer <- read_csv("data/unscaled_wdbc.csv") |>
 unscaled_cancer
 ```
 
-Looking at the unscaled / uncentered data above, you can see that the difference
+Looking at the unscaled and uncentered data above, you can see that the difference
 between the values for area measurements are much larger than those for
 smoothness, and the mean appears to be much larger too. Will this affect
 predictions? In order to find out, we will create a scatter plot of these two
@@ -744,11 +752,18 @@ For example:
 
 You can find [a full set of all the steps and variable selection functions](https://tidymodels.github.io/recipes/reference/index.html)
 on the recipes home page.
-We finally use the `bake` function to apply the recipe to the unscaled data.
+
+Here we are calculated the required statistics based off the data input into the recipe, but
+the data are not yet scaled and centered. In order to actually scale and center the data 
+we need to apply the `bake` function to the unscaled data. 
 ```{r 05-scaling-4}
 scaled_cancer <- bake(uc_recipe, unscaled_cancer)
 scaled_cancer
 ```
+
+It may seem redundant that we had to both `bake` and `prep` to scale and center the data.
+However, we do this in two steps so we can specify a different data set in the `bake` step,
+say, new data that you want to predict, which were not part of the training set. 
 
 At this point, you may wonder why we are doing so much work just to center and
 scale our variables.  Can't we just manually scale and center the `Area` and
@@ -833,7 +848,7 @@ scaled <- ggplot(scaled_cancer, aes(x = Area, y = Smoothness, group = Class, col
                      labels = c("Benign", "Malignant", "Unknown"),
                      values= c(16, 16, 17)) +
   ggtitle("Standardized Data") +
-  labs(x = "Area (scaled)", y = "Smoothness (scaled)") + 
+  labs(x = "Area (standardized)", y = "Smoothness (standardized)") + 
   # coord_equal(ratio = 1) +
   geom_segment(aes(
     x = unlist(new_obs_scaled[1]), y = unlist(new_obs_scaled[2]),
@@ -897,8 +912,8 @@ detection, there are many cases in which the "important" class to identify
 (presence of disease, malicious email) is much rarer than the "unimportant"
 class (no disease, normal email).
 
-To better illustrate the problem, let's revisit the breast cancer data; except
-now we will remove many of the observations of malignant tumours, simulating
+To better illustrate the problem, let's revisit the scaled breast cancer data, 
+`cancer`; except now we will remove many of the observations of malignant tumours, simulating
 what the data would look like if the cancer was rare. We will do this by
 picking only 3 observations randomly from the malignant group, and keeping all
 of the benign observations. We choose these 3 observations using the `slice_sample`
@@ -910,14 +925,15 @@ The new imbalanced data is shown in Figure \@ref(fig:05-unbalanced).
 set.seed(3)
 rare_cancer <- bind_rows(
     filter(cancer, Class == "B"),
-    cancer |> filter(Class == "M") |> slice_sample(n = 3)
+    cancer |> 
+      filter(Class == "M") |> slice_sample(n = 3)
     ) |>
   select(Class, Perimeter, Concavity)
 
 rare_plot <- rare_cancer |>
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
   geom_point(alpha = 0.5) +
-  labs(color = "Diagnosis", x = "Perimeter (scaled)", y = "Concavity (scaled)") +
+  labs(color = "Diagnosis", x = "Perimeter (standardized)", y = "Concavity (standardized)") +
   scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2"))
 rare_plot
 ```
@@ -970,11 +986,11 @@ rare_plot + geom_point(aes(x = new_point[1], y = new_point[2]),
 </center>
 
 Figure \@ref(fig:05-upsample-2) shows what happens if we set the background colour of 
-each area of the plot to the decision the K-nearest neighbor 
+each area of the plot to the predictions the K-nearest neighbor 
 classifier would make. We can see that the decision is 
 always "benign," corresponding to the blue colour.
 
-```{r 05-upsample-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data with background colour indicating the decision of the classifier"}
+```{r 05-upsample-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data with background colour indicating the decision of the classifier and the points represent the labelled data"}
 
 knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) |>
   set_engine("kknn") |>
@@ -995,7 +1011,7 @@ rare_plot <-
   ggplot() +
   geom_point(data = rare_cancer, mapping = aes(x = Perimeter, y = Concavity, color = Class), alpha = 0.75) +
   geom_point(data = prediction_table, mapping = aes(x = Perimeter, y = Concavity, color = Class), alpha = 0.02, size = 5.) +
-  labs(color = "Diagnosis", x = "Perimeter (scaled)", y = "Concavity (scaled)") +
+  labs(color = "Diagnosis", x = "Perimeter (standardized)", y = "Concavity (standardized)") +
   scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2"))
 
 rare_plot
@@ -1050,7 +1066,7 @@ upsampled_plot <-
   ggplot() +
   geom_point(data = prediction_table, mapping = aes(x = Perimeter, y = Concavity, color = Class), alpha = 0.02, size = 5.) +
   geom_point(data = rare_cancer, mapping = aes(x = Perimeter, y = Concavity, color = Class), alpha = 0.75) +
-  labs(color = "Diagnosis", x = "Perimeter (scaled)", y = "Concavity (scaled)") +
+  labs(color = "Diagnosis", x = "Perimeter (standardized)", y = "Concavity (standardized)") +
   scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2"))
 
 upsampled_plot
