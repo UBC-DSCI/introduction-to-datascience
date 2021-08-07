@@ -734,12 +734,13 @@ In the plot for the nonstandardized original data, you can see some odd choices
 for the three nearest neighbours. In particular, the "neighbours" are visually
 well within the cloud of benign observations, and the neighbours are all nearly
 vertically aligned with the new observation (which is why it looks like there
-is only one black line on this plot).  Here the computation of nearest
+is only one black line on this plot). Figure \@ref(fig:05-scaling-plt-zoomed)
+shows a close up of that region on the unstandardized plot. Here the computation of nearest
 neighbours is dominated by the much larger-scale area variable. On the right,
 the plot for standardized data shows a much more intuitively reasonable
 selection of nearest neighbours. Thus, standardizing the data can change things
-in an important way when we are using predictive algorithms.  Standardizing your data should be a part of the preprocessing you do
-before predictive modelling / analysis, and its important to think about whether the problem domain and whether you need to standardize your data.
+in an important way when we are using predictive algorithms. Standardizing your data should be a part of the preprocessing you do
+before predictive modelling and you should think your problem domain and whether you need to standardize your data. 
 
 ```{r 05-scaling-plt, echo = FALSE, fig.height = 4, fig.width = 10, fig.cap = "Comparison of K = 3 nearest neighbours with standardized and unstandardized data"}
 
@@ -818,6 +819,35 @@ gridExtra::grid.arrange(unscaled, scaled, ncol = 2)
 ```
 </center>
 
+```{r 05-scaling-plt-zoomed, echo = FALSE, fig.cap = "Zoomed in plot of unstandardized data"}
+library(ggforce)
+ggplot(unscaled_cancer, aes(x = Area, y = Smoothness, group = Class, color = Class, shape = Class)) +
+  geom_point(size = 2) + 
+  scale_color_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"), 
+                     values = c("steelblue2", "orange2", "red")) +
+  scale_shape_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"),
+                     values= c(16, 16, 17)) +
+  ggtitle("Nonstandardized Data") +
+  geom_segment(aes(
+    x = unlist(new_obs[1]), y = unlist(new_obs[2]),
+    xend = unlist(neighbours[1, attrs[1]]),
+    yend = unlist(neighbours[1, attrs[2]])
+  ), color = "black") +
+  geom_segment(aes(
+    x = unlist(new_obs[1]), y = unlist(new_obs[2]),
+    xend = unlist(neighbours[2, attrs[1]]),
+    yend = unlist(neighbours[2, attrs[2]])
+  ), color = "black") +
+  geom_segment(aes(
+    x = unlist(new_obs[1]), y = unlist(new_obs[2]),
+    xend = unlist(neighbours[3, attrs[1]]),
+    yend = unlist(neighbours[3, attrs[2]])
+  ), color = "black") + 
+  theme_bw() + 
+ facet_zoom(ylim = c(0.075, 0.150), xlim= c(399.5, 402)) 
+```
 
 ### Balancing
 
