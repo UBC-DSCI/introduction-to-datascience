@@ -266,7 +266,7 @@ $K$ for us. We will cover how to choose $K$ ourselves in the next chapter.
 To illustrate the concept of K-nearest neighbors classification, we 
 will walk through an example.  Suppose we have a
 new observation, with perimeter of `r new_point[1]` and concavity of `r new_point[2]`, whose 
-diagnosis "Class" is unknown. This new observation is depicted by the red, triangular point in
+diagnosis "Class" is unknown. This new observation is depicted by the red, diamond point in
 Figure \@ref(fig:05-knn-1).
 
 
@@ -280,7 +280,7 @@ perim_concav_with_new_point <-  bind_rows(cancer, tibble(Perimeter = new_point[1
                      values = c("steelblue2", "orange2", "red")) +
   scale_shape_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
-                     values= c(16, 16, 17))+ 
+                     values= c(16, 16, 18))+ 
   scale_size_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
                      values= c(2, 2, 2.5))
@@ -332,7 +332,7 @@ perim_concav_with_new_point2 <- bind_rows(cancer, tibble(Perimeter = new_point[1
                      values = c("steelblue2", "orange2", "red")) +
   scale_shape_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
-                     values= c(16, 16, 17))+ 
+                     values= c(16, 16, 18))+ 
   scale_size_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
                      values= c(2, 2, 2.5))
@@ -400,7 +400,7 @@ To find the $K$ nearest neighbors to our new observation, we compute the distanc
 from that new observation to each observation in our training data, and select the $K$ observations corresponding to the
 $K$ *smallest* distance values. For example, suppose we want to use $K=5$ neighbors to classify a new 
 observation with perimeter of `r new_point[1]` and 
-concavity of `r new_point[2]`, shown in red in Figure \@ref(fig:05-multiknn-1). Let's calculate the distances
+concavity of `r new_point[2]`, shown as a red, diamond in Figure \@ref(fig:05-multiknn-1). Let's calculate the distances
 between our new point and each of the observations in the training set to find
 the $K=5$ neighbors that are nearest to our new point. 
 You will see in the `mutate` step below, we compute the straight-line
@@ -410,7 +410,7 @@ and concavity coordinates, add the squared differences, and then take the square
 ```{r 05-multiknn-1, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with new observation labelled in red"}
 perim_concav <- bind_rows(cancer, tibble(Perimeter = new_point[1], Concavity = new_point[2], Class = "unknown")) |>
   ggplot(aes(x = Perimeter, y = Concavity, color = Class, shape = Class, size = Class)) +
-  geom_point(aes(x = new_point[1], y = new_point[2]), color = "red", size = 2.5, pch = 17) + 
+  geom_point(aes(x = new_point[1], y = new_point[2]), color = "red", size = 2.5, pch = 18) + 
   geom_point(alpha = 0.5) +
   scale_x_continuous(name = "Perimeter (standardized)", breaks = seq(-2, 4, 1)) +
   scale_y_continuous(name = "Concavity (standardized)", breaks = seq(-2, 4, 1)) +
@@ -420,7 +420,7 @@ perim_concav <- bind_rows(cancer, tibble(Perimeter = new_point[1], Concavity = n
                      values = c("steelblue2", "orange2", "red")) +
   scale_shape_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
-                     values= c(16, 16, 17))+ 
+                     values= c(16, 16, 18))+ 
   scale_size_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
                      values= c(2, 2, 2.5))
@@ -505,20 +505,16 @@ The distance formula becomes
 $$\mathrm{Distance} = \sqrt{(a_{1} -b_{1})^2 + (a_{2} - b_{2})^2 + \dots + (a_{m} - b_{m})^2}.$$
 
 This formula still corresponds to a straight-line distance, just in a space with 
-more dimensions. 
-
-Let's say we have three predictor
+more dimensions. Let's say we have three predictor
 variables, perimeter, concavity, and symmetry (so, a 3-dimensional space) for two observations where
-$observation_1 = (0.417, 2.31, 0.837)$ and $observation_2 = (0, 3.5, 1)$.
+$\mathrm{observation}_1 = (0.417, 2.31, 0.837)$ and $\mathrm{observation}_{new} = (0, 3.5, 1)$.
 Previously, when we had two variables, we added up the squared difference between each of our (two) variables,
 and then took the square root. Now we will do the same, except for our
 three variables.  We calculate the distance as follows
 
 $$\mathrm{Distance} =\sqrt{(0 - 0.417)^2 + (3.5 - 2.31)^2 + (1 - 0.837)^2} = 1.27$$.
-
 In this case, the formula above is just the straight line distance in this 3-dimensional space.
-Let's calculate the distances between our new observation and each of the observations in the training set to find
-the $K=5$ neighbors when we have three predictors: perimeter, concavity and symmetry. 
+Let's calculate the distances between our new observation (with a perimeter of 0, concavity of 3.5 and symmetry of 1) and each of the observations in the training set to find the $K=5$ neighbors when we have three predictors: perimeter, concavity and symmetry. 
 ```{r}
 new_obs_Perimeter <- 0
 new_obs_Concavity <- 3.5
@@ -532,7 +528,7 @@ cancer |>
   arrange(dist_from_new) |>
   slice(1:5) # subset the first 5 rows
 ```
-
+Based on $K=5$ nearest neighbors with these three predictors we would classify the new observation as malignant. 
 Figure \@ref(fig:05-more) shows what
 the data look like when we visualize them as a 3-dimensional scatter.
 
@@ -560,7 +556,7 @@ scaled_cancer_3 |>
     opacity = 0.4,
     size = 150,
     colors = c("orange2", "steelblue2", "red"), 
-    symbol = ~Class, symbols = c('circle','circle','x')
+    symbol = ~Class, symbols = c('circle','circle','diamond')
   ) |>
   add_markers() |>
   layout(scene = list(
@@ -834,7 +830,7 @@ unscaled <- ggplot(unscaled_cancer, aes(x = Area, y = Smoothness, group = Class,
                      values = c("steelblue2", "orange2", "red")) +
   scale_shape_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
-                     values= c(16, 16, 17)) +
+                     values= c(16, 16, 18)) +
     scale_size_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
                      values=c(2,2,2.5)) + 
@@ -872,7 +868,7 @@ scaled <- ggplot(scaled_cancer, aes(x = Area, y = Smoothness,
                      values = c("steelblue2", "orange2", "red")) +
   scale_shape_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
-                     values= c(16, 16, 17)) +
+                     values= c(16, 16, 18)) +
   scale_size_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
                     values=c(2,2,2.5)) + 
@@ -908,7 +904,7 @@ ggplot(unscaled_cancer, aes(x = Area, y = Smoothness, group = Class, color = Cla
                      values = c("steelblue2", "orange2", "red")) +
   scale_shape_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
-                     values= c(16, 16, 17)) +
+                     values= c(16, 16, 18)) +
     scale_size_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
                      values = c(1, 1, 2.5)) + 
@@ -997,6 +993,21 @@ my_distances <- table_with_distances(rare_cancer[, attrs], new_point)
 my_distances <- bind_cols(my_distances, select(rare_cancer, Class))
 neighbors <- rare_cancer[order(my_distances$Distance), ]
 
+
+rare_plot <- bind_rows(rare_cancer, tibble(Perimeter = new_point[1], Concavity = new_point[2], Class = "unknown")) |>
+  ggplot(aes(x = Perimeter, y = Concavity, color = Class, shape = Class)) +
+  geom_point(alpha = 0.5) +
+  labs(color = "Diagnosis", x = "Perimeter (standardized)", y = "Concavity (standardized)") + 
+  scale_color_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"), 
+                     values = c("steelblue2", "orange2", "red")) +
+  scale_shape_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"),
+                     values= c(16, 16, 18))+ 
+  scale_size_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"),
+                     values= c(2, 2, 2.5))
+
 for (i in 1:7) {
   clr <- "steelblue2"
   if (neighbors$Class[i] == "M") {
@@ -1013,7 +1024,7 @@ for (i in 1:7) {
 rare_plot + geom_point(aes(x = new_point[1], y = new_point[2]),
   color = "red",
   size = 2.5,
-  pch = 17
+  pch = 18
 )
 ```
 </center>
