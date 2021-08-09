@@ -81,9 +81,9 @@ image measurements available to us to predict whether a future tumor image
 question is important because traditional, non-data-driven methods for tumor
 diagnosis are quite subjective and dependent upon how skilled and experienced
 the diagnosing physician is. Furthermore, benign tumors are not normally
-dangerous; the cells stay in the same place and the tumor stops growing before
+dangerous; the cells stay in the same place, and the tumor stops growing before
 it gets very large. By contrast, in malignant tumors, the cells invade the
-surrounding tissue and spread into nearby organs where they can cause serious
+surrounding tissue and spread into nearby organs, where they can cause serious
 damage (@stanfordhealthcare).
 Thus, it is important to quickly and accurately diagnose the tumor type to
 guide patient treatment.
@@ -91,7 +91,7 @@ guide patient treatment.
 ### Loading the cancer data
 
 Our first step is to load, wrangle, and explore the data using visualizations
-in order to better understand the data we are working with.  We start by
+in order to better understand the data we are working with. We start by
 loading the `tidyverse` package needed for our analysis. 
 
 ```{r 05-load-libraries, warning = FALSE, message = FALSE}
@@ -102,7 +102,7 @@ In this case, the file containing the breast cancer data set is a `.csv`
 file with headers. We'll use the `read_csv` function with no additional
 arguments, and then inspect its contents:
 
-```{r 05-read-data}
+```{r 05-read-data, message = FALSE}
 cancer <- read_csv("data/wdbc.csv")
 cancer
 ```
@@ -112,14 +112,14 @@ cancer
 Breast tumors can be diagnosed by performing a *biopsy*, a process where
 tissue is removed from the body and examined for the presence of disease.
 Traditionally these procedures were quite invasive; modern methods such as fine
-needle asipiration, used to collect the present data set, extract only a small
+needle aspiration, used to collect the present data set, extract only a small
 amount of tissue and are less invasive. Based on a digital image of each breast
-tissue sample collected for this data set, 10 different variables were measured
+tissue sample collected for this data set, ten different variables were measured
 for each cell nucleus in the image (items 3-12 of the list of variables below), and then the mean 
  for each variable across the nuclei was recorded. As part of the
-data preparation, these values have been *scaled*; we will discuss what this
+data preparation, these values have been *standardized (centered and scaled)*; we will discuss what this
 means and why we do it later in this chapter. Each image additionally was given
-a unique ID and a diagnosis for malignance by a physician.  Therefore, the
+a unique ID and a diagnosis by a physician.  Therefore, the
 total set of variables per image in this data set is:
 
 1. ID: identification number 
@@ -145,9 +145,9 @@ the page (instead of across).
 glimpse(cancer)
 ```
 
-We can see from the summary of the data above that `Class` is of type character
-(denoted by `<chr>`). Since we are going to be working with `Class` as a
-categorical statistical variable, we will convert it to factor using the
+From the summary of the data above, we can see that `Class` is of type character
+(denoted by `<chr>`). Since we will be working with `Class` as a
+categorical statistical variable, we will convert it to a factor using the
 function `as_factor`.
 
 ```{r 05-class}
@@ -157,13 +157,14 @@ glimpse(cancer)
 ```
 
 Recall factors have what are called "levels", which you can think of as categories. We
-can ask for the levels from the `Class` column by using the `levels` function.
+can verify the levels of the `Class` column by using the `levels` function.
 This function should return the name of each category in that column. Given
-that we only have 2 different values in our `Class` column (B for benign and M 
+that we only have two different values in our `Class` column (B for benign and M 
 for malignant), we only expect to get two names back.  Note that the `levels` function requires
-a *vector* argument, while the `select` function outputs a *data frame*; 
+a *vector* argument (while the `select` function outputs a *data frame*); 
 so we use the `pull` function to convert the `Class`
-column into a vector.
+column into a vector and pass that into the `levels` function to see the categories 
+in the `Class` column. 
 
 ```{r 05-levels}
 cancer |>
@@ -175,23 +176,22 @@ cancer |>
 
 Before we start doing any modelling, let's explore our data set. Below we use
 the `group_by`, `summarize` and `n` functions to find the number and percentage 
-of benign and maligant tumor observations in our data set. The `n` function within
-the `summarize` function counts the number of observations in each `Class` group. 
-We have 357 (63\%) benign and 212 (37\%) malignant tumor observations.
-
+of benign and malignant tumor observations in our data set. The `n` function within
+`summarize` counts the number of observations in each `Class` group. 
+Then we calculate the percentage in each group by dividing by the total number of observations. We have 357 (63\%) benign and 212 (37\%) malignant tumor observations.
 ```{r 05-tally}
 num_obs <- nrow(cancer)
 cancer |>
   group_by(Class) |>
   summarize(
-    n = n(),
+    count = n(),
     percentage = n() / num_obs * 100
   )
 ```
 
 Next, let's draw a scatter plot to visualize the relationship between the
 perimeter and concavity variables. Rather than use `ggplot's` default palette,
-we define our own colourblind-friendly colors using&mdash;`"orange2"` 
+we select our own colourblind-friendly colors&mdash;`"orange2"` 
 for light orange and `"steelblue2"` for light blue&mdash;and
  pass them as the `values` argument to the `scale_color_manual` function. 
 We also make the category labels ("B" and "M") more readable by 
@@ -200,26 +200,26 @@ changing them to "Benign" and "Malignant" using the `labels` argument.
 ```{r 05-scatter, fig.height = 4, fig.width = 5, fig.cap= "Scatter plot of concavity versus perimeter coloured by diagnosis label"}
 perim_concav <- cancer %>%
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
-  geom_point(alpha = 0.5) +
+  geom_point(alpha = 0.6) +
   labs(color = "Diagnosis", x = "Perimeter (standardized)", y = "Concavity (standardized)") +
   scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2"))
 perim_concav
 ```
 
 In Figure \@ref(fig:05-scatter), we can see that malignant observations typically fall in
-the the upper right-hand corner of the plot area. By contrast, benign
-observations typically fall in lower left-hand corner of the plot. In other words, benign observations 
-tend to have lower concavity and perimeter values, and malignant ones tends to have larger 
-concavity and perimeter values. Suppose we
+the upper right-hand corner of the plot area. By contrast, benign
+observations typically fall in the lower left-hand corner of the plot. In other words,
+benign observations tend to have lower concavity and perimeter values, and malignant
+ones tend to have larger values. Suppose we
 obtain a new observation not in the current data set that has all the variables
 measured *except* the label (i.e., an image without the physician's diagnosis
-for the tumor class). We could compute the perimeter and concavity values,
+for the tumor class). We could compute the standardized perimeter and concavity values,
 resulting in values of, say, 1 and 1. Could we use this information to classify
 that observation as benign or malignant? Based on the scatter plot, how might 
 you classify that new observation? How would you classify a new observation with
-perimeter value of -1 and concavity value of -0.5? What about 0 and 1? It seems
-like the *prediction of an unobserved label* might be possible, based on our
-visualization. 
+a standardized perimeter value of -1 and a concavity value of -0.5? What about 0 and 1? 
+Based on our visualization, it seems
+like the *prediction of an unobserved label* might be possible.
 
 ## Classification with K-nearest neighbors
 
@@ -255,7 +255,7 @@ neighbors <- cancer[order(my_distances$Distance), ]
 
 In order to actually make predictions for new observations in practice, we
 will need a classification algorithm. 
-In this book we will use the K-nearest neighbors classification algorithm.
+In this book, we will use the K-nearest neighbors classification algorithm.
 To predict the label of a new observation (here, classify it as either benign
 or malignant), the K-nearest neighbors classifier generally finds the $K$
 "nearest" or "most similar" observations in our training set, and then uses
@@ -266,13 +266,25 @@ $K$ for us. We will cover how to choose $K$ ourselves in the next chapter.
 To illustrate the concept of K-nearest neighbors classification, we 
 will walk through an example.  Suppose we have a
 new observation, with perimeter of `r new_point[1]` and concavity of `r new_point[2]`, whose 
-diagnosis "Class" is unknown. This new observation is depicted by the red scatter point in
+diagnosis "Class" is unknown. This new observation is depicted by the red, triangular point in
 Figure \@ref(fig:05-knn-1).
 
 
 ```{r 05-knn-1, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with new observation labelled in red"}
-perim_concav +
-  geom_point(aes(x = new_point[1], y = new_point[2]), color = "red", size = 2.5, pch = 17)
+perim_concav_with_new_point <-  bind_rows(cancer, tibble(Perimeter = new_point[1], Concavity = new_point[2], Class = "unknown")) %>%
+  ggplot(aes(x = Perimeter, y = Concavity, color = Class, shape = Class, size = Class)) +
+  geom_point(alpha = 0.6) +
+  labs(color = "Diagnosis", x = "Perimeter (standardized)", y = "Concavity (standardized)") +
+  scale_color_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"), 
+                     values = c("steelblue2", "orange2", "red")) +
+  scale_shape_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"),
+                     values= c(16, 16, 17))+ 
+  scale_size_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"),
+                     values= c(2, 2, 2.5))
+perim_concav_with_new_point
 ```
 </center>
 
@@ -284,17 +296,13 @@ they would have the same diagnosis.
 
 
 ```{r 05-knn-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter, with malignant nearest neighbor to a new observation highlighted"}
-perim_concav + geom_point(aes(x = new_point[1], y = new_point[2]),
-  color = "red",
-  size = 2.5, 
-  pch = 17
-) +
+perim_concav_with_new_point +
   geom_segment(aes(
     x = new_point[1],
     y = new_point[2],
     xend = pull(neighbors[1, attrs[1]]),
     yend = pull(neighbors[1, attrs[2]])
-  ), color = "black")
+  ), color = "black", size = 0.5)
 ```
 </center>
 
@@ -305,60 +313,66 @@ my_distances <- table_with_distances(cancer[, attrs], new_point)
 neighbors <- cancer[order(my_distances$Distance), ]
 ```
 
-Suppose we have another new observation with perimeter `r new_point[1]` and
+Suppose we have another new observation with standardized perimeter `r new_point[1]` and
 concavity of `r new_point[2]`. Looking at the scatter plot in Figure \@ref(fig:05-knn-4), how would you
-classify this red observation? The nearest neighbor to this new point is a
+classify this red, triangular observation? The nearest neighbor to this new point is a
 **benign** observation at (`r round(neighbors[1, c(attrs[1], attrs[2])], 1)`).
-Does this seem like the right prediction to make for the red observation? Probably 
+Does this seem like the right prediction to make for this observation? Probably 
 not, if you consider the other nearby points...
 
 
 ```{r 05-knn-4, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter, with benign nearest neighbor to a new observation highlighted"}
-perim_concav + geom_point(aes(x = new_point[1], y = new_point[2]),
-  color = "red",
-  size = 2.5, 
-  pch = 17
-) +
+
+perim_concav_with_new_point2 <- bind_rows(cancer, tibble(Perimeter = new_point[1], Concavity = new_point[2], Class = "unknown")) %>%
+  ggplot(aes(x = Perimeter, y = Concavity, color = Class, shape = Class, size = Class)) +
+  geom_point(alpha = 0.6) +
+  labs(color = "Diagnosis", x = "Perimeter (standardized)", y = "Concavity (standardized)") +
+ scale_color_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"), 
+                     values = c("steelblue2", "orange2", "red")) +
+  scale_shape_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"),
+                     values= c(16, 16, 17))+ 
+  scale_size_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"),
+                     values= c(2, 2, 2.5))
+perim_concav_with_new_point2 +  
   geom_segment(aes(
     x = new_point[1],
     y = new_point[2],
     xend = pull(neighbors[1, attrs[1]]),
     yend = pull(neighbors[1, attrs[2]])
-  ), color = "black")
+  ), color = "black", size = 0.5)
 ```
 </center>
 
 To improve the prediction we can consider several
-neighboring points, say $K = 3$, that are closest to the new red observation
+neighboring points, say $K = 3$, that are closest to the new observation
 to predict its diagnosis class. Among those 3 closest points, we use the
 *majority class* as our prediction for the new observation. As shown in Figure \@ref(fig:05-knn-5), we
 see that the diagnoses of 2 of the 3 nearest neighbors to our new observation
-are malignant. Therefore we take majority vote and classify our new red
+are malignant. Therefore we take majority vote and classify our new red, triangular
 observation as malignant. 
 <!-- For our red observation at (`r new_point`), the nearest points are: (`r round(neighbors[1, c(attrs[1], attrs[2])], 1)`), (`r round(neighbors[2,  c(attrs[1], attrs[2])],1)`), and (`r round(neighbors[3, c(attrs[1], attrs[2])],1)`). -->
 
 
 ```{r 05-knn-5, echo =  FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with three nearest neighbors"}
-perim_concav + geom_point(aes(x = new_point[1], y = new_point[2]),
-  color = "red",
-  size = 2.5, 
-  pch = 17
-) +
+perim_concav_with_new_point2 + 
   geom_segment(aes(
     x = new_point[1], y = new_point[2],
     xend = pull(neighbors[1, attrs[1]]),
     yend = pull(neighbors[1, attrs[2]])
-  ), color = "black") +
+  ), color = "black", size = 0.5) +
   geom_segment(aes(
     x = new_point[1], y = new_point[2],
     xend = pull(neighbors[2, attrs[1]]),
     yend = pull(neighbors[2, attrs[2]])
-  ), color = "black") +
+  ), color = "black", size = 0.5) +
   geom_segment(aes(
     x = new_point[1], y = new_point[2],
     xend = pull(neighbors[3, attrs[1]]),
     yend = pull(neighbors[3, attrs[2]])
-  ), color = "black")
+  ), color = "black", size = 0.5)
 ```
 </center>
 
@@ -394,14 +408,23 @@ distance using the formula above: we square the differences between the two obse
 and concavity coordinates, add the squared differences, and then take the square root.
 
 ```{r 05-multiknn-1, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with new observation labelled in red"}
-perim_concav <- cancer |>
-  ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
+perim_concav <- bind_rows(cancer, tibble(Perimeter = new_point[1], Concavity = new_point[2], Class = "unknown")) |>
+  ggplot(aes(x = Perimeter, y = Concavity, color = Class, shape = Class, size = Class)) +
+  geom_point(aes(x = new_point[1], y = new_point[2]), color = "red", size = 2.5, pch = 17) + 
   geom_point(alpha = 0.5) +
   scale_x_continuous(name = "Perimeter (standardized)", breaks = seq(-2, 4, 1)) +
   scale_y_continuous(name = "Concavity (standardized)", breaks = seq(-2, 4, 1)) +
-  labs(color = "Diagnosis") +
-  scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2")) +
-  geom_point(aes(x = new_point[1], y = new_point[2]), color = "red", size = 2.5, pch = 17)
+  labs(color = "Diagnosis") + 
+  scale_color_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"), 
+                     values = c("steelblue2", "orange2", "red")) +
+  scale_shape_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"),
+                     values= c(16, 16, 17))+ 
+  scale_size_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"),
+                     values= c(2, 2, 2.5))
+
 perim_concav
 ```
 </center>
@@ -804,7 +827,7 @@ neighbors <- unscaled_cancer[order(my_distances$Distance), ]
 unscaled_cancer <- bind_rows(unscaled_cancer, new_obs)
 
 # plot the scatter
-unscaled <- ggplot(unscaled_cancer, aes(x = Area, y = Smoothness, group = Class, color = Class, shape = Class)) +
+unscaled <- ggplot(unscaled_cancer, aes(x = Area, y = Smoothness, group = Class, color = Class, shape = Class, size = Class)) +
   geom_point(alpha = 0.6) + 
   scale_color_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"), 
@@ -812,22 +835,25 @@ unscaled <- ggplot(unscaled_cancer, aes(x = Area, y = Smoothness, group = Class,
   scale_shape_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
                      values= c(16, 16, 17)) +
+    scale_size_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"),
+                     values=c(2,2,2.5)) + 
   ggtitle("Nonstandardized Data") +
   geom_segment(aes(
     x = unlist(new_obs[1]), y = unlist(new_obs[2]),
     xend = unlist(neighbors[1, attrs[1]]),
     yend = unlist(neighbors[1, attrs[2]])
-  ), color = "black") +
+  ), color = "black", size = 0.5) +
   geom_segment(aes(
     x = unlist(new_obs[1]), y = unlist(new_obs[2]),
     xend = unlist(neighbors[2, attrs[1]]),
     yend = unlist(neighbors[2, attrs[2]])
-  ), color = "black") +
+  ), color = "black", size = 0.5) +
   geom_segment(aes(
     x = unlist(new_obs[1]), y = unlist(new_obs[2]),
     xend = unlist(neighbors[3, attrs[1]]),
     yend = unlist(neighbors[3, attrs[2]])
-  ), color = "black")
+  ), color = "black", size = 0.5)
 
 # create new scaled obs and get NNs
 new_obs_scaled <- tibble(Area = -0.72, Smoothness = 2.8, Class = "unknown")
@@ -838,7 +864,8 @@ neighbors_scaled <- scaled_cancer[order(my_distances_scaled$Distance), ]
 scaled_cancer <- bind_rows(scaled_cancer, new_obs_scaled)
 
 # plot the scatter
-scaled <- ggplot(scaled_cancer, aes(x = Area, y = Smoothness, group = Class, color = Class, shape = Class)) +
+scaled <- ggplot(scaled_cancer, aes(x = Area, y = Smoothness, 
+                                    group = Class, color = Class, shape = Class, size = Class)) +
   geom_point(alpha = 0.6) + 
   scale_color_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"), 
@@ -846,6 +873,9 @@ scaled <- ggplot(scaled_cancer, aes(x = Area, y = Smoothness, group = Class, col
   scale_shape_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
                      values= c(16, 16, 17)) +
+  scale_size_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"),
+                    values=c(2,2,2.5)) + 
   ggtitle("Standardized Data") +
   labs(x = "Area (standardized)", y = "Smoothness (standardized)") + 
   # coord_equal(ratio = 1) +
@@ -853,17 +883,17 @@ scaled <- ggplot(scaled_cancer, aes(x = Area, y = Smoothness, group = Class, col
     x = unlist(new_obs_scaled[1]), y = unlist(new_obs_scaled[2]),
     xend = unlist(neighbors_scaled[1, attrs[1]]),
     yend = unlist(neighbors_scaled[1, attrs[2]])
-  ), color = "black") +
+  ), color = "black", size = 0.5) +
   geom_segment(aes(
     x = unlist(new_obs_scaled[1]), y = unlist(new_obs_scaled[2]),
     xend = unlist(neighbors_scaled[2, attrs[1]]),
     yend = unlist(neighbors_scaled[2, attrs[2]])
-  ), color = "black") +
+  ), color = "black", size = 0.5) +
   geom_segment(aes(
     x = unlist(new_obs_scaled[1]), y = unlist(new_obs_scaled[2]),
     xend = unlist(neighbors_scaled[3, attrs[1]]),
     yend = unlist(neighbors_scaled[3, attrs[2]])
-  ), color = "black")
+  ), color = "black", size = 0.5)
 
 gridExtra::grid.arrange(unscaled, scaled, ncol = 2)
 ```
@@ -879,6 +909,9 @@ ggplot(unscaled_cancer, aes(x = Area, y = Smoothness, group = Class, color = Cla
   scale_shape_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
                      values= c(16, 16, 17)) +
+    scale_size_manual(name = "Diagnosis", 
+                     labels = c("Benign", "Malignant", "Unknown"),
+                     values = c(1, 1, 2.5)) + 
   ggtitle("Nonstandardized Data") +
   geom_segment(aes(
     x = unlist(new_obs[1]), y = unlist(new_obs[2]),
@@ -957,6 +990,7 @@ in the training data that were tagged as malignant.
 
 
 ```{r 05-upsample, echo=FALSE, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data with 7 nearest neighbors to a new observation highlighted"}
+
 new_point <- c(2, 2)
 attrs <- c("Perimeter", "Concavity")
 my_distances <- table_with_distances(rare_cancer[, attrs], new_point)
