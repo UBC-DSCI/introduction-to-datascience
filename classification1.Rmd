@@ -530,16 +530,16 @@ cancer |>
   arrange(dist_from_new) |>
   slice(1:5) # subset the first 5 rows
 ```
-Based on $K=5$ nearest neighbors with these three predictors we would classify the new observation as malignant. 
-Figure \@ref(fig:05-more) shows what
-the data look like when we visualize them as a 3-dimensional scatter.
+Based on $K=5$ nearest neighbors with these three predictors we would classify the new observation as malignant since 4 out of 5 of the nearest neighbors are malignant class. 
+Figure \@ref(fig:05-more) shows what the data look like when we visualize them 
+as a 3-dimensional scatter with lines corresponding to the five nearest neighbors.
 
 ```{r 05-more, echo = FALSE, message = FALSE, fig.cap = "3D scatter plot of the symmetry, concavity, and perimeter variables."}
 library(plotly)
 attrs <- c("Perimeter", "Concavity", "Symmetry")
 
 # create new scaled obs and get NNs
-new_obs_3 <- tibble(Perimeter = 0, Concavity = 3.5, Symmetry = 1, Class = "unknown")
+new_obs_3 <- tibble(Perimeter = 0, Concavity = 3.5, Symmetry = 1, Class = "Unknown")
 my_distances_3 <- table_with_distances(cancer[, attrs], new_obs_3[, attrs])
 neighbors_3 <- cancer[order(my_distances_3$Distance), ]
 
@@ -549,23 +549,53 @@ data <- neighbors_3 %>% select(Perimeter, Concavity, Symmetry) %>% slice(1:5)
 scaled_cancer_3 <- bind_rows(cancer, new_obs_3) %>% 
   mutate(Class = fct_recode(Class, "Benign" = "B", "Malignant"= "M"))
 
-scaled_cancer_3 |>
-  plot_ly(
-    x = ~Perimeter,
+plot_3d <- scaled_cancer_3 |>
+  plot_ly() |>
+  layout(scene = list(
+    xaxis = list(title = "Perimeter (standardized)"),
+    yaxis = list(title = "Concavity (standardized)"),
+    zaxis = list(title = "Symmetry (standardized)")
+  )) %>% 
+   add_trace(x = ~Perimeter,
     y = ~Concavity,
     z = ~Symmetry,
     color = ~Class,
     opacity = 0.4,
     size = 150,
     colors = c("orange2", "steelblue2", "red"), 
-    symbol = ~Class, symbols = c('circle','circle','diamond')
-  ) |>
-  add_markers() |>
-  layout(scene = list(
-    xaxis = list(title = "Perimeter (standardized)"),
-    yaxis = list(title = "Concavity (standardized)"),
-    zaxis = list(title = "Symmetry (standardized)")
-  ))
+    symbol = ~Class, symbols = c('circle','circle','diamond'))
+
+x1 <- c(pull(new_obs_3[1]), data$Perimeter[1])
+y1 <- c(pull(new_obs_3[2]), data$Concavity[1])
+z1 <- c(pull(new_obs_3[3]), data$Symmetry[1])
+
+x2 <- c(pull(new_obs_3[1]), data$Perimeter[2])
+y2 <- c(pull(new_obs_3[2]), data$Concavity[2])
+z2 <- c(pull(new_obs_3[3]), data$Symmetry[2])
+
+x3 <- c(pull(new_obs_3[1]), data$Perimeter[3])
+y3 <- c(pull(new_obs_3[2]), data$Concavity[3])
+z3 <- c(pull(new_obs_3[3]), data$Symmetry[3])
+
+x4 <- c(pull(new_obs_3[1]), data$Perimeter[4])
+y4 <- c(pull(new_obs_3[2]), data$Concavity[4])
+z4 <- c(pull(new_obs_3[3]), data$Symmetry[4])
+
+x5 <- c(pull(new_obs_3[1]), data$Perimeter[5])
+y5 <- c(pull(new_obs_3[2]), data$Concavity[5])
+z5 <- c(pull(new_obs_3[3]), data$Symmetry[5])
+
+plot_3d  %>%
+  add_trace(x = x1, y = y1, z = z1, type = "scatter3d", mode = "lines", 
+            name = "lines", showlegend = FALSE,   color = I("steelblue2")) %>%
+  add_trace(x = x2, y = y2, z = z2, type = "scatter3d", mode = "lines", 
+            name = "lines", showlegend = FALSE,  color =  I("steelblue2")) %>%
+  add_trace(x = x3, y = y3, z = z3, type = "scatter3d", mode = "lines", 
+            name = "lines", showlegend = FALSE,   color =  I("steelblue2")) %>%
+  add_trace(x = x4, y = y4, z = z4, type = "scatter3d", mode = "lines", 
+            name = "lines", showlegend = FALSE,   color =  I("orange2")) %>%
+  add_trace(x = x5, y = y5, z = z5, type = "scatter3d", mode = "lines", 
+            name = "lines", showlegend = FALSE,   color =  I("steelblue2")) 
 ```
 
 *Click and drag the plot above to rotate it, and scroll to zoom. Note that in
