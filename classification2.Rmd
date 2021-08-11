@@ -13,8 +13,8 @@ By the end of the chapter, readers will be able to:
 - Describe what training, validation, and test data sets are and how they are used in classification
 - Split data into training, validation, and test data sets
 - Evaluate classification accuracy in R using a validation data set and appropriate metrics
-- Execute cross-validation in R to choose the number of neighbours in a K-nearest neighbours classifier
-- Describe advantages and disadvantages of the K-nearest neighbours classification algorithm
+- Execute cross-validation in R to choose the number of neighbours in a $K$-nearest neighbours classifier
+- Describe advantages and disadvantages of the $K$-nearest neighbours classification algorithm
 
 ## Evaluating accuracy
 
@@ -52,6 +52,10 @@ the observations in the test set? One way we can do this is to calculate the
 **prediction accuracy**. This is the fraction of examples for which the
 classifier made the correct prediction. To calculate this we divide the number
 of correct predictions by the number of predictions made. 
+
+$$prediction \; accuracy = \frac{number \; of  \; correct  \; predictions}{total \;  number \;  of  \; predictions}$$
+
+
 This process is illustrated in Figure \@ref(fig:06-ML-paradigm-test).
 Note that there are other measures for how well classifiers perform, such as *precision* and *recall*; 
 these will not be discussed here, but you will likely encounter them in other more advanced
@@ -61,7 +65,7 @@ books on this topic.
 knitr::include_graphics("img/ML-paradigm-test.png")
 ```
 
-In R, we can use the `tidymodels` library collection not only to perform K-nearest neighbours
+In R, we can use the `tidymodels` library collection not only to perform $K$-nearest neighbours
 classification, but also to assess how well our classification worked. Let's
 work through an example of this process using the breast cancer dataset.
 We start by loading the necessary libraries, reading in the breast cancer data
@@ -122,7 +126,7 @@ data sets into two separate data frames.
 set.seed(1)
 cancer_split <- initial_split(cancer, prop = 0.75, strata = Class)
 cancer_train <- training(cancer_split)
-cancer_test <- testing(cancer_split)
+cancer_test <- testing(cancer_split) 
 ```
 
 > Note: You will see in the code above that we use the `set.seed` function
@@ -165,7 +169,7 @@ cancer_recipe <- recipe(Class ~ Smoothness + Concavity, data = cancer_train) |>
 ### Train the classifier
 
 Now that we have split our original data set into training and test sets, we
-can create our K-nearest neighbours classifier with only the training set using
+can create our $K$-nearest neighbours classifier with only the training set using
 the technique we learned in the previous chapter. For now, we will just choose
 the number $K$ of neighbours to be 3, and use concavity and smoothness as the
 predictors. As before we need to create a model specification, combine
@@ -186,7 +190,7 @@ knn_fit <- workflow() |>
 knn_fit
 ```
 
-> Note: Here again you see the `set.seed` function. In the K-nearest neighbours algorithm, 
+> Note: Here again you see the `set.seed` function. In the $K$-nearest neighbours algorithm, 
 > there is a tie for the majority neighbour class, the winner is randomly selected. Although there is no chance
 > of a tie when $K$ is odd (here $K=3$), it is possible that the code may be changed in the future to have an even value of $K$. 
 > Thus, to prevent potential issues with reproducibility, we have set the seed. Note that in your own code,
@@ -194,7 +198,7 @@ knn_fit
 
 ### Predict the labels in the test set
 
-Now that we have a K-nearest neighbours classifier object, we can use it to
+Now that we have a $K$-nearest neighbours classifier object, we can use it to
 predict the class labels for our test set.  We use the `bind_cols` to add the
 column of predictions to the original test data, creating the
 `cancer_test_predictions` data frame.  The `Class` variable contains the true
@@ -215,7 +219,8 @@ the `truth` and `estimate` arguments:
 
 ```{r 06-accuracy}
 cancer_test_predictions |>
-  metrics(truth = Class, estimate = .pred_class)
+  metrics(truth = Class, estimate = .pred_class) |>
+  filter(.metric == "accuracy")
 ```
 
 ```{r 06-accuracy-2, echo = FALSE, warning = FALSE}
@@ -246,7 +251,8 @@ confu21 <- (confusionmt %>% filter(name == "cell_2_1"))$value
 confu22 <- (confusionmt %>% filter(name == "cell_2_2"))$value
 ```
 
-This table shows that the classifier labelled 
+The confusion matrix shows `r confu11` observations were correctly predicted 
+as maligant, and `r confu22` were correctly predicted as benign. Therefore the classifier labelled 
 `r confu11`+`r confu22` = `r confu11+confu22` observations 
 correctly. It also shows that the classifier made some mistakes; in particular,
 it classified  `r confu21` observations as benign when they were truly malignant,
@@ -255,7 +261,7 @@ and `r confu12` observations as malignant when they were truly benign.
 ### Critically analyze performance
 
 We now know that the classifier was `r round(100*cancer_acc_1$.estimate,0)`% accurate
-on the test dataset. That sounds pretty good!...Wait, *is* it good? 
+on the test data set. That sounds pretty good!...Wait, *is* it good? 
 Or do we need something higher?
 
 In general, what a *good* value for accuracy is depends on the application.
@@ -277,7 +283,7 @@ classification problem: the *majority classifier*. The majority classifier
 *always* guesses the majority class label from the training data, regardless of
 what values the predictor variables take.  It helps to give you a sense for
 scale when considering accuracies. If the majority classifier obtains a 90%
-accuracy on a problem, then you might hope for your K-nearest neighbours
+accuracy on a problem, then you might hope for your $K$-nearest neighbours
 classifier to do better than that. If your classifier provides a significant
 improvement upon the majority classifier, this means that at least your method
 is extracting some useful information from your predictor variables.  Be
@@ -305,10 +311,10 @@ is benign. The estimated accuracy of the majority classifier is usually
 fairly close to the majority class proportion in the training data.
 In this case, we would suspect that the majority classifier will have 
 an accuracy of around `r round(cancer_propn_1[1,1], 0)`%.
-The K-nearest neighbours classifier we built does quite a bit better than this, 
+The $K$-nearest neighbours classifier we built does quite a bit better than this, 
 with an accuracy of `r round(100*cancer_acc_1$.estimate, 0)`%. 
 This means that from the perspective of accuracy,
-the K-nearest neighbours classifier improved quite a bit on the basic
+the $K$-nearest neighbours classifier improved quite a bit on the basic
 majority classifier. Hooray! But we still need to be cautious; in 
 this application, it is likely very important not to miss-diagnose any malignant tumours to avoid missing
 patients who actually need medical care. The confusion matrix above shows
@@ -322,7 +328,7 @@ for the application.
 
 The vast majority of predictive models in statistics and machine learning have
 *parameters*. A *parameter* is a number that you have to pick in advance that determines
-some aspect of how the model behaves. For example, in the K-nearest neighbours
+some aspect of how the model behaves. For example, in the $K$-nearest neighbours
 classification algorithm, $K$ is a parameter that we have to pick
 that determines how many neighbours participate in the class vote. 
 By picking different values of $K$, we create different classifiers 
@@ -365,7 +371,7 @@ overall set of training data.
 
 Let's investigate this idea in R! In particular, we will use different seed
 values in the `set.seed` function to generate five different train/validation
-splits of our overall training data, train five different K-nearest neighbours
+splits of our overall training data, train five different $K$-nearest neighbours
 models, and evaluate their accuracy. We will start with just a single
 split generated by using `set.seed(1)`.
 ```{r 06-five-splits}
@@ -514,7 +520,7 @@ accuracy estimate will be (lower standard error). However, we are limited
 by computational power: the
 more folds we choose, the  more computation it takes, and hence the more time
 it takes to run the analysis. So when you do cross-validation, you need to
-consider the size of the data, and the speed of the algorithm (e.g., K-nearest
+consider the size of the data, and the speed of the algorithm (e.g., $K$-nearest
 neighbour) and the speed of your computer. In practice, this is a trial and
 error process, but typically $C$ is chosen to be either 5 or 10. Here we show
 how the standard error decreases when we use 10-fold cross validation rather
@@ -701,7 +707,7 @@ grid.arrange(grobs = plots)
 ## Summary
 
 Classification algorithms use one or more quantitative variables to predict the
-value of another, categorical variable. The K-nearest neighbours algorithm in
+value of another, categorical variable. The $K$-nearest neighbours algorithm in
 particular does this by first finding the $K$ points in the training data nearest
 to the new observation, and then returning the majority class vote from those
 training observations. We can evaluate a classifier by splitting the data
@@ -715,7 +721,7 @@ process is summarized in Figure \@ref(fig:06-overview).
 knitr::include_graphics("img/train-test-overview.jpeg")
 ```
 
-The overall workflow for performing K-nearest neighbours classification using `tidymodels` is as follows:
+The overall workflow for performing $K$-nearest neighbours classification using `tidymodels` is as follows:
 
 1. Use the `initial_split` function to split the data into a training and test set. Set the `strata` argument to the class label variable. Put the test set aside for now.
 2. Use the `vfold_cv` function to split up the training data for cross validation.
@@ -726,15 +732,15 @@ The overall workflow for performing K-nearest neighbours classification using `t
 7. Make a new model specification for the best parameter value (i.e., $K$), and retrain the classifier using the `fit` function.
 8. Evaluate the estimated accuracy of the classifier on the test set using the `predict` function.
 
-All algorithms have strengths and weaknesses. We summarize these for the K-nearest neighbours algorithm here.
+All algorithms have strengths and weaknesses. We summarize these for the $K$-nearest neighbours algorithm here.
 
-**Strengths:** K-nearest neighbours classification
+**Strengths:** $K$-nearest neighbours classification
 
 1. is a simple, intuitive algorithm
 2. requires few assumptions about what the data must look like 
 3. works for binary (two-class) and multi-class (more than 2 classes) classification problems
 
-**Weaknesses:** K-nearest neighbours classification
+**Weaknesses:** $K$-nearest neighbours classification
 
 1. becomes very slow as the training data gets larger
 2. may not perform well with a large number of predictors
@@ -749,14 +755,14 @@ pick a subset of useful variables to include as predictors.*
 Another potentially important part of tuning your classifier is to choose which
 variables from your data will be treated as predictor variables. Technically, you can choose
 anything from using a single predictor variable to using every variable in your
-data; the K-nearest neighbours algorithm accepts any number of
+data; the $K$-nearest neighbours algorithm accepts any number of
 predictors. However, it is **not** the case that using more predictors always
 yields better predictions! In fact, sometimes including irrelevant predictors can
 actually negatively affect classifier performance.
 
 ### The effect of irrelevant predictors
 
-Let's take a look at an example where K-nearest neighbours performs
+Let's take a look at an example where $K$-nearest neighbours performs
 worse when given more predictors to work with. In this example we have modified
 the breast cancer data to have only the `Smoothness`, `Concavity`, and `Perimeter` variables from the original data,
 and then added irrelevant variables that we created ourselves using a random number generator.
@@ -875,7 +881,7 @@ Figure \@ref(fig:06-performance-irrelevant-features) is that it shows that the m
 still outperforms the baseline majority classifier (with about `r round(cancer_propn_1[1,1], 0)`% accuracy) 
 even with 40 irrelevant variables.
 How could that be? Figure \@ref(fig:06-neighbours-irrelevant-features) provides the answer:
-the tuning procedure for the K-nearest neighbours classifier combats the extra randomness from the irrelevant variables 
+the tuning procedure for the $K$-nearest neighbours classifier combats the extra randomness from the irrelevant variables 
 by increasing the number of neighbours. Of course, because of all the extra noise in the data from the irrelevant
 variables, the number of neighbours does not increase smoothly; but the general trend is increasing.
 Figure \@ref(fig:06-fixed-irrelevant-features) corroborates
