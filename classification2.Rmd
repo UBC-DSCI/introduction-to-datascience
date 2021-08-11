@@ -146,9 +146,25 @@ a train / test split of 75% / 25%, as desired. Recall from Chapter \@ref(classif
 that we use the `glimpse` function to view data with a large number of columns,
 as it prints the data such that the columns go down the page (instead of across).
 
+We can use `group_by` and `summarize` to find the proportion of malignant and benign classes 
+in `cancer_train`.
+```{r 06-train-proportion}
+cancer_train |> 
+  group_by(Class) |>
+  summarize(proportion = n()/nrow(cancer_train))
+```
+```{r 06-train-prop, echo = FALSE}
+train_prop <- cancer_train |> 
+  group_by(Class) |>
+  summarize(proportion = n()/nrow(cancer_train))
+```
+We see `r round(filter(train_prop, Class == "B")$proportion, 3)*100`% of the training
+data are benign and `r round(filter(train_prop, Class == "M")$proportion, 3)*100`% 
+are malignant indicating that our class proportions were roughly preserved when we split the data.
+
 ### Preprocess the data
 
-As we mentioned last chapter, KNN is sensitive to the scale of the predictors,
+As we mentioned last chapter, $K$-nearest neighbors is sensitive to the scale of the predictors,
 and so we should perform some preprocessing to standardize them. An
 additional consideration we need to take when doing this is that we should
 create the standardization preprocessor using **only the training data**. This ensures that
@@ -229,11 +245,12 @@ cancer_acc_1 <- cancer_test_predictions %>%
                 filter(.metric == 'accuracy')
 ```
 
-In the metrics data frame we are interested in the `accuracy` row;
-looking at the value of the `.estimate` variable
+In the metrics data frame we filtered the `.metric` column since we are 
+interested in the `accuracy` row. Other entries involve more advanced metrics that
+are beyond the scope of this book. Looking at the value of the `.estimate` variable
  shows that the estimated accuracy of the classifier on the test data 
 was `r round(100*cancer_acc_1$.estimate, 0)`%.
-The other entries involve more advanced metrics that are beyond the scope of this book.
+
 We can also look at the *confusion matrix* for the classifier, which shows
 the table of predicted labels and correct labels, using the `conf_mat` function:
 
@@ -623,7 +640,7 @@ Let's specify a much larger range of values of $K$ to try in the `grid`
 argument of `tune_grid`. Figure \@ref(fig:06-lots-of-ks) shows a plot of estimated accuracy as 
 we vary $K$ from 1 to almost the number of observations in the data set.
 
-```{r 06-lots-of-ks, fig.height = 4, fig.width = 5, fig.cap="Plot of accuracy estimate versus number of neighbours for many K values"}
+```{r 06-lots-of-ks, message = FALSE, fig.height = 4, fig.width = 5, fig.cap="Plot of accuracy estimate versus number of neighbours for many K values"}
 set.seed(1)
 k_lots <- tibble(neighbors = seq(from = 1, to = 385, by = 10))
 knn_results <- workflow() |>
@@ -665,11 +682,13 @@ new data: if we had a different training set, the predictions would be
 completely different.  In general, if the model *is influenced too much* by the
 training data, it is said to **overfit** the data.
 
-You can see these two effects in Figure \@ref(fig:06-decision-grid-K),
+Both overfitting and underfitting are problematic and will lead to a model 
+that does not generalize well to new data. When fitting a model, we need to strike
+a balance between the two. You can see these two effects in Figure \@ref(fig:06-decision-grid-K),
 which shows how the classifier changes as we set the number of neighbours $K$ to 1, 7, 20, and 300.
 
 <center>
-```{r 06-decision-grid-K, echo = FALSE, fig.height = 7, fig.width = 10, fig.cap = "Effect of K in overfitting and underfitting"}
+```{r 06-decision-grid-K, echo = FALSE, message = FALSE, fig.height = 7, fig.width = 10, fig.cap = "Effect of K in overfitting and underfitting"}
 library(gridExtra)
 ks <- c(1, 7, 20, 300)
 plots <- list()
@@ -713,11 +732,11 @@ to the new observation, and then returning the majority class vote from those
 training observations. We can evaluate a classifier by splitting the data
 randomly into a training and test data set, using the training set to build the
 classifier, and using the test set to estimate its accuracy. Finally, we
-can tune the classifier (e.g., select the number of neighbours $K$ in KNN)
+can tune the classifier (e.g., select the number of neighbours $K$ in $K$-nn)
 by maximizing estimated accuracy via cross-validation. This 
 process is summarized in Figure \@ref(fig:06-overview).
 
-```{r 06-overview, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Overview of KNN classification", fig.retina = 2, out.width = "660"}
+```{r 06-overview, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Overview of K-nn classification", fig.retina = 2, out.width = "660"}
 knitr::include_graphics("img/train-test-overview.jpeg")
 ```
 
@@ -787,7 +806,7 @@ cancer_irrelevant %>%
       select(Class, Smoothness, Concavity, Perimeter, Irrelevant1, Irrelevant2)
 ```
 
-Next, we build a sequence of KNN classifiers that include `Smoothness`,
+Next, we build a sequence of $K$-nn classifiers that include `Smoothness`,
 `Concavity`, and `Perimeter` as predictor variables, but also increasingly many irrelevant
 variables. In particular we create 6 datasets with 0, 5, 10, 15, 20, and 40 irrelevant predictors.
 Then we build a model, tuned via 5-fold cross-validation, for each data set.
@@ -931,7 +950,7 @@ In particular, you
 2. tune each one using cross validation
 3. pick the subset of predictors that gives you the highest cross-validation accuracy  
 
-Best subset selection is applicable to any  classification method (KNN or otherwise).
+Best subset selection is applicable to any  classification method ($K$-nn or otherwise).
 However, it becomes very slow when you have even a moderate
 number of predictors to choose from (say, around 10). This is because the number of possible predictor subsets
 grows very quickly with the number of predictors, and you have to train the model (itself
@@ -1018,7 +1037,7 @@ one over increasing predictor set sizes
 and another to check which predictor to add in each round (where you see `for (j in 1:length(names))` below).
 For each set of predictors to try, we construct a model formula,
 pass it into a `recipe`, build a `workflow` that tunes
-a KNN classifier using 5-fold cross-validation, 
+a $K$-nn classifier using 5-fold cross-validation, 
 and finally records the estimated accuracy.
 
 ```{r 06-fwdsel-2, warning = FALSE}
