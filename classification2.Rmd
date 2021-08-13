@@ -56,7 +56,7 @@ of correct predictions by the number of predictions made.
 $$prediction \; accuracy = \frac{number \; of  \; correct  \; predictions}{total \;  number \;  of  \; predictions}$$
 
 
-This process for assessing if our predictions match the true labels in the 
+The process for assessing if our predictions match the true labels in the 
 test set is illustrated in Figure \@ref(fig:06-ML-paradigm-test).
 
 > Note that there are other measures for how well classifiers perform, such as *precision* and *recall*; 
@@ -70,7 +70,7 @@ knitr::include_graphics("img/ML-paradigm-test.png")
 In R, we can use the `tidymodels` package not only to perform $K$-nearest neighbors
 classification, but also to assess how well our classification worked. Let's
 work through an example of this process using the breast cancer data set.
-We start by loading the necessary libraries, reading in the breast cancer data
+We start by loading the necessary packages, reading in the breast cancer data
 from the previous chapter, and making a quick scatter plot visualization of
 tumor cell concavity versus smoothness colored by diagnosis in Figure \@ref(fig:06-precode).
 
@@ -106,14 +106,14 @@ using a larger test data set). Here, we will use 75% of the data for training,
 and 25% for testing.  
 
 The `initial_split` function from `tidymodels` handles the procedure of splitting
-the data for us. It also takes two very important steps when splitting to ensure
+the data for us. It also applies two very important steps when splitting to ensure
 that the accuracy estimates from the test data are reasonable. First, it
-**shuffles** the data before splitting. This ensures that any ordering present
+**shuffles** the data before splitting, which ensures that any ordering present
 in the data does not influence the data that ends up in the training and testing sets.
 Second, it **stratifies** the data by the class label, to ensure that roughly
 the same proportion of each class ends up in both the training and testing sets. For example,
-in our data set roughly 63% of the
-observations are from the benign class (`B`) and 37% are from the malignant class (`M`),
+in our data set, roughly 63% of the
+observations are from the benign class (`B`), and 37% are from the malignant class (`M`),
 so `initial_split` ensures that roughly 63% of the training data are benign, 
 37% of the training data are malignant,
 and the same proportions exist in the testing data.
@@ -125,6 +125,7 @@ in the training set. We will also set the `strata` argument to the categorical l
 right proportions of each category of observation.
 The `training` and `testing` functions then extract the training and testing
 data sets into two separate data frames.
+
 ```{r 06-initial-split}
 set.seed(1)
 cancer_split <- initial_split(cancer, prop = 0.75, strata = Class)
@@ -155,23 +156,25 @@ train_prop <- cancer_train |>
   summarize(proportion = n()/nrow(cancer_train))
 ```
 
-We can use `group_by` and `summarize` to find the proportion of malignant and benign classes 
+We can use `group_by` and `summarize` to find the percentage of malignant and benign classes 
 in `cancer_train` and we see about `r round(filter(train_prop, Class == "B")$proportion, 2)*100`% of the training
 data are benign and `r round(filter(train_prop, Class == "M")$proportion, 2)*100`% 
 are malignant indicating that our class proportions were roughly preserved when we split the data.
 
 ```{r 06-train-proportion}
-cancer_train |> 
-  group_by(Class) |>
-  summarize(proportion = n()/nrow(cancer_train))
+cancer_proportions <- cancer_train %>%
+                      group_by(Class) %>%
+                      summarize(n = n()) %>%
+                      mutate(percent = 100*n/nrow(cancer_train))
+cancer_proportions
 ```
 
 
 
 ### Preprocess the data
 
-As we mentioned last chapter, $K$-nearest neighbors is sensitive to the scale of the predictors,
-and so we should perform some preprocessing to standardize them. An
+As we mentioned in the last chapter, $K$-nearest neighbors is sensitive to the scale of the predictors,
+so we should perform some preprocessing to standardize them. An
 additional consideration we need to take when doing this is that we should
 create the standardization preprocessor using **only the training data**. This ensures that
 our test data does not influence any aspect of our model training. Once we have
@@ -213,7 +216,7 @@ knn_fit
 ```
 
 > Note: Here again you see the `set.seed` function. In the $K$-nearest neighbors algorithm, 
-> there is a tie for the majority neighbor class, the winner is randomly selected. Although there is no chance
+> if there is a tie for the majority neighbor class, the winner is randomly selected. Although there is no chance
 > of a tie when $K$ is odd (here $K=3$), it is possible that the code may be changed in the future to have an even value of $K$. 
 > Thus, to prevent potential issues with reproducibility, we have set the seed. Note that in your own code,
 > you only have to set the seed once at the beginning of your analysis. 
@@ -284,14 +287,14 @@ and `r confu12` observations as malignant when they were truly benign.
 ### Critically analyze performance
 
 We now know that the classifier was `r round(100*cancer_acc_1$.estimate,0)`% accurate
-on the test data set. That sounds pretty good!...Wait, *is* it good? 
+on the test data set. That sounds pretty good!... Wait, *is* it good? 
 Or do we need something higher?
 
 In general, what a *good* value for accuracy is depends on the application.
-On a task of predicting whether a tumor is benign or malignant
-for a type of tumor that is benign 99% of the time, it is very easy to
-obtain a 99% accuracy just by guessing benign for every observation. In this
-case, 99% accuracy is probably not good enough. And beyond just accuracy,
+ For instance, suppose you are predicting whether a tumor is benign or malignant
+ for a type of tumor that is benign 99% of the time. It is very easy to obtain 
+ a 99% accuracy just by guessing benign for every observation. In this case, 
+ 99% accuracy is probably not good enough.  And beyond just accuracy,
 sometimes the *kind* of mistake the classifier makes is important as well. In
 the previous example, it might be very bad for the classifier to predict
 "benign" when the true class is "malignant", as this might result in a patient
@@ -304,7 +307,7 @@ also the confusion matrix.
 However, there is always an easy baseline that you can compare to for any
 classification problem: the *majority classifier*. The majority classifier
 *always* guesses the majority class label from the training data, regardless of
-what values the predictor variables take.  It helps to give you a sense for
+the predictor variables' values.  It helps to give you a sense of
 scale when considering accuracies. If the majority classifier obtains a 90%
 accuracy on a problem, then you might hope for your $K$-nearest neighbors
 classifier to do better than that. If your classifier provides a significant
@@ -313,13 +316,9 @@ is extracting some useful information from your predictor variables.  Be
 careful though: improving on the majority classifier does not *necessarily*
 mean the classifier is working well enough for your application. 
 
-As an example, in the breast cancer data, the proportions of benign and malignant
+As an example, in the breast cancer data, recall the proportions of benign and malignant
 observations in the training data are as follows:
 ```{r 06-proportions}
-cancer_proportions <- cancer_train %>%
-                      group_by(Class) %>%
-                      summarize(n = n()) %>%
-                      mutate(percent = 100*n/nrow(cancer_train))
 cancer_proportions
 ```
 ```{r 06-proportions-2, echo = FALSE, warning = FALSE}
@@ -339,9 +338,9 @@ with an accuracy of `r round(100*cancer_acc_1$.estimate, 0)`%.
 This means that from the perspective of accuracy,
 the $K$-nearest neighbors classifier improved quite a bit on the basic
 majority classifier. Hooray! But we still need to be cautious; in 
-this application, it is likely very important not to miss-diagnose any malignant tumors to avoid missing
+this application, it is likely very important not to misdiagnose any malignant tumors to avoid missing
 patients who actually need medical care. The confusion matrix above shows
-that the classifier does indeed miss-diagnose a significant number of malignant tumors as benign (`r confu21`
+that the classifier does indeed misdiagnose a significant number of malignant tumors as benign (`r confu21`
 out of `r confu11+confu21` malignant tumors, or `r round(100*(confu21)/(confu11+confu21))`%!).
 Therefore, even though the accuracy improved upon the majority classifier,
 our critical analysis suggests that this classifier may not have appropriate performance
