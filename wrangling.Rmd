@@ -1142,29 +1142,38 @@ summarize(
 lang_summary_by_region
 ```
 
-## Using `summarize` and `across` to iterate
+Notice that `group_by` on its own doesn't change the way the data looks, but instead it 
+changes how other functions, such as `summarize` work with the data, as we saw above.  
+
+```{r}
+group_by(lang_home_tidy, region)
+```
+
+## Iterating over columns of a data frame
 
 Where should you turn when you discover the next step in your data
 wrangling/cleaning process requires you to apply a function to each column in a
-data frame? The process of repeating a function on different columns or
-different data sets is called **iteration**. For example, suppose you wanted to
+data frame? The process of repeating a function, say on different columns or data sets,
+is called **iteration**. For example, suppose you wanted to
 know the maximum value of each column in a data frame. You could use `summarize`
 as discussed above. However, this becomes inconvenient when you have many
 columns, as `summarize` requires you to type out a column name and a data
 transformation for each summary statistic you want to calculate.
 
-In cases like this, where you want to apply the same data transformation to all
+### Using `summarize` and `across` to iterate 
+
+In cases, where you want to apply the same data transformation to all
 columns, it is more efficient to use `dplyr`'s `across` function to apply a
 transformation to each column. For example, let's find the maximum value of each
 column of the `region_lang`. First, let’s peek at the data to familiarize
 ourselves with it:
 
-``` {r 02-preview-region-data}
+``` {r 02-preview-region-data, message = FALSE}
 region_lang <- read_csv("data/region_lang.csv")
 region_lang
 ```
 
-We could apply `summarize` in the same way that we did above to find the maximum
+We *could* apply `summarize` in the same way that we did above to find the maximum
 values:
 
 ``` {r}
@@ -1176,7 +1185,7 @@ lang_summary_max <- summarize(region_lang,
 lang_summary_max 
 ```
 
-The approach above is a valid way to do this, but if we had many columns in our
+The approach above gets the job done, but if we had many columns in our
 data set then this method would take a lot of time since we would have to
 explicitly write out the name of each column! A faster and less error-prone way
 to apply function(s) to many columns is to use `summarize` and `across`. In the
@@ -1203,7 +1212,7 @@ arrange(!is.na(lang_known), lang_known) |>
 write_csv("data/region_lang_with_nas.csv")
 ```
 
-``` {r 02-read-in-nas}
+``` {r 02-read-in-nas, message = FALSE, warning = FALSE}
 region_with_nas <- read_csv("data/region_lang_with_nas.csv")
 region_with_nas
 ```
@@ -1232,33 +1241,16 @@ max_of_columns
 Now we get the maximum count for each column ignoring the NAs in the data set!
 
 
-## Using `purrr`'s `map*` functions to iterate
+### Using `purrr`'s `map*` functions to iterate
 
-Where should you turn when you discover the next step in your data
-wrangling/cleaning process requires you to apply a function to each column in a
-data frame? The process of repeating a function on different columns or
-different data sets is called **iteration**. For example, suppose you wanted to
-know the maximum value of each column in a data frame. You could use `summarize`
-as discussed above. However, this becomes inconvenient when you have many
-columns, as `summarize` requires you to type out a column name and a data
-transformation for each summary statistic you want to calculate.
-
-In cases like this, where you want to apply the same data transformation to all
-columns, it is more efficient to use `purrr`'s `map` function to apply it to
-each column. For example, let's find the maximum value of each column of the
-`region_lang` data frame by using `map` with the `max` function. First, let’s
-peak at the data to familiarize ourselves with it:
-
-``` {r 02-preview-data}
-region_lang <- read_csv("data/region_lang.csv")
-region_lang
-```
-
-Next, we will select only the numeric columns of the data frame:
+An alternative to `summarize` and `across` for iteration is `purrr`'s `map` function. 
+Let's again find the maximum value of each column of the
+`region_lang` data frame, but using `map` with the `max` function this time.
+We will select only the numeric columns of the data frame:
 
 ``` {r 02-numeric-data}
 region_lang_numeric <- region_lang |>
-select(mother_tongue:lang_known)
+  select(where(is.numeric))
 region_lang_numeric
 ```
 
@@ -1309,21 +1301,15 @@ max_of_columns
 Which `map_*` function you choose depends on what you want to do with the
 output; you don't always have to pick `map_df`!
 
-What if you need to add other arguments to the functions you want to map? For
-example, what if there were NA values in our columns that we wanted to know the
-maximum of?
-
-
+Similarly to `summarize` and `across`, `map_df()` returns `NA` for columns that 
+contain NAs in the data frame (remember that is what happens with many of the
+built-in R statistical functions when NA's are present...).
 ``` {r 02-map-na}
 map_df(region_with_nas, max)
 ```
 
-Notice `map_df()` returns `NA` for the `most_at_work` and `lang_known` variables
-since those columns contained NAs in the data frame. Thus, we also need to add
-the argument `na.rm = TRUE` to the `max` function so that we get a more useful
-value than `NA` returned (remember that is what happens with many of the
-built-in R statistical functions when NA's are present...). What we need to do
-in that case is add these additional arguments to the end of our call to to
+We need to add the argument `na.rm = TRUE` to the `max` function so that we get a more useful
+value than `NA` returned. We will add these additional arguments to the end of our call to the
 `map` and they will be passed to the function that we are mapping. An example of
 this is shown below:
 
@@ -1338,6 +1324,9 @@ The `map_*` functions are generally quite useful for solving problems involving
 iteration. Additionally, their use is not limited to columns of a data frame;
 `map_*` functions can be used to apply functions to elements of a vector or
 list, and even to lists of data frames, or nested data frames.
+
+## Iterating over rows of a data frame with `rowwise()`
+
 
 ## Additional resources
 
