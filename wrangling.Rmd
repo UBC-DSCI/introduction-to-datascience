@@ -31,6 +31,8 @@ By the end of the chapter, readers will be able to:
       - `separate`
       - `summarize`
       - `group_by`
+      - `across`
+      - `rowwise`
       - `map`
 
 ## Data frames and Vectors
@@ -1325,9 +1327,36 @@ iteration. Additionally, their use is not limited to columns of a data frame;
 `map_*` functions can be used to apply functions to elements of a vector or
 list, and even to lists of data frames, or nested data frames.
 
-## Iterating over rows of a data frame with `rowwise()`
+## Iterating over rows with `rowwise()`
 
+What if you want apply a function by rows now instead of columns? 
+For instance, suppose we want to know the maximum value between `mother_tongue`, 
+`most_at_home`, `most_at_work` and `lang_known` for each language in Vancouver. 
+```{r vancouver_filter}
+region_lang |>
+  filter(region == "Vancouver") |> 
+  select(region, mother_tongue:lang_known)
+```
+In other words, we want to apply the `max` function row-wise. We will use the aptly 
+named function `rowwise` to accomplish this task. Similar to `group_by`, `rowwise` 
+doesn't do anything when called by itself, however, we can apply 
+`rowwise` in combination with other functions to change how these other functions
+work with the data. Here we will use `rowwise` and `mutate`. 
+```{r}
+region_lang |>
+  filter(region == "Vancouver") |> 
+  select()
+region_lang |> 
+  rowwise() |> 
+  mutate(maximum = max(mother_tongue:lang_known))
+```
+Notice if we used `mutate` without `rowwise` we would have computed the maximum 
+value across *all* rows rather than the maximum value for *each* row. 
 
+```{r}
+region_lang |> 
+  mutate(maximum = max(mother_tongue:lang_known))
+```
 ## Additional resources
 
   - As we briefly mentioned earlier in a note, the `tidyverse` is actually a *R
