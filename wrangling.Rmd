@@ -794,25 +794,29 @@ English in the 2016 Canadian census was
 `r format(round(number_most_home/toronto_popn, 2), scientific = FALSE, big.mark = ",")`
 in Toronto.
 
-``` {r, include = FALSE}
-city_popn <- region_data |> filter(region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton")) |> arrange(desc(population)) |> pull(population)
-rep_popn <- rep(city_popn, 2)
+To find out the populations of each city we will first filter the `region_data`
+for only the rows where region is equal to one of our desired cities. Then we arrange it 
+according to the population size and use the `pull` 
+function, which takes a column in a data frame and transforms it into a vector. 
+
+``` {r find-city-populations}
+city_populations <- region_data |> 
+  filter(region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton")) |> 
+  arrange(desc(population)) |> 
+  pull(population)
+city_populations
 ```
 
-We can create a vector of the city populations. Then we use `mutate` to
+Then we use `mutate` to
 calculate the proportion of people reporting a given language as their primary
 language at home for all the languages in the `official_langs` data set by
 dividing the column by our vector of city populations. We give the mutated
 column a new name `most_at_home_proportion`, which will create a new column in
 our data set.
 
-``` {r}
-city_populations <- c(5928040, 4098927, 2463431, 1392609, 1321426)
-```
-
 ```{r, include = FALSE}
-official_langs <- mutate(official_langs, most_at_home_proportion =
-most_at_home / city_populations )
+official_langs <- mutate(official_langs, 
+                         most_at_home_proportion = most_at_home / city_populations )
 
 official_langs
 ```
@@ -1229,7 +1233,7 @@ region_with_nas |>
   summarize(across(mother_tongue:lang_known, max))
 ```
 
-Thus, we also need to add the argument `na.rm = TRUE` (`na.rm` means "NA
+Thus, we also need to add the argument `na.rm = TRUE` ("NA
 remove") to the `across` function so that we get a more useful value than `NA`
 returned. An example of this is shown below:
 
@@ -1327,36 +1331,57 @@ iteration. Additionally, their use is not limited to columns of a data frame;
 `map_*` functions can be used to apply functions to elements of a vector or
 list, and even to lists of data frames, or nested data frames.
 
-## Iterating over rows with `rowwise()`
+## Iterating over rows in a data frame with `rowwise()`
 
-What if you want apply a function by rows now instead of columns? 
-For instance, suppose we want to know the maximum value between `mother_tongue`, 
-`most_at_home`, `most_at_work` and `lang_known` for each language in Vancouver. 
-```{r vancouver_filter}
-region_lang |>
-  filter(region == "Vancouver") |> 
-  select(region, mother_tongue:lang_known)
-```
+
+What if you want to apply a function across rows instead of columns? 
+For instance, suppose we want to know the maximum value between `mother_tongue`,
+`most_at_home`, `most_at_work` and `lang_known` for each language in Vancouver.
 In other words, we want to apply the `max` function row-wise. We will use the aptly 
-named function `rowwise` to accomplish this task. Similar to `group_by`, `rowwise` 
-doesn't do anything when called by itself, however, we can apply 
-`rowwise` in combination with other functions to change how these other functions
-work with the data. Here we will use `rowwise` and `mutate`. 
-```{r}
-region_lang |>
+named function `rowwise` to accomplish this task. First, we `filter` the data for 
+only the languages in Vancouver. We also `select` specific columns so we can see 
+all the columns in the data frame, but note that this step is not strictly necessary. 
+```{r vancouver_filter}
+vancouver_lang <- region_lang |>
   filter(region == "Vancouver") |> 
-  select()
-region_lang |> 
-  rowwise() |> 
-  mutate(maximum = max(mother_tongue:lang_known))
+  select(region, language:lang_known)
+vancouver_lang
 ```
-Notice if we used `mutate` without `rowwise` we would have computed the maximum 
-value across *all* rows rather than the maximum value for *each* row. 
+Similar to `group_by`, `rowwise` doesn't do anything when it is called by itself, 
+however, we can apply `rowwise` in combination with other functions to change how 
+these other functions operate on the data. We will use `rowwise` and `mutate` 
+to find the maximum count for each language in the data set.  
+```{r}
+vancouver_lang |> 
+  rowwise() |> 
+  mutate(maximum = max(c(mother_tongue, most_at_home, most_at_work, lang_known)))
+```
+Notice if we used `mutate` without `rowwise`, we would have computed the maximum 
+value across *all* rows rather than the maximum value for *each* row. Therefore 
+`r format(vancouver_lang |>  mutate(maximum = max(c(mother_tongue, most_at_home, most_at_work, lang_known))) |> slice(1) |> pull(maximum),  scientific = FALSE, big.mark = ",")` is reported as the maximum value in every single row since it is 
+the maximum value among all the rows, so this code is not doing what we want. 
 
 ```{r}
-region_lang |> 
-  mutate(maximum = max(mother_tongue:lang_known))
+vancouver_lang |> 
+  mutate(maximum = max(c(mother_tongue, most_at_home, most_at_home, lang_known)))
 ```
+Cleaning and wrangling data can be a very time-consuming process, however, it is a critical step in any data analysis. We have explored many different functions for wrangling data into a tidy format. Table \@ref(tab:summary-functions-table) summarizes some of the key wrangling functions we learned in this chapter. 
+
+Table: (#tab:summary-functions-table) Summary of wrangling functions 
+
+| Function | Description |
+| ---      | ----------- | 
+| `pivot_longer` | generally makes the data frame longer and narrower |
+| `pivot_wider` | generally makes a data frame wider and decreases the number of rows | 
+| `separate` | splits up a character column into multiple columns  | 
+| `select` | subsets columns of a data frame |
+| `filter` | subsets rows of a data frame | 
+| `mutate` | adds or modifies columns in a data frame | 
+| `summarize` | calculates summaries of inputs | 
+| `group_by` |  allows you to apply function(s) to groups of rows |
+| `across` | allows you to apply function(s) to multiple columns  | 
+| `rowwise` | allows you to apply function(s) across rows of a data frame | 
+
 ## Additional resources
 
   - As we briefly mentioned earlier in a note, the `tidyverse` is actually a *R
