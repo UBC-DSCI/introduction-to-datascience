@@ -18,13 +18,17 @@ By the end of the chapter, readers will be able to:
     each other
   - describe the types of data that can be stored in integer, double, character,
     logical, and factor vectors in R
-  - recall and use the following tidyverse functions and operators for their
+  - recall and use the following functions and operators for their
     intended data wrangling tasks:
       - `select`
       - `filter`
       - `mutate`
       - `|>`
       - `c()`
+      - `==` 
+      - `!`
+      - `&` 
+      - `|`
       - `%in%`
       - `pivot_longer`
       - `pivot_wider`
@@ -34,19 +38,22 @@ By the end of the chapter, readers will be able to:
       - `across`
       - `rowwise`
       - `map`
+      - `pull`
 
 ## Data frames and Vectors
 
 We now know how to load data into R from various file formats. Given that most
-of the tools we have used to do this represent the data as a data frame in R, we
+of the tools we have used to import data represent the data as a *data frame* in R, we
 will spend some time learning more about data frames to deepen our understanding
-of them. This will be useful prerequisite knowledge to use and manipulate these
-objects in our data analysis.
+of them. This will be useful prerequisite knowledge to use
+and manipulate these objects in our data analysis.
 
 ### What is a data frame?
 
-To define a **data frame**, first, let's introduce a few commonly used terms in
-statistics:
+A **data frame** is a table-like structure and is a very common method for storing 
+data in R. We have actually seen and worked with data frames already in 
+Chapter \@ref(reading), but we will define it more precisely in this chapter. 
+But first, we need to introduce a few commonly used terms in statistics:
 
   - **observation** - all of the quantities or a qualities we collect from a
     given entity/object (*e.g.,* adult)
@@ -74,12 +81,12 @@ and the columns are the variables:
 knitr::include_graphics("img/vars.jpeg")
 ```
 
-From a computer programming perspective, in R, a data frame is a special subtype
-of a list object whose elements (columns) are *vectors*. For example, the data
+From a computer programming perspective, in R, a data frame is a special type of
+object whose columns are *vectors*. For example, the data
 frame in Figure \@ref(fig:02-vectors) has three vectors whose names are `region`,
 `year` and `population`.
 
-``` {r 02-vectors, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Data frame with 3 vectors", fig.retina = 2, out.width = "700"}
+``` {r 02-vectors, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Data frame with three vectors", fig.retina = 2, out.width = "700"}
 knitr::include_graphics("img/vectors.jpeg")
 ```
 
@@ -88,10 +95,8 @@ knitr::include_graphics("img/vectors.jpeg")
 In R, **vectors** are objects that can contain one or more elements. The vector
 elements are ordered, and they must all be of the same *data type*. R has
 several different basic data types, as shown in table \@ref(tab:datatype-table).
-
-Lists, which are sometimes called recursive vectors because lists can contain
-other lists. In the vector shown in Figure \@ref(fig:02-vector), the elements are
-of integer type:
+In the vector shown in Figure \@ref(fig:02-vector), the elements are
+of all the same type (integer):
 
 ``` {r 02-vector, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Example of a numeric type vector", fig.retina = 2, out.width = "700"}
 knitr::include_graphics("img/vector.jpeg")
@@ -108,29 +113,30 @@ year
 Table: (#tab:datatype-table) Basic data types in R
 
 | Data type | Description | Example |
-| --- | --- | --- |
+| ---       | ----------  |---------|
 | character | Letters or numbers surrounded by quotes | "1" , "Hello world!" |
 | double | Numbers with decimals values | 1.2333 |
 | integer | Numbers that do not contain decimals | 1L, 20L (where "L" tells R to store as an integer) |
 | logical | A value of true and false | `TRUE`, `FALSE` |
-| factor | Used to represent data with a limited number of values | a `size` variable with levels "large", "medium" and "small" |
+| factor | Used to represent data with a limited number of values | a `size` variable with levels `large`, `medium` and `small` |
 
 > "Numeric" is an umbrella term that includes integer and double data types.
 > Most of the time when working with numbers in R they will be double types. For
 > instance, a double data type is the default when you create a vector of
 > numbers using `c()`, and when you read in whole numbers via `read_csv`. There
 > are other basic data types in R, such as *raw* and *complex*, which we won't
-> cover in this textbook. We will go into more details about factors in chapter
+> cover in this textbook. We will go into more details about factors in Chapter
 > \@ref(viz).
 
-### How are vectors different from a list?
+### What is a list?
 
 Lists are also objects in R that have multiple elements, you can think of them
 as super-vectors. Vectors and lists differ by the requirement of element type
 consistency. All elements within a single vector must be of the same type (e.g.,
-all elements are numbers), whereas elements within a single list can be of
-different types (e.g., characters, numbers, logicals and even other lists can be
-elements in the same list).
+all elements are integers), whereas elements within a single list can be of
+different types (e.g., characters, integers, logicals and even other lists can be
+elements in the same list). Lists are sometimes called recursive vectors 
+because lists can contain other lists. 
 
 ``` {r 02-vec-vs-list, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "A vector versus a list", fig.retina = 2, out.width = "650"}
 knitr::include_graphics("img/vec_vs_list.jpeg")
@@ -144,12 +150,20 @@ knitr::include_graphics("img/vec_vs_list.jpeg")
 
 ### What does this have to do with data frames?
 
-As mentioned earlier, a data frame is really a special type of list where the
-elements can only be vectors. Representing data with such an object enables us
-to easily work with our data in a tabular manner. It also allows us to have
-columns, containing qualities or values, for different statistical variables
-linked in a row for one observation - these columns cannot be independently
-sorted. This is similar to a table in a database.
+As mentioned earlier, a data frame is a special type of object in R whose columns are vectors. 
+In particular, a data frame is really a special subtype of list where the elements 
+can only be vectors. Although the columns of a data frame can only be vectors, 
+and vector elements must be of the same data type, not all columns in a data frame 
+need to be of the same type. Figure \@ref(fig:02-dataframe) shows a data frame where
+the columns are vectors of different types, but the elements are the same data type
+within each column. Representing data with data frames enables us to work with our 
+data in a tabular manner easily. It also allows us to have columns (containing
+qualities or values) for different variables linked in a row for one observation,
+and these columns can't be sorted independently. For example, suppose you had a
+data frame where the rows were students and the columns were students' grades.
+If you sorted students by their name alphabetically, you would want the grades 
+associated with each student to get sorted along with each name rather than sorting
+the columns independently. 
 
 ``` {r 02-dataframe, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Data frame and vector types", fig.retina = 2, out.width = "650"}
 knitr::include_graphics("img/dataframe.jpeg")
@@ -158,14 +172,14 @@ knitr::include_graphics("img/dataframe.jpeg")
 The functions from the `tidyverse` package that we are using often give us a
 special class of data frame called a *tibble*. Tibbles have some additional
 features and benefits over the built-in data frame object. These include the
-ability to add grouping (and other useful) attributes and more predictable type
-preservation when subsetting. Because a tibble is just a data frame with some
+ability to add useful (such as grouping, which we will discuss later) attributes
+and more predictable type preservation when subsetting. Because a tibble is just a data frame with some
 added features, we will collectively refer to both built-in R data frames and
 tibbles as data frames in this book.
 
 > You can use the function `class` on a data object to assess whether a data
 > frame is a built-in R data frame or a tibble. If the data object is a data
-> frame `class` will return `"data.frame"`, whereas if the data object is a
+> frame, `class` will return `"data.frame"`. If the data object is a
 > tibble it will return `"tbl_df" "tbl" "data.frame"`. You can easily convert
 > built-in R data frames to tibbles using the `tidyverse` `as_tibble` function.
 > For example we can check the class of the Canadian languages data set,
@@ -176,14 +190,14 @@ class(can_lang)
 ```
 
 
-Vectors, data frames and lists are basic types of *data structures* in R which
-are core to most data analyses. We summarize them in table
+Vectors, data frames and lists are basic types of *data structures* in R, which
+are core to most data analyses. We summarize them in Table
 \@ref(tab:datastructure-table).
 
 Table: (#tab:datastructure-table) Basic data structures in R
 
 | Data Structure | Description |
-| --- | --- |
+| ---            |------------ |
 | vector | An ordered collection of one, or more, values of the *same data type* (e.g. all values are numeric). *Note: in R, a vector of length one is used to represent a single value.* |
 | data frame | A list of *vectors* of the *same length*, which has column and row names. We typically use a data frame to represent a data set. | 
 | list | An ordered collection of one, or more, values. The elements in the list can be of different data types. |
@@ -207,6 +221,9 @@ Tidy data satisfy the following three criteria [@wickham2014tidy]:
   - each value is a single cell (i.e., its row and column position in the data
     frame is not shared with another value)
 
+In Figure \@ref(fig:02-tidy-image), we have a tidy data set that satisfies these 
+three criteria. 
+
 ``` {r 02-tidy-image, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Tidy data", fig.retina = 2, out.width = "1150"}
 knitr::include_graphics("img/tidy_data.jpeg")
 ```
@@ -225,28 +242,29 @@ below!
 
 ### Going from wide to long (or tidy!) using `pivot_longer`
 
-One common step to get data into a tidy format is to combine columns stored in
-separate columns but are really part of the same variable. Data is often stored
-in a wider, not tidy, format because this format is usually more intuitive for
+One common step to get data into a tidy format is to combine columns that are 
+stored in separate columns but are really part of the same variable.
+Data is often stored this way because this format is usually more intuitive for
 human readability and understanding, and humans create data sets.
 
 For example, in Figure \@ref(fig:02-wide-to-long), the table on the left is in an
 untidy, "wide" format because the year values (2006, 2011, 2016) are listed as
-the column headers. For humans, this table is easy to read thus you will often
+the column headers. For humans, this table is easy to read, which is why you will often
 find data stored in this wide format. However, for R, to do any visualization or
 analysis this format is difficult to work with. For example, if we wanted to
 find the maximum year it's hard to do when the year values are not in their own
-column. Another problem with data in this format is that we don't know what the
+column (since R often applies functions, such as `max` column-wise). 
+Another problem with data in this format is that we don't know what the
 numbers under each year actually represent. Do those numbers represent
 population size? Land area? It's not clear. We can reshape this data set to a
 "long" format by creating a column called "year" and a column called
-"population," which is the table on the right.
+"population," which is the table on the right of Figure \@ref(fig:02-wide-to-long).
 
 ``` {r 02-wide-to-long, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from wide to long data", fig.retina = 2, out.width = "1150"}
 knitr::include_graphics("img/wide_to_long.jpeg")
 ```
 
-The function `pivot_longer`, which combines columns, makes the data frame longer
+The function `pivot_longer` combines columns, and often makes the data frame longer
 and narrower. To learn how to use `pivot_longer`, we will work with the
 `region_lang_top5_cities_wide.csv` data set. This data set contains contains the
 counts of how many Canadians cited each language as their mother tongue for five
@@ -268,14 +286,17 @@ lang_wide
 What is wrong with our untidy format above? From a data analysis perspective,
 this format is not ideal because the values of the variable *region* (Toronto,
 Montréal, Vancouver, Calgary and Edmonton) are stored as column names. Thus they
-are not easily accessible to the data analysis functions we will want to apply
-to our data set. Additionally, the values of the *mother tongue* variable are
+are not easily accessible to the data analysis functions we will apply
+to our data set. Additionally, the *mother tongue* variable values are
 spread across multiple columns, which will prevent us from doing any desired
 visualization or statistical tasks until we combine them into one column. For
-instance, suppose we want to know the languages with the highest number of
+instance, suppose we want to know the languages with the highest number of 
 Canadians reporting it as their mother tongue among all five regions. This
-question would be tough to answer with the data in its current format. It would
-be much easier to answer if we tidy our data first.
+question would be tough to answer with the data in its current format. We *could* 
+find the answer, perhaps by finding the maximum of each of our five columns first 
+then finding the maximum of those. Though, it would be much easier to answer if we tidy our
+data first. If mother tongue were instead stored as one column, we could simply 
+use `max(mother_tongue)` to get the maximum number. 
 
 To accomplish this data transformation, we will use the `tidyverse` function
 `pivot_longer`. The table on the left in Figure
@@ -687,10 +708,6 @@ filter(official_langs, most_at_home > 2669195)
 Toronto is reported by more people as their primary language at home than French
 in Montréal according to the 2016 Canadian census.
 
-> `==`, `!=`, `&`, `|` and `>` are examples of logical operators. These
-> operators don't only have be used with the `filter` function. For example, you
-> can type `1 > 2` or `"Vancouver" == "Calgary"` into R and it will give you a
-> response (`FALSE` in both cases).
 
 ## Using `mutate` to modify or add columns
 
