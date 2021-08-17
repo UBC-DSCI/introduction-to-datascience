@@ -283,9 +283,11 @@ lang_wide
 ```
 
 
-What is wrong with our untidy format above? From a data analysis perspective,
-this format is not ideal because the values of the variable *region* (Toronto,
-Montréal, Vancouver, Calgary and Edmonton) are stored as column names. Thus they
+What is wrong with our untidy format above? The table on the left in Figure
+\@ref(fig:img-pivot-longer-with-table) represents the data in the "wide" (messy) format.
+From a data analysis perspective, this format is not ideal because the values of 
+the variable *region* (Toronto, Montréal, Vancouver, Calgary and Edmonton) 
+are stored as column names. Thus they
 are not easily accessible to the data analysis functions we will apply
 to our data set. Additionally, the *mother tongue* variable values are
 spread across multiple columns, which will prevent us from doing any desired
@@ -293,29 +295,23 @@ visualization or statistical tasks until we combine them into one column. For
 instance, suppose we want to know the languages with the highest number of 
 Canadians reporting it as their mother tongue among all five regions. This
 question would be tough to answer with the data in its current format. We *could* 
-find the answer, perhaps by finding the maximum of each of our five columns first 
-then finding the maximum of those. Though, it would be much easier to answer if we tidy our
-data first. If mother tongue were instead stored as one column, we could simply 
-use `max(mother_tongue)` to get the maximum number. 
-
-To accomplish this data transformation, we will use the `tidyverse` function
-`pivot_longer`. The table on the left in Figure
-\@ref(fig:img-pivot-longer-with-table) represents the data in the "wide" format
-and the table on the right represents how we want the data to look after we've
-applied the `pivot_longer` function.
+find the answer with the data in this format, though it would be much easier to answer if we tidy our
+data first. If mother tongue were instead stored as one column, as shown in the tidy
+data on the right in Figure \@ref(fig:img-pivot-longer-with-table),
+we could simply use one line of code (`max(mother_tongue)`) to get the maximum value. 
 
 ``` {r img-pivot-longer-with-table, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from wide to long with the pivot_longer function", out.width="1100", fig.retina = 2}
 knitr::include_graphics("img/pivot_longer_with_table.jpeg")
 ```
 
 Figure \@ref(fig:img-pivot-longer) details what arguments we need to specify to
-use `pivot_longer`.
+use the `tidyverse` function, `pivot_longer`, to accomplish this data transformation.
 
 ``` {r img-pivot-longer, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the pivot_longer function", out.width="1100", fig.retina = 2}
 knitr::include_graphics("img/pivot_longer.jpeg")
 ```
 
-For the above example, we use `pivot_longer` to combine the Toronto, Montréal,
+We use `pivot_longer` to combine the Toronto, Montréal,
 Vancouver, Calgary and Edmonton columns into a single column called `region`,
 and create a column called `mother_tongue` that contains the count of how many
 Canadians report each language as their mother tongue for each metropolitan
@@ -382,14 +378,14 @@ What is wrong with this format above? In this example, each observation should
 be a language in a region. However, in the messy data set above, each
 observation is split across multiple rows. One where the count for
 `most_at_home` is recorded and the other where the count for `most_at_work` is
-recorded. Suppose we wanted to visualize the relationship between the number of
+recorded. We can see how we would like to transform the data from long to wide with
+`pivot_wider` in Figure \@ref(fig:img-pivot-wider-table). 
+Suppose we wanted to visualize the relationship between the number of
 Canadians reporting their primary language at home and work. It would be
-difficult to do that with the data in its current format since these two
+difficult to do that with the messy data table on the left since these two
 variables are stored in the same column.
 
-We can see how we would like to transform the data from long to wide with
-`pivot_wider` in Figure
-\@ref(fig:img-pivot-wider-table).
+
 
 ``` {r img-pivot-wider-table, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from long to wide with pivot_wider", out.width="1100", fig.retina = 2}
 knitr::include_graphics("img/pivot_wider_with_table.jpeg")
@@ -434,8 +430,8 @@ Data are also not considered tidy when multiple values are stored in the same
 cell. The data set we show below is even messier than the ones we dealt with
 above: the `Toronto`, `Montréal`, `Vancouver`, `Calgary` and `Edmonton` columns
 contain the number of Canadians reporting their primary language at home and
-work in one column separated by the delimiter "/". The column names are the
-values of a variable, AND each value does not have its own cell! To turn this
+work in one column separated by the delimiter (`/`). The column names are the
+values of a variable, *and* each value does not have its own cell! To turn this
 messy data into tidy data, we'll have to fix these issues.
 
 ``` {r, warning=FALSE, message=FALSE}
@@ -465,12 +461,12 @@ knitr::include_graphics("img/separate_function.jpeg")
 ```
 
 ``` {r}
-lang_no_delimiter <- separate(lang_messy_longer,
+lang_tidy <- separate(lang_messy_longer,
   col = value,
   into = c("most_at_home", "most_at_work"),
   sep = "/"
 )
-lang_no_delimiter
+lang_tidy
 ```
 
 
@@ -481,33 +477,33 @@ Is this data set now tidy? If we recall the three criteria for tidy data:
   - each value is a single cell.
 
 We can see that this data now satisfies all three criteria, making it easier to
-analyze. However, we aren't done yet! Notice in the table above the word
+analyze. However, we aren't done yet! Notice in the table above that the word
 `<chr>` appears beneath each of the column names. The word under the column name
 indicates the data type of each column. Here all of our variables are
 "character" data types. Recall, character data types are letter(s) or digits(s)
 surrounded by quotes. In the previous example in section \@ref(pivot-wider), the
 `most_at_home` and `most_at_work` variables were `<dbl>` (double) (you can
 verify this by looking at the tables in the previous sections), which is a type
-of numeric data. This change is due to the delimiter "/" when we read in this
+of numeric data. This change is due to the delimiter (`/`) when we read in this
 messy data set. R read the columns in as character types, and by default,
 `separate` will return columns as character data types.
 
 It makes sense for `region`, `category`, and `language` to be stored as a
-character type. However, if we want to apply any functions that treat the
-`most_at_home` and `most_at_work` columns as a number (e.g. finding rows that
-are above numeric threshold of a column), it won't be possible to do if the
+character type. However, suppose we want to apply any functions that treat the
+`most_at_home` and `most_at_work` columns as a number (e.g. finding rows 
+above a numeric threshold of a column). In that case, it won't be possible to do if the
 variable is stored as a `character`. We can set `convert = TRUE` to convert the
 `most_at_home` and `most_at_work` columns to the correct data type.
 
 
 ``` {r}
-lang_no_delimiter <- separate(lang_messy_longer,
+lang_tidy <- separate(lang_messy_longer,
   col = value,
   into = c("most_at_home", "most_at_work"),
   sep = "/", 
   convert = TRUE
 )
-lang_no_delimiter
+lang_tidy
 ```
 
 Now we see `<int>` appears under our columns, `most_at_home` and `most_at_work`,
@@ -527,7 +523,7 @@ ensure they are represented as individual columns to make the data tidy.
 
 ## Using `select` to extract a range of columns
 
-Chapter 1 discussed two `tidyverse` functions: `select` and `filter` to select
+Chapter \@ref(intro) discussed two `tidyverse` functions: `select` and `filter` to select
 columns and filter rows from a data frame. We will now learn more ways we can
 use these functions. Recall, the `select` function creates a subset of the
 *columns* of a data frame, while the `filter` subsets *rows* with specific
@@ -536,32 +532,32 @@ values.
 ### Using `select` helpers to extract columns
 
 Suppose we wanted to select only the columns `language`, `region`,
-`most_at_home` and `most_at_work` from the `lang_no_delimiter` data set. We can
+`most_at_home` and `most_at_work` from the `lang_tidy` data set. We can
 use the `select` function to choose the columns that we want and assign it to a
 data frame:
 
 ``` {r}
-selected_columns <- select(lang_no_delimiter, language, region, most_at_home, most_at_work)
+selected_columns <- select(lang_tidy, language, region, most_at_home, most_at_work)
 selected_columns
 ```
 
 Here we wrote out the names of each of the columns. However, this method is
 time-consuming, especially if you have a lot of columns! Another approach is to
-use a "`select` helper". `select` helpers are operators that make it easier for
-us to select columns. For instance, we can use a `select` helper to choose a
+use a "select helper". Select helpers are operators that make it easier for
+us to select columns. For instance, we can use a select helper to choose a
 range of columns rather than typing each column name out. To do this, we use the
 colon (`:`) operator to denote the range. For example, to get all the columns in
-the `lang_no_delimiter` data frame from `language` to `most_at_work` we pass
+the `lang_tidy` data frame from `language` to `most_at_work` we pass
 `language:most_at_work` as the second argument to the `select` function.
 
 ``` {r}
-column_range <- select(lang_no_delimiter, language:most_at_work)
+column_range <- select(lang_tidy, language:most_at_work)
 column_range
 ```
 
-Notice that we get the same output as we did above, but with less typing and
-thus less error prone! This type of operator is handy, especially for large
-data sets
+Notice that we get the same output as we did above, but with less typing, and thus,
+we are less error-prone! This type of operator is handy, especially for large
+data sets.
 
 Suppose instead we wanted to extract columns that followed a particular pattern
 rather than just selecting a range. Let's say we wanted only to select the
@@ -570,7 +566,7 @@ us to select variables based on their names. Here we can use the `select` helper
 `starts_with` to choose only the columns that start with the word "most":
 
 ``` {r 02-select-helpers}
-select(lang_no_delimiter, starts_with("most"))
+select(lang_tidy, starts_with("most"))
 ```
 
 We could also have chosen the columns containing an underscore `_` by adding
@@ -578,7 +574,7 @@ We could also have chosen the columns containing an underscore `_` by adding
 the columns we want contain underscores and the others don't.
 
 ``` {r 02-select-helper-contains}
-select(lang_no_delimiter, contains("_"))
+select(lang_tidy, contains("_"))
 ```
 
 There are many different `select` helpers, which are very handy for selecting
@@ -591,7 +587,7 @@ resources section for a complete list of `select` helpers.
 
 Recall we can use the `filter` function to obtain the subset of rows with
 desired values from a data frame. Again, our first argument is the name of the
-data frame object, `lang_no_delimiter`. The second argument is a logical
+data frame object, `lang_tidy`. The second argument is a logical
 statement to use when filtering the rows. Here, for example, we'll say that we
 are interested in rows where the category is "Official languages". We use the
 *equivalency operator* (`==`) to compare the values of the `category` column
@@ -600,7 +596,7 @@ data frame with all the columns of the input data frame but only the rows we
 asked for in our logical filter statement.
 
 ``` {r}
-official_langs <- filter(lang_no_delimiter, category == "Official languages")
+official_langs <- filter(lang_tidy, category == "Official languages")
 official_langs
 ```
 
@@ -613,7 +609,7 @@ where the `category` does NOT equal "Official languages" we write the code
 below.
 
 ``` {r}
-filter(lang_no_delimiter, category != "Official languages")
+filter(lang_tidy, category != "Official languages")
 ```
 
 ### Using `filter` to extract rows with `&` or `,`
@@ -912,7 +908,7 @@ ggplot(
 ```
 
 > Don't worry too much about the code to make this plot, we will talk more in
-> detail about visualizations in chapter \@ref(viz).
+> detail about visualizations in Chapter \@ref(viz).
 
 From this visualization, we can see that in Calgary, Edmonton, Toronto and
 Vancouver, English was reported as the most common primary language used at home
