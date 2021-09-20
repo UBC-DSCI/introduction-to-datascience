@@ -105,7 +105,7 @@ You can create vectors in R using the concatenate `c()` function. To create the
 vector `region` as shown in Figure \@ref(fig:02-vector) we write:
 
 ``` {r}
-year <- c("Toronto", "Montreak", "Vancouver", "Calgary", "Ottawa")
+year <- c("Toronto", "Montreal", "Vancouver", "Calgary", "Ottawa")
 year
 ```
 
@@ -221,7 +221,7 @@ Tidy data satisfy the following three criteria [@wickham2014tidy]:
   - each row is a single observation,
   - each column is a single variable, and
   - each value is a single cell (i.e., its row and column position in the data
-    frame is not shared with another value)
+    frame) is not shared with another value.
 
 In Figure \@ref(fig:02-tidy-image), we have a tidy data set that satisfies these 
 three criteria. 
@@ -242,44 +242,65 @@ upfront. Luckily there are many well-designed `tidyverse` data
 cleaning/wrangling tools to help you easily tidy your data. Let's explore them
 below!
 
-### Going from wide to long (or tidy!) using `pivot_longer`
+### Going from wide to long using `pivot_longer`
 
-One common step to get data into a tidy format is to combine columns that are 
-stored in separate columns but are really part of the same variable.
-Data is often stored this way because this format is usually more intuitive for
+One task that is commonly performed to get data into a tidy format 
+is to combine values that are stored in separate columns, 
+but are really part of the same variable, into one.
+Data is often stored this way because this format is sometimes more intuitive for
 human readability and understanding, and humans create data sets.
+In Figure \@ref(fig:02-wide-to-long), 
+the table on the left is in an untidy, "wide" format because the year values 
+(2006, 2011, 2016) are stored as column names. 
+And as a consequence, 
+the values for population for the various cities 
+over these years are also split across several columns. 
+For humans, this table is easy to read, which is why you will often
+find data stored in this wide format. 
+However, this format is difficult to work with 
+when performing data visualization 
+or statistical analysis using R.
 
-For example, in Figure \@ref(fig:02-wide-to-long), the table on the left is in an
-untidy, "wide" format because the year values (2006, 2011, 2016) are listed as
-the column headers. For humans, this table is easy to read, which is why you will often
-find data stored in this wide format. However, for R, to do any visualization or
-analysis this format is difficult to work with. For example, if we wanted to
-find the maximum year it's hard to do when the year values are not in their own
-column (since R often applies functions, such as `max` column-wise). 
+For example, if we wanted to
+find the latest year it would be challenging because the 
+year values are stored as column names instead of as values in a single column.
+So before we could apply a function to find the latest year 
+(for example, by using `max`), 
+we would have to first first extract the column names to get them as a vector
+and then apply a function to extract the latest year.
+The problem only gets worse if you would like to find the value for the 
+population for a given region for the latest year.
+Both of these tasks are greatly simplified once the data is tidied.
+
 Another problem with data in this format is that we don't know what the
 numbers under each year actually represent. Do those numbers represent
-population size? Land area? It's not clear. We can reshape this data set to a
-"long" format by creating a column called "year" and a column called
+population size? Land area? It's not clear. 
+To solve both of these problems, 
+we can reshape this data set to a tidy data format 
+by creating a column called "year" and a column called
 "population," which is the table on the right of Figure \@ref(fig:02-wide-to-long).
+Note that this transformation makes the data "longer".
 
 ``` {r 02-wide-to-long, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from wide to long data", fig.retina = 2, out.width = "1150"}
 knitr::include_graphics("img/wide_to_long.jpeg")
 ```
 
-The function `pivot_longer` combines columns, and often makes the data frame longer
-and narrower. To learn how to use `pivot_longer`, we will work with the
+The function `pivot_longer` combines columns, 
+and is usually used during tidying data 
+when we need to make the data frame longer and narrower. 
+To learn how to use `pivot_longer`, we will work through an example with the
 `region_lang_top5_cities_wide.csv` data set. This data set contains contains the
 counts of how many Canadians cited each language as their mother tongue for five
 major Canadian cities (Toronto, Montréal, Vancouver, Calgary and Edmonton) from
-the 2016 Canadian census. We will load the `tidyverse` package so we can use our
-wrangling functions and the `canlang` package since it contains the
-`region_lang` and `region_data` data sets that we will use later in the chapter.
+the 2016 Canadian census. 
+To get started, 
+we will load the `tidyverse` package so we can access our data reading 
+and wrangling functions in R.
 
 Our data set is stored in an untidy format, as shown below:
 
 ``` {r 02-tidyverse, warning=FALSE, message=FALSE}
 library(tidyverse)
-library(canlang)
 lang_wide <- read_csv("data/region_lang_top5_cities_wide.csv")
 lang_wide
 ```
@@ -647,13 +668,17 @@ filter(official_langs, region == "Calgary" | region == "Edmonton")
 
 ### Using `filter` to extract rows with `%in%`
 
-Suppose we want to see the populations of our five cities. The `region_data`
-data set from the `canlang` package contains statistics for number of
-households, land area, population and number of dwellings for different regions
-according to the 2016 Canadian census.
+Suppose we want to see the populations of our five cities. Let's read in the
+`region_data.csv` file that comes from the 2016 Canadian census, 
+as it contains statistics for number of households, land area, population 
+and number of dwellings for different regions.
 
-``` {r}
-region_data
+```{r, include = FALSE}
+write_csv(canlang::region_data, "data/region_data.csv")
+```
+
+``` {r message = FALSE}
+region_data <- read_csv("data/region_data.csv")
 ```
 
 To get the population of our five cities we can filter the data set using the
