@@ -870,105 +870,72 @@ English in the 2016 Canadian census was
 `r format(round(number_most_home/toronto_popn, 2), scientific = FALSE, big.mark = ",")`
 in Toronto.
 
-To extract the populations of our five cities we will first arrange the `five_cities`
-data set that we created above according to the population size (from largest to smallest) 
-using the `arrange` function. Recall this function takes column names as
-input and orders the rows in the data frame in ascending order based on the
-values in the columns. There we need to add `desc` in front of the `population` 
-variable to order the rows in descending order. 
+Let's now use `mutate` to create a new column in our dataframe 
+that holds the proportion of people who speak English 
+for our five cities of focus in this chapter. 
+To accomplish this, we will need to do 2 tasks 
+before we can use mutate to create the new column for us:
 
-``` {r find-city-populations}
-ordered_cities <-  arrange(five_cities, 
-                           desc(population)) 
-ordered_cities
-```
-Then we will use the `pull` function, which extracts a column in a data frame 
-and transforms it into a vector. We use `pull` instead of `select` because for the 
-next step we want the population values as a vector rather than a tibble, which would be the 
-output of using `select`. 
+1. create a vector containing the population values for our cities
+2. filter the `official_langs` data frame 
+so that we only keep the rows where the language is English
+
+To create a vector containing the population values for our cities
+(Toronto, Montréal, Vancouver, Calgary, Edmonton),
+we will use the `c` function:
+
 ```{r}
-city_populations <- pull(ordered_cities, 
-                         population)
+city_populations <- c(5928040, 4098927, 2463431, 1392609, 1321426)
 city_populations
 ```
-Then we use `mutate` to
-calculate the proportion of people reporting a given language as their primary
-language at home for all the languages in the `official_langs` data set by
-dividing the column by our vector of city populations. We give the mutated
-column a new name `most_at_home_proportion`, which will create a new column in
-our data set.
+
+And next, we will filter the `official_langs` data frame 
+so that we only keep the rows where the language is English.
+We will name the new dataframe we get from this `english_langs`:
+
+```{r}
+english_langs <- filter(official_langs, language == "English")
+english_langs
+```
+
+Finally, we can use `mutate` to create a new column, 
+named `most_at_home_proportion`, that will have value that corresponds to 
+the proportion of people reporting English as their primary
+language at home.
+We will compute this by dividing the column by our vector of city populations. 
 
 ```{r, include = TRUE}
-official_langs <- mutate(official_langs, 
+english_langs <- mutate(english_langs, 
                          most_at_home_proportion = most_at_home / city_populations )
 
-official_langs
+english_langs
 ```
 
-Notice that we divided a vector with 10 elements (`most_at_home`) by a vector
-with only 5 elements (`city_populations`). What gives? Arithmetic operations of
-vectors are performed *memberwise* meaning the first element of `most_at_home`
-will be divided by the first element of `city_populations`, the second element
-of `most_at_home` will be divided by the second element of `city_populations`
-and so on. When two vectors have different lengths, the shorter one will be
-recycled to match the longer one. Here the elements of `city_populations` will
-be repeated once to match the length of `most_at_home`.
-
-You *can* do this in R, however we can very easily introduce errors using this
-method without realizing. For example, suppose we only listed four city
-populations, but still had ten elements of five cities in the `most_at_home
-column`. Then the first two city populations listed in the `city_populations`
-vector (Toronto and Montréal) would be repeated at the end and our calculated
-proportions would be wrong in our final data table.
-
-``` {r include = F}
-toronto_eng <- filter(official_langs, region == "Toronto" & language == "English") %>% pull(most_at_home)
-toronto_fr <- filter(official_langs, region == "Toronto" & language == "French") %>% pull(most_at_home)
-```
-
-Instead, let's use the `case_when` function. When used inside the `mutate`
-function, `case_when` will allow us to mutate a variable *when* a particular
-condition is met. We write the condition on the left side of the tilde (`~`)
-symbol and the mutation on the right side. Let's consider just Toronto to start.
-We want to take the `most_at_home` value for English in Toronto
-(`r format(toronto_eng, scientific = FALSE, big.mark = ",")`) and divide it by
-Toronto's population
-(`r format(toronto_popn, scientific = FALSE, big.mark = ",")`). Likewise, we want to
-divide the `most_at_home` value for French in Toronto
-(`r format(toronto_fr, scientific = FALSE, big.mark = ",")`) and by
-Toronto's population. So when `region == Toronto` (the *condition*), we want to
-apply `most_at_home/5928040` (the *mutation*). We do the same for the other
-cities, which is what you see in the code below.
-
-``` {r 02-case-when}
-mutate(official_langs,
-  most_at_home_proportion = case_when(
-    region == "Toronto" ~ most_at_home / 5928040,
-    region == "Montréal" ~ most_at_home / 4098927,
-    region == "Vancouver" ~ most_at_home / 2463431,
-    region == "Calgary" ~ most_at_home / 1392609,
-    region == "Edmonton" ~ most_at_home / 1321426
-  )
-)
-```
-
-If you compare the proportions in these two tables, we get the same values with
-both methods. That is the beauty of R -- there are usually multiple ways to
-accomplish the same thing!
+> Note: one important thing about the computation that we did above was
+that we had to ensure that we ordered the `city_populations` vector in the
+same order as the cities were listed in the `english_langs` dataframe.
+This is because R will perform the division computation we did by dividing 
+each element of the `most_at_home` column by each element of the 
+`city_populations` vector - matching them up by position.
+Failing to do this would have resulted in the incorrect math to be performed.
+In more advanced data wrangling, 
+one might solve this problem in a less error-prone way though using 
+a technique called joins. 
+We link to resources that discuss this in the additional resources section below.
 
 ## Creating a visualization with tidy data
 
 Now that we have cleaned and wrangled our data, we can make visualizations or do 
 statistical analyses to answer questions about our data! Let's suppose we want to
-answer the question: what proportion of people in each city speak Canada's official 
-languages as their primary language at home in these five cities? Since our data is
+answer the question: what proportion of people in each city speak English 
+as their primary language at home in these five cities? Since our data is
 cleaned already, in a few short lines of code, we can use `ggplot` to create a
 data visualization to answer this question! Here we create a bar chart to represent the proportions for
 each region and color the proportions by language.
 
 ```{r 02-plot, fig.width = 7, fig.height = 2.5}
 ggplot(
-  official_langs,
+  english_langs,
   aes(
     x = most_at_home_proportion,
     y = region,
@@ -976,7 +943,7 @@ ggplot(
   )
 ) +
   geom_bar(stat = "identity") +
-  xlab("Language reported as the primary language at home (proportion)") +
+  xlab("English reported as the primary language spoken most often at home (proportion)") +
   ylab("Region")
 ```
 
@@ -984,10 +951,8 @@ ggplot(
 > detail about visualizations in Chapter \@ref(viz).
 
 From this visualization, we can see that in Calgary, Edmonton, Toronto and
-Vancouver, English was reported as the most common primary language used at home
-compared to French. However, in Montréal, French was reported as the most common
-primary language used at home over English.
-
+Vancouver, English was reported as the most common primary language used at home.
+However, in Montréal, this does not seem to be the case!
 
 ## Combining functions using the pipe operator, `|>`
 
