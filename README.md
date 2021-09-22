@@ -60,8 +60,13 @@ To build the **PDF version** of the book, instead run
 
 ## Style Guide
 
+#### General
+- 80 character line limit
+
 #### R code blocks
-- For R code block labels, use the format `##-[name with only alphanumeric + hyphens]` where the `##` is the 2-digit chapter number, e.g. `03-test-name` for a label `test-name` in chapter 3
+- For R code block labels, use the format `##-[name with only alphanumeric +
+  hyphens]` where the `##` is the 2-digit chapter number, e.g. `03-test-name`
+  for a label `test-name` in chapter 3
 
 #### Figures
 
