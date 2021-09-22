@@ -58,16 +58,25 @@ To build the **PDF version** of the book, instead run
     bookdown::render_book('index.Rmd', 'bookdown::gitbook')
     ```
 
-### Updating the textbook data
+## Style Guide
+
+#### R code blocks
+- For R code block labels, use the format `##-[name with only alphanumeric + hyphens]` where the `##` is the 2-digit chapter number, e.g. `03-test-name` for a label `test-name` in chapter 3
+
+#### Figures
+
+#### Tables
+
+#### Bibliography
+
+#### Naming conventions
+
+## Updating the textbook data
 Data sets are collected and curated by `data/retrieve_data.ipynb`. To run that notebook in the Docker container type the following in the terminal:
 
 ```
 docker run --rm -it -p 8888:8888 -v $PWD:/home/rstudio/introduction-to-datascience ubcdsci/intro-to-ds jupyter notebook --ip=0.0.0.0 --allow-root
 ```
-
-## Style Guide
-
-- For R code block labels, use the format `##-[name with only alphanumeric + hyphens]` where the `##` is the 2-digit chapter number, e.g. `03-test-name` for a label `test-name` in chapter 3
 
 ## Repository Organization / Important Files
 - The files `index.Rmd` and `##-name.Rmd` are [R-markdown](https://rmarkdown.rstudio.com/) chapter contents to be parsed by [Bookdown](https://bookdown.org/)
