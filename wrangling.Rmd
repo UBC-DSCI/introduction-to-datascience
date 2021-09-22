@@ -475,7 +475,11 @@ lang_messy
 ```
 
 First we’ll use `pivot_longer` to create two columns, `region` and `value`,
-similar to what we did previously:
+similar to what we did previously. 
+The new `region` columns will contain the region names,
+and the new column `value` will be a temporary holding place for the 
+data that we need to further separate - 
+the number of Canadians reporting their primary language at home and work.
 
 ``` {r}
 lang_messy_longer <- pivot_longer(lang_messy,
@@ -486,10 +490,13 @@ lang_messy_longer <- pivot_longer(lang_messy,
 lang_messy_longer
 ```
 
-Then we'll use `separate` to split the `value` column into two columns, one that
-contains only the counts of Canadians that speak each language most at home, and
-one that contains the counts for most at work for each region. Figure
-\@ref(fig:img-separate) outlines what we need to specify to use `separate`.
+Next we'll use `separate` to split the `value` column into two columns, 
+one that contains only the counts of Canadians 
+that speak each language most at home, 
+and one that contains the counts of Canadians 
+that speak each language most at work for each region. 
+Figure \@ref(fig:img-separate) 
+outlines what we need to specify to use `separate`.
 
 ``` {r img-separate, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the separate function", out.width="1100", fig.retina = 2}
 knitr::include_graphics("img/separate_function.jpeg")
@@ -520,7 +527,7 @@ surrounded by quotes. In the previous example in section \@ref(pivot-wider), the
 `most_at_home` and `most_at_work` variables were `<dbl>` (double) (you can
 verify this by looking at the tables in the previous sections), which is a type
 of numeric data. This change is due to the delimiter (`/`) when we read in this
-messy data set. R read the columns in as character types, and by default,
+messy data set. R read these columns in as character types, and by default,
 `separate` will return columns as character data types.
 
 It makes sense for `region`, `category`, and `language` to be stored as a
@@ -622,11 +629,24 @@ Resources section at the end of the chapter for a comprehensive resource on `sel
 
 Recall we can use the `filter` function to obtain the subset of rows with
 desired values from a data frame. Again, our first argument is the name of the
-data frame object, `tidy_lang`. The second argument is a logical
-statement to use when filtering the rows. Suppose we are only interested in official 
-languages in this data set. We use the *equivalency operator* (`==`) to compare the values of the `category` column with the value `"Official languages"`. With these arguments, `filter` returns a
-data frame with all the columns of the input data frame but only the rows we
-asked for in our logical filter statement.
+data frame object.
+Here we will continue to work with the `tidy_lang` data frame 
+to demonstrate more details on how filter works.
+The second argument to `filter` 
+is a logical statement to use when filtering the rows. 
+`filter` works by returning the rows 
+where the logical statement evaluates to `TRUE`.
+Suppose we are only interested in subsetting the rows for the
+official languages of Canada (English and French) from this data set. 
+We can do this by using the *equivalency operator* (`==`) 
+to compare the values of the `category` column 
+with the value `"Official languages"`. 
+With these arguments, `filter` returns a data frame with all the columns 
+of the input data frame 
+but only the rows we asked for in our logical filter statement - 
+those where the `category` column holds the value `""Official languages"`.
+We name this data frame `official_langs` and will primarily focus on this 
+data frame for the remainder of this chapter (except for the next example).
 
 ``` {r}
 official_langs <- filter(tidy_lang, category == "Official languages")
@@ -645,33 +665,31 @@ below.
 filter(tidy_lang, category != "Official languages")
 ```
 
-### Using `filter` to extract rows with `&` or `,` {#filter-and}
+### Using `filter` to extract rows that satisfy mutliple conditions using `,` {#filter-and}
 
-Let's suppose we want to look at only the rows for French in Montréal. Here we
-want to filter the data set to find rows that satisfy multiple conditions
-simultaneously. We can do this with `&`, which is a logical operator meaning
-"and". We are filtering the `official_langs` data frame where the `region ==
-"Montréal"` *and* the `language == "French"`.
-
-``` {r}
-filter(official_langs, region == "Montréal" & language == "French")
-```
-
-Notice that we can accomplish the same thing using a comma (`,`) instead of the
-ampersand sign (`&`). The filter function treats the comma (`,`) between the logical
-statements as an "and".
+Let's suppose we want to look at only the rows 
+for the French language in Montréal. 
+To do this, we need to filter the data set 
+to find rows that satisfy multiple conditions simultaneously. 
+We can do this with `,`, which in the case of `filter`, 
+is interpreted by R as "and". 
+We write the code as shown below to filter the `official_langs` data frame 
+to subset the rows where `region == "Montréal"` *and* the `language == "French"`.
 
 ``` {r}
-filter(official_langs, region == "Montréal" , language == "French")
+filter(official_langs, region == "Montréal", language == "French")
 ```
 
 ### Using `filter` to extract rows with `|`
 
-Suppose we were interested in the rows for only the Albertan cities in our data
-set (Edmonton and Calgary). We can't use `&` as we did above because `region`
-cannot be both Edmonton and Calgary simultaneously. Instead, we can use the `|`
-logical operator, which gives us the cases where one condition *or* another
-condition *or* both are satisfied. In the code below, we ask R to return the rows
+Suppose we were interested in the rows for only the Albertan cities 
+in our `official_langs` data set (Edmonton and Calgary). 
+We can't use `,` as we did above because `region`
+cannot be both Edmonton *and* Calgary simultaneously. 
+Instead, we can use the `|` logical operator, 
+which gives us the cases where one condition *or* 
+another condition *or* both are satisfied. 
+In the code below, we ask R to return the rows
 where the `region` columns are equal to "Calgary" *or* "Edmonton".
 
 ``` {r}
@@ -680,8 +698,9 @@ filter(official_langs, region == "Calgary" | region == "Edmonton")
 
 ### Using `filter` to extract rows with `%in%`
 
-Suppose we want to see the populations of our five cities. Let's read in the
-`region_data.csv` file that comes from the 2016 Canadian census, 
+Suppose next, we want to see the populations of our five cities. 
+Let's read in the `region_data.csv` file 
+that comes from the 2016 Canadian census, 
 as it contains statistics for number of households, land area, population 
 and number of dwellings for different regions.
 
@@ -691,19 +710,21 @@ write_csv(canlang::region_data, "data/region_data.csv")
 
 ``` {r message = FALSE}
 region_data <- read_csv("data/region_data.csv")
+region_data
 ```
 
-To get the population of our five cities we can filter the data set using the
-`%in%` operator. The `%in%` operator is used to see if an element belongs to a
-vector. Here we are filtering if any of the five cities ("Toronto", "Montréal",
-"Vancouver", "Calgary", "Edmonton") match the rows in the `region`
-column.
+To get the population of our five cities 
+we can filter the data set using the `%in%` operator. 
+The `%in%` operator is used to see if an element belongs to a vector. 
+Here we are filtering for rows where the value in the `region` column
+matches any of the five cities we are intersted in: Toronto, Montréal,
+Vancouver, Calgary, and Edmonton.
 
 ``` {r}
+city_names <- c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton")
 five_cities <- filter(region_data, 
-                      region %in% c("Toronto", "Montréal", "Vancouver", "Calgary", "Edmonton"))
+                      region %in% city_names)
 five_cities
-
 ```
 
 > **What's the difference between `==` and `%in%`?** Let's suppose we have two
@@ -715,12 +736,11 @@ five_cities
 > elements in `vectorB`. Then the second element of `vectorA` is then compared
 > to all the elements in `vectorB` etc. Notice the difference between `==` and
 > `%in%` in the example below.
- 
-``` {r}
-c("Vancouver", "Toronto") == c("Toronto", "Vancouver")
-c("Vancouver", "Toronto") %in% c("Toronto", "Vancouver")
-```
-
+> 
+>``` {r}
+>c("Vancouver", "Toronto") == c("Toronto", "Vancouver")
+>c("Vancouver", "Toronto") %in% c("Toronto", "Vancouver")
+>```
 
 ### Using `filter` to extract rows with values above or below a threshold
 
@@ -729,65 +749,76 @@ census_popn <- 35151728
 most_french <- 2669195
 ```
 
-We saw in section \@ref(filter-and) that `r format(most_french, scientific = FALSE, big.mark = ",")` people
-reported speaking French in Montréal as their primary language at home. If we
-are interested in finding the languages in regions with higher numbers of people
-who speak it as their primary language at home than French in Montréal then we
-can create a filter to obtain rows where the value of `most_at_home` is greater
-than `r format(most_french, scientific = FALSE, big.mark = ",")`.
+We saw in section \@ref(filter-and) that 
+`r format(most_french, scientific = FALSE, big.mark = ",")` people reported 
+speaking French in Montréal as their primary language at home. 
+If we are interested in finding the official languages in regions 
+with higher numbers of people who speak it as their primary language at home 
+compared to French in Montréal then we can use `filter` to obtain rows 
+where the value of `most_at_home` is greater than 
+`r format(most_french, scientific = FALSE, big.mark = ",")`.
 
 ``` {r}
 filter(official_langs, most_at_home > 2669195)
 ```
 
-`filter` returns a data frame with only one row indicating that only English in
-Toronto is reported by more people as their primary language at home than French
-in Montréal according to the 2016 Canadian census.
-
+`filter` returns a data frame with only one row indicating that when 
+considering the official languages, 
+only English in Toronto is reported by more people 
+as their primary language at home 
+than French in Montréal according to the 2016 Canadian census.
 
 ## Using `mutate` to modify or add columns
 
 ``` {r 02-character-official-langs, echo = FALSE}
-official_langs <- mutate(official_langs,
+official_langs_chr <- mutate(official_langs,
   most_at_home = as.character(most_at_home),
   most_at_work = as.character(most_at_work)
 )
 ```
  
-In section \@ref(separate), when we first read in our data and separated our
-columns the variables were "character" data types. We used the `convert`
-argument to convert our columns to the desired data types. However, suppose we
-read a data set into R and wanted to convert the data types, but didn't need to
-separate it first. For example, suppose the `most_at_home` and `most_at_work`
-columns in our `official_langs` data frame were character data types.
+In section \@ref(separate), 
+when we first read in the `"region_lang_top5_cities_messy.csv"` data 
+all of the variables were "character" data types. 
+During the tidying process, 
+we used the `convert` argument from the `separate` function 
+to convert the `most_at_home` and `most_at_work` columns 
+to the desired integer (i.e., numeric class) data types. 
+However, suppose we didn't use the `convert` argument 
+and needed to modify the column type some other way?
+Below we create such a situation 
+so that we can demonstrate how we can use `mutate`
+to change the column types of a dataframe. 
+`mutate` is a useful function to modify or create new dataframe columns.
 
+``` {r warning=FALSE, message=FALSE}
+lang_messy <- read_csv("data/region_lang_top5_cities_messy.csv")
+lang_messy_longer <- pivot_longer(lang_messy,
+               cols = Toronto:Edmonton,
+               names_to = "region",
+               values_to = "value")
+tidy_lang <- separate(lang_messy_longer, col = value,
+           into = c("most_at_home", "most_at_work"),
+           sep = "/") 
+official_langs_chr <- filter(tidy_lang, category == "Official languages")
 
-``` {r}
-official_langs 
+official_langs_chr 
 ```
 
-If we want to apply any functions that treat the `most_at_home` and
-`most_at_work` columns as a number (e.g. finding rows that are above a numeric
-threshold of a column), it won't be possible to do if the variable is stored as
-a `character`.
-
-``` {r}
-filter(official_langs, most_at_home > 2669195)
-```
-
-
-When we look at the table we got from `filter` above, it isn't quite doing what
-we'd expect. We see numbers in the table in the `most_at_home` column that are
-less than `r format(most_french, scientific = FALSE, big.mark = ",")`. Therefore
-we will use the function `mutate` to convert these two columns to a "numeric"
-data type. `mutate` is a function that will allow us to create a new variable or
-transform existing ones in our data set. We specify the data set in the first
-argument, and in the proceeding arguments, we specify the function we want to
-apply (`as.numeric`) to which columns (`most_at_home`, `most_at_work`). Then we
-give the mutated variable a new name. Here we are naming the columns the same
-names ("most\_at\_home", "most\_at\_work"), but you can call these mutated
-variables anything you'd like.
-
+To use `mutate`, again we first specify the data set in the first argument, 
+and in the following arguments, 
+we specify the name of the column we want to modify or create 
+(here `most_at_home` and `most_at_work`), an `=` sign,
+and then the function we want to apply (here `as.numeric`).
+In the function we want to apply, 
+we refer directly to the column name upon which we want it to act 
+(here `most_at_home` and `most_at_work`).
+In our example, we are naming the columns the same
+names as columns that already exist in the data frame 
+("most\_at\_home", "most\_at\_work") 
+and this will cause `mutate` to modify those columns in-place.
+If we were to give the columns a new name, 
+then `mutate` would create new columns with the names we specified.
 `mutate`'s general syntax is detailed in Figure \@ref(fig:img-mutate).
 
 ``` {r img-mutate, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the mutate function", out.width="1100", fig.retina = 2}
@@ -799,22 +830,16 @@ to numeric data types in the `official_langs` data set as described in figure
 \@ref(fig:img-mutate):
 
 ``` {r}
-official_langs <- mutate(official_langs,
+official_langs_numeric <- mutate(official_langs_chr,
   most_at_home = as.numeric(most_at_home),
   most_at_work = as.numeric(most_at_work)
 )
-official_langs
+official_langs_numeric
 ```
 
 Now we see `<dbl>` appears under our columns, `most_at_home` and `most_at_work`,
 indicating they are double data types (which is a type of numeric data type)!
-
-Now when we filter we get what we expect:
-
-``` {r}
-filter(official_langs, most_at_home > 2669195)
-```
-
+Now we could apply numeric functions to them to do useful things. 
 
 ### Using `mutate` to create new columns
 
@@ -826,7 +851,6 @@ pull(most_at_home)
 toronto_popn <- region_data |> filter(region == "Toronto") |>
 pull(population)
 ```
-
 
 We can see in the table that
 `r format(number_most_home, scientific = FALSE, big.mark = ",")` people reported
@@ -1485,3 +1509,9 @@ Table: (#tab:summary-functions-table) Summary of wrangling functions
     in a data frame, but none of the above functions are flexible enough to do
     what you want. In that case, you may consider using [a for
     loop](https://r4ds.had.co.nz/iteration.html#iteration).
+  - There are many `select` helpers that can be used to efficiently subset 
+    columns in a data frame when paired with the `select` function, 
+    or other functions that also use the tidy select syntax for column selection 
+    (e.g., `pivot-longer`). 
+    The [documentation for `select` helpers](https://tidyselect.r-lib.org/reference/select_helpers.html) 
+    is a useful reference to find the helper you need for your particular problem.
