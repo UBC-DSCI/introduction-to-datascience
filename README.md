@@ -18,13 +18,18 @@ We provide instructions for both methods here.
 
 ### Without RStudio
 
-Once you are done editing, navigate to the repository root folder and run
+To build the **html version** of the book, navigate to the repository root folder and run
 ```
 ./build.sh
 ``` 
 from the command line. This command automatically spawns a docker container
 with the `ubcdsci/intro-to-ds` image, runs the script `build.R` from within the container,
 and then stops the container.
+
+To build the **PDF version** of the book, instead run
+```
+./pdfbuild.sh
+```
 
 ### With RStudio
 
@@ -48,8 +53,6 @@ and then stops the container.
     - for the username enter `rstudio` 
     - for the password enter `password` (or whatever you may have changed it to in the `docker run` command above)
     
-    > Note, if you prefer not to use RStudio, but a plain text editor instead (i.e., vim) the see [these docs](#usage-without-rstudio) below.
-
 3. Finally, you can render the book by running the following R code in the R console:
     ```
     bookdown::render_book('index.Rmd', 'bookdown::gitbook')
