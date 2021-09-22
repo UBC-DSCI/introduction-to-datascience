@@ -221,7 +221,7 @@ Tidy data satisfy the following three criteria [@wickham2014tidy]:
   - each row is a single observation,
   - each column is a single variable, and
   - each value is a single cell (i.e., its row and column position in the data
-    frame) is not shared with another value.
+    frame is not shared with another value).
 
 In Figure \@ref(fig:02-tidy-image), we have a tidy data set that satisfies these 
 three criteria. 
@@ -373,49 +373,61 @@ been met:
 Suppose we have observations spread across multiple rows rather than in a single
 row. For example, in Figure \@ref(fig:long-to-wide), the table on the left is an
 untidy, long format because the `count` column contains two variables
-(population and commuter count) and each observation is split across two rows.
+(population and commuter count) and information about each observation 
+(here population and commuter counts for a region) is split across two rows. 
+Remember, that one of the criteria for tidy data 
+is that each observation must be in a single row.
+
 Using data in this format means it's harder to apply functions when the values
-are not in their own column. For example, finding the maximum number of
-commuters is possible to do with the untidy table but requires a few more steps
-and is cumbersome. We can reshape this data set to a wider format by creating a
-column called "population" and a column called "commuters", which is the table
-on the right.
+for two or more variables are mixed together in a column.
+For example, finding the maximum number of commuters 
+is possible to do with the untidy table,
+however it requires an additional step of filtering for the commuter values
+before the maximum value can be computed.
+In comparison, if the data were tidy, 
+all we would have to do is compute the maximum value for the commuter column.
+To reshape this untidy data set to a tidy (and in this case wider) format,
+we need to create a column called "population" 
+and a column called "commuters".
+This is illustrated in the table on the right (Figure \@ref(fig:long-to-wide)).
 
 ``` {r long-to-wide, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from long to wide data", fig.retina = 2, out.width = "1150"}
 knitr::include_graphics("img/long_to_wide.jpeg")
 ```
 
-To tidy this type of data in R, we can use the function `pivot_wider`, which
-generally increases the number of columns (widens) and decreases the number of
-rows in a data set. The data set `region_lang_top5_cities_long.csv` contains the
-number of Canadians reporting the primary language at home and work for five
+To tidy this type of data in R, we can use the function `pivot_wider`,
+which generally increases the number of columns (widens) 
+and decreases the number of rows in a data set. 
+To learn how to use `pivot_wider`, we will work through an example with the `region_lang_top5_cities_long.csv` data set. 
+This data set contains the number of Canadians reporting 
+the primary language at home and work for five
 major cities (Toronto, Montréal, Vancouver, Calgary and Edmonton).
-
 
 ``` {r 02-reading-long, warning=FALSE, message=FALSE, R.options = list(width = 90)}
 lang_long <- read_csv("data/region_lang_top5_cities_long.csv")
 lang_long
 ```
 
-What is wrong with this format above? In this example, each observation should
-be a language in a region. However, in the messy data set above, each
-observation is split across multiple rows. One where the count for
-`most_at_home` is recorded and the other where the count for `most_at_work` is
-recorded. We can see how we would like to transform the data from long to wide with
-`pivot_wider` in Figure \@ref(fig:img-pivot-wider-table). 
-Suppose we wanted to visualize the relationship between the number of
-Canadians reporting their primary language at home and work. It would be
-difficult to do that with the messy data table on the left since these two
-variables are stored in the same column.
-
-
+What makes the data set shown above untidy? 
+In this example, each observation is a language in a region. 
+However, in the messy data set above, 
+each observation is split across multiple rows. 
+One where the count for `most_at_home` is recorded 
+and the other where the count for `most_at_work` is recorded. 
+Suppose our analysis goal with this data set was to 
+visualize the relationship between the number of
+Canadians reporting their primary language at home and work. 
+Doing that would be difficult with this data as it currently is
+since these two variables are stored in the same column.
+We can see how we would like to transform the data to make it tidy
+with `pivot_wider` in Figure \@ref(fig:img-pivot-wider-table).
 
 ``` {r img-pivot-wider-table, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from long to wide with pivot_wider", out.width="1100", fig.retina = 2}
 knitr::include_graphics("img/pivot_wider_with_table.jpeg")
 ```
 
-To tidy this data, we will use `pivot_wider`, and Figure
-\@ref(fig:img-pivot-wider) details what we need to specify to use this function.
+Figure \@ref(fig:img-pivot-wider) details what we need to specify 
+to use the `pivot_wider` function.
 
 ``` {r img-pivot-wider, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the pivot_wider function", out.width="1100", fig.retina = 2}
 knitr::include_graphics("img/pivot_wider.jpeg")
@@ -435,12 +447,12 @@ lang_home_tidy
 The data above is now tidy! We can go through the three criteria again to check
 that this data is a tidy data set.
 
-1.  All the variables are their own columns in the data frame, i.e.,
-    `most_at_home`, and `most_at_work` have been separated into their own
+1.  All the statistical variables are their own columns in the data frame (i.e.,
+    `most_at_home`, and `most_at_work`) have been separated into their own
     columns in the data frame.
-2.  Each observation, i.e., each language in a region is in a single row.
-3.  Each value is a single cell, i.e., its row, column position in the data
-    frame is not shared with another value.
+2.  Each observation, (i.e., each language in a region) is in a single row.
+3.  Each value is a single cell (i.e., its row, column position in the data
+    frame is not shared with another value).
 
 You might notice that we have the same number of columns in our tidy data set as
 we did in our messy one. Therefore `pivot_wider` didn't really "widen" our data
