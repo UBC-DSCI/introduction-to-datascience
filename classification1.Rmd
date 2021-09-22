@@ -610,7 +610,7 @@ especially if we want to handle multiple classes, more than two variables,
 or predicting the class for multiple new observations. Thankfully, in R,
 the $K$-nearest neighbors algorithm is implemented in the `parsnip` package 
 included in the 
-[`tidymodels` meta package](https://www.tidymodels.org/), along with 
+[`tidymodels` package](https://www.tidymodels.org/), along with 
 many [other models](https://www.tidymodels.org/find/parsnip/)
  that you will encounter in this and future chapters of the book. The `tidymodels` collection
 provides tools to help make and use models, such as classifiers.  Using the packages
@@ -627,7 +627,7 @@ We will use the `cancer` data set from above, with
 perimeter and concavity as predictors and $K = 5$ neighbors to build our classifier. Then
 we will use the classifier to predict the diagnosis label for a new observation with
 perimeter 0, concavity 3.5, and an unknown diagnosis label. Let's pick out our two desired
-predictor variables and class label and store it as a new dataset named `cancer_train`:
+predictor variables and class label and store them as a new data set named `cancer_train`:
 
 ```{r 05-tidymodels-2}
 cancer_train <- cancer |>
@@ -655,7 +655,7 @@ knn_spec
 ```
 
 In order to fit the model on the breast cancer data, we need to pass the model specification
-and the dataset to the `fit` function. We also need to specify what variables to use as predictors
+and the data setto the `fit` function. We also need to specify what variables to use as predictors
 and what variable to use as the target. Below, the `Class ~ Perimeter + Concavity` argument specifies 
 that `Class` is the target variable (the one we want to predict),
 and both `Perimeter` and `Concavity` are to be used as the predictors.
@@ -698,8 +698,8 @@ predict(knn_fit, new_obs)
 
 Is this predicted malignant label the true class for this observation? 
 Well, we don't know because we do not have this
-observation's diagnosis&mdash; that is what we were trying to predict.
-In the next chapter, we will 
+observation's diagnosis&mdash; that is what we were trying to predict! The 
+classifier's prediction is not necessarily correct, but in the next chapter, we will 
 learn ways to quantify how accurate we think our predictions are.
 
 ## Data preprocessing with `tidymodels`
@@ -731,7 +731,8 @@ $K$-nearest neighbor classification algorithm, this large shift can change the
 outcome of using many other predictive models. 
 
 To scale and center our data, we need to find
-our variables' mean and *standard deviation* (a number quantifying how spread out values are). 
+our variables' *mean* (the average, which quantifies the "central" value of a 
+set of numbers) and *standard deviation* (a number quantifying how spread out values are). 
 For each observed value of the variable, we subtract the mean (center the variable) 
 and divide by the standard deviation (scale the variable). When we do this, the data 
 is said to be *standardized*, and all variables in a data set will have a mean of 0 
@@ -795,7 +796,7 @@ For example:
 You can find [a full set of all the steps and variable selection functions](https://tidymodels.github.io/recipes/reference/index.html)
 on the recipes home page.
 
-Here we have calculated the required statistics based on the data input into the 
+At this point, we have calculated the required statistics based on the data input into the 
 recipe, but the data are not yet scaled and centred. To actually scale and center 
 the data, we need to apply the bake function to the unscaled data.
 
@@ -805,10 +806,10 @@ scaled_cancer
 ```
 
 It may seem redundant that we had to both `bake` *and* `prep` to scale and center the data.
-However, we do this in two steps so we could specify a different data set in the `bake` step
-if desired, say, new data you want to predict, which were not part of the training set. 
+ However, we do this in two steps so we can specify a different data set in the `bake` step, 
+ for instance, new data that were not part of the training set. 
 
-At this point, you may wonder why we are doing so much work just to center and
+You may wonder why we are doing so much work just to center and
 scale our variables.  Can't we just manually scale and center the `Area` and
 `Smoothness` variables ourselves before building our $K$-nearest neighbor model? Well,
 technically *yes*; but doing so is error-prone.  In particular, we might
@@ -951,7 +952,10 @@ ggplot(unscaled_cancer, aes(x = Area, y = Smoothness, group = Class, color = Cla
     xend = unlist(neighbors[3, attrs[1]]),
     yend = unlist(neighbors[3, attrs[2]])
   ), color = "black") +   theme_light() +  
- facet_zoom( xlim= c(399.7, 401.6), ylim = c(0.08, 0.14), zoom.size = 2) 
+# facet_zoom( xlim = c(399.7, 401.6), ylim = c(0.08, 0.14), zoom.size = 2) + 
+   facet_zoom(x = ( Area > 380 & Area < 420) , 
+              y = (Smoothness > 0.08 & Smoothness < 0.14), zoom.size = 2) + 
+  theme_bw()
 ```
 
 ### Balancing
@@ -1000,7 +1004,10 @@ rare_plot
 > process, which then guarantees the same result, i.e., the same choice of 3
 > observations, each time the code is run. In general, when your code involves
 > random numbers, if you want *the same result* each time, you should use
-> `set.seed`; if you want a *different result* each time, you should not.
+> `set.seed`; if you want a *different result* each time, you should not. 
+> You only need to `set.seed` once at the beginning of your analysis, so the 
+rest of the analysis uses seemingly random numbers.
+ 
 
 Suppose we now decided to use $K = 7$ in $K$-nearest neighbor classification.
 With only 3 observations of malignant tumors, the classifier 
