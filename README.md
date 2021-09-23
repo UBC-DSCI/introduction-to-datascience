@@ -167,6 +167,7 @@ These are absolute last steps when rendering the PDF output:
 - Look for and fix bad line wraps in code and text
 - Look for and fix bad figure placement
 - Look for `??` in the PDF (broken refs)
+- Make sure the 3D figures (and the text around them that refers to clicking and dragging) are properly modified for the PDF output
 
 ## Updating the textbook data
 Data sets are collected and curated by `data/retrieve_data.ipynb`. To run that notebook in the Docker container type the following in the terminal:
