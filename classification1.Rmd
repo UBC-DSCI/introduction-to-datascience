@@ -13,7 +13,7 @@ focus on *classification*, i.e., using one or more
 variables to predict the value of a categorical variable of interest. This chapter
 will cover the basics of classification, how to preprocess data to make it
 suitable for use in a classifier, and how to use our observed data to make
-predictions. The next will focus on how to evaluate how accurate the
+predictions. The next chapter will focus on how to evaluate how accurate the
 predictions from our classifier are, as well as how to improve our classifier
 (where possible) to maximize its accuracy.
 
@@ -161,8 +161,8 @@ can verify the levels of the `Class` column by using the `levels` function.
 This function should return the name of each category in that column. Given
 that we only have two different values in our `Class` column (B for benign and M 
 for malignant), we only expect to get two names back.  Note that the `levels` function requires a *vector* argument; 
-so we use the `pull` function to convert the `Class`
-column into a vector and pass that into the `levels` function to see the categories 
+so we use the `pull` function to extract a single column (`Class`) and 
+pass that into the `levels` function to see the categories 
 in the `Class` column. 
 
 ```{r 05-levels}
@@ -176,7 +176,7 @@ cancer |>
 Before we start doing any modelling, let's explore our data set. Below we use
 the `group_by`, `summarize` and `n` functions to find the number and percentage 
 of benign and malignant tumor observations in our data set. The `n` function within
-`summarize` counts the number of observations in each `Class` group. 
+`summarize` when paired with `group_by` counts the number of observations in each `Class` group. 
 Then we calculate the percentage in each group by dividing by the total number of observations. We have 357 (63\%) benign and 212 (37\%) malignant tumor observations.
 ```{r 05-tally}
 num_obs <- nrow(cancer)
@@ -190,13 +190,13 @@ cancer |>
 
 Next, let's draw a scatter plot to visualize the relationship between the
 perimeter and concavity variables. Rather than use `ggplot's` default palette,
-we select our own colourblind-friendly colors&mdash;`"orange2"` 
+we select our own colorblind-friendly colors&mdash;`"orange2"` 
 for light orange and `"steelblue2"` for light blue&mdash;and
  pass them as the `values` argument to the `scale_color_manual` function. 
 We also make the category labels ("B" and "M") more readable by 
 changing them to "Benign" and "Malignant" using the `labels` argument.
 
-```{r 05-scatter, fig.height = 4, fig.width = 5, fig.cap= "Scatter plot of concavity versus perimeter coloured by diagnosis label"}
+```{r 05-scatter, fig.height = 4, fig.width = 5, fig.cap= "Scatter plot of concavity versus perimeter colored by diagnosis label"}
 perim_concav <- cancer %>%
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
   geom_point(alpha = 0.6) +
@@ -215,7 +215,7 @@ measured *except* the label (i.e., an image without the physician's diagnosis
 for the tumor class). We could compute the standardized perimeter and concavity values,
 resulting in values of, say, 1 and 1. Could we use this information to classify
 that observation as benign or malignant? Based on the scatter plot, how might 
-you classify that new observation? If the standardized concavity and perimeter values are 1 and 1, the point would lie in the middle of the orange cloud of malignant points and thus we could probably classify it as malignant. Based on our visualization, it seems like the *prediction of an unobserved label* might be possible.
+you classify that new observation? If the standardized concavity and perimeter values are 1 and 1 respectively, the point would lie in the middle of the orange cloud of malignant points and thus we could probably classify it as malignant. Based on our visualization, it seems like the *prediction of an unobserved label* might be possible.
 
 ## Classification with $K$-nearest neighbors
 
@@ -261,7 +261,7 @@ $K$ for us. We will cover how to choose $K$ ourselves in the next chapter.
 
 To illustrate the concept of $K$-nearest neighbors classification, we 
 will walk through an example.  Suppose we have a
-new observation, with perimeter of `r new_point[1]` and concavity of `r new_point[2]`, whose 
+new observation, with standardized perimeter of `r new_point[1]` and standardized concavity of `r new_point[2]`, whose 
 diagnosis "Class" is unknown. This new observation is depicted by the red, diamond point in
 Figure \@ref(fig:05-knn-1).
 
@@ -291,7 +291,7 @@ then the perimeter and concavity values are similar, and so we may expect that
 they would have the same diagnosis. 
 
 
-```{r 05-knn-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter. The new observation is represented as a red diamond with a line to the malignant nearest neighbor."}
+```{r 05-knn-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter. The new observation is represented as a red diamond with a line to the one nearest neighbor, which has a malignant label."}
 perim_concav_with_new_point +
   geom_segment(aes(
     x = new_point[1],
@@ -317,7 +317,7 @@ Does this seem like the right prediction to make for this observation? Probably
 not, if you consider the other nearby points...
 
 
-```{r 05-knn-4, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter. The new observation is represented as a red diamond with a line to the benign nearest neighbor."}
+```{r 05-knn-4, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter. The new observation is represented as a red diamond with a line to the one nearest neighbor, which has a benign label."}
 
 perim_concav_with_new_point2 <- bind_rows(cancer, tibble(Perimeter = new_point[1], Concavity = new_point[2], Class = "unknown")) %>%
   ggplot(aes(x = Perimeter, y = Concavity, color = Class, shape = Class, size = Class)) +
@@ -383,7 +383,7 @@ We decide which points are the $K$ "nearest" to our new observation
 using the *straight-line distance* (we will often just refer to this as *distance*). 
 Suppose we have two observations $a$ and $b$, each having two predictor variables, $x$ and $y$.
 Denote $a_x$ and $a_y$ to be the values of variables $x$ and $y$ for observation $a$;
-$b_x$ and $b_y$ have similar definitions for observaiton $b$.
+$b_x$ and $b_y$ have similar definitions for observation $b$.
 Then the straight-line distance between observation $a$ and $b$ on the x-y plane can 
 be computed using the following formula: 
 
@@ -396,7 +396,7 @@ To find the $K$ nearest neighbors to our new observation, we compute the distanc
 from that new observation to each observation in our training data, and select the $K$ observations corresponding to the
 $K$ *smallest* distance values. For example, suppose we want to use $K=5$ neighbors to classify a new 
 observation with perimeter of `r new_point[1]` and 
-concavity of `r new_point[2]`, shown as a red, diamond in Figure \@ref(fig:05-multiknn-1). Let's calculate the distances
+concavity of `r new_point[2]`, shown as a red diamond in Figure \@ref(fig:05-multiknn-1). Let's calculate the distances
 between our new point and each of the observations in the training set to find
 the $K=5$ neighbors that are nearest to our new point. 
 You will see in the `mutate` step below, we compute the straight-line
@@ -486,7 +486,7 @@ perim_concav + annotate("path",
 
 Although the above description is directed toward two predictor variables, 
 exactly the same $K$-nearest neighbors algorithm applies when you
-have a higher number of predictor variable.  Each predictor variable may give us new
+have a higher number of predictor variables.  Each predictor variable may give us new
 information to help create our classifier.  The only difference is the formula
 for the distance between points. Suppose we have $m$ predictor
 variables for two observations $a$ and $b$, i.e., 
@@ -607,7 +607,7 @@ In order to classify a new observation using a $K$-nearest neighbor classifier, 
 
 Coding the $K$-nearest neighbors algorithm in R ourselves can get complicated,
 especially if we want to handle multiple classes, more than two variables,
-or predicting the class for multiple new observations. Thankfully, in R,
+or predict the class for multiple new observations. Thankfully, in R,
 the $K$-nearest neighbors algorithm is implemented in the `parsnip` package 
 included in the 
 [`tidymodels` package](https://www.tidymodels.org/), along with 
@@ -642,9 +642,9 @@ distance (`weight_func = "rectangular"`). The `weight_func` argument controls
 how neighbors vote when classifying a new observation; by setting it to `"rectangular"`,
 each of the $K$ nearest neighbors gets exactly 1 vote as described above. Other choices, 
 which weigh each neighbor's vote differently, can be found on 
-[the tidymodels website](https://parsnip.tidymodels.org/reference/nearest_neighbor.html).
+[the `tidymodels` website](https://parsnip.tidymodels.org/reference/nearest_neighbor.html).
 In the `set_engine` argument, we specify which package or system will be used for training
-the model. In this case, `kknn` is an R package for performing $K$-nearest neighbors classification.
+the model. Here `kknn` is the R package we will use for performing $K$-nearest neighbors classification.
 Finally, we specify that this is a classification problem with the `set_mode` function.
 
 ```{r 05-tidymodels-3}
@@ -655,7 +655,7 @@ knn_spec
 ```
 
 In order to fit the model on the breast cancer data, we need to pass the model specification
-and the data setto the `fit` function. We also need to specify what variables to use as predictors
+and the data set to the `fit` function. We also need to specify what variables to use as predictors
 and what variable to use as the target. Below, the `Class ~ Perimeter + Concavity` argument specifies 
 that `Class` is the target variable (the one we want to predict),
 and both `Perimeter` and `Concavity` are to be used as the predictors.
@@ -682,7 +682,7 @@ in the next chapter.
 Finally it shows (somewhat confusingly) that the "best" weight function 
 was "rectangular" and "best" setting of $K$ was 5; but since we specified these earlier,
 R is just repeating those settings to us here. In the next chapter, we will actually
-let R find the $K$ value for us. 
+let R find the value of $K$ for us. 
 
 Finally, we make the prediction on the new observation by calling the `predict` function,
 passing both the fit object we just created and the new observation itself. As above 
@@ -733,8 +733,8 @@ outcome of using many other predictive models.
 To scale and center our data, we need to find
 our variables' *mean* (the average, which quantifies the "central" value of a 
 set of numbers) and *standard deviation* (a number quantifying how spread out values are). 
-For each observed value of the variable, we subtract the mean (center the variable) 
-and divide by the standard deviation (scale the variable). When we do this, the data 
+For each observed value of the variable, we subtract the mean (i.e., center the variable) 
+and divide by the standard deviation (i.e., scale the variable). When we do this, the data 
 is said to be *standardized*, and all variables in a data set will have a mean of 0 
 and a standard deviation of 1. To illustrate the effect that standardization can have on the $K$-nearest
 neighbor algorithm, we will read in the original, unstandardized Wisconsin breast
@@ -753,7 +753,7 @@ Looking at the unscaled and uncentered data above, you can see that the differen
 between the values for area measurements are much larger than those for
 smoothness. Will this affect
 predictions? In order to find out, we will create a scatter plot of these two
-predictors (coloured by diagnosis) for both the unstandardized data we just
+predictors (colored by diagnosis) for both the unstandardized data we just
 loaded, and the standardized version of that same data. But first, we need to
 standardize the `unscaled_cancer` data set with `tidymodels`.
 
@@ -794,11 +794,11 @@ For example:
 - `-Class`: specify everything except the `Class` variable
 
 You can find [a full set of all the steps and variable selection functions](https://tidymodels.github.io/recipes/reference/index.html)
-on the recipes home page.
+on the `recipes` home page.
 
 At this point, we have calculated the required statistics based on the data input into the 
 recipe, but the data are not yet scaled and centred. To actually scale and center 
-the data, we need to apply the bake function to the unscaled data.
+the data, we need to apply the `bake` function to the unscaled data.
 
 ```{r 05-scaling-4}
 scaled_cancer <- bake(uc_recipe, unscaled_cancer)
@@ -806,11 +806,11 @@ scaled_cancer
 ```
 
 It may seem redundant that we had to both `bake` *and* `prep` to scale and center the data.
- However, we do this in two steps so we can specify a different data set in the `bake` step, 
- for instance, new data that were not part of the training set. 
+ However, we do this in two steps so we can specify a different data set in the `bake` step if we want. 
+ For example, we may want to specify new data that were not part of the training set. 
 
 You may wonder why we are doing so much work just to center and
-scale our variables.  Can't we just manually scale and center the `Area` and
+scale our variables. Can't we just manually scale and center the `Area` and
 `Smoothness` variables ourselves before building our $K$-nearest neighbor model? Well,
 technically *yes*; but doing so is error-prone.  In particular, we might
 accidentally forget to apply the same centering / scaling when making
@@ -931,7 +931,7 @@ ggplot(unscaled_cancer, aes(x = Area, y = Smoothness, group = Class, color = Cla
                      labels = c("Benign", "Malignant", "Unknown"), 
                      values = c("steelblue2", "orange2", "red")) +
   scale_shape_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"),
+                   labels = c("Benign", "Malignant", "Unknown"),
                      values= c(16, 16, 18)) +
     scale_size_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
@@ -1063,12 +1063,12 @@ rare_plot + geom_point(aes(x = new_point[1], y = new_point[2]),
 ```
 </center>
 
-Figure \@ref(fig:05-upsample-2) shows what happens if we set the background colour of 
+Figure \@ref(fig:05-upsample-2) shows what happens if we set the background color of 
 each area of the plot to the predictions the $K$-nearest neighbor 
 classifier would make. We can see that the decision is 
-always "benign," corresponding to the blue colour.
+always "benign," corresponding to the blue color.
 
-```{r 05-upsample-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data with background colour indicating the decision of the classifier and the points represent the labelled data"}
+```{r 05-upsample-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data with background color indicating the decision of the classifier and the points represent the labelled data"}
 
 knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) |>
   set_engine("kknn") |>
@@ -1120,13 +1120,13 @@ upsampled_cancer |>
   summarize(n = n())
 ```
 Now suppose we train our $K$-nearest neighbor classifier with $K=7$ on this *balanced* data. 
-Figure \@ref(fig:05-upsample-plot) shows what happens now when we set the background colour 
+Figure \@ref(fig:05-upsample-plot) shows what happens now when we set the background color 
 of each area of our scatter plot to the decision the $K$-nearest neighbor 
 classifier would make. We can see that the decision is more reasonable; when the points are close
 to those labelled malignant, the classifier predicts a malignant tumor, and vice versa when they are 
 closer to the benign tumor observations.
 
-```{r 05-upsample-plot, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Upsampled data with background colour indicating the decision of the classifier"}
+```{r 05-upsample-plot, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Upsampled data with background color indicating the decision of the classifier"}
 
 knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) |>
   set_engine("kknn") |>
@@ -1208,11 +1208,11 @@ prediction
 The classifier predicts that the first observation is benign ("B"), while the second is
 malignant ("M"). Figure \@ref(fig:05-workflow-plot-show) visualizes the predictions that this 
 trained $K$-nearest neighbor model will make on a large range of new observations.
-Although you have seen coloured prediction map visualizations like this a few times now,
+Although you have seen colored prediction map visualizations like this a few times now,
 we have not included the code to generate them, as it is a little bit complicated.
 For the interested reader who wants a learning challenge, we now include it below. 
 The basic idea is to create a grid of synthetic new observations using the `expand.grid` function, 
-predict the label of each, and visualize the predictions with a coloured scatter having a very high transparency 
+predict the label of each, and visualize the predictions with a colored scatter having a very high transparency 
 (low `alpha` value) and large point radius. See if you can figure out what each line is doing!
 
 > *Understanding this code is not required for the remainder of the textbook. It is included
@@ -1235,8 +1235,8 @@ knnPredGrid <- predict(knn_fit, asgrid)
 prediction_table <- bind_cols(knnPredGrid, asgrid) |> rename(Class = .pred_class)
 
 # plot:
-# 1. the coloured scatter of the original data
-# 2. the faded coloured scatter for the grid points
+# 1. the colored scatter of the original data
+# 2. the faded colored scatter for the grid points
 wkflw_plot <-
   ggplot() +
   geom_point(data = unscaled_cancer, 
@@ -1247,6 +1247,6 @@ wkflw_plot <-
   scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2"))
 ```
 
-```{r 05-workflow-plot-show, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of smoothness versus area where background colour indicates the decision of the classifier"}
+```{r 05-workflow-plot-show, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of smoothness versus area where background color indicates the decision of the classifier"}
 wkflw_plot
 ```
