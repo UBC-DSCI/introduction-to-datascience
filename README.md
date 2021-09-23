@@ -66,34 +66,67 @@ To build the **PDF version** of the book, instead run
 - use Oxford commas ("a, b, and c" not "a, b and c")
 - "subset" should not be used as a verb
 - functions in text should not have parentheses (`read_csv` not `read_csv()`)
-- 
+- remove all references to "course" and "student"; replace with "reader" or "you" where necessary
+- make sure we have permission to use all external resources that we use
 
 #### Code blocks
-- For R code block labels, use the format `##-[name with only alphanumeric + hyphens]` where 
+- Use the knitr label format `##-[name with only alphanumeric + hyphens]` where 
   the `##` is the 2-digit chapter number, e.g. `03-test-name` for a label `test-name` in chapter 3
+- Make sure to get syntax highlighting by specifying the language in each code block:
+  <pre>
+  ```r
+     code
+  ```
+  </pre>
+  not
+  <pre>
+  ```
+    code
+  ```
+  (similar for `html` where needed)
 - always use `|>` pipe, not `%>%`
 - anywhere we specify a grid of tuning values, don't just do `grid = 10`; actually specify the values using `seq` or `c(...)`
-- make sure all lines of code are at most 80 characters (for LaTeX PDF output typesetting)
 - do not end code blocks with `head(dataframe)`; just use `dataframe` to print
 - `set.seed` once at the beginning of each chapter
 - use `"double quotes"` for strings, not `'single quotes'`
+- make sure all lines of code are at most 80 characters (for LaTeX PDF output typesetting)
+- pass code blocks through `styler` (although must obey the 80ch limit)
+- use `slice`, `slice_min`, `slice_max` (not `top_n`)
 
 #### Section headings
 - All (sub)section headings should be sentence case ("Loading a tabular data set", not "Loading a Tabular Data Set")
+- Make sure that subsections occur in 1-step hierarchies (no subsubsection directly below subsection, for example)
+- Make sure that `{-}` is used wherever unnumbered headings are required
+
+Choose an appropriate table of contents depth via (example has depth 2 below, which is a good default)
+```
+bookdown::gitbook:
+    toc_depth: 2
+```
 
 #### Learning objectives
 - when saying that students will do things in code, always say "in R"
+- "you will be able to" (not "students will be able to", "the reader will be able to")
 
 #### Equations
-- make sure all equations get labels/numbers and are referenced (not by "equation below" or "equation above")
+- make sure all equations get capitalized labels ("Equation \@ref(blah)", not "equation below" or "equation above")
 
 #### Figures
-- make sure all figures get labels/numbers and are referenced (not "figure below" or "figure above")
+- make sure all figures get (capitalized) labels ("Figure \@ref(blah)", not "figure below" or "figure above")
+- make sure all figures get captions
 - specify image widths in terms of linewidth percent (e.g. `out.width="70%"`)
 - center align all images
+- make sure we have permission for every figure/logo that we use
+- Make sure all figures follow the visualization principles in Chapter 4
+- Make sure axes are set appropriately to not inflate/deflate differences artificially *where it does not compromise clarity* (e.g. in the classification
+  chapter there are a few examples where zoomed-in accuracy axes are better than using the full range 0 to 1)
 
 #### Tables
-- make sure all tables get labels/numbers and are referenced (not "table below" or "table above")
+- make sure all tables get capitalized labels ("Table \@ref(blah)", not "table below" or "table above")
+- make sure all tables get captions
+
+#### Note boxes
+- note boxes should be typeset as quote boxes using `>` and start with **Note:**
 
 #### Bibliography
 - do not put "et al" or "and others"; always use the full list of authors, BibTeX will choose how to abbreviate
@@ -108,10 +141,14 @@ To build the **PDF version** of the book, instead run
 - data frame (not dataframe)
 - data set (not dataset)
 - scatter plot (not scatterplot)
+- capitalize all initialisms and acronyms (URL not url, API not api, $K$-NN not $k$-nn)
+- response variable (not target, output)
+- predictor variable (not explanatory)
+- numerical variable (not quantitative variable)
+- categorical variable (not class variable)
 
 #### Punctuation
 - emdashes should have no surrounding spaces. `This kind of typesetting&mdash;which is awesome&mdash;is correct!` and `Typesetting with spaces around em-dashes &mdash; which is bad &mdash; is not correct`
-
 #### Common typos to check for
 - RMPSE: should be RMSPE
 - boostrap: should be bootstrap
