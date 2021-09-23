@@ -161,6 +161,12 @@ Generally the book uses American spelling. Some common British vs American and C
 - c vs s: defense (not defence)
 - er vs re: center (not centre)
 
+#### PDF Output
+These are absolute last steps when rendering the PDF output:
+- Look for and fix bad line breaks (e.g. with only one word on the next line, orphans, and widows)
+- Look for and fix bad line wraps in code and text
+- Look for and fix bad figure placement
+
 ## Updating the textbook data
 Data sets are collected and curated by `data/retrieve_data.ipynb`. To run that notebook in the Docker container type the following in the terminal:
 
