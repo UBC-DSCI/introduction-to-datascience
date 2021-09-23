@@ -92,6 +92,7 @@ To build the **PDF version** of the book, instead run
 - make sure all lines of code are at most 80 characters (for LaTeX PDF output typesetting)
 - pass code blocks through `styler` (although must obey the 80ch limit)
 - use `slice`, `slice_min`, `slice_max` (not `top_n`)
+- just `pull(colname)`, don't `select` first
 
 #### Section headings
 - All (sub)section headings should be sentence case ("Loading a tabular data set", not "Loading a Tabular Data Set")
