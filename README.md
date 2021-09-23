@@ -133,9 +133,9 @@ bookdown::gitbook:
 - do not put "et al" or "and others"; always use the full list of authors, BibTeX will choose how to abbreviate
 
 #### Naming conventions
-- $K$-means (not K-means, K means, Kmeans)
-- $K$-nearest neighbors (not K-nearest neighbors, K nearest neighbors, K nearest neighbor, use US spelling neighbor not neighbour). Note that $K$-nearest neighbor is not the singular form.
-- $K$-NN (not KNN, K-NN, K NN, $K$NN)
+- K-means (not $K$-\*, K means, Kmeans)
+- K-nearest neighbors (not $K$-\*, K nearest neighbors, K nearest neighbor, use US spelling neighbor not neighbour). Note that "K-nearest neighbor" is not the singular form; "K-nearest neighbors" is
+- K-NN (not $K$-\*, KNN, K NN, $K$NN, K-nn)
 - local repository (not local computer)
 - package (not library, meta package, meta-package)
 - data science (not Data Science)
