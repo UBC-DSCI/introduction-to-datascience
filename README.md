@@ -61,21 +61,68 @@ To build the **PDF version** of the book, instead run
 ## Style Guide
 
 #### General
-- 80 character line limit
-- `set.seed` once at the beginning of each chapter
+- **80 character line limit!** This is necessary to make git diffs useful
+- numbers in text should be english words ("four common mistakes" not "4 common mistakes") unless there are units (40km, not forty km)
+- use Oxford commas ("a, b, and c" not "a, b and c")
+- "subset" should not be used as a verb
+- functions in text should not have parentheses (`read_csv` not `read_csv()`)
+- 
 
-#### R code blocks
-- For R code block labels, use the format `##-[name with only alphanumeric +
-  hyphens]` where the `##` is the 2-digit chapter number, e.g. `03-test-name`
-  for a label `test-name` in chapter 3
+#### Code blocks
+- For R code block labels, use the format `##-[name with only alphanumeric + hyphens]` where 
+  the `##` is the 2-digit chapter number, e.g. `03-test-name` for a label `test-name` in chapter 3
+- always use `|>` pipe, not `%>%`
+- anywhere we specify a grid of tuning values, don't just do `grid = 10`; actually specify the values using `seq` or `c(...)`
+- make sure all lines of code are at most 80 characters (for LaTeX PDF output typesetting)
+- do not end code blocks with `head(dataframe)`; just use `dataframe` to print
+- `set.seed` once at the beginning of each chapter
+- use `"double quotes"` for strings, not `'single quotes'`
+
+#### Section headings
+- All (sub)section headings should be sentence case ("Loading a tabular data set", not "Loading a Tabular Data Set")
+
+#### Learning objectives
+- when saying that students will do things in code, always say "in R"
+
+#### Equations
+- make sure all equations get labels/numbers and are referenced (not by "equation below" or "equation above")
 
 #### Figures
+- make sure all figures get labels/numbers and are referenced (not "figure below" or "figure above")
+- specify image widths in terms of linewidth percent (e.g. `out.width="70%"`)
+- center align all images
 
 #### Tables
+- make sure all tables get labels/numbers and are referenced (not "table below" or "table above")
 
 #### Bibliography
+- do not put "et al" or "and others"; always use the full list of authors, BibTeX will choose how to abbreviate
 
 #### Naming conventions
+- $K$-means (not K-means, K means, Kmeans)
+- $K$-nearest neighbors (not K-nearest neighbors, K nearest neighbors, K nearest neighbor, use US spelling neighbor not neighbour). Note that $K$-nearest neighbor is not the singular form.
+- $K$-NN (not KNN, K-NN, K NN, $K$NN)
+- local repository (not local computer)
+- package (not library, meta package, meta-package)
+- data science (not Data Science)
+- data frame (not dataframe)
+- data set (not dataset)
+- scatter plot (not scatterplot)
+
+#### Punctuation
+- emdashes should have no surrounding spaces. `This kind of typesetting&mdash;which is awesome&mdash;is correct!` and `Typesetting with spaces around em-dashes &mdash; which is bad &mdash; is not correct`
+
+#### Common typos to check for
+- RMPSE: should be RMSPE
+- boostrap: should be bootstrap
+
+#### Use American spelling
+Generally the book uses American spelling. Some common British vs American and Canadian vs American gotchas:
+- o vs ou: neighbor and color (not neighbour and colour)
+- single vs double ell: labeling and labeled (not labelling and labelled)
+- z vs s: summarize (not summarise)
+- c vs s: defense (not defence)
+- er vs re: center (not centre)
 
 ## Updating the textbook data
 Data sets are collected and curated by `data/retrieve_data.ipynb`. To run that notebook in the Docker container type the following in the terminal:
