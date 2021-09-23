@@ -770,13 +770,6 @@ than French in Montréal according to the 2016 Canadian census.
 
 ## Using `mutate` to modify or add columns
 
-``` {r 02-character-official-langs, echo = FALSE}
-official_langs_chr <- mutate(official_langs,
-  most_at_home = as.character(most_at_home),
-  most_at_work = as.character(most_at_work)
-)
-```
- 
 In section \@ref(separate), 
 when we first read in the `"region_lang_top5_cities_messy.csv"` data 
 all of the variables were "character" data types. 
@@ -1004,13 +997,6 @@ output <- data |>
   select(new_col)
 ```
 
-> Note: The `|>` pipe operator was inspired by a previous version of the pipe
-> operator, `%>%`. The `%>%` pipe operator is not built into R and needs to be
-> loaded via an external R package. There are some other drawbacks to using
-> `%>%`, which are beyond the scope of this textbook. Just be aware that `%>%` exists
-> since you may see it used in some books or other sources. However, in this
-> textbook, we will be using the base R pipe operator syntax, `|>`.
-
 You can think of the pipe as a physical pipe. It takes the output from the
 function on the left-hand side of the pipe, and passes it as the first argument
 to the function on the right-hand side of the pipe. Note here that we have again
@@ -1022,6 +1008,20 @@ again is used to aid in improving code readability.
 
 Next, let's learn about the details of using the pipe, and look at some examples
 of how to use it in data analysis.
+
+> Note: In this textbook, we will be using the base R pipe operator syntax, `|>`.
+> This base R `|>` pipe operator was inspired by a previous version of the pipe
+> operator, `%>%`. The `%>%` pipe operator is not built into R 
+> and is from the `magrittr` R package.
+> The `tidyverse` metapackage imports the `%>%` pipe operator via `dplyr` 
+> (which in turn imports the `magrittr` R package).
+> In more advanced R use related to sharing and distributing code as R packages,
+> there are some other drawbacks to using `%>%` compared to `|>`, 
+> however these are beyond the scope of this textbook. 
+> We have this note in the book to make the reader aware that `%>%` exists
+> as it still commonly used in data analysis code and in many data science 
+> books and other resources.
+> In most cases these two pipes are interchangeable and either can be used.
 
 ### Using `|>` to combine `filter` and `select`
 
@@ -1037,11 +1037,15 @@ Suppose we want to create a subset of the data with only the languages and
 counts of each language spoken most at home for the city of Vancouver. To do
 this, we can use the functions `filter` and `select`. First, we use `filter` to
 create a data frame called `van_data` that contains only values for Vancouver.
-We then use `select` on this data frame to keep only the variables we want:
 
 ``` {r}
 van_data <- filter(tidy_lang, region == "Vancouver")
 van_data
+```
+
+We then use `select` on this data frame to keep only the variables we want:
+
+``` {r}
 van_data_selected <- select(van_data, language, most_at_home)
 van_data_selected
 ```
@@ -1069,19 +1073,18 @@ approach is more clear and readable.
 
 ### Using `|>` with more than two functions
 
-The `|>` can be used with any function in R. Additionally, we can pipe together
+The pipe operator (|>) can be used with any function in R. Additionally, we can pipe together
 more than two functions. For example, we can pipe together three functions to: 
 
-- order the rows by counts of the language most spoken at home from smallest to largest
-- only include the counts that are more than 10,000 and 
-- only include the region, language and count of Canadians reporting their primary language at home columns in our table.
+- `filter` rows to include only those where the counts of the language most spoken at home are greater than 10,000, 
+- `select` only the columns corresponding to `region`, `language` and `most_at_home`, and
+- `arrange` the dataframe rows in order by counts of the language most spoken at home 
+from smallest to largest.
 
-To order by counts of the language most spoken at home we will use the
-`tidyverse` function, `arrange`. Here we use only one column for sorting (`most_at_home`),
-but more than one can also be used. To do this, list additional columns
-separated by commas. The order they are listed in indicates the order in which
-they will be used for sorting. This is much like how an English dictionary sorts
-words: first by the first letter, then by the second letter, and so on.
+> **Note:** As we saw in Chapter \@ref(intro), we can use the `tidyverse` `arrange` function 
+> to order the rows in the dataframe by the values of one or more columns. 
+> Here we pass the column name `most_at_home` to arrange to order the dataframe rows 
+> by the values in that column, in ascending order.
 
 ``` {r}
 large_region_lang <- filter(tidy_lang, most_at_home > 10000) |>
@@ -1116,9 +1119,9 @@ still want to do these things. For example, you might store temporary objects
 because you want to save prepared data before feeding it into a plot function 
 so you can iteratively change the plot without having to
 redo all of your data transformations each time you create a new plot.
-Additionally, piping many functions can be overwhelming, so you may also want to
-store a temporary object midway through and pipe that into more functions after
-that.
+Additionally, piping many functions can be overwhelming and difficult to debug, 
+so you may also want to store a temporary object midway through 
+and pipe that into more functions after that.
 
 ## Aggregating data with `group_by` + `summarize`
 
