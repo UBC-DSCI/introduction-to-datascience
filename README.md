@@ -110,10 +110,10 @@ bookdown::gitbook:
 - "you will be able to" (not "students will be able to", "the reader will be able to")
 
 #### Equations
-- make sure all equations get capitalized labels ("Equation \@ref(blah)", not "equation below" or "equation above")
+- make sure all equations get capitalized labels ("Equation \\@ref(blah)", not "equation below" or "equation above")
 
 #### Figures
-- make sure all figures get (capitalized) labels ("Figure \@ref(blah)", not "figure below" or "figure above")
+- make sure all figures get (capitalized) labels ("Figure \\@ref(blah)", not "figure below" or "figure above")
 - make sure all figures get captions
 - specify image widths in terms of linewidth percent (e.g. `out.width="70%"`)
 - center align all images
@@ -123,7 +123,7 @@ bookdown::gitbook:
   chapter there are a few examples where zoomed-in accuracy axes are better than using the full range 0 to 1)
 
 #### Tables
-- make sure all tables get capitalized labels ("Table \@ref(blah)", not "table below" or "table above")
+- make sure all tables get capitalized labels ("Table \\@ref(blah)", not "table below" or "table above")
 - make sure all tables get captions
 
 #### Note boxes
