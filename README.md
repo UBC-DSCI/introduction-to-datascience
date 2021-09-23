@@ -62,6 +62,7 @@ To build the **PDF version** of the book, instead run
 
 #### General
 - 80 character line limit
+- `set.seed` once at the beginning of each chapter
 
 #### R code blocks
 - For R code block labels, use the format `##-[name with only alphanumeric +
