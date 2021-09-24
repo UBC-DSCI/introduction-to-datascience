@@ -24,12 +24,16 @@ To build the **html version** of the book, navigate to the repository root folde
 ``` 
 from the command line. This command automatically spawns a docker container
 with the `ubcdsci/intro-to-ds` image, runs the script `build.R` from within the container,
-and then stops the container.
+and then stops the container. It may ask you for a password; this is the password for the
+`sudo` command on your computer. Typically this is just your usual computer user account password.
+But if your setup doesn't require you to use `sudo` to start a docker container, you can just
+open `build.sh` and delete the word `sudo` at the start of the script.
 
 To build the **PDF version** of the book, instead run
 ```
 ./pdfbuild.sh
 ```
+The same comments regarding passwords and `sudo` as above apply here.
 
 ### With RStudio
 
