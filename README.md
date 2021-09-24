@@ -68,6 +68,7 @@ To build the **PDF version** of the book, instead run
 - functions in text should not have parentheses (`read_csv` not `read_csv()`)
 - remove all references to "course" and "student"; replace with "reader" or "you" where necessary
 - make sure we have permission to use all external resources that we use
+- remove all references to "clicking on things" in the HTML version of the book (e.g. "click this link to ...")
 
 #### Code blocks
 - Use the knitr label format `##-[name with only alphanumeric + hyphens]` where 
@@ -169,6 +170,9 @@ These are absolute last steps when rendering the PDF output:
 - Look for and fix bad figure placement
 - Look for `??` in the PDF (broken refs)
 - Make sure the 3D figures (and the text around them that refers to clicking and dragging) are properly modified for the PDF output
+- Make sure all markdown label-replaced URLs (of the form `[blah](url)`) will make 
+  sense in the hardcopy book version (i.e. nothing like "click this"). Many links appear in the additional resources: make sure the 
+  text-replacement of the URL contains enough information for someone to find the resource (without being able to click the link)
 
 ## Updating the textbook data
 Data sets are collected and curated by `data/retrieve_data.ipynb`. To run that notebook in the Docker container type the following in the terminal:
