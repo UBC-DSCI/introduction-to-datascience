@@ -12,6 +12,8 @@ By the end of the chapter, readers will be able to:
 
 - Describe what training, validation, and test data sets are and how they are used in classification
 - Split data into training, validation, and test data sets
+- Describe what a random seed is and its importance in reproducible data analysis
+- Set the random seed in R using the `set.seed` function
 - Evaluate classification accuracy in R using a validation data set and appropriate metrics
 - Execute cross-validation in R to choose the number of neighbors in a $K$-nearest neighbors classifier
 - Describe advantages and disadvantages of the $K$-nearest neighbors classification algorithm
@@ -39,9 +41,11 @@ labels for the observations in the **test set**, then we have some
 confidence that our classifier might also accurately predict the class
 labels for new observations without known class labels.
 
-> Note: if there were a golden rule of machine learning, it might be this: *you cannot use the test data to build the model!* 
-> If you do, the model gets to "see" the test data in advance, making it look more accurate than it really is. Imagine
-> how bad it would be to overestimate your classifier's accuracy when predicting whether a patient's tumor is malignant or benign!
+> Note: if there were a golden rule of machine learning, it might be this: 
+> *you cannot use the test data to build the model!* If you do, the model gets to
+> "see" the test data in advance, making it look more accurate than it really
+> is. Imagine how bad it would be to overestimate your classifier's accuracy
+> when predicting whether a patient's tumor is malignant or benign!
 
 ```{r 06-training-test, echo = FALSE, warning = FALSE, fig.cap = "Splitting the data into training and testing sets", fig.retina = 2, out.width = "600pt"}
 knitr::include_graphics("img/training_test.jpeg")
@@ -66,17 +70,111 @@ books on this topic.
 knitr::include_graphics("img/ML-paradigm-test.png")
 ```
 
+## Randomness and seeds {#randomseeds}
+Beginning in this chapter, our data analyses will often involve the use
+of *randomness*. We use randomness any time we need to make a decision in our
+analysis that needs to be fair, unbiased, and not influenced by human input.
+For example, in this chapter, we need to split
+a data set into a training set and test set to evaluate our classifier. We 
+certainly do not want to choose how to split
+the data ourselves by hand, as we want to avoid accidentally influencing the result
+of the evaluation. So instead, we let R *randomly* split the data.
+In future chapters we will use randomness
+in many other ways, e.g., to help us select a small subset of data from a larger data set, 
+to pick groupings of data, and more.
+
+However, the use of randomness runs counter to one of the main 
+tenets of good data analysis practice: *reproducibility*. Recall that a reproducible
+analysis produces the same result each time it is run; if we include randomness
+in the analysis, would we not get a different result each time?
+The trick is that in R&mdash;and other programming languages&mdash;randomness 
+is not actually random! Instead, R uses a *random number generator* that
+produces a sequence of numbers that
+are completely determined by a *seed value*. Once you set the seed value 
+using the `set.seed` function, everything after that point may *look* random,
+but is actually totally reproducible. As long as you pick the same seed
+value, you get the same result!
+
+Let's use an example to investigate how seeds work in R. Say we want 
+to randomly pick 10 numbers from 0 to 9 in R using the `sample` function,
+but we want it to be reproducible. Before using the sample function,
+we call `set.seed`, and pass it any integer as an argument. 
+Here, we pass in the number `1`.
+```{r}
+set.seed(1)
+random_numbers <- sample(0:9, 10, replace=TRUE)
+random_numbers
+```
+You can see that `random_numbers` is a list of 10 numbers
+from 0 to 9 that, from all appearances, looks random. If 
+we run the `sample` function again, we will 
+get a fresh batch of 10 numbers that also look random.
+```{r}
+random_numbers <- sample(0:9, 10, replace=TRUE)
+random_numbers
+```
+If we want to force R to produce the same sequences of random numbers,
+we can simply call the `set.seed` function again with the same argument
+value.
+```{r}
+set.seed(1)
+random_numbers <- sample(0:9, 10, replace=TRUE)
+random_numbers
+random_numbers <- sample(0:9, 10, replace=TRUE)
+random_numbers
+```
+And if we choose 
+a different value for the seed&mdash;say, 4235&mdash;we
+obtain a different sequence of random numbers.
+```{r}
+set.seed(4235)
+random_numbers <- sample(0:9, 10, replace=TRUE)
+random_numbers
+```
+In other words, even though the sequences of numbers that R is generating *look*
+random, they are totally determined when we set a seed value! 
+
+So what does this mean for data analysis? Well, `sample` is certainly
+not the only function that uses randomness in R. Many of the functions 
+that we use in `tidymodels`, `tidyverse`, and beyond use randomness&mdash;many of them
+without even telling you about it. So at the beginning of every data analysis you
+do, right after loading packages, you should call the `set.seed` function and
+pass it an integer that you pick.
+Also note that when R starts up, it creates its own seed to use. So if you do not
+explicitly call the `set.seed` function in your code, your results will 
+likely not be reproducible.
+And finally, be careful to set the seed *only once* at the beginning of a data
+analysis. Each time you set the seed, you are inserting your own human input,
+thereby influencing the analysis. If you use `set.seed` many times
+throughout your analysis, the randomness that R uses will not look 
+as random as it should.
+
+In summary: if you want your analysis to be reproducible, i.e., produce *the same result* each time you
+run it, make sure to use `set.seed` exactly once at the beginning of the analysis.
+Different argument values in `set.seed` lead to different patterns of randomness, but as long as 
+you pick the same argument value your result will be the same. 
+In the remainder of the textbook, we will set the seed once at the beginning of each chapter.
+
+## Evaluating accuracy with `tidymodels`
+Back to evaluating classifiers now!
 In R, we can use the `tidymodels` package not only to perform $K$-nearest neighbors
-classification, but also to assess how well our classification worked. Let's
-work through an example of this process using the breast cancer data set.
-We start by loading the necessary packages, reading in the breast cancer data
-from the previous chapter, and making a quick scatter plot visualization of
+classification, but also to assess how well our classification worked. 
+Let's work through an example of how to use tools from `tidymodels` to evaluate a classifier
+ using the breast cancer data set from the previous chapter.
+We begin the analysis by loading the packages we require,
+reading in the breast cancer data,
+and then making a quick scatter plot visualization of
 tumor cell concavity versus smoothness colored by diagnosis in Figure \@ref(fig:06-precode).
+You will also notice that we set the random seed here at the beginning of the analysis
+using the `set.seed` function, as described in Section \@ref(randomseeds).
 
 ```{r 06-precode, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of tumor cell concavity versus smoothness colored by diagnosis label", message = F, warning = F}
 # load packages
 library(tidyverse)
 library(tidymodels)
+
+# set the seed
+set.seed(1)
 
 # load data
 cancer <- read_csv("data/unscaled_wdbc.csv") |>

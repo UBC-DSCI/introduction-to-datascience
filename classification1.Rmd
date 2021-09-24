@@ -974,20 +974,24 @@ class (no disease, normal email).
 To better illustrate the problem, let's revisit the scaled breast cancer data, 
 `cancer`; except now we will remove many of the observations of malignant tumors, simulating
 what the data would look like if the cancer was rare. We will do this by
-picking only 3 observations randomly from the malignant group, and keeping all
-of the benign observations. We choose these 3 observations using the `slice_sample`
-function, which takes two arguments: a data frame-like object to sample from 
-and the number of rows to be randomly selected (`n`).
+picking only 3 observations from the malignant group, and keeping all
+of the benign observations. We choose these 3 observations using the `slice_head`
+function, which takes two arguments: a data frame-like object,
+and the number of rows to select from the top (`n`).
 The new imbalanced data is shown in Figure \@ref(fig:05-unbalanced).
 
-```{r 05-unbalanced, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data"}
+```{r 05-unbalanced-seed, echo = FALSE, warning = FALSE, message = FALSE}
+# hidden seed here for reproducibility 
+# randomness shouldn't affect much in this use of step_upsample,
+# but just in case...
 set.seed(3)
+```
+```{r 05-unbalanced, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data"}
 rare_cancer <- bind_rows(
-    filter(cancer, Class == "B"),
-    cancer |> 
-      filter(Class == "M") |> slice_sample(n = 3)
+      filter(cancer, Class == "B"),
+      cancer |> filter(Class == "M") |> slice_head(n = 3)
     ) |>
-  select(Class, Perimeter, Concavity)
+    select(Class, Perimeter, Concavity)
 
 rare_plot <- rare_cancer |>
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
@@ -996,18 +1000,6 @@ rare_plot <- rare_cancer |>
   scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2"))
 rare_plot
 ```
-> Note: You will see in the code above that we use the `set.seed` function.
-> This is because we are using `slice_sample` to artificially pick only 3 of
-> the malignant tumor observations, which uses random sampling to choose which
-> rows will be in the training set. In order to make the code reproducible, we
-> use `set.seed` to specify where the random number generator starts for this
-> process, which then guarantees the same result, i.e., the same choice of 3
-> observations, each time the code is run. In general, when your code involves
-> random numbers, if you want *the same result* each time, you should use
-> `set.seed`; if you want a *different result* each time, you should not. 
-> You only need to `set.seed` once at the beginning of your analysis, so the 
-rest of the analysis uses seemingly random numbers.
- 
 
 Suppose we now decided to use $K = 7$ in $K$-nearest neighbor classification.
 With only 3 observations of malignant tumors, the classifier 
