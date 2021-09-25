@@ -1123,40 +1123,119 @@ Additionally, piping many functions can be overwhelming and difficult to debug,
 so you may also want to store a temporary object midway through 
 and pipe that into more functions after that.
 
-## Aggregating data with `group_by` + `summarize`
+## Aggregating data with `summarize`
 
-### Calculating summary statistics:
+### Calculating summary statistics on a column:
 
 As a part of many data analyses, we need to calculate a summary value for the
-data (a *summary statistic*). Examples of summary statistics we might want to calculate are the
-number of observations, the average/mean value for a column, the minimum value, etc. 
-A useful `dplyr` function for calculating summary statistics is
-`summarize`, where the first argument is the data frame and the proceeding arguments
-are the summaries we want to perform. Below we show how to use the `summarize` function to
-calculate the minimum and maximum number of Canadians reporting a particular
-language as their primary language at home:
+data (a *summary statistic*). 
+Examples of summary statistics we might want to calculate 
+are the number of observations, the average/mean value for a column, 
+the minimum value, etc. 
+Often times, 
+this summary statistic is calculated from the values in a data frame column, 
+or columns, as shown in Figure \@ref(fig:summarize)).
+
+```{r summarize}
+# Add figure here
+```
+
+A useful `dplyr` function for calculating summary statistics is `summarize`, 
+where the first argument is the data frame and the proceeding arguments
+are the summaries we want to perform. 
+Below we show how to use the `summarize` function to calculate the minimum 
+and maximum number of Canadians 
+reporting a particular language as their primary language at home.
+
+First a reminder of what `region_lang` looks like:
 
 ``` {r}
-lang_summary <- summarize(tidy_lang,
-  min_most_at_home = min(most_at_home),
-  most_most_at_home = max(most_at_home)
-)
-lang_summary
+region_lang
+```
+
+And then we apply `summarize` to calculate the minimum 
+and maximum number of Canadians 
+reporting a particular language as their primary language at home, 
+for any region:
+
+``` {r}
+summarize(region_lang,
+          min_most_at_home = min(most_at_home),
+          max_most_at_home = max(most_at_home))
+```
+
+```{r, include = FALSE}
+lang_summary <- summarize(region_lang,
+          min_most_at_home = min(most_at_home),
+          max_most_at_home = max(most_at_home))
 ```
 
 From this we see that there are some languages in the data set the no one speaks
 as their primary language at home, as well as that the most commonly spoken
 primary language at home is spoken by
-`r format(lang_summary$most_most_at_home[1], scientific = FALSE, big.mark = ",")`
+`r format(lang_summary$max_most_at_home[1], scientific = FALSE, big.mark = ",")`
 people.
 
-### Calculating group summary statistics:
+#### Calculating summary statistics when there are NA's
+
+When we use base R statistical summary functions 
+(e.g., `max`, `mix`, `mean`, `sum`, etc) with `summarize`, 
+R will return to us `NA` when we apply functions to columns that 
+contain `NA`'ss in the data frame. 
+Usually that is not what we want to happen, 
+instead we'd usually like R to ignore the NA's 
+and calculate the summary statistic using all of the other values, 
+that are not `NA`'s, in the column.
+
+How can we do that? 
+In this case of pairing base R statistical summary functions with `summarize`, 
+we can avoid getting R to return NA's by adding the argument `na.rm = TRUE` 
+to the base R statistical summary function we are applying. 
+We show an example of this below.
+
+First we create a seemingly innocuous NA 
+in the first row of the `region_lang` data frame, 
+in the most_at_home column:
+
+```{r}
+region_lang_na <- region_lang
+region_lang_na[["most_at_home"]][1] <- NA
+region_lang_na
+```
+
+And then if we apply our summarize function as above, 
+we see that no longer get the minimum and maximum returned, 
+but just an `NA` instead!
+
+```{r}
+summarize(region_lang_na,
+          min_most_at_home = min(most_at_home),
+          max_most_at_home = max(most_at_home))
+```
+
+We can fix this by adding the `na.rm = TRUE` as explained above:
+
+```{r}
+summarize(region_lang_na,
+          min_most_at_home = min(most_at_home, na.rm = TRUE),
+          max_most_at_home = max(most_at_home, na.rm = TRUE))
+```
+
+### Calculating summary statistics on a column from groups of rows:
 
 A common pairing with `summarize` is `group_by`. Pairing these functions
-together can let you summarize values for subgroups within a data set. For
-example, here, we can use `group_by` to group the regions of the `tidy_lang` dataframe
+together can let you summarize values for subgroups within a data set,
+as illustrated in Figure \@ref(fig:summarize-groupby). 
+
+```{r summarize-groupby}
+# Add figure here
+```
+
+For example, 
+here, we can use `group_by` to group the regions of the `tidy_lang` dataframe
 and then calculate the minimum and maximum number of Canadians 
-reporting the language as the primary language at home for each of the groups.
+reporting the language as the primary language at home 
+for each of the regions in the data set.
 
 The `group_by` function takes at least two arguments. The first is the data
 frame that will be grouped, and the second and onwards are columns to use in the
@@ -1164,135 +1243,58 @@ grouping. Here we use only one column for grouping (`region`), but more than one
 can also be used. To do this, list additional columns separated by commas.
 
 ``` {r}
-lang_summary_by_region <- group_by(tidy_lang, region) |>
-summarize(
-  min_most_at_home = min(most_at_home),
-  max_most_at_home = max(most_at_home)
-)
-lang_summary_by_region
+group_by(region_lang, region) |>
+  summarize(
+    min_most_at_home = min(most_at_home),
+    max_most_at_home = max(most_at_home)
+    )
 ```
 
-Notice that `group_by` on its own doesn't change the way the data looks. In the output below 
-the grouped data set looks the same, and it doesn't *appear* to be grouped by `region`. 
-Instead, `group_by` simply changes how other functions work with the data, as we saw with `summarize` above.  
+Notice that `group_by` on its own doesn't change the way the data looks. 
+In the output below the grouped data set looks the same, 
+and it doesn't *appear* to be grouped by `region`. 
+Instead, `group_by` simply changes how other functions work with the data, 
+as we saw with `summarize` above.  
 
 ```{r}
-group_by(tidy_lang, region)
+group_by(region_lang, region)
 ```
 
-## Iterating over columns of a data frame
+### Calculating summary statistics on many columns
 
-Where should you turn when you discover the next step in your data
-wrangling/cleaning process requires you to apply a function to *every* column in a
-data frame? The process of repeating a function, say on different columns or data sets,
-is called **iteration**. For example, suppose you wanted to
-know the maximum value of every column in a data frame. You could use `summarize`
-as discussed above. However, this becomes inconvenient when you have many
-columns, as `summarize` requires you to type out a column name and a data
-transformation for each summary statistic you want to calculate.
-
-### Using `summarize` and `across` to iterate 
-
-In cases, where you want to apply the same data transformation to all
-columns, it is more efficient to use `dplyr`'s `across` function with `summarize` to apply a
-transformation to each column. For example, let's find the maximum value of each of the numeric
-columns of the `region_lang.csv` data set. First, let’s read in and peek at the data to familiarize
-ourselves with it:
-
-``` {r 02-preview-region-data, message = FALSE}
-region_lang <- read_csv("data/region_lang.csv")
-region_lang
-```
-
-We *could* apply `summarize` in the same way that we did above to find the maximum
-values:
-
-``` {r}
-lang_summary_max <- summarize(region_lang,  
-                              mother_tongue = max(mother_tongue), 
-                              most_at_home = max(most_at_home),
-                              most_at_work = max(most_at_work), 
-                              lang_known = max(lang_known)) 
-lang_summary_max 
-```
-
-The approach above gets the job done, but if we had many columns in our
-data set then this method would take a lot of time since we would have to
-explicitly write out the name of each column! A faster and less error-prone way
-to apply function(s) to many columns is to use `summarize` and `across`. In the
-first argument of `across` we specify the columns we want to summarize and in
-the second argument we indicate the function we want to apply.
+Sometimes we need to summarize statistics across many columns. 
+In such a case, using `summarize` alone means that we have to 
+type out the name of each column we want to summarize. 
+To do this more efficiently, we can pair `summarize` with `across`
+and use the same syntax we use with the `select` function to 
+specify which columns we would like to perform the statistical summarries on, 
+as well as which function to use to calculate these.
+Here we demonstrate finding the maximum value of each of the numeric
+columns of the `region_lang` data set.
 
 ``` {r 02-across-data}
-max_of_columns <- region_lang |>
+region_lang |>
   summarize(across(mother_tongue:lang_known, max))
-
-max_of_columns
 ``` 
 
-We get the same output as we did above and we didn't have to write out each and every column name! 
-What if you need to add other arguments to the functions you want to use? For
-example, what if there were NA values in our columns that we wanted to know the
-maximum of?
-
-``` {r 02-making-NAs-data, include = F}
-region_with_nas <- region_lang |> 
-  select_if(is.numeric) |>
-add_row(mother_tongue = 5, most_at_home = 5, most_at_work = NA, lang_known = NA) |>
-arrange(!is.na(lang_known), lang_known) |>
-write_csv("data/region_lang_with_nas.csv")
-```
-
-``` {r 02-read-in-nas, message = FALSE, warning = FALSE}
-region_with_nas <- read_csv("data/region_lang_with_nas.csv")
-region_with_nas
-```
-
-Notice `summarize` returns `NA` for the `most_at_work` and `lang_known`
-variables since those columns contained NAs in the data frame. This is what
-happens with many of the built-in R statistical functions when NA's are present
-(it is not solely a problem with `summarize` and `across`).
-
-``` {r 02-nas-region}
-region_with_nas |>
-  summarize(across(mother_tongue:lang_known, max))
-```
-
-Thus, we also need to add the argument `na.rm = TRUE` ("NA
-remove") to the `across` function so that we get a more useful value than `NA`
-returned. An example of this is shown below:
-
-``` {r 02-across-data-nas}
-max_of_columns <- region_with_nas |>
-  summarize(across(mother_tongue:lang_known, max, na.rm = TRUE))
-max_of_columns
-
-``` 
-
-Now we get the maximum count for each column ignoring the NAs in the data set!
-
-
-### Using `purrr`'s `map*` functions to iterate
-
-An alternative to `summarize` and `across` for iteration is `purrr`'s `map` function. 
+An alternative to `summarize` and `across` 
+for applying a function to many columns is the `map` family of functions.
 Let's again find the maximum value of each column of the
 `region_lang` data frame, but using `map` with the `max` function this time.
-We will select only the numeric columns of the data frame:
 
-``` {r 02-numeric-data}
-region_lang_numeric <- region_lang |>
-  select(where(is.numeric))
-region_lang_numeric
-```
-
-Next, we use `map` to apply the `max` function to each column. `map` takes two
-arguments, an object (a vector, data frame or list) that you want to apply the
-function to, and the function that you would like to apply. Here our arguments
-will be `region_lang_numeric` and `max`:
+As `map` does not have an argument that lets us use `select` syntax 
+to specify which columns to apply the `max` function to, 
+we will do this before calling `map`.
+`map` takes two arguments, 
+an object (a vector, data frame or list) that you want to apply the function to, 
+and the function that you would like to apply.  
+Here our arguments will be a data frame 
+(that we passed to `map` from `select`, via the pipe operator) and `max`:
 
 ``` {r 02-map}
-max_of_columns <- map(region_lang_numeric, max)
-max_of_columns
+region_lang |>
+  select(mother_tongue:lang_known) |>
+  map(max)
 ```
 
 > **Note:** `purrr` is part of the tidyverse, and so like the `dplyr` and
@@ -1304,11 +1306,14 @@ doesn't look like a data frame. As it so happens, it is *not* a data frame, but
 rather a plain list:
 
 ``` {r 02-type-out-of-map}
-typeof(max_of_columns)
+region_lang |>
+  select(mother_tongue:lang_known) |>
+  map(max) |>
+  typeof()
 ```
 
 So what do we do? Should we convert this to a data frame? We could, but a
-simpler alternative is to just use a different `map_*` function from the `purrr`
+simpler alternative is to just use a different `map` function from the `purrr`
 package. There are quite a few to choose from, they all work similarly, and
 their name reflects the type of output you want from the mapping operation:
 
@@ -1319,64 +1324,98 @@ their name reflects the type of output you want from the mapping operation:
 | `map_int()` | integer vector |
 | `map_dbl()` | double vector |
 | `map_chr()` | character vector |
-| `map_df()` | data frame |
+| `map_dfc()` | data frame, combining column-wise |
+| `map_dfc()` | data frame, combining row-wise |
 
-Let's get the columns' maximums again, but this time use the `map_df` function
+Let's get the columns' maximums again, but this time use the `map_dfc` function
 to return the output as a data frame:
 
 ``` {r 02-map-df-example}
-max_of_columns <- map_df(region_lang_numeric, max)
-max_of_columns
+region_lang |>
+  select(mother_tongue:lang_known) |>
+  map_dfc(max)
 ```
 
-Which `map_*` function you choose depends on what you want to do with the
-output; you don't always have to pick `map_df`!
+Which `map` function you choose depends on what you want to do with the
+output; you don't always have to pick `map_dfc`!
 
-Similarly to `summarize` and `across`, `map_df()` returns `NA` for columns that 
-contain NAs in the data frame (remember that is what happens with many of the
-built-in R statistical functions when NA's are present...).
-``` {r 02-map-na}
-map_df(region_with_nas, max)
-```
+Similarly to when we use base R statistical summary functions 
+(e.g., `max`, `mix`, `mean`, `sum`, etc) with `summarize`, 
+`map` functions paired with base R statistical summary functions
+also return NA's when we apply them to columns that 
+contain NAs in the data frame.
 
-We need to add the argument `na.rm = TRUE` to the end of our call to
-`map` and they will be passed to the function that we are mapping. An example of
-this is shown below:
+To avoid this, again we need to add the argument `na.rm = TRUE`.
+When we use this with `map` we do this by adding a `,` and then `na.rm = TRUE`,
+after specifying the function we want map to apply, as illustrated below:
 
 ``` {r}
-map_df(region_with_nas, max, na.rm = TRUE)
+region_lang |>
+  select(mother_tongue:lang_known) |>
+  map_dfc(max, na.rm = TRUE)
 ```
 
-Now `map_df()` returns the maximum count for each column ignoring the NAs in the
-data set!
-
-The `map_*` functions are generally quite useful for solving problems involving
-iteration. Additionally, their use is not limited to columns of a data frame;
-`map_*` functions can be used to apply functions to elements of a vector or
-list, and even to lists of data frames, or nested data frames.
+The `map` family functions are generally quite useful for solving many problems 
+involving repeatedly applying functions in R. 
+Additionally, their use is not limited to columns of a data frame;
+`map` family functions can be used to apply functions to elements of a vector,
+or a list, and even to lists of data frames, or nested data frames.
+To learn more about them see the resource linked to in the Additional Resources
+section at the end of this chapter.
 
 ## Apply functions across columns within one row with `rowwise`
 
 What if you want to apply a function across columns but within one row? 
+We illustrate such a data transformation in Figure \@ref(fig:rowwise).
+
+```{r rowwise}
+# fig goes here
+```
+
 For instance, suppose we want to know the maximum value between `mother_tongue`,
-`most_at_home`, `most_at_work` and `lang_known` for each language in the `region_lang` data set?
-In other words, we want to apply the `max` function row-wise. We will use the aptly 
-named function `rowwise` in combination with `mutate` to accomplish this task. 
->**Note:** Before we apply `rowwise` we will `select` only the count columns 
+`most_at_home`, `most_at_work` 
+and `lang_known` for each language, in each region,
+in the `region_lang` data set?
+In other words, we want to apply the `max` function row-wise. 
+We will use the aptly named function `rowwise` in combination with `mutate` 
+to accomplish this task. 
+
+Before we apply `rowwise` we will `select` only the count columns 
 so we can see all the columns in the dataframe's output easily in the book. 
+So for this demonstration, the data set we are operating on looks like this:
+
+```{r}
+region_lang |> 
+  select(mother_tongue:lang_known)
+```
+
+Now we apply `rowwise` before `mutate`, to tell R that we would like
+our mutate function to be applied across, and within, a row,
+as opposed to being applied on a column 
+(which is the default behaviour of `mutate`):
 
 ```{r}
 region_lang |> 
   select(mother_tongue:lang_known) |>
   rowwise() |> 
-  mutate(maximum = max(c(mother_tongue, most_at_home, most_at_work, lang_known)))
+  mutate(maximum = max(c(mother_tongue, 
+                         most_at_home, 
+                         most_at_work, 
+                         lang_known)))
 ```
 
-Similar to `group_by`, `rowwise` doesn't do anything when it is called by itself, 
-however, we can apply `rowwise` in combination with other functions to change how 
-these other functions operate on the data.  
-Notice if we used `mutate` without `rowwise`, we would have computed the maximum 
-value across *all* rows rather than the maximum value for *each* row. 
+Now we see that we get an additional column added to our data frame, 
+named `maximum`, which is the the maximum value between `mother_tongue`,
+`most_at_home`, `most_at_work` and `lang_known` for each language, 
+in each region in the `region_lang` data set.
+
+Similar to `group_by`, 
+`rowwise` doesn't do anything when it is called by itself, 
+however, we can apply `rowwise` in combination 
+with other functions to change how these other functions operate on the data.  
+Notice if we used `mutate` without `rowwise`, 
+we would have computed the maximum value across *all* rows 
+rather than the maximum value for *each* row. 
 Therefore in the output below the same maximum value is reported 
 in every single row since it is 
 the maximum value among *all* the rows, so this code is not doing what we want. 
@@ -1384,7 +1423,10 @@ the maximum value among *all* the rows, so this code is not doing what we want.
 ```{r}
 region_lang |> 
   select(mother_tongue:lang_known) |>
-  mutate(maximum = max(c(mother_tongue, most_at_home, most_at_home, lang_known)))
+  mutate(maximum = max(c(mother_tongue, 
+                         most_at_home, 
+                         most_at_home, 
+                         lang_known)))
 ```
 
 ## Summary
