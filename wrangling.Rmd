@@ -1195,7 +1195,7 @@ We show an example of this below.
 
 First we create a seemingly innocuous NA 
 in the first row of the `region_lang` data frame, 
-in the most_at_home column:
+in the `most_at_home column`:
 
 ```{r}
 region_lang_na <- region_lang
@@ -1262,12 +1262,14 @@ group_by(region_lang, region)
 
 ### Calculating summary statistics on many columns
 
+#### `summarize` + `across` for calculating summary statistics on many columns
+
 Sometimes we need to summarize statistics across many columns. 
 In such a case, using `summarize` alone means that we have to 
 type out the name of each column we want to summarize. 
 To do this more efficiently, we can pair `summarize` with `across`
 and use the same syntax we use with the `select` function to 
-specify which columns we would like to perform the statistical summarries on, 
+specify which columns we would like to perform the statistical summaries on, 
 as well as which function to use to calculate these.
 Here we demonstrate finding the maximum value of each of the numeric
 columns of the `region_lang` data set.
@@ -1276,6 +1278,29 @@ columns of the `region_lang` data set.
 region_lang |>
   summarize(across(mother_tongue:lang_known, max))
 ``` 
+
+> **Note on calculating summary statistics with `summarize` + `across`** 
+> **when there are NA's**:
+> 
+> Similarly to when we use base R statistical summary functions 
+> (e.g., `max`, `mix`, `mean`, `sum`, etc) with `summarize` alone, 
+> the use of the `summarize` + `across` functions paired 
+> with base R statistical summary functions
+> also return NA's when we apply them to columns that 
+> contain NAs in the data frame. 
+> 
+> To avoid this, again we need to add the argument `na.rm = TRUE`,
+> but in this case we need to use it a little bit differently.
+> In this case, we need to add a `,` and then `na.rm = TRUE`,
+> after specifying the function we want `summarize` + `across` to apply, 
+> as illustrated below:
+> 
+> ``` {r}
+> region_lang_na |>
+>   summarize(across(mother_tongue:lang_known, max, na.rm = TRUE))
+> ```
+
+#### `map` for calculating summary statistics on many columns
 
 An alternative to `summarize` and `across` 
 for applying a function to many columns is the `map` family of functions.
@@ -1339,21 +1364,23 @@ region_lang |>
 Which `map` function you choose depends on what you want to do with the
 output; you don't always have to pick `map_dfc`!
 
-Similarly to when we use base R statistical summary functions 
-(e.g., `max`, `mix`, `mean`, `sum`, etc) with `summarize`, 
-`map` functions paired with base R statistical summary functions
-also return NA's when we apply them to columns that 
-contain NAs in the data frame.
-
-To avoid this, again we need to add the argument `na.rm = TRUE`.
-When we use this with `map` we do this by adding a `,` and then `na.rm = TRUE`,
-after specifying the function we want map to apply, as illustrated below:
-
-``` {r}
-region_lang |>
-  select(mother_tongue:lang_known) |>
-  map_dfc(max, na.rm = TRUE)
-```
+> **Note on calculating summary statistics with `map` when there are NA's**:
+> 
+> Similarly to when we use base R statistical summary functions 
+> (e.g., `max`, `mix`, `mean`, `sum`, etc) with `summarize`, 
+> `map` functions paired with base R statistical summary functions
+> also return NA's when we apply them to columns that 
+> contain NAs in the data frame.
+> 
+> To avoid this, again we need to add the argument `na.rm = TRUE`.
+> When we use this with `map` we do this by adding a `,` and then `na.rm = TRUE`,
+> after specifying the function we want `map` to apply, as illustrated below:
+> 
+> ``` {r}
+> region_lang_na |>
+>   select(mother_tongue:lang_known) |>
+>   map_dfc(max, na.rm = TRUE)
+> ```
 
 The `map` family functions are generally quite useful for solving many problems 
 involving repeatedly applying functions in R. 
@@ -1480,9 +1507,9 @@ Table: (#tab:summary-functions-table) Summary of wrangling functions
     `pivot_longer`/`pivot_wider` and `separate`, but also covers missing values
     and additional wrangling functions (like `unite`). The [data
     transformation](https://r4ds.had.co.nz/transform.html) chapter covers
-    `select`, `filter`, `arrange`, `mutate`, and `summarize`. And the [`map_*`
+    `select`, `filter`, `arrange`, `mutate`, and `summarize`. And the [`map`
     functions](https://r4ds.had.co.nz/iteration.html#the-map-functions) chapter
-    provides more about the `map_*` functions.
+    provides more about the `map` functions.
   - You will occasionally encounter a case where you need to iterate over items
     in a data frame, but none of the above functions are flexible enough to do
     what you want. In that case, you may consider using [a for
