@@ -71,6 +71,7 @@ From a data perspective, a data frame is a rectangle where the rows are the
 observations and the columns are the variables:
 
 ``` {r 02-setup, include=FALSE}
+library(magick)
 library(tidyverse)
 library(canlang)
 library(cowplot)
@@ -282,7 +283,7 @@ by creating a column called "year" and a column called
 Note that this transformation makes the data "longer".
 
 ``` {r 02-wide-to-long, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from wide to long data", fig.retina = 2, out.width = "1150"}
-knitr::include_graphics("img/wide_to_long.jpeg")
+knitr::include_graphics("img/pivot_functions/pivot_functions.001.jpeg")
 ```
 
 The function `pivot_longer` combines columns, 
@@ -324,7 +325,7 @@ data on the right in Figure \@ref(fig:img-pivot-longer-with-table),
 we could simply use one line of code (`max(mother_tongue)`) to get the maximum value. 
 
 ``` {r img-pivot-longer-with-table, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from wide to long with the pivot_longer function", out.width="1100", fig.retina = 2}
-knitr::include_graphics("img/pivot_longer_with_table.jpeg")
+knitr::include_graphics("img/pivot_functions/pivot_functions.003.jpeg")
 ```
 
 Figure \@ref(fig:img-pivot-longer) details what arguments we need to specify to
@@ -392,7 +393,7 @@ and a column called "commuters".
 This is illustrated in the table on the right (Figure \@ref(fig:long-to-wide)).
 
 ``` {r long-to-wide, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from long to wide data", fig.retina = 2, out.width = "1150"}
-knitr::include_graphics("img/long_to_wide.jpeg")
+knitr::include_graphics("img/pivot_functions/pivot_functions.002.jpeg")
 ```
 
 To tidy this type of data in R, we can use the function `pivot_wider`,
@@ -423,7 +424,7 @@ We can see how we would like to transform the data to make it tidy
 with `pivot_wider` in Figure \@ref(fig:img-pivot-wider-table).
 
 ``` {r img-pivot-wider-table, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Going from long to wide with pivot_wider", out.width="1100", fig.retina = 2}
-knitr::include_graphics("img/pivot_wider_with_table.jpeg")
+knitr::include_graphics("img/pivot_functions/pivot_functions.004.jpeg")
 ```
 
 Figure \@ref(fig:img-pivot-wider) details what we need to specify 
@@ -1125,7 +1126,7 @@ and pipe that into more functions after that.
 
 ## Aggregating data with `summarize`
 
-### Calculating summary statistics on a column:
+### Calculating summary statistics on columns:
 
 As a part of many data analyses, we need to calculate a summary value for the
 data (a *summary statistic*). 
@@ -1136,8 +1137,9 @@ Often times,
 this summary statistic is calculated from the values in a data frame column, 
 or columns, as shown in Figure \@ref(fig:summarize)).
 
-```{r summarize}
-# Add figure here
+```{r summarize, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "`summarize` is useful for calculating summary statistics on one, or more, column(s). In it's simplest use case, it creates a new data frame with a single row containing the summary statistic(s) for each column being summarized. The darker, top row of each table represents the column headers.", out.width="100%", fig.retina = 2}
+image_read("img/summarize/summarize.001.jpeg") |> 
+  image_crop("2000x475+0+300")
 ```
 
 A useful `dplyr` function for calculating summary statistics is `summarize`, 
@@ -1227,8 +1229,9 @@ A common pairing with `summarize` is `group_by`. Pairing these functions
 together can let you summarize values for subgroups within a data set,
 as illustrated in Figure \@ref(fig:summarize-groupby). 
 
-```{r summarize-groupby}
-# Add figure here
+```{r summarize-groupby, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "`summarize` + `group_by` is useful for calculating summary statistics on one, or more, column(s), for each group. It creates a new data frame with a row for each group, containing the summary statistic(s) for each column being summarized. It also creates a column listing the value of the grouping variable. The darker, top row of each table represents the column headers. The grey, blue and green coloured rows correspond to the rows that belong to each of three groups being represented in this cartoon example.", out.width="100%", fig.retina = 2}
+image_read("img/summarize/summarize.002.jpeg") |> 
+  image_crop("2000x475+0+300")
 ```
 
 For example, 
@@ -1262,10 +1265,26 @@ group_by(region_lang, region)
 
 ### Calculating summary statistics on many columns
 
+Sometimes we need to summarize statistics across many columns.
+An example of this is illustrated in Figure \@ref(fig:summarize-across).
+
+```{r summarize-across, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "`summarize` + `across` or `map` is useful for efficiently calculating summary statistics on many columns at once. The darker, top row of each table represents the column headers.", out.width="100%", fig.retina = 2}
+image_read("img/summarize/summarize.003.jpeg") |> 
+  image_crop("2000x475+0+300")
+```
+
+In such a case, using `summarize` alone means that we have to 
+type out the name of each column we want to summarize.
+In this section we will meet two strategies for performing this task. 
+First we will see how we can do this using `summarize` + `across`.
+Then we will also explore how we can use a more general iteration function, 
+`map`, to also accomplish this.
+
 #### `summarize` + `across` for calculating summary statistics on many columns
 
-Sometimes we need to summarize statistics across many columns. 
-In such a case, using `summarize` alone means that we have to 
+To summarize statistics across many columns, we can use the 
+`summarize` function we have just recently learned about.
+However, in such a case, using `summarize` alone means that we have to 
 type out the name of each column we want to summarize. 
 To do this more efficiently, we can pair `summarize` with `across`
 and use the same syntax we use with the `select` function to 
@@ -1395,8 +1414,9 @@ section at the end of this chapter.
 What if you want to apply a function across columns but within one row? 
 We illustrate such a data transformation in Figure \@ref(fig:rowwise).
 
-```{r rowwise}
-# fig goes here
+```{r rowwise, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "`rowwise` + `mutate` is useful for applying functions across columns within one row. The darker, top row of each table represents the column headers.", out.width="100%", fig.retina = 2}
+image_read("img/summarize/summarize.004.jpeg") |> 
+  image_crop("2000x475+0+300")
 ```
 
 For instance, suppose we want to know the maximum value between `mother_tongue`,
