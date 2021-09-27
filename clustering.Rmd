@@ -567,7 +567,7 @@ not_standardized_data
 ```
 
 And then we apply the `scale` function to every column in the data frame 
-using `mutate` + `across`:
+using `mutate` + `across`.
 
 ```{r 10-mapdf-scale-data}
 standardized_data <- not_standardized_data |>
@@ -587,6 +587,7 @@ earlier, the clustering will be reproducible.
 # hidden seed
 set.seed(1)
 ```
+
 ```{r 10-kmeans}
 penguin_clust <- kmeans(standardized_data, centers = 3)
 penguin_clust
@@ -637,57 +638,64 @@ penguin_clust_ks <- tibble(k = 1:9)
 penguin_clust_ks
 ```
 
-Then we use `map` \index{map} to apply the `kmeans` function to each
-K. However, we need to use `map` a little bit differently than we have
-before. This is because we need to iterate over `k`, which is the *second argument* 
-to the `kmeans` function. In the past, we have used `map` only to iterate over values of the
-*first argument* of a function. Since that is the default, we could simply 
-write `map(data_frame, function_name)`. This won't work here; we need to 
-provide our data frame as the first argument to the `kmeans` function.
-
-The solution is to create something called an *anonymous function*. \index{function!anonymous}
-An anonymous function is a function that has no name,
-unlike other functions you've seen so far (`kmeans`, `select`, etc). 
+Then we use `rowwise` \index{rowwise} + `mutate` to apply the `kmeans` function 
+within each row, to each K. 
+However, given that the `kmeans` returns a model object to us, (not a vector),
+we will need to store the results as a list columm.
+This can work because lists are super vectors, and so they are legitimate 
+data structures for data frame columns. 
+To make this work, 
+we have to put each model object in a list using the `list` function.
 To do this we will write our map statement like this:
 
-```{r, eval = FALSE}
-map(penguin_clust_ks, function(k) kmeans(standardized_data, k))
+```{r}
+penguin_clust_ks <- tibble(k = 1:9) |>
+  rowwise() |>
+  mutate(penguin_clusts = list(kmeans(standardized_data, k)))
 ```
 
-The anonymous function in the above call is `function(k) kmeans(standardized_data, k)`.
-This function takes a single argument (`k`) and evaluates `kmeans(standardized_data, k)`.
-Since `k` is the *first* (and only) argument to the function, we can use `map` just
-like we did before! The rest of the call above does just that -- it passes each row of
-`penguin_clust_ks` to our anonymous function.
+If we take a look at our data frame `penguin_clust_ks` now, 
+we see that it has two columns: one with the value for K, 
+and the other holding the clustering model object in a list column.
 
-Below, we execute this `map` call inside of a `mutate` call on the 
-`penguin_clust_ks` data frame and get a list column that contains a K-means
-clustering object for each value of K we had:
-\index{mutate}
-
-```{r 10-choose-k-part2}
-penguin_clust_ks <- tibble(k = 1:9) |>
-  mutate(penguin_clusts = map(k, function(ks) kmeans(standardized_data, ks)))
+```{r}
 penguin_clust_ks
 ```
 
-Next, we use `map` again to apply `glance` \index{glance} to each of the K-means
-clustering objects to get the clustering statistics (including WSSD). The output
-of glance is a data frame, and so we get another list column. This results in a 
-complex data frame with 3 columns, one for K, one for the 
+> If we wanted to get one of the clusterings out 
+> of the list column in the data frame,
+> we can use our familiar friends `slice` and `pull`.
+> However, before we do this, we need to turn `rowwise`.
+> To do that, we use `ungroup` 
+> (predictably, this can also turn `group_by` off as well).
+> 
+> ```{r}
+> penguin_clust_ks |>
+>   ungroup() |>
+>   slice(1) |>
+>   pull(penguin_clusts)
+> ```
+
+Next, we use `mutate` again to apply `glance` \index{glance} 
+to each of the K-means clustering objects to get the clustering statistics 
+(including WSSD). 
+The output of glance is a data frame, 
+and so we need to create another list column (using `list`) for this to work. 
+This results in a complex data frame with 3 columns, one for K, one for the 
 K-means clustering objects, and one for the clustering statistics:
 
 ```{r 10-choose-k-part3}
 penguin_clust_ks <- tibble(k = 1:9) |>
-  mutate(
-    penguin_clusts = map(k, ~ kmeans(standardized_data, .x)),
-    glanced = map(penguin_clusts, glance)
-  )
+  rowwise() |>
+  mutate(penguin_clusts = list(kmeans(standardized_data, k)),
+         glanced = list(glance(penguin_clusts)))
+
 penguin_clust_ks
 ```
 
-Finally we extract the total WSSD from the `glanced` column. Given that each 
-item in this column is a data frame, we will need to use the `unnest` function 
+Finally we extract the total WSSD from the `glanced` column. 
+Given that each item in this list column is a data frame, 
+we will need to use the `unnest` function 
 to unpack the data frames into simpler column data types. 
 
 ```{r 10-get-total-within-sumsqs}
@@ -728,10 +736,9 @@ the more likely we are to find a lucky, or good clustering (if one exists!).
 
 ```{r 10-choose-k-nstart, fig.height = 4, fig.width = 4.35, message= F, warning = F}
 penguin_clust_ks <- tibble(k = 1:9) |>
-  mutate(
-    penguin_clusts = map(k, ~ kmeans(standardized_data, nstart = 10, .x)),
-    glanced = map(penguin_clusts, glance)
-  )
+  rowwise() |>
+  mutate(penguin_clusts = list(kmeans(standardized_data, nstart = 10, k)),
+         glanced = list(glance(penguin_clusts)))
 
 clustering_statistics <- penguin_clust_ks |>
   unnest(glanced)
