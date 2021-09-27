@@ -73,6 +73,7 @@ The same comments regarding passwords and `sudo` as above apply here.
 - remove all references to "course" and "student"; replace with "reader" or "you" where necessary
 - make sure we have permission to use all external resources that we use
 - remove all references to "clicking on things" in the HTML version of the book (e.g. "click this link to ...")
+- When we introduce a new term, use `**bolding**` to typeset it (but only the first introduction of the term)
 
 #### Code blocks
 - Use the knitr label format `##-[name with only alphanumeric + hyphens]` where 
