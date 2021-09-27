@@ -24,14 +24,18 @@ including techniques to choose the number of clusters.
 ## Chapter learning objectives 
 By the end of the chapter, readers will be able to:
 
-* Describe a case where clustering is appropriate, and what insight it might extract from the data.
+* Describe a case where clustering is appropriate, 
+and what insight it might extract from the data.
 * Explain the K-means clustering algorithm.
 * Interpret the output of a K-means analysis.
-* Identify when it is necessary to scale variables before clustering, and do this using R.
+* Differentiate between clustering and classification.
+* Identify when it is necessary to scale variables before clustering, 
+and do this using R.
 * Perform K-means clustering in R using `kmeans`.
 * Use the elbow method to choose the number of clusters for K-means.
 * Visualize the output of K-means clustering in R using coloured scatter plots.
-* Describe the advantages, limitations and assumptions of the K-means clustering algorithm.
+* Describe the advantages, 
+limitations and assumptions of the K-means clustering algorithm.
 
 ## Clustering
 Clustering \index{clustering} is a data analysis task involving separating a data set into
@@ -266,7 +270,9 @@ Note, however, that "large" is relative to *both* the scale of the variables for
 
 ### The clustering algorithm
 
-We begin the K-means \index{K-means!algorithm} algorithm by picking K, and uniformly randomly assigning data to the K clusters. 
+We begin the K-means \index{K-means!algorithm} algorithm by picking K, 
+and randomly assigning an equal number of observations 
+to each of the K clusters.
 Then K-means consists of two major steps that attempt to minimize the
 sum of WSSDs over all the clusters, i.e. the \index{WSSD!total} *total WSSD*:
 
@@ -678,11 +684,19 @@ elbow_plot
 ```
 
 It looks like 3 clusters is the right choice for this data.
-But why is there a "bump" in the total WSSD plot here? Shouldn't total WSSD always
-decrease as we add more clusters? Technically yes, but remember:  K-means can 
-get "stuck" in a bad solution. Unfortunately, for K = 8 we had an unlucky initialization
-and found a bad clustering! \index{K-means!restart,nstart} We can help prevent finding a bad clustering by trying a 
-few different random initializations via the `nstart` argument (here we use 10 restarts). 
+But why is there a "bump" in the total WSSD plot here? 
+Shouldn't total WSSD always decrease as we add more clusters? 
+Technically yes, but remember:  K-means can get "stuck" in a bad solution. 
+Unfortunately, for K = 8 we had an unlucky initialization
+and found a bad clustering! \index{K-means!restart,nstart} 
+We can help prevent finding a bad clustering 
+by trying a few different random initializations 
+via the `nstart` argument (here we use 10 restarts). 
+When we do this, K-means clustering will be performed 
+the number of times specified by the `nstart` argument,
+and R will return to us the best clustering from this.
+The more times we perform K-means clustering, 
+the more likely we are to find a lucky, or good clustering (if one exists!).
 
 ```{r 10-choose-k-nstart, fig.height = 4, fig.width = 4.35, message= F, warning = F}
 penguin_clust_ks <- tibble(k = 1:9) |>
@@ -702,6 +716,14 @@ elbow_plot <- ggplot(clustering_statistics, aes(x = k, y = tot.withinss)) +
   scale_x_continuous(breaks = 1:9)
 elbow_plot
 ```
+
+What value should you choose for `nstart`? The answer is it depends.
+It depends on the size of your data set, 
+and the speed and size of your computer.
+The larger the `nstart` value the better from an analysis perspective, 
+but there is a trade-off that doing many many clusterings 
+could take a long time.
+So this is something that needs to be balanced.
 
 ## Additional resources
 - Chapter 10 of [An Introduction to Statistical Learning](https://www.statlearning.com/) [-@james2013introduction] provides a great next stop in the process of learning about clustering and unsupervised learning in general. In the realm of clustering specifically, it provides a great companion introduction to K-means, but also covers *hierarchical* clustering for when you expect there to be subgroups, and then subgroups within subgroups, etc. in your data. In the realm of more general unsupervised learning, it covers *principal components analysis (PCA)*, which is a very popular technique in scientific applications for reducing the number of predictors in a dataset. 
