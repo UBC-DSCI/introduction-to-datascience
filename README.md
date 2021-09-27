@@ -155,6 +155,8 @@ bookdown::gitbook:
 
 #### Punctuation
 - emdashes should have no surrounding spaces. `This kind of typesetting&mdash;which is awesome&mdash;is correct!` and `Typesetting with spaces around em-dashes &mdash; which is bad &mdash; is not correct`
+- make sure `\index` commands don't break punctuation spacing. E.g. `This is an item \index{item}; it is good` will typeset with an erroneous space after item, i.e. `This is an item ; it is good`
+
 #### Common typos to check for
 - RMPSE: should be RMSPE
 - boostrap: should be bootstrap
@@ -171,12 +173,17 @@ Generally the book uses American spelling. Some common British vs American and C
 These are absolute last steps when rendering the PDF output:
 - Look for and fix bad line breaks (e.g. with only one word on the next line, orphans, and widows)
 - Look for and fix bad line wraps in code and text
-- Look for and fix bad figure placement
+- Look for and fix bad figure placement (falling off page, going over the side)
 - Look for `??` in the PDF (broken refs)
+- Look in the index for near-duplicates, and merge if needed
 - Make sure the 3D figures (and the text around them that refers to clicking and dragging) are properly modified for the PDF output
 - Make sure all markdown label-replaced URLs (of the form `[blah](url)`) will make 
   sense in the hardcopy book version (i.e. nothing like "click this"). Many links appear in the additional resources: make sure the 
   text-replacement of the URL contains enough information for someone to find the resource (without being able to click the link)
+
+#### HTML Output
+- Look for broken references (I *think* these end up as `??`)
+- Look for uncentered images
 
 ## Updating the textbook data
 Data sets are collected and curated by `data/retrieve_data.ipynb`. To run that notebook in the Docker container type the following in the terminal:
