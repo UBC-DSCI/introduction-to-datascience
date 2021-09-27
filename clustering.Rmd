@@ -3,23 +3,20 @@
 ```{r 09-clustering, echo = FALSE, message = FALSE, warning = FALSE}
 knitr::opts_chunk$set(warning = FALSE)
 library(RColorBrewer)
-# colour blind friendly colours:
-#cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-#library(plotrix)
-#sapply(cbbPalette, color.id) # to convert hex colour to colours with names 
-
-# set the colours in the graphs, some graphs with the code shown to students are hard coded 
+# set the colours in the graphs, 
+# some graphs with the code shown to students are hard coded 
 cbbPalette <- c(brewer.pal(9, "Paired"))
 cbpalette <- c("darkorange3", "dodgerblue3", "goldenrod1")
-
 ```
 
 ## Overview 
 As part of exploratory data analysis, it is often helpful to see if there are
-meaningful subgroups (or *clusters*) in the data; this grouping can be used 
-for many purposes, such as generating new questions or improving predictive analyses. 
-This chapter provides an introduction to clustering using the *K-means* algorithm,
+meaningful subgroups (or *clusters*) in the data. 
+This grouping can be used for many purposes, 
+such as generating new questions or improving predictive analyses. 
+This chapter provides an introduction to clustering 
+using the K-means algorithm,
 including techniques to choose the number of clusters.
 
 ## Chapter learning objectives 
@@ -45,32 +42,40 @@ use the subgroups to generate new questions about the data and follow up with a
 predictive modelling exercise. In this course, clustering will be used only for
 exploratory analysis, i.e., uncovering patterns in the data.  
 
-Note that clustering is a fundamentally different kind of task than classification or
-regression. In particular, both classification and regression are *supervised tasks* 
-\index{classification}\index{regression}\index{supervised} where 
-there is a *predictive target* (a class label or value), and we
-have examples of past data with labels/values that help us predict those of
-future data. By contrast, clustering is an *unsupervised task*, \index{unsupervised} as we are
-trying to understand and examine the structure of data without any labels to
-help us. This approach has both advantages and disadvantages. Clustering
-requires no additional annotation or input on the data. For example, it would
-be nearly impossible to annotate all the articles on Wikipedia with human-made
-topic labels. However, we can still cluster the articles without this
-information to find groupings corresponding to topics automatically. 
+Note that clustering is a fundamentally different kind of task 
+than classification or regression. 
+In particular, both classification and regression are *supervised tasks* 
+\index{classification}\index{regression}\index{supervised} 
+where there is a *response variables* (a category label or value), 
+and we have examples of past data with labels/values 
+that help us predict those of future data. 
+By contrast, clustering is an *unsupervised task*, 
+\index{unsupervised} as we are trying to understand 
+and examine the structure of data without any response variable labels 
+or values to help us. 
+This approach has both advantages and disadvantages. 
+Clustering requires no additional annotation or input on the data. 
+For example, it would be nearly impossible to annotate 
+all the articles on Wikipedia with human-made topic labels. 
+However, we can still cluster the articles without this information 
+to find groupings corresponding to topics automatically. 
 
-However, because there is no predictive target, it is not as easy to evaluate
+However, because there is no response variable, it is not as easy to evaluate
 the "quality" of a clustering.  With classification, we can use a test data set
 to assess prediction performance. In clustering, there is not a single good
 choice for evaluation. In this book, we will use visualization to ascertain the
 quality of a clustering, and leave rigorous evaluation for more advanced
 courses.  
 
-> There are also so-called *semisupervised* tasks, \index{semisupervised} where only some of the data
-> come with labels/annotations, but the vast majority don't. The goal
-> is to try to uncover underlying structure in the data that allows one to
-> guess the missing labels. This sort of task is beneficial, for example, when one 
-> has an unlabelled data set that is too large to manually label, but one is willing to
-> provide a few informative example labels as a "seed" to guess the labels for all the data.
+> There are also so-called *semisupervised* tasks, \index{semisupervised} 
+> where only some of the data come with response variable labels/values, 
+> but the vast majority don't. 
+> The goal is to try to uncover underlying structure in the data 
+> that allows one to guess the missing labels. 
+> This sort of task is beneficial, for example, 
+> when onehas an unlabelled data set that is too large to manually label, 
+> but one is willing to provide a few informative example labels as a "seed" 
+> to guess the labels for all the data.
 
 
 **An illustrative example** 
@@ -79,24 +84,37 @@ courses.
 Here we will present an illustrative example using a data set \index{Palmer penguins} from the
 [{palmerpenguins} R data package](https://allisonhorst.github.io/palmerpenguins/). This data set was
 collected by [Dr. Kristen Gorman](https://www.uaf.edu/cfos/people/faculty/detail/kristen-gorman.php) and
-the [Palmer Station, Antarctica LTER](https://lternet.edu/) and includes
-measurements for adult penguins near Palmer Station [@palmerpenguins]. We have
+the [Palmer Station, Antarctica Long Term Ecological Research Site](https://pal.lternet.edu/) and includes
+measurements for adult penguins found near there [@palmerpenguins]. We have
 modified the data set for use in this chapter. Here we will focus on using two
 variables---penguin bill and flipper length, both in millimeters---to determine whether 
 there are distinct types of penguins in our data.
 Understanding this might help us with species discovery and classification in a data-driven
 way.
-```{r 09-penguins, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 3, fig.width = 4, fig.cap = "Gentoo penguin. [@penguinsimage]", fig.retina = 2}
-knitr::include_graphics("img/gentoo.jpg")
+
+```{r 09-penguins, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 3, fig.width = 4, fig.cap = "Gentoo penguin.", fig.retina = 2}
+knitr::include_graphics("img/Gentoo_Penguin._(8671680772).jpg")
 ```
 
-Below we will work with `penguin_data`, a subset of 18 observations of the original data, which has already been scaled. We will discuss scaling for K-means in more detail later in this chapter. \index{mutate}\index{read function!read\_csv} 
+To learn about K-means clustering in this chapter, 
+we will work with `penguin_data`, 
+a subset of 18 observations of the original data, which has already been scaled. 
+We will discuss scaling for K-means in more detail later in this chapter. \index{mutate}\index{read function!read\_csv} 
+
+Before we get started, we will load the `tidyverse` metapackage to ensure
+we have the functions we need, 
+as well as set a random seed, so that our analysis will be reproducible.
+As we will learn in more detail later in the chapter, 
+the K-means clustering algorithm uses random numbers - 
+which is why setting the seed here is important.
+
 ```{r 10-toy-example-data, echo = FALSE, message = FALSE, warning = FALSE}
 library(tidyverse)
 
 data <- read_csv("data/toy_penguins.csv") |>
   mutate(cluster = as_factor(cluster)) |>
-  mutate(flipper_length_scaled = scale(flipper_length_mm), bill_length_scaled = scale(bill_length_mm))
+  mutate(flipper_length_scaled = as.double(scale(flipper_length_mm)), 
+         bill_length_scaled = as.double(scale(bill_length_mm)))
 
 penguin_data <- data |> select(flipper_length_scaled, bill_length_scaled)
 ```
@@ -105,7 +123,6 @@ penguin_data <- data |> select(flipper_length_scaled, bill_length_scaled)
 
 ```{r 10-clustering, warning = F, message=F}
 library(tidyverse)
-
 set.seed(1)
 
 penguin_data
@@ -120,17 +137,31 @@ base
 ```
 
 Based \index{ggplot}\index{ggplot!geom\_point} on the visualization in Figure \@ref(fig:10-toy-example-plot), we might
-suspect there are a few subtypes of penguins, selected from combinations of
-high/low flipper length and high/low bill length. How do we find this grouping
-automatically, and how do we pick the number of subtypes? The way to rigorously
-separate the data into groups is to use a clustering algorithm.
-In this chapter, we will focus on the *K-means* algorithm, \index{K-means} a widely-used
-and often very effective clustering method, combined with the *elbow method* \index{elbow method} for
-selecting the number of clusters. This procedure will separate the data into 
-the following groups denoted by colour:
+suspect there are a few subtypes of penguins 
+within the observations we have in our data set.
+We can see ~ 3 groups of observations in Figure \@ref(fig:10-toy-example-plot),
+including:
+
+1. a small flipper and bill length group,
+2. a small flipper length, but large bill length group, and
+3. a large  flipper and bill length group.
+
+This is interesting that we can use data visualization to uncover such patterns,
+but also leads to the questions of how might we find 
+these kind of grouping patterns automatically, 
+and how do we pick the number of groups or subtypes? 
+The way to rigorously separate the data into groups 
+is to use a clustering algorithm.
+In this chapter, we will focus on the *K-means* algorithm, 
+\index{K-means} a widely-used and often very effective clustering method, 
+combined with the *elbow method* \index{elbow method} 
+for selecting the number of clusters. 
+This procedure will separate the data into the following groups 
+denoted by colour:
 
 ```{r 10-toy-example-clustering, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Subset data of penguin scaled bill length versus flipper length with coloured groups"}
-ggplot(data, aes(y = bill_length_scaled, x = flipper_length_scaled, colour = cluster)) +
+ggplot(data, aes(y = bill_length_scaled, 
+                 x = flipper_length_scaled, colour = cluster)) +
   geom_point() +
   xlab("Flipper Length (scaled)") +
   ylab("Bill Length (scaled)") + 
@@ -161,13 +192,8 @@ have.
 ```{r 10-toy-example-clus1, echo = FALSE, message = FALSE, warning = FALSE}
 library(tidyverse)
 
-# clus1 <- tibble(loyalty = c(7, 7.5, 8, 7, 8),
-#               csat = c(1, 1, 2, 2, 3),
-#               )
 clus1 <- filter(data, cluster == 2) |>
   select(bill_length_scaled, flipper_length_scaled)
-
-# clus1_center <- clus1 |> summarize(csat = mean(csat), loyalty = mean(loyalty))
 ```
 
 The K-means algorithm is a procedure that groups data into K clusters.
@@ -641,12 +667,5 @@ elbow_plot <- ggplot(clustering_statistics, aes(x = k, y = tot.withinss)) +
 elbow_plot
 ```
 
-
-
 ## Additional resources
 - Chapter 10 of [An Introduction to Statistical Learning](https://www.statlearning.com/) [-@james2013introduction] provides a great next stop in the process of learning about clustering and unsupervised learning in general. In the realm of clustering specifically, it provides a great companion introduction to K-means, but also covers *hierarchical* clustering for when you expect there to be subgroups, and then subgroups within subgroups, etc. in your data. In the realm of more general unsupervised learning, it covers *principal components analysis (PCA)*, which is a very popular technique in scientific applications for reducing the number of predictors in a dataset. 
-
-
-<!--We have linked a helpful companion vi 
-
-<iframe width="840" height="473" src="https://www.youtube.com/embed/aIybuNt9ps4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe> -->
