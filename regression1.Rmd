@@ -32,17 +32,18 @@ By the end of the chapter, readers will be able to:
 
 ## The regression problem
 
-Regression, like classification, is a predictive problem setting where we want
+Regression, like classification, is a predictive \index{predictive question} problem setting where we want
 to use past information to predict future observations. But in the case of
 regression, the goal is to predict *numerical* values instead of *categorical* values. 
-The variable that you want to predict is often called the *response variable*.
+The variable that you want to predict is often called the *response variable*. \index{response variable}
 For example, we could try to use the number of hours a person spends on
 exercise each week to predict their race time in the annual Boston marathon. As 
 another example, we could try to use the size of a house to
 predict its sale price. Both of these response variables---race time and sale price---are 
 numerical, and so predicting them given past data is considered a regression problem.
 
-Just like in the classification setting, there are many possible methods that we can use 
+Just like in the \index{classification!comparison to regression} 
+classification setting, there are many possible methods that we can use 
 to predict numerical response variables. In this chapter we will
 focus on the **K-nearest neighbours** algorithm, and in the next chapter
 we will study **linear regression**.
@@ -59,7 +60,8 @@ of our method on observations not seen during training. And finally, we can use 
 choices of model parameters (e.g., K in a K-nearest neighbours model). The major difference
 is that we are now predicting numerical variables instead of categorical variables.
 
-> You can usually tell whether a variable is numerical or categorical---and therefore whether you
+> You can usually tell whether a \index{categorical variable}\index{numerical variable}
+> variable is numerical or categorical---and therefore whether you
 > need to perform regression or classification---by taking two response variables X and Y from your
 > data, and asking the question "is response variable X *more* than response variable Y?"
 > If the variable is categorical, the question will make no sense ("is blue more than red?",
@@ -71,17 +73,18 @@ is that we are now predicting numerical variables instead of categorical variabl
 
 ## Exploring a data set
 
-In this chapter and the next, we will study the Sacramento real estate data
+In this chapter and the next, we will study the Sacramento \index{Sacramento real estate} real estate data
 set. This data set contains 932 real estate transactions in Sacramento,
 California [originally reported in the Sacramento Bee newspaper](https://support.spatialkey.com/spatialkey-sample-csv-data/).
 We first need to formulate a precise question that
 we want to answer. In this example, our question is again predictive:
-can we use the size of a house in the Sacramento, CA area to predict
+\index{question!regression} can we use the size of a house in the Sacramento, CA area to predict
 its sale price? A rigorous, quantitative answer to this question might help
 a realtor advise a client as to whether the price of a particular listing 
 is fair, or perhaps how to set the price of a new listing.
-We begin the analysis by loading and examining the data.
+We begin the analysis by loading and examining the data, and setting the seed value.
 
+\index{seed!set.seed}
 ```{r 07-load, message = FALSE}
 library(tidyverse)
 library(tidymodels)
@@ -99,6 +102,8 @@ and `price` (house sale price, in US dollars (USD)).  The first step is to visua
 the data as a scatter plot where we place the predictor variable
 (house size) on the x-axis, and we place the target/response variable that we
 want to predict (sale price) on the y-axis.
+\index{ggplot!geom\_point}
+\index{visualization!scatter}
 
 ```{r 07-edaRegr, message = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square feet)"}
 eda <- ggplot(sacramento, aes(x = sqft, y = price)) +
@@ -121,17 +126,22 @@ predict the former.
 ## K-nearest neighbours regression
 
 Much like in the case of classification, we can use a K-nearest
-neighbours-based approach in regression to make predictions. Let's take a small
-sample of the data above and walk through how K-nearest neighbours (knn) works
+neighbours-based \index{K-nearest neighbors!regression} approach in regression to make predictions. Let's take a small
+sample of the data above and walk through how K-nearest neighbours (K-NN) works
 in a regression context before we dive in to creating our model and assessing
 how well it predicts house sale price. This subsample is taken to allow us to
 illustrate the mechanics of KNN regression with a few data points; later in
 this chapter we will use all the data.
 
-To take a small random sample of size 30, we'll use the function `slice_sample`, and input the data frame to sample from and the number of rows to randomly select.
+To take a small random sample of size 30, we'll use the function
+`slice_sample`, and input the data frame to sample from and the number of rows
+to randomly select. \index{slice\_sample}
 
+```{r 07-sacramento-seed, echo = FALSE, message = FALSE, warning = FALSE}
+# hidden seed
+set.seed(10)
+```
 ```{r 07-sacramento}
-set.seed(1234)
 small_sacramento <- slice_sample(sacramento, n = 30)
 ```
 
@@ -159,6 +169,7 @@ We will employ the same intuition from the classification chapter, and use the
 neighbouring points to the new point of interest to suggest/predict what its
 sale price might be. For the example above, we find and label the 5 nearest
 neighbours to our observation of a house that is 2,000 square feet.
+\index{mutate}\index{slice}\index{arrange}\index{abs}
 
 ```{r 07-find-k3}
 nearest_neighbours <- small_sacramento |>
@@ -212,6 +223,8 @@ As usual, we must start by putting some test data away in a lock box that we
 will come back to only after we choose our final model. Let's take care of that
 now. Note that for the remainder of the chapter we'll be working with the
 entire Sacramento data set, as opposed to the smaller sample of 30 points above.
+\index{training data}
+\index{test data}
 
 ```{r 07-test-train-split}
 sacramento_split <- initial_split(sacramento, prop = 0.75, strata = price)
@@ -219,11 +232,11 @@ sacramento_train <- training(sacramento_split)
 sacramento_test <- testing(sacramento_split)
 ```
 
-Next, we'll use cross-validation to choose $K$. In KNN classification, we used
+Next, we'll use cross-validation \index{cross-validation} to choose $K$. In KNN classification, we used
 accuracy to see how well our predictions matched the true labels. We cannot use
 the same metric in the regression setting, since our predictions will almost never
 *exactly* match the true response variable values. Therefore in the
-context of KNN regression we will use root mean square prediction error
+context of KNN regression we will use root mean square prediction error \index{root mean square prediction error|see{RMSPE}}\index{RMSPE}
 (RMSPE) instead. The mathematical formula for calculating RMSPE is: 
 
 $$\text{RMSPE} = \sqrt{\frac{1}{n}\sum\limits_{i=1}^{n}(y_i - \hat{y}_i)^2}$$
@@ -303,7 +316,7 @@ errors_plot
 When using many code packages (`tidymodels` included), the evaluation output 
 we will get to assess the prediction quality of
 our KNN regression models is labelled "RMSE", or "root mean squared
-error". Why is this so, and why not just RMSPE? 
+error". Why is this so, and why not just RMSPE? \index{RMSPE!comparison with RMSE}
 In statistics, we try to be very precise with our
 language to indicate whether we are calculating the prediction error on the
 training data (*in-sample* prediction) versus on the testing data 
@@ -330,6 +343,7 @@ The use of `set_mode("regression")` essentially
 for tuning and evaluation.
 Then we create a 5-fold cross validation object, and put the recipe and model specification together
 in a workflow.
+\index{tidymodels}\index{recipe}\index{workflow}
 
 ```{r 07-choose-k-knn}
 sacr_recipe <- recipe(price ~ sqft, data = sacramento_train) |>
@@ -357,6 +371,7 @@ is beyond the scope of this chapter; but roughly, if your estimated mean is 100,
 error is 1,000, you can expect the *true* RMSPE to be somewhere roughly between 99,000 and 101,000 (although it may
 fall outside this range). You may ignore the other columns in the metrics data frame,
 as they do not provide any additional insight.
+\index{cross validation!collect\_metrics}
 
 ```{r 07-choose-k-knn-results}
 
@@ -458,7 +473,7 @@ as the original training data.
 Recall from the classification
 chapters that this behaviour&mdash;where the model is influenced too much
 by the noisy data&mdash;is called *overfitting*; we use this same term 
-in the context of regression. 
+in the context of regression. \index{overfitting!regression}
 
 What about the plots in Figure \@ref(fig:07-howK) where $K$ is quite large, 
 say, $K$ = 250 or 932? 
@@ -473,7 +488,7 @@ the smooth, inflexible blue line does not follow the training observations very 
 In other words, the model is *not influenced enough* by the training data.
 Recall from the classification
 chapters that this behaviour is called *underfitting*; we again use this same
-term in the context of regression. 
+term in the context of regression.  \index{underfitting!regression}
 
 Ideally, what we want is neither of the two situations discussed above. Instead,
 we would like a model that (1) follows the overall "trend" in the training data, so the model
@@ -587,8 +602,8 @@ on the quality of predictions. Fortunately, we can use the predictor selection
 algorithm from the classification chapter in KNN regression as well.
 As the algorithm is the same, we will not cover it again in this chapter.
 
-We will now demonstrate a multivariate KNN regression analysis of the 
-Sacramento real estate data using `tidymodels`. This time we will use
+We will now demonstrate a multivariate KNN regression \index{K-nearest neighbors!multivariate regression} analysis of the 
+Sacramento real estate \index{Sacramento real estate} data using `tidymodels`. This time we will use
 house size (measured in square feet) as well as number of bedrooms as our
 predictors, and continue to use house sale price as our outcome/target variable
 that we are trying to predict.

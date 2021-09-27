@@ -38,7 +38,7 @@ By the end of the chapter, readers will be able to:
 ## Choosing the visualization
 #### *Ask a question, and answer it*
 
-The purpose of a visualization is to answer a question about a data set of interest. So naturally, the first thing to do **before** creating a visualization is to formulate the question about the data you are trying to answer. 
+The purpose of a visualization is to answer a question \index{question!visualization} about a data set of interest. So naturally, the first thing to do **before** creating a visualization is to formulate the question about the data you are trying to answer. 
 A good visualization will clearly answer your question without distraction; a *great* visualization will suggest even what the question
 was itself without additional explanation. Imagine your visualization as part of a poster presentation for a project; even if you aren't standing
 at the poster explaining things, an effective visualization will convey your message to the audience.
@@ -48,6 +48,10 @@ we will cover in this chapter, we will be able to answer *only descriptive and e
 questions, as we have not learned the tools necessary to do that properly just yet.  
 
 As with most coding tasks, it is totally fine (and quite common) to make mistakes and iterate a few times before you find the right visualization for your data and question. There are [many different kinds of plotting graphics](https://serialmentor.com/dataviz/directory-of-visualizations.html) available to use. For the kinds we will introduce in this book, the general rules of thumb are:
+\index{visualization!line}
+\index{visualization!histogram}
+\index{visualization!scatter}
+\index{visualization!bar}
 
 - **line plots** visualize trends with respect to an independent, ordered quantity (e.g. time)
 - **histograms** visualize the distribution of one quantitative variable (i.e., all its possible values and how often they occur) 
@@ -90,7 +94,7 @@ making it easier for them to understand and remember your message quickly.
 #### *Build the visualization iteratively*
 
 This section will cover examples of how to choose and refine a visualization given a data set and a question that you want to answer, 
-and then how to create the visualization in R using `ggplot2`. To use the `ggplot2` package, we need to load the `tidyverse` metapackage.
+and then how to create the visualization in R \index{ggplot} using `ggplot2`.  To use the `ggplot2` package, we need to load the `tidyverse` metapackage.
 
 
 
@@ -106,9 +110,9 @@ options(warn = -1)
 
 ### The Mauna Loa CO2 data set 
  The [Mauna Loa CO2 data set](https://www.esrl.noaa.gov/gmd/ccgg/trends/data.html), curated by [Dr. Pieter Tans, NOAA/GML](https://www.esrl.noaa.gov/gmd/staff/Pieter.Tans/) and [Dr. Ralph Keeling, Scripps Institution of Oceanography](https://scrippsco2.ucsd.edu/)
-records the atmospheric concentration of carbon dioxide (CO2, in parts per million) at the Mauna Loa research station in Hawaii from 1959 onwards [@maunadata].
+records the atmospheric concentration of carbon dioxide (CO2, in parts per million) at the Mauna Loa research station in \index{Mauna Loa CO2} Hawaii from 1959 onwards [@maunadata].
 
-**Question:** Does the concentration of atmospheric CO2 change over time, and are there any interesting patterns to note?
+**Question:** \index{question!visualization} Does the concentration of atmospheric CO2 change over time, and are there any interesting patterns to note?
 ```{r 03-data-co2, warning=FALSE, message=FALSE}
 # mauna loa carbon dioxide data
 co2_df <- read_csv("data/mauna_loa.csv") |>
@@ -121,6 +125,8 @@ show the data as individual points with `x` (horizontal axis) and `y` (vertical 
  date as the `x` coordinate 
 and CO2 concentration as the `y` coordinate. When using the `ggplot2` package, we create the plot object with the `ggplot` function; there are 
 a few basic aspects of a plot that we need to specify:
+\index{ggplot!aesthetic mapping}
+\index{ggplot!geometric object}
 
 - the *data*: the name of the data frame object that we would like to visualize 
     - here, we specify the `co2_df` data frame
@@ -137,6 +143,8 @@ knitr::include_graphics("img/ggplot_function_scatter.jpeg")
 ```
 We could pass many other possible arguments to the aesthetic mapping and geometric object to change how the plot looks. For 
 the purposes of quickly testing things out to see what they look like, though, we can just go with the default settings:
+\index{ggplot!aes}
+\index{ggplot!geom\_point}
 
 ```{r 03-data-co2-scatter, warning=FALSE, message=FALSE, fig.cap = "Scatter plot of atmospheric concentration of CO2 over time"}
 co2_scatter <- ggplot(co2_df, aes(x = date_decimal, y = ppm)) +
@@ -149,6 +157,7 @@ This plot answers the first part of our question in the affirmative, but that ap
 However, since time is an ordered quantity, we can try using a line plot instead using the `geom_line` function. Line plots require
 that their `x` coordinate orders the data, and connect the sequence of `x` and `y` coordinates with line segments. Let's again try this with just 
 the default arguments: 
+\index{ggplot!geom\_line}
 
 ```{r 03-data-co2-line, warning=FALSE, message=FALSE, fig.cap = "Line plot of atmospheric concentration of CO2 over time"}
 co2_line <- ggplot(co2_df, aes(x = date_decimal, y = ppm)) +
@@ -164,6 +173,8 @@ scatter plots: often, the points are shown too close together or even on top of 
 Now that we have settled on the rough details of the visualization, it is time to refine things. This plot is fairly straightforward, and there is not much
 visual noise to remove. But there are a few things we must do to improve clarity, such as adding informative axis labels and making the font a more readable size.
 To add axis labels, we use the `xlab` and `ylab` functions. To change the font size, we use the `theme` function with the `text` argument:
+\index{ggplot!xlab,ylab}
+\index{ggplot!theme}
 
 ```{r 03-data-co2-line-2, warning=FALSE, message=FALSE, fig.cap = "Line plot of atmospheric concentration of CO2 over time with clearer axes and labels"}
 co2_line <- ggplot(co2_df, aes(x = date_decimal, y = ppm)) +
@@ -175,7 +186,7 @@ co2_line
 ```
 
 Finally, let's see if we can better understand the oscillation by changing the visualization slightly. Note that it is totally fine to use a small number of visualizations to answer different aspects of the question you are trying to answer. We will accomplish
-this by using *scales*, another important feature of `ggplot2` that easily transforms the different variables and set limits.
+this by using *scales*, \index{ggplot!scales} another important feature of `ggplot2` that easily transforms the different variables and set limits.
 We scale the horizontal axis using the `scale_x_continuous` function, and the vertical axis with the `scale_y_continuous` function.
 We can transform the axis by passing the `trans` argument, and set limits by passing the `limits` argument. In particular, here, we 
 will use the `scale_x_continuous` function with the `limits` argument to zoom in on just five years of data (say, 1990-1995):
@@ -196,9 +207,9 @@ Therefore, the oscillating pattern in CO2 matches up fairly closely with the two
 
 
 ### The island landmass data set
-The `islands.csv` data set contains a list of Earth's landmasses as well as their area (in thousands of square miles) [@islandsdata]. 
+The `islands.csv` data set \index{Island landmasses} contains a list of Earth's landmasses as well as their area (in thousands of square miles) [@islandsdata]. 
 
-**Question:** Are the continents (North / South America, Africa, Europe, Asia, Australia, Antarctica) Earth's seven largest landmasses? If so, what are the next few largest landmasses after those?
+**Question:** \index{question!visualization} Are the continents (North / South America, Africa, Europe, Asia, Australia, Antarctica) Earth's seven largest landmasses? If so, what are the next few largest landmasses after those?
 ```{r 03-data-islands, warning=FALSE, message=FALSE}
 # islands data
 islands_df <- read_csv("data/islands.csv")
@@ -208,6 +219,7 @@ Here, we have a list of Earth's landmasses, and are trying to compare their size
 question is a bar plot, specified by the `geom_bar` function in `ggplot2`. However, by default, `geom_bar` sets the heights
 of bars to the number of times a value appears in a data frame (its *count*); here, we want to plot exactly the values in the data frame, i.e.,
 the landmass sizes. So we have to pass the `stat = "identity"` argument to `geom_bar`:
+\index{ggplot!geom\_bar}
 
 ```{r 03-data-islands-bar, warning=FALSE, message=FALSE,  fig.cap = "Bar plot of all Earth's landmasses' size with squished labels"}
 islands_bar <- ggplot(islands_df, aes(x = landmass, y = size)) +
@@ -217,6 +229,7 @@ islands_bar
 
 Alright, not bad! The plot in Figure \@ref(fig:03-data-islands-bar) is definitely the right kind of visualization, as we can clearly see and compare sizes of landmasses. The major issues are that the smaller landmasses' sizes are hard to distinguish, and the names of the landmasses are obscuring each other as they have been squished into too little space. But remember that the question we asked was only about the largest landmasses; let's make the plot a little bit clearer by keeping only the largest 12 landmasses. We do this using the `slice_max` function.
 Then to help us make sure the labels have enough space, we'll use horizontal bars instead of vertical ones. We do this by swapping the `x` and `y` variables:
+\index{slice\_max}
 
 ```{r 03-data-islands-bar-2, warning=FALSE, message=FALSE, fig.cap = "Bar plot of size for Earth's largest 12 landmasses"}
 islands_top12 <- slice_max(islands_df, order_by = size, n = 12)
@@ -229,6 +242,8 @@ The plot in Figure \@ref(fig:03-data-islands-bar-2) is definitely clearer now, a
 the affirmative. But the question could be made clearer from the plot by organizing the bars not by alphabetical order
 but by size, and to colour them based on whether they are a continent. To do this, we 
 use `mutate` to add a column to the data regarding whether or not the landmass is a continent:
+\index{c function}
+\index{mutate}
 
 ```{r 03-data-islands-bar-3, warning=FALSE, message=FALSE}
 islands_top12 <- slice_max(islands_df, order_by = size, n = 12)
@@ -239,7 +254,7 @@ islands_ct
 
 In order to colour the bars, we add the `fill` argument to the aesthetic mapping. Then we use the `reorder` 
 function in the aesthetic mapping to organize the landmasses by their `size` variable.
-Finally, we use the `labs` and `theme` functions to add labels, change the font size, and position the legend:
+Finally, we \index{ggplot!reorder}\index{ggplot!labs} use the `labs` and `theme` functions to add labels, change the font size, and position the legend:
 
 ```{r 03-data-islands-bar-4, warning=FALSE, message=FALSE, fig.cap = "Bar plot of size for Earth's largest 12 landmasses coloured by whether its a continent with clearer axes and labels"}
 islands_bar <- ggplot(islands_ct, aes(x = size, y = reorder(landmass, size), fill = is_continent)) +
@@ -254,9 +269,9 @@ and continents are coloured differently than other landmasses, making it quite c
 
 
 ### The Old Faithful eruption/waiting time data set
-The `faithful` data set contains measurements of the waiting time between eruptions and the subsequent eruption duration (in minutes). The `faithful` data set is available in base R under the name `faithful` so it does not need to be loaded.
+The `faithful` data set \index{Old Faithful} contains measurements of the waiting time between eruptions and the subsequent eruption duration (in minutes). The `faithful` data set is available in base R under the name `faithful` so it does not need to be loaded.
 
-**Question:** Is there a relationship between the waiting time before an eruption to the duration of the eruption? 
+**Question:** \index{question!visualization} Is there a relationship between the waiting time before an eruption to the duration of the eruption? 
 
 ```{r 03-data-faithful-tibble, echo = F, warning=FALSE, message=FALSE}
 # old faithful eruption time / wait time data convert to tibble
@@ -291,9 +306,9 @@ faithful_scatter
 
 ### The Canadian languages data set
 
-We will return to the `can_lang` data set [@timbers2020canlang], which contains counts of languages from the 2016 Canadian census.
+We will return to the `can_lang` data set [@timbers2020canlang], \index{Canadian languages} which contains counts of languages from the 2016 Canadian census.
 
-**Question:** Is there a relationship between the number of people who speak a language as their mother tongue and the number of people who speak that language as their primary spoken language at home? And is there a pattern in the strength of this relationship in the higher-level language categories (Official languages, Aboriginal languages, or non-official and non-Aboriginal languages)?
+**Question:** \index{question!visualization} Is there a relationship between the number of people who speak a language as their mother tongue and the number of people who speak that language as their primary spoken language at home? And is there a pattern in the strength of this relationship in the higher-level language categories (Official languages, Aboriginal languages, or non-official and non-Aboriginal languages)?
 
 ```{r 03-canlang-example, message = F, warning = F}
 can_lang <- read_csv("data/can_lang.csv")
@@ -301,12 +316,14 @@ can_lang
 ```
 
 We will begin with a scatter plot of the `mother_tongue` and `most_at_home` columns from our data frame.
+\index{ggplot!geom\_point}
 
 ```{r 03-mother-tongue-vs-most-at-home, fig.width=5.75, fig.height=5, warning=FALSE, fig.cap = "Scatter plot of number of Canadians reporting a language as their mother tongue vs the primary language at home"}
 ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
   geom_point()
 ``` 
 To improve the interpretability of the data visualization in Figure \@ref(fig:03-mother-tongue-vs-most-at-home) we should replace the default axis names with a more informative labels. We can use `\n` to create a line break in the axis names so the words after `\n` are printed on a new line. This will make the axes labels on the plots more readable.
+\index{escape character}
 
 ```{r 03-mother-tongue-vs-most-at-home-labs, fig.width=5.75, fig.height=5, warning=FALSE, fig.cap = "Scatter plot of number of Canadians reporting a language as their mother tongue vs the primary language at home with x and y labels"}
 ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
@@ -316,7 +333,7 @@ ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
 ```
 
 Most of the data points from the 214 observations in this data set are bunched up in the lower left-handside of the visualization in Figure \@ref(fig:03-mother-tongue-vs-most-at-home-labs). The data is clumped because many more people in Canada speak the two languages represented by the points in the upper right corner. By filtering the data, we can confirm these two points correspond to the two official languages (English and French):
-
+\index{filter}
 ```{r english-mother-tongue}
 can_lang |>
   filter(language == "English" | language == "French")
@@ -335,7 +352,7 @@ ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
 ```
 > Here we are adjusting the scale of the x and y axes on a $log$ scale with base 10. 
 > Notice that $log_{10}(10) = 1$, $log_{10}(100) = 2$, and $log_{10}(1000) = 3$. 
-On the logarithmic scale, the values 
+On the logarithmic scale, \index{ggplot!logarithmic scaling} the values 
 10, 100 and 1000 are all the same distance apart so we see that applying this function
 is moving big values closer together and moving small values farther apart.
 > Therefore by adjusting the scale in this way we are highlighting the differences between small values, which allows us to better see the relationship in Figure \@ref(fig:03-mother-tongue-vs-most-at-home-scale).
@@ -355,6 +372,7 @@ Similar to our example in chapter 1, we can convert the counts to percentages to
 `r format(round(english_mother_tongue/census_popn*100, 2), scientific = FALSE, big.mark = ",")`\%.
 
 Below we use `mutate` to calculate the percentage of people reporting a given language as their mother tongue and primary language at home for all the languages in the `can_lang` data set. Since the new columns are appended to the end of the data table, we selected the new columns after the transformation so you can clearly see the mutated output from the table.
+\index{mutate}\index{select}
 
 ```{r}
 can_lang <- can_lang |>
@@ -392,7 +410,7 @@ ggplot(can_lang, aes(x = most_at_home_percent, y = mother_tongue_percent, color 
   scale_y_log10(labels = scales::comma)
 ```
 
-In Figure \@ref(fig:03-scatter-colour-by-category), the points are coloured with the default `ggplot2` colour palette. But what if you want to use different colours? In R, one package that provides alternative colour palettes is `RColorBrewer` [@RColorBrewer]. You can visualize the list of colour palettes that `RColorBrewer` has to offer with the `display.brewer.all()` function. You can also print a list of colour blind friendly palettes by adding `colorblindFriendly = T` to the function.
+In Figure \@ref(fig:03-scatter-colour-by-category), the points are coloured with the default `ggplot2` colour palette. But what if you want to use different colours? In R, one package that provides alternative colour palettes \index{color palette} is `RColorBrewer` [@RColorBrewer]. You can visualize the list of colour palettes that `RColorBrewer` has to offer with the `display.brewer.all()` function. You can also print a list of colour blind friendly palettes by adding `colorblindFriendly = T` to the function.
 
 ```{r}
 library(RColorBrewer)
@@ -411,7 +429,7 @@ ggplot(can_lang, aes(x = most_at_home_percent, y = mother_tongue_percent, color 
   scale_color_brewer(palette = "RdYlBu")
 ```
 
-You can use this [color blindness simulator](https://www.color-blindness.com/coblis-color-blindness-simulator/) to check if your visualizations are colour blind friendly.
+You can use this [color blindness simulator](https://www.color-blindness.com/coblis-color-blindness-simulator/) \index{color palette!color blindness simulator} to check if your visualizations are colour blind friendly.
 
 From the visualization in Figure \@ref(fig:scatter-colour-by-category-palette), we can now clearly see that not just a lot, but that the majority of Canadians reported one of the official languages as their mother tongue and as the language they speak most often at home. 
 
@@ -422,6 +440,7 @@ For each higher-level language category, there appears to be a positive relation
 Does this mean that this relationship is positive for all languages in the world? Can we use this data visualization on its own to predict how many people have a given language as their mother tongue if we know how many people speak it as their primary language at home? The answer to both these questions is "no." However, with exploratory data analysis, we can create new hypotheses, ideas, and questions (like the ones at the beginning of this paragraph). Answering those questions would likely involve gathering additional data and doing more complex analyses, which we will see more of later in this book.   
 
 Now, we can go one step further and distinguish English and French languages with different colours in our visualization. To separate these languages, we will filter the rows where the language is either English or French and mutate the `category` column to equal the corresponding language. 
+\index{filter}\index{mutate}
 
 ```{r 03-separate-English-French}
 english_and_french <- can_lang |>
@@ -430,7 +449,7 @@ english_and_french <- can_lang |>
 english_and_french
 ```
 
-Next we will bind the mutated data set `english_and_french` that we just created with the remaining rows in the `can_lang` data set:
+Next we will bind \index{bind\_rows} the mutated data set `english_and_french` that we just created with the remaining rows in the `can_lang` data set:
 ```{r 03-bind-english-french}
 can_lang <- bind_rows(
   english_and_french,
@@ -440,7 +459,7 @@ can_lang <- bind_rows(
 ```
 
 
-We have added a few more layers to make the data visualization in Figure \@ref(fig:03-nachos-to-cheesecake) even more effective. Specifically, we used have improved the visualizations accessibility by choosing colours that are easier to distinguish, mapped category to shape, and handled the problem of overlapping data points by making them slightly transparent. 
+We have added a few more layers to make the data visualization in Figure \@ref(fig:03-nachos-to-cheesecake) even more effective. Specifically, we used have improved the visualizations accessibility by choosing colours that are easier to distinguish, mapped category to shape, and handled the problem of overlapping data points by making them slightly transparent. \index{ggplot!transparency}\index{alpha|see{ggplot}}
 ```{r 03-nachos-to-cheesecake, fig.width=7.75, fig.height=4, warning=FALSE, message=FALSE, fig.cap = "Scatter plot of percentage of Canadians reporting a language as their mother tongue vs the primary language at home coloured by language category"}
 ggplot(can_lang, aes(
   x = most_at_home_percent,
@@ -457,10 +476,10 @@ ggplot(can_lang, aes(
 ```
 
 ### The Michelson speed of light data set
-The `morley` data set contains measurements of the speed of light (in kilometres per second with 299,000 subtracted) from the year 1879 
+The `morley` data set \index{Michelson speed of light} contains measurements of the speed of light (in kilometres per second with 299,000 subtracted) from the year 1879 
 for five experiments, each with 20 consecutive runs [@lightdata]. This data set is available in base R under the name `morley` so it does not need to be loaded.
 
-**Question:** Given what we know now about the speed of 
+**Question:** \index{question!visualization} Given what we know now about the speed of 
 light (299,792.458 kilometres per second), how accurate were each of the experiments?
 ```{r 03-data-morley-tibble, echo = F, warning=FALSE, message=FALSE}
 # michelson morley experimental data
@@ -474,7 +493,7 @@ morley
 
 In this experimental data, Michelson was trying to measure just a single quantitative number (the speed of light). The data set
 contains many measurements of this single quantity. To tell how accurate the experiments were, we need to visualize the 
-distribution of the measurements (i.e., all their possible values and how often each occurs). We can do this using a *histogram*. A histogram helps us visualize how a 
+distribution of the measurements (i.e., all their possible values and how often each occurs). We can do this using a *histogram*. A histogram \index{ggplot!histogram} helps us visualize how a 
 particular variable is distributed in a data set by separating the data into bins, and then using vertical bars 
 to show how many data points fell in each bin. To create a histogram in `ggplot2` we will use the `geom_histogram` geometric
 object, setting the `x` axis to the `Speed` measurement variable; and as we did before, let's use the default arguments just to see how things look:
@@ -486,7 +505,7 @@ morley_hist
 ```
 
 Figure \@ref(fig:03-data-morley-hist) is a great start. However, we cannot tell how accurate the measurements are using this visualization unless we can see what the true value is.
-In order to visualize the true speed of light, we will add a vertical line with the `geom_vline` function, setting the `xintercept` argument
+In order to visualize the true speed of light, we will add a vertical line with the `geom_vline` function, \index{ggplot!geom\_vline} setting the `xintercept` argument
 to the true value. There is a similar function, `geom_hline`, that is used for plotting horizontal lines. Note that *vertical lines*
 are used to denote quantities on the *horizontal axis*, while *horizontal lines* are used to denote quantities on the *vertical axis*. 
 
@@ -510,11 +529,11 @@ morley_hist <- ggplot(morley, aes(x = Speed, fill = Expt)) +
 morley_hist
 ```
 
-
-Wait a second, we notice that the histogram is still all the same colour! What is going on here? If we look at the printed `morley` data, the column `Expt` is an integer (we see the label `<int>` underneath the `Expt` column name). But, we want to treat it as a categorical variable.  To fix this issue we can write `factor(Expt)` in the `fill` aesthetic mapping. Factors are a special categorical type of variable in R that are often used for class label data. By writing `factor(Expt)` we are ensuring that R will treat this variable as a factor and the colour will be mapped discretely.
+Wait a second; the histogram is still all the same colour! What is going on here? If we look at the printed `morley` data, the column `Expt` is an integer (we see the label `<int>` underneath the `Expt` column name). But we want to treat it as a categorical variable.  To fix this issue we can write `factor(Expt)` in the `fill` aesthetic mapping. Factors are a special categorical type of variable in R that are often used for class label data. By writing `factor(Expt)` we are ensuring that R will treat this variable as a factor and the colour will be mapped discretely.
+\index{factor!usage in ggplot}
 
 ```{r 03-data-morley-hist-with-factor, warning=FALSE, message=FALSE, fig.cap = "Histogram of Michelson's speed of light data coloured by experiment as factor"}
-morley_hist <- ggplot(morley, aes(x = Speed, fill = Expt)) +
+morley_hist <- ggplot(morley, aes(x = Speed, fill = factor(Expt))) +
   geom_histogram(position = "identity", alpha = 0.5) +
   geom_vline(xintercept = 792.458, linetype = "dashed", size = 1.0)
 morley_hist
@@ -532,7 +551,7 @@ In order to create a plot in `ggplot2` that has multiple subplots arranged in a 
 The argument to `facet_grid` specifies the variable(s) used to split the plot into subplots. It has the syntax `vertical_variable ~ horizontal_variable`,
 where `veritcal_variable` is used to split the plot vertically, `horizontal_variable` is used to split horizontally, and `.` is used if there should be no split
 along that axis. In our case, we only want to split vertically along the `Expt` variable, so we use `Expt ~ .` as the argument to `facet_grid`.
-
+\index{ggplot!facet\_grid}
 
 ```{r 03-data-morley-hist-4, warning=FALSE, message=FALSE, fig.cap = "Histogram of Michelson's speed of light data split vertically by experiment"}
 morley_hist <- ggplot(morley, aes(x = Speed, fill = factor(Expt))) +
@@ -548,6 +567,7 @@ using the `labs` function, and increase the font size to make it readable using 
 is easy to compare the experiments on this plot to one another, it is hard to get a sense 
 for just how accurate all the experiments were overall. For example, how accurate is the value 800 on the plot, relative to the true speed of light?
 To answer this question, we'll use the `mutate` function to transform our data into a relative measure of accuracy rather than absolute measurements:
+\index{ggplot!labs}\index{ggplot!theme}
 
 ```{r 03-data-morley-hist-5, warning=FALSE, message=FALSE, fig.cap = "Histogram of relative accuracy split vertically by experiment with clearer axes and labels"}
 morley_rel <- mutate(morley, relative_accuracy = 100 * ((299000 + Speed) - 299792.458) / (299792.458))
@@ -573,7 +593,7 @@ For example, you could use an exploratory visualization in the opening of the pr
 of a more detailed data analysis / model, a visualization of the results of your analysis to show what your analysis has uncovered,
 or even one at the end of a presentation to help suggest directions for future work. 
 
-Regardless of where it appears, a good way to discuss your visualization is as a story:
+Regardless of where it appears, a good way to discuss your visualization is as a story \index{visualization!explanation}:
 
 1) Establish the setting and scope, and motivate why you did what you did. 
 2) Pose the question that your visualization answers. Justify why the question is important to answer.
@@ -590,7 +610,7 @@ Regardless of where it appears, a good way to discuss your visualization is as a
 Below are two examples of how one might take these four steps in describing the example visualizations that appeared earlier in this chapter.
 Each of the steps is denoted by its numeral in parentheses, e.g. (3).
 
-**Mauna Loa Atmospheric CO2 Measurements:** (1) Many current forms of energy generation and conversion---from automotive engines to natural gas power plants---rely on burning
+**Mauna Loa Atmospheric CO2 Measurements:** (1) \index{Mauna Loa CO2} Many current forms of energy generation and conversion---from automotive engines to natural gas power plants---rely on burning
 fossil fuels and produce greenhouse gases, typically primarily carbon dioxide (CO2), as a byproduct. Too much of these gases in the Earth's atmosphere will cause it to trap
 more heat from the sun, leading to global warming. (2) In order to assess how quickly the atmospheric concentration of CO2 is increasing over time, we (3) used a data set from
 the Mauna Loa observatory from Hawaii, consisting of CO2 measurements from 1959 to the present. We plotted the measured concentration of CO2 (on the vertical axis) over time
@@ -598,7 +618,7 @@ the Mauna Loa observatory from Hawaii, consisting of CO2 measurements from 1959 
 aligns with Hawaii's seasons, with an amplitude that is small relative to the growth in the overall trend. This shows that atmospheric CO2 is clearly increasing over 
 time, and (4) it is perhaps worth investigating more into the causes.
 
-**Michelson Light Speed Experiments:** (1) Our modern understanding of the physics of light has advanced significantly from the 
+**Michelson Light Speed Experiments:** (1) \index{Michelson speed of light} Our modern understanding of the physics of light has advanced significantly from the 
 late 1800s when Michelson and Morley's experiments first demonstrated that it had a finite speed. We now know based on modern experiments that it 
 moves at roughly 299792.458 kilometres per second. (2) But how accurately were we first able to measure this fundamental physical constant, and did certain
 experiments produce more accurate results than others?
@@ -617,10 +637,11 @@ Just as there are many ways to store data sets, there are many ways to store vis
 Which one you choose can depend on several factors, such as file size/type limitations 
 (e.g., if you are submitting your visualization as part of a conference paper or to a poster printing shop)
 and where it will be displayed (e.g., online, in a paper, on a poster, on a billboard, in talk slides).
-Generally speaking, images come in two flavours: *bitmap* (or *raster*) formats and *vector* (or *scalable graphics*) formats.
+Generally speaking, images come in two flavours: *bitmap* (or *raster*) \index{bitmap|see{raster graphics}}\index{raster graphics} formats and *vector* (or *scalable graphics*) \index{vector graphics} formats.
 
 
 **Bitmap / Raster** images are represented as a 2-D grid of square pixels, each with its own colour. Raster images are often *compressed* before storing so they take up less space. A compressed format is *lossy* if the image cannot be perfectly recreated when loading and displaying, with the hope that the change is not noticeable. *Lossless* formats, on the other hand, allow a perfect display of the original image.
+\index{raster graphics!file types}
 
 - *Common file types:* 
     - [JPEG](https://en.wikipedia.org/wiki/JPEG) (`.jpg`, `.jpeg`): lossy, usually used for photographs 
@@ -630,6 +651,7 @@ Generally speaking, images come in two flavours: *bitmap* (or *raster*) formats 
 - *Open-source software:* [GIMP](https://www.gimp.org/)
 
 **Vector / Scalable Graphics** images are represented as a collection of mathematical objects (lines, surfaces, shapes, curves). When the computer displays the image, it redraws all of the elements using their mathematical formulas.
+\index{vector graphics!file types}
 
 - *Common file types:* 
     - [SVG](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics) (`.svg`): general-purpose use 
@@ -646,7 +668,8 @@ vector graphics as much as you like without the image looking bad, while raster 
 > The portable document format [PDF](https://en.wikipedia.org/wiki/PDF) (`.pdf`) is commonly used to
 > store *both* raster and vector graphics formats. If you try to open a PDF and it's taking a long time
 > to load, it may be because there is a complicated vector graphics image that your computer is rendering. 
-
+\index{PDF}
+\index{portable document format|see{PDF}}
 
 
 
@@ -660,26 +683,31 @@ faithful_plot <- ggplot(data = faithful, aes(x = waiting, y = eruptions)) +
 
 faithful_plot
 
-ggsave("faithful_plot.png", faithful_plot)
-ggsave("faithful_plot.jpg", faithful_plot)
-ggsave("faithful_plot.bmp", faithful_plot)
-ggsave("faithful_plot.tiff", faithful_plot)
-ggsave("faithful_plot.svg", faithful_plot)
+ggsave("img/faithful_plot.png", faithful_plot)
+ggsave("img/faithful_plot.jpg", faithful_plot)
+ggsave("img/faithful_plot.bmp", faithful_plot)
+ggsave("img/faithful_plot.tiff", faithful_plot)
+ggsave("img/faithful_plot.svg", faithful_plot)
 
-print(paste("PNG filesize: ", file.info("faithful_plot.png")["size"] / 1000000, "MB"))
-print(paste("JPG filesize: ", file.info("faithful_plot.jpg")["size"] / 1000000, "MB"))
-print(paste("BMP filesize: ", file.info("faithful_plot.bmp")["size"] / 1000000, "MB"))
-print(paste("TIFF filesize: ", file.info("faithful_plot.tiff")["size"] / 1000000, "MB"))
-print(paste("SVG filesize: ", file.info("faithful_plot.svg")["size"] / 1000000, "MB"))
+print(paste("PNG filesize: ", file.info("img/faithful_plot.png")["size"] / 1000000, "MB"))
+print(paste("JPG filesize: ", file.info("img/faithful_plot.jpg")["size"] / 1000000, "MB"))
+print(paste("BMP filesize: ", file.info("img/faithful_plot.bmp")["size"] / 1000000, "MB"))
+print(paste("TIFF filesize: ", file.info("img/faithful_plot.tiff")["size"] / 1000000, "MB"))
+print(paste("SVG filesize: ", file.info("img/faithful_plot.svg")["size"] / 1000000, "MB"))
 ```
-Wow, that's quite a difference! Notice that for such a simple plot with few graphical elements (points), the vector graphics format (SVG) is over 100 
-times smaller than the uncompressed raster images (BMP, TIFF). Also, note that the JPG format is twice as large as the PNG format since the JPG
-compression algorithm is designed for natural images (not plots). Below, we also show what the images look like when we zoom in to a rectangle with only 3 data points.
-You can see why vector graphics formats are so useful: because they're just based on mathematical formulas, vector graphics can be scaled up to arbitrary sizes.
-This makes them great for presentation media of all sizes, from papers to posters to billboards.
+Wow, that's quite a difference! Notice that for such a simple plot with few
+graphical elements (points), the vector graphics format (SVG) is over 100 times
+smaller than the uncompressed raster images (BMP, TIFF). Also, note that the
+JPG format is twice as large as the PNG format since the JPG compression
+algorithm is designed for natural images (not plots). Below, we also show what
+the images look like when we zoom in to a rectangle with only 3 data points.
+You can see why vector graphics formats are so useful: because they're just
+based on mathematical formulas, vector graphics can be scaled up to arbitrary
+sizes.  This makes them great for presentation media of all sizes, from papers
+to posters to billboards.
 
 
-```{r 03-raster-image, echo=FALSE, fig.cap = "Zoomed in `faithful`, raster (PNG, left) and vector (SVG, right) formats", fig.show="hold", out.width="230px", out.height="200px", fig.align= "center", message =F}
+```{r 03-raster-image, echo=FALSE, fig.cap = "Zoomed in `faithful`, raster (PNG, left) and vector (SVG, right) formats", fig.show="hold", out.width="230pt", out.height="200pt", fig.align= "center", message =F}
 knitr::include_graphics("img/faithful_zoom.png")
 knitr::include_graphics("img/faithful_zoom.svg")
 ```
