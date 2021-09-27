@@ -3,6 +3,8 @@
 ```{r 09-clustering, echo = FALSE, message = FALSE, warning = FALSE}
 knitr::opts_chunk$set(warning = FALSE)
 library(RColorBrewer)
+library(gridExtra)
+library(cowplot)
 
 # set the colours in the graphs, 
 # some graphs with the code shown to students are hard coded 
@@ -207,7 +209,7 @@ In K-means clustering, we measure the quality of a cluster by its
 First, we find the cluster centers by computing the mean of each variable 
 over data points in the cluster. For example, suppose we have a 
 cluster containing four observations, and we are using two variables, $x$ and $y$, to cluster the data.
-Then we would compute the $x$ and $y$ variables, $\mu_x$ and $\mu_y$, of the cluster center via
+Then we would compute the coordinates, $\mu_x$ and $\mu_y$, of the cluster center via:
 
 $$\mu_x = \frac{1}{4}(x_1+x_2+x_3+x_4) \quad \mu_y = \frac{1}{4}(y_1+y_2+y_3+y_4).$$
 
@@ -215,7 +217,7 @@ In the first cluster from the example, there are `r nrow(clus1)` data points. Th
 (``r paste("flipper_length_scaled =", round(mean(clus1$flipper_length_scaled),2))`` and ``r paste("bill_length_scaled =", round(mean(clus1$bill_length_scaled),2))``) highlighted 
 in Figure \@ref(fig:10-toy-example-clus1-center).
 
-```{r 10-toy-example-clus1-center, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Cluster 1 from the toy example, with center highlighted."}
+```{r 10-toy-example-clus1-center, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Cluster 1 from the `penguin_data` data set example. Observations are in blue, with the cluster center highlighted in red."}
 base <- ggplot(clus1) +
   geom_point(aes(y = bill_length_scaled, x = flipper_length_scaled),  col = "dodgerblue3") +
   labs(x = "Flipper Length (scaled)", y = "Bill Length (scaled)") +
@@ -242,7 +244,7 @@ S^2 = \left((x_1 - \mu_x)^2 + (y_1 - \mu_y)^2\right) + \left((x_2 - \mu_x)^2 + (
 
 These distances are denoted by lines in Figure \@ref(fig:10-toy-example-clus1-dists) for the first cluster of the penguin data example. 
 
-```{r 10-toy-example-clus1-dists, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Cluster 1 from the toy example, with distances to the center highlighted."}
+```{r 10-toy-example-clus1-dists, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Cluster 1 from the `penguin_data` data set example. Observations are in blue, with the cluster center highlighted in red. The distances from the observations to the cluster center are represented as black lines."}
 base <- ggplot(clus1) +
   geom_point(aes(y = bill_length_scaled, x = flipper_length_scaled),col = "dodgerblue3") +
   labs(x = "Flipper Length (scaled)", y = "Bill Length (scaled)") +
@@ -272,10 +274,11 @@ sum of WSSDs over all the clusters, i.e. the \index{WSSD!total} *total WSSD*:
 2. **Label update:** Reassign each data point to the cluster with the nearest center.
 
 These two steps are repeated until the cluster assignments no longer change.
-For example, in the penguin data example, our initialization might look like this:
+For example, in the penguin data example, 
+our random initialization might look like this:
+
 <center>
 ```{r 10-toy-kmeans-init, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Random initialization of labels."}
-library(gridExtra)
 set.seed(14)
 penguin_data["label"] <- factor(sample(1:3, nrow(penguin_data), replace = T))
 
@@ -289,12 +292,19 @@ print(plt_lbl)
 ```
 </center>
 
-And the first four iterations of K-means would look like (each row corresponds to an iteration,
+And we show what the the first four iterations of K-means would look like in  
+Figure \@ref(fig:10-toy-kmeans-iter). 
+There each row corresponds to an iteration,
 where the left column depicts the center update, 
-and the right column depicts the reassignment of data to clusters): 
+and the right column depicts the reassignment of data to clusters.
+
 <center>
 **Center Update**  &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp;**Label Update**
-```{r 10-toy-kmeans-iter, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 8}
+```{r 10-toy-kmeans-iter, echo = FALSE, warning = FALSE, fig.height = 16, fig.width = 8, fig.cap = "First four iterations of K-means clustering on the `penguin_data` example data set. Each row corresponds to an iteration,where the left column depicts the center update, and the right column depicts the reassignment of data to clusters. Cluster centers are indicated by larger points that are outlined in black."}
+
+list_plot_cntrs <- vector(mode = "list", length = 4)
+list_plot_lbls <- vector(mode = "list", length = 4)
+
 for (i in 1:4) {
   # compute centers
   centers <- penguin_data |>
@@ -309,7 +319,7 @@ for (i in 1:4) {
     theme(legend.position = "none") +
     scale_color_manual(values= cbpalette) + 
     geom_point(data = centers, aes(y = bill_length_scaled, x = flipper_length_scaled, fill = label), size = 5, shape = 21, stroke = 2, colour = "black", fill = cbpalette)
-
+  
   # reassign labels
   dists <- rbind(centers, penguin_data) |>
     select("flipper_length_scaled", "bill_length_scaled") |>
@@ -323,16 +333,24 @@ for (i in 1:4) {
     xlab("Flipper Length (scaled)") +
     ylab("Bill Length (scaled)") +
     theme(legend.position = "none") +
-    scale_color_manual(values= cbpalette) + 
-
+    scale_color_manual(values= cbpalette) +
     geom_point(data = centers, aes(y = bill_length_scaled, x = flipper_length_scaled, fill = label), size = 5, shape = 21, stroke = 2, colour = "black", fill = cbpalette) 
 
-  # to generate the animated version, get rid of grid.arrange and use the below two lines
-  # set the figure width to 4.35 too
-  # print(plt_ctr)
-  # print(plt_lbl)
-  grid.arrange(plt_ctr, plt_lbl, nrow = 1)
+  list_plot_cntrs[[i]] <- plt_ctr
+  list_plot_lbls[[i]] <- plt_lbl
 }
+
+iter_plot_list <- c(list_plot_cntrs[1], list_plot_lbls[1],
+                    list_plot_cntrs[2], list_plot_lbls[2],
+                    list_plot_cntrs[3], list_plot_lbls[3],
+                    list_plot_cntrs[4], list_plot_lbls[4])
+plot_grid(plotlist = iter_plot_list, ncol = 2,
+          label_x = 0.005,
+          label_y = 0.980,
+          labels = c("Iteration 1", "",
+                     "Iteration 2", "",
+                     "Iteration 3", "",
+                     "Iteration 4", ""))
 ```
 </center>
 
@@ -349,7 +367,7 @@ in the fourth iteration; both the centers and labels will remain the same from t
 ### Random restarts
 
 Unlike the classification and regression models we studied in previous chapters, K-means \index{K-means!restart,nstart} can get "stuck" in a bad solution.
-For example, if we were unlucky and initialized K-means with the following labels:
+For example, Figure \@ref(fig:10-toy-kmeans-bad-init) illustrates an unlucky random initialization by K-means.
 <center>
 ```{r 10-toy-kmeans-bad-init, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Random initialization of labels."}
 set.seed(11)
@@ -365,10 +383,13 @@ print(plt_lbl)
 ```
 </center>
 
-Then the iterations of K-means would look like:
+Figure \@ref(fig:10-toy-kmeans-bad-iter) shows what the iterations of K-means would look like with the unlucky random initialization shown in Figure \@ref(fig:10-toy-kmeans-bad-init).
 <center>
 **Center Update**  &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp;**Label Update**
-```{r 10-toy-kmeans-bad-iter, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 8}
+```{r 10-toy-kmeans-bad-iter, echo = FALSE, warning = FALSE, fig.height = 20, fig.width = 8, fig.cap = "First five iterations of K-means clustering on the `penguin_data` example data set with a poor random initialization. Each row corresponds to an iteration,where the left column depicts the center update, and the right column depicts the reassignment of data to clusters. Cluster centers are indicated by larger points that are outlined in black."}
+list_plot_cntrs <- vector(mode = "list", length = 5)
+list_plot_lbls <- vector(mode = "list", length = 5)
+
 for (i in 1:5) {
   # compute centers
   centers <- penguin_data |>
@@ -400,10 +421,23 @@ for (i in 1:5) {
     scale_color_manual(values= cbpalette) +
     geom_point(data = centers, aes(y = bill_length_scaled, x = flipper_length_scaled, fill = label), size = 5, shape = 21, stroke = 2, colour = "black", fill = cbpalette)
 
-  # print(plt_ctr)
-  # print(plt_lbl)
-  grid.arrange(plt_ctr, plt_lbl, nrow = 1)
+  list_plot_cntrs[[i]] <- plt_ctr
+  list_plot_lbls[[i]] <- plt_lbl
 }
+
+iter_plot_list <- c(list_plot_cntrs[1], list_plot_lbls[1],
+                    list_plot_cntrs[2], list_plot_lbls[2],
+                    list_plot_cntrs[3], list_plot_lbls[3],
+                    list_plot_cntrs[4], list_plot_lbls[4],
+                    list_plot_cntrs[5], list_plot_lbls[5])
+plot_grid(plotlist = iter_plot_list, ncol = 2,
+          label_x = 0.005,
+          label_y = 0.980,
+          labels = c("Iteration 1", "",
+                     "Iteration 2", "",
+                     "Iteration 3", "",
+                     "Iteration 4", "",
+                     "Iteration 5", ""))
 ```
 </center>
 
@@ -413,16 +447,18 @@ and pick the clustering that has the lowest final total WSSD.
 
 ### Choosing K
 
-In order to cluster data using K-means, we also have to pick the number of clusters, K.
-But unlike in classification, we have no data labels and cannot perform
-cross-validation with some measure of model prediction error.
+In order to cluster data using K-means, 
+we also have to pick the number of clusters, K.
+But unlike in classification, we have no response variable 
+and cannot perform cross-validation with some measure of model prediction error.
 Further, if K is chosen too small, then multiple clusters get grouped together;
-if K is too large, then clusters get subdivided. In both cases, we will potentially miss
-interesting structure in the data. For example, take a look below at the K-means
-clustering of our penguin flipper and bill length data for a number of clusters
-ranging from 1 to 9.
+if K is too large, then clusters get subdivided. 
+In both cases, we will potentially miss interesting structure in the data. 
+Figure \@ref(fig:10-toy-kmeans-vary-k) illustrates the impact of K 
+on K-means clustering of our penguin flipper and bill length data 
+by showing the different clusterings for K's ranging from 1 to 9.
 
-```{r 10-toy-kmeans-vary-k, echo = FALSE, warning = FALSE, fig.height = 10, fig.width = 12, fig.cap = "Clustering of the penguin data for # clusters ranging from 1 to 9."}
+```{r 10-toy-kmeans-vary-k, echo = FALSE, warning = FALSE, fig.height = 10, fig.width = 12, fig.cap = "Clustering of the penguin data for K clusters ranging from 1 to 9. Cluster centers are indicated by larger points that are outlined in black."}
 library(broom)
 set.seed(3)
 
@@ -464,9 +500,9 @@ total WSSD, since the cluster center (denoted by an "x") is not close to any of 
 the other hand, if we set K greater than 3, the clustering subdivides subgroups of data; this does indeed still 
 decrease the total WSSD, but by only a *diminishing amount*. If we plot the total WSSD versus the number of 
 clusters, we see that the decrease in total WSSD levels off (or forms an "elbow shape") \index{elbow method} when we reach roughly 
-the right number of clusters.
+the right number of clusters (Figure \@ref(fig:10-toy-kmeans-elbow)).
 <center>
-```{r 10-toy-kmeans-elbow, echo = FALSE, warning = FALSE, fig.height = 6, fig.width = 10, fig.cap = "Total WSSD for # clusters ranging from 1 to 9."}
+```{r 10-toy-kmeans-elbow, echo = FALSE, warning = FALSE, fig.height = 6, fig.width = 10, fig.cap = "Total WSSD for K clusters ranging from 1 to 9."}
 p2 <- ggplot(clusterings, aes(x = k, y = tot.withinss)) +
   geom_point(size = 2) +
   geom_line() +
