@@ -25,6 +25,7 @@ At the end of the previous chapter, we noted some limitations of KNN regression.
 While the method is simple and easy to understand, KNN regression does not
 predict well beyond the range of the predictors in the training data, and
 the method gets significantly slower as the training dataset grows.
+\index{regression!linear}
 Fortunately, there is an alternative to KNN regression---*linear regression*---that addresses
 both of these limitations. Linear regression is also much more commonly used in practice, especially
 in scientific applications, because it provides an interpretable mathematical equation that describes
@@ -48,14 +49,14 @@ straight line of best fit through the training data and then
 > similar to that of linear regression and KNN
 > regression. It is useful to have a good understanding of linear regression before learning about
 > logistic regression. After reading this chapter, see the "Additional Resources" section at the end of the
-> classification chapters to learn more about logistic regression.
+> classification chapters to learn more about logistic regression. \index{regression!logistic}
 
-Let's return to the Sacramento housing data from the previous chapter to learn
+Let's return to the Sacramento housing data \index{Sacramento real estate} from the previous chapter to learn
 how to apply linear regression and compare it to KNN regression. For now, we
 will consider 
 a smaller version of the housing data to help make our visualizations clear.
 Recall our predictive question: can we use the size of a house in the Sacramento, CA area to predict
-its sale price? In particular, recall that we have come across a new 2,000-square foot house we are interested
+its sale price? \index{question!regression} In particular, recall that we have come across a new 2,000-square foot house we are interested
 in purchasing with an advertised list price of
 \$350,000. Should we offer the list price, or is that over/undervalued?
 To answer this question using simple linear regression, we use the data we have
@@ -70,9 +71,10 @@ library(scales)
 library(gridExtra)
 library(caret)
 
+set.seed(2)
+
 sacramento <- read_csv("data/sacramento.csv")
 
-set.seed(2)
 small_sacramento <- sample_n(sacramento, size = 30)
 
 small_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
@@ -84,7 +86,7 @@ small_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
 small_plot
 ```
 
-The equation for the straight line is: 
+The equation for the straight line is: \index{straight line!equation}
 
 $$\text{house sale price} = \beta_0 + \beta_1 \cdot (\text{house size}),$$
 where
@@ -130,7 +132,6 @@ different lines could be drawn through the data points.
 Some plausible examples are shown in Figure \@ref(fig:08-several-lines).
 
 ```{r 08-several-lines, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5,  fig.cap = "Scatter plot of sale price versus size with many possible lines that could be drawn through the data points"}
-
 small_plot +
   geom_abline(intercept = -64542.23, slope = 190, color = "green") +
   geom_abline(intercept = -6900, slope = 175, color = "purple") +
@@ -143,6 +144,7 @@ each of the observed data points in the training data. Figure \@ref(fig:08-verti
 these vertical distances as red lines. Finally, to assess the predictive 
 accuracy of a simple linear regression model,
 we use RMSPE&mdash;the same measure of predictive performance we used with KNN regression.
+\index{RMSPE}
 
 ```{r 08-verticalDistToMin,  echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of sale price versus size with red lines denoting the vertical distances between the predicted values and the observed data points"}
 small_sacramento <- small_sacramento |>
@@ -154,7 +156,7 @@ small_plot +
 
 ## Linear regression in R
 
-We can perform simple linear regression in R using `tidymodels` in a
+We can perform simple linear regression in R using `tidymodels` \index{tidymodels} in a
 very similar manner to how we performed KNN regression. 
 To do this, instead of creating a `nearest_neighbor` model specification with
 the `kknn` engine, we use a `linear_reg` model specification
@@ -164,18 +166,25 @@ Below we illustrate how we can use the usual `tidymodels` workflow to predict ho
 price given house size using a simple linear regression approach using the full
 Sacramento real estate data set.
 
-> An additional difference that you will notice below is that we do not standardize
+> An additional difference that you will notice below is that we do not standardize \index{standardization}
 > (i.e., scale and center) our predictors. In K-nearest neighbours models, recall that 
 > the model fit changes depending on whether we standardize first or not. In linear regression,
 > standardization does not affect the fit (it *does* affect the coefficients in the equation, though!).
 > So you can standardize if you want&mdash;it won't hurt anything&mdash;but if you leave the
 > predictors in their original form, the best fit coefficients are usually easier to interpret afterward.
 
-As usual, we start by putting some test data away in a lock box that we
+As usual, we start by loading packages, setting the seed, loading data, and putting some test data away in a lock box that we
 can come back to after we choose our final model. Let's take care of that now.
+\index{seed!set.seed}
 
 ```{r 08-test-train-split}
+library(tidyverse)
+library(tidymodels)
+
 set.seed(1234)
+
+sacramento <- read_csv("data/sacramento.csv")
+
 sacramento_split <- initial_split(sacramento, prop = 0.6, strata = price)
 sacramento_train <- training(sacramento_split)
 sacramento_test <- testing(sacramento_split)
@@ -203,7 +212,9 @@ This means that the equation of the line of best fit is
 $$\text{house sale price} = `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), scientific=FALSE)` + `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`\cdot (\text{house size}).$$
 In other words, the model predicts that houses 
 start at \$`r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), big.mark=",", nsmall=0, scientific=FALSE)` for 0 square feet, and that
-every extra square foot increases the cost of the house by \$`r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`. Finally, we predict on the test data set to assess how well our model does:
+every extra square foot increases the cost of 
+the house by \$`r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`. Finally, 
+we predict on the test data set to assess how well our model does:
 
 ```{r 08-assessFinal}
 lm_test_results <- lm_fit |>
@@ -213,7 +224,7 @@ lm_test_results <- lm_fit |>
 lm_test_results
 ```
 
-Our final model's test error as assessed by RMSPE
+Our final model's test error as assessed by RMSPE \index{RMSPE}
 is `r format(round(lm_test_results |> filter(.metric == 'rmse') |> pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`. 
 Remember that this is in units of the target/response variable, and here that
 is US Dollars (USD). Does this mean our model is "good" at predicting house
@@ -241,7 +252,7 @@ lm_plot_final
 ```
 
 We can extract the coefficients from our model by accessing the
-fit object that is output by the `fit` function; we first have to extract
+fit object that is output by the `fit` \index{tidymodels!fit} function; we first have to extract
 it from the workflow using the `pull_workflow_fit` function, and then apply
 the `tidy` function to convert the result into a data frame:
 
@@ -255,7 +266,7 @@ coeffs
 ## Comparing simple linear and KNN regression
 
 Now that we have a general understanding of both simple linear and KNN
-regression, we can start to compare and contrast these methods as well as the
+regression, we \index{regression!comparison of methods} can start to compare and contrast these methods as well as the
 predictions made by them. To start, let's look at the visualization of the
 simple linear regression model predictions for the Sacramento real estate data
 (predicting price from house size) and the "best" KNN regression model
@@ -334,7 +345,7 @@ There can however also be a disadvantage to using a simple linear regression
 model in some cases, particularly when the relationship between the target and
 the predictor is not linear, but instead some other shape (e.g. curved or oscillating). In 
 these cases the prediction model from a simple linear regression
-will underfit (have high bias), meaning that model/predicted values does not
+will underfit \index{underfitting!regression} (have high bias), meaning that model/predicted values does not
 match the actual observed values very well. Such a model would probably have a
 quite high RMSE when assessing model goodness of fit on the training data and
 a quite high RMPSE when assessing model prediction quality on a test data
@@ -353,7 +364,7 @@ linear regression model.
 Finally, note that the KNN regression model becomes "flat"
 at the left and right boundaries of the data, while the linear model
 predicts a constant slope. Predicting outside the range of the observed
-data is known as *extrapolation*; KNN and linear models behave quite differently
+data is known as *extrapolation*; \index{extrapolation} KNN and linear models behave quite differently
 when extrapolating. Depending on the application, the flat
 or constant slope trend may make more sense. For example, if our housing
 data were slightly different, the linear model may have actually predicted 
@@ -366,7 +377,7 @@ so the "flat" extrapolation of KNN likely does not match reality.
 
 As in KNN classification and KNN regression, we can move beyond the simple
 case of only one predictor to the case with multiple predictors,
-known as *multivariate linear regression*. 
+known as *multivariate linear regression*. \index{regression!multivariate linear}\index{regression!multivariate linear equation|see{plane equation}}
 To do this, we follow a very similar approach to what we did for
 KNN regression: we just add more predictors to the model formula in the 
 recipe. But recall that we do not need to use cross-validation to choose any parameters,
@@ -377,7 +388,7 @@ better. But because the same predictor selection
 algorithm from the classification chapter extends to the setting of linear regression,
 it will not be covered again in this chapter.
 
-We will demonstrate multivariate linear regression using the Sacramento real estate 
+We will demonstrate multivariate linear regression using the Sacramento real estate  \index{Sacramento real estate}
 data with both house size
 (measured in square feet) as well as number of bedrooms as our predictors, and
 continue to use house sale price as our response variable. We will start by 
@@ -455,7 +466,7 @@ mcoeffs <- mlm_fit %>%
              tidy()
 mcoeffs
 ```
-And then use those slopes to write a mathematical equation to describe the prediction plane:
+And then use those slopes to write a mathematical equation to describe the prediction plane: \index{plane equation}
 
 $$\text{house sale price} = \beta_0 + \beta_1\cdot(\text{house size}) + \beta_2\cdot(\text{number of bedrooms}),$$
 where:
@@ -493,7 +504,7 @@ lm_mult_test_results
 ```
 
 
-We obtain an RMSPE for the multivariate linear regression model 
+We obtain an RMSPE \index{RMSPE} for the multivariate linear regression model 
 of `r format(lm_mult_test_results |> filter(.metric == 'rmse') |> pull(.estimate), big.mark=",", nsmall=0, scientific = FALSE)`. This prediction error
 is less than the prediction error for the multivariate KNN regression model,
 indicating that we should likely choose linear regression for predictions of
@@ -508,12 +519,13 @@ test data.
 
 ## Multicollinearity and outliers
 
-What can go wrong when performing (multivariate) linear regression? 
-Two common issues to be mindful of are *outliers* and, in the multivarate case, *collinear predictors*.
+What can go wrong when performing (possibly multivariate) linear regression? 
+This section will introduce two common issues&mdash;*outliers* and *collinear predictors*&mdash;and 
+illustrate their impact on predictions.
 
 ### Outliers
 
-Outliers are data points that do not follow the usual pattern of the rest of the data.
+Outliers \index{outliers} are data points that do not follow the usual pattern of the rest of the data.
 In the setting of linear regression, these are points that
  have a vertical distance to the line of best fit that is either much higher or much lower 
 than you might expect based on the rest of the data. The problem with outliers is that
@@ -574,13 +586,15 @@ lm_plot_outlier_large
 
 ### Multicollinearity
 
-The second, and much more subtle, issue can occur when performing multivariate linear regression.
-In particular, if you include multiple predictors that are strongly linearly related to one another,
-the coefficients that describe the plane of best fit can be very unstable. Consider
-an extreme example using the Sacramento housing data where the house was measured twice
-by two people.
-Since the two people are each slightly inaccurate, the two measurements might not agree exactly,
-but they are very strongly linearly related to each other, as shown in Figure \@ref(fig:08-lm-multicol).
+The second, and much more subtle, issue can occur when performing multivariate
+linear regression.  In particular, if you include multiple predictors that are \index{colinear}\index{multicolinear|see{colinear}}
+strongly linearly related to one another, the coefficients that describe the
+plane of best fit can be very unreliable&mdash;small changes to the data can
+result in large changes in the coefficients. Consider an extreme example using
+the Sacramento housing data where the house was measured twice by two people.
+Since the two people are each slightly inaccurate, the two measurements might
+not agree exactly, but they are very strongly linearly related to each other,
+as shown in Figure \@ref(fig:08-lm-multicol).
 
 ```{r 08-lm-multicol, fig.height = 4, fig.width = 5, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of the with possible outlier highlighted in red"}
 
@@ -641,7 +655,8 @@ Best Fit 2: $\text{house sale price} = `r icept2` + `r sqft2`\cdot (\text{house 
 Best Fit 3: $\text{house sale price} = `r icept3` + `r sqft3`\cdot (\text{house size 1 (ft$^2$)}) + `r sqft33` \cdot (\text{house size 2 (ft$^2$)}).$
 
 Therefore, when performing multivariate linear regression, it is important to avoid including very
-linearly related predictors. 
+linearly related predictors. However, techniques for doing so are beyond the scope of this
+book; see the list of additional resources at the end of this chapter to find out where you can learn more.
 
 ## Designing new predictors
 
@@ -660,12 +675,17 @@ There are, however, a wide variety of cases where the predictor variables do hav
 meaningful relationship with the response variable, but that relationship does not fit
 the assumptions of the regression method you have chosen. For example, a dataframe `df`
 with two variables---`x` and `y`---with a nonlinear relationship between the two variables
-will not be correctly captured by simple linear regression, as shown in Figure \@ref(fig:08-predictor-design).
-<center>
-```{r 08-predictor-design, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Example of a dataset with a nonlinear relationship between the predictor and the response"}
+will not be fully captured by simple linear regression, as shown in Figure \@ref(fig:08-predictor-design).
+```{r 08-predictor-design-df, echo = FALSE, message = FALSE, warning = FALSE}
 set.seed(1)
 df = tibble(x = sample(10000, 100, replace=TRUE)/10000)
 df <- df |> mutate(y = x^3 + 0.2*sample(10000, 100, replace=TRUE)/10000 - 0.1)
+```
+```{r 08-predictor-design-df-2, message = FALSE, warning = FALSE}
+df
+```
+<center>
+```{r 08-predictor-design, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Example of a dataset with a nonlinear relationship between the predictor and the response"}
 curve_plt <- ggplot(df, aes(x = x, y = y)) +
   geom_point() +
   xlab("x") +
@@ -677,7 +697,7 @@ curve_plt
 Instead of trying to predict the response `y` using a linear regression on `x`,
 we might have some scientific background about our problem to suggest that `y`
 should be a cubic function of `x`. So before performing regression,
-we might *create a new predictor variable* `z` using the `mutate` function:
+we might *create a new predictor variable* `z` using the `mutate` function: \index{predictor design}
 ```{r 08-predictor-design-3, message = FALSE, warning = FALSE}
 df <- df |>
         mutate(z = x^3)
@@ -702,7 +722,7 @@ curve_plt2
  
 The process of
 transforming predictors (and potentially combining multiple predictors in the process)
-is known as *feature engineering*. In real data analysis
+is known as *feature engineering*. \index{feature engineering|see{predictor design}} In real data analysis
 problems, you will need to rely on
 a deep understanding of the problem---as well as the wrangling tools 
 from previous chapters---to engineer useful new features that improve
