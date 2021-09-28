@@ -107,23 +107,26 @@ Understanding this might help us with species discovery and classification in a 
 way.
 
 ```{r 09-penguins, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 3, fig.width = 4, fig.cap = "Gentoo penguin.", fig.retina = 2}
-knitr::include_graphics("img/Gentoo_Penguin._(8671680772).jpg")
+# image source: https://commons.wikimedia.org/wiki/File:Gentoo_Penguin._(8671680772).jpg
+knitr::include_graphics("img/gentoo.jpg")
 ```
 
-To learn about K-means clustering in this chapter, 
-we will work with `penguin_data`, 
-a subset of 18 observations of the original data, 
+To learn about K-means clustering 
+we will work with `penguin_data` in this chapter.
+`penguin_data` is a subset of 18 observations of the original data, 
 which has already been standardized 
-(remember from Chapter \@ref(classification) that scaling is part of the standardization process). 
+(remember from Chapter \@ref(classification) 
+that scaling is part of the standardization process). 
 We will discuss scaling for K-means in more detail later in this chapter. 
 \index{mutate}\index{read function!read\_csv} 
 
-Before we get started, we will load the `tidyverse` metapackage to ensure
-we have the functions we need, 
-as well as set a random seed, so that our analysis will be reproducible.
+Before we get started, we will load the `tidyverse` metapackage 
+as well as set a random seed.
+This will ensure we have access to the functions we need, 
+and help make our analysis will be reproducible.
 As we will learn in more detail later in the chapter, 
-the K-means clustering algorithm uses random numbers - 
-which is why setting the seed here is important.
+setting the seed here is important 
+because the K-means clustering algorithm uses random numbers.
 
 ```{r 10-toy-example-data, echo = FALSE, message = FALSE, warning = FALSE}
 library(tidyverse)
@@ -151,30 +154,31 @@ penguin_data <- read_csv("data/penguins_standardized.csv")
 penguin_data
 ```
 
-Next, we can create a scatter plot using this data set to see if we can use
-data visualization to detect subtypes or groups in our data set.
 
-```{r 10-toy-example-plot, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Subset data of penguin standardized bill length versus standardized flipper length."}
+Next, we can create a scatter plot using this data set 
+to see if we can detect subtypes or groups in our data set.
+
+```{r 10-toy-example-plot, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Scatter plot of standardized bill length versus standardized flipper length."}
 ggplot(data, aes(x = flipper_length_standardized, y = bill_length_standardized)) +
   geom_point() +
   xlab("Flipper Length (standardized)") +
   ylab("Bill Length (standardized)")
 ```
 
-Based \index{ggplot}\index{ggplot!geom\_point} on the visualization in Figure \@ref(fig:10-toy-example-plot), we might
-suspect there are a few subtypes of penguins 
-within the observations we have in our data set.
-We can see ~ 3 groups of observations in Figure \@ref(fig:10-toy-example-plot),
+Based \index{ggplot}\index{ggplot!geom\_point} on the visualization 
+in Figure \@ref(fig:10-toy-example-plot), 
+we might suspect there are a few subtypes of penguins within our data set.
+We can see roughly 3 groups of observations in Figure \@ref(fig:10-toy-example-plot),
 including:
 
 1. a small flipper and bill length group,
 2. a small flipper length, but large bill length group, and
 3. a large  flipper and bill length group.
 
-This is interesting that we can use data visualization to uncover such patterns,
+It is interesting that we can use data visualization to uncover such patterns,
 but also leads to the questions of how might we find 
 these kind of grouping patterns automatically, 
-and how do we pick the number of groups or subtypes? 
+and how do we pick the number of groups or subtypes.
 The way to rigorously separate the data into groups 
 is to use a clustering algorithm.
 In this chapter, we will focus on the *K-means* algorithm, 
@@ -184,7 +188,7 @@ for selecting the number of clusters.
 This procedure will separate the data into the following groups 
 denoted by colour:
 
-```{r 10-toy-example-clustering, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Subset data of penguin standardized bill length versus standardized flipper length with coloured groups"}
+```{r 10-toy-example-clustering, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of standardized bill length versus standardized flipper length with coloured groups"}
 ggplot(data, aes(y = bill_length_standardized, 
                  x = flipper_length_standardized, colour = cluster)) +
   geom_point() +
@@ -232,7 +236,7 @@ In K-means clustering, we measure the quality of a cluster by its
 First, we find the cluster centers by computing the mean of each variable 
 over data points in the cluster. For example, suppose we have a 
 cluster containing four observations, and we are using two variables, $x$ and $y$, to cluster the data.
-Then we would compute the coordinates, $\mu_x$ and $\mu_y$, of the cluster center via:
+Then we would compute the coordinates, $\mu_x$ and $\mu_y$, of the cluster center via
 
 $$\mu_x = \frac{1}{4}(x_1+x_2+x_3+x_4) \quad \mu_y = \frac{1}{4}(y_1+y_2+y_3+y_4).$$
 
@@ -262,9 +266,13 @@ base <- ggplot(clus1) +
 base
 ```
 
-The second step in computing the WSSD is to add up the squared distance \index{distance!K-means} between each point in the cluster and the cluster center.
-We use the straight-line / Euclidean distance formula that we learned about in the [classification chapter](\@ref(classification)).
-In the `r nrow(clus1)`-observation cluster example above, we would compute the WSSD $S^2$ via
+The second step in computing the WSSD is to add up the squared distance 
+\index{distance!K-means} between each point in the cluster 
+and the cluster center.
+We use the straight-line / Euclidean distance formula 
+that we learned about in Chapter \@ref(classification).
+In the `r nrow(clus1)`-observation cluster example above, 
+we would compute the WSSD $S^2$ via
 
 \begin{align*}
 S^2 = \left((x_1 - \mu_x)^2 + (y_1 - \mu_y)^2\right) + \left((x_2 - \mu_x)^2 + (y_2 - \mu_y)^2\right) + \\ \left((x_3 - \mu_x)^2 + (y_3 - \mu_y)^2\right)  +  \left((x_4 - \mu_x)^2 + (y_4 - \mu_y)^2\right).
@@ -295,7 +303,7 @@ Note, however, that "large" is relative to *both* the scale of the variables for
 ### The clustering algorithm
 
 We begin the K-means \index{K-means!algorithm} algorithm by picking K, 
-and randomly assigning an equal number of observations 
+and randomly assigning a roughly equal number of observations 
 to each of the K clusters.
 Then K-means consists of two major steps that attempt to minimize the
 sum of WSSDs over all the clusters, i.e. the \index{WSSD!total} *total WSSD*:
@@ -330,7 +338,7 @@ and the right column depicts the reassignment of data to clusters.
 
 <center>
 **Center Update**  &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp; &emsp;**Label Update**
-```{r 10-toy-kmeans-iter, echo = FALSE, warning = FALSE, fig.height = 16, fig.width = 8, fig.cap = "First four iterations of K-means clustering on the `penguin_data` example data set. Each row corresponds to an iteration,where the left column depicts the center update, and the right column depicts the reassignment of data to clusters. Cluster centers are indicated by larger points that are outlined in black."}
+```{r 10-toy-kmeans-iter, echo = FALSE, warning = FALSE, fig.height = 16, fig.width = 8, fig.cap = "First four iterations of K-means clustering on the `penguin_data` example data set. Each row corresponds to an iteration, where the left column depicts the center update, and the right column depicts the reassignment of data to clusters. Cluster centers are indicated by larger points that are outlined in black."}
 
 list_plot_cntrs <- vector(mode = "list", length = 4)
 list_plot_lbls <- vector(mode = "list", length = 4)
@@ -396,14 +404,14 @@ in the fourth iteration; both the centers and labels will remain the same from t
 
 What kind of data is suitable for K-means clustering? 
 In the simplest version of K-means clustering that we have presented here,
-the straight-line / Euclidean distance is used to measure the 
+the straight-line distance is used to measure the 
 distance between observations and cluster centres. 
 This means that only quantitative data should be used with this algorithm.
 There are variants on the K-means algorithm, 
 as well as other clustering algorithms entirely, 
 that use other distance metrics 
-to allow for non-quantitative data to be clustered, 
-however they are beyond the scope of this book.
+to allow for non-quantitative data to be clustered. 
+These, however, are beyond the scope of this book.
 
 ### Random restarts
 
@@ -570,7 +578,7 @@ To address this problem, we typically standardize \index{standardization!K-means
 which ensures that each variable has a mean of 0 and standard deviation of 1.
 The `scale` function in R can be used to do this. 
 We show an example of how to use this function 
-below using an unscaled, and unstandardized version of data set in this chapter.
+below using an unscaled and unstandardized version of data set in this chapter.
 
 ```{r 10-get-unscaled-data, echo = FALSE, message = FALSE, warning = FALSE}
 unstandardized_data <- read_csv("data/toy_penguins.csv") |>
@@ -663,11 +671,11 @@ penguin_clust_ks
 ```
 
 Then we use `rowwise` \index{rowwise} + `mutate` to apply the `kmeans` function 
-within each row, to each K. 
+within each row to each K. 
 However, given that the `kmeans` function 
-returns a model object to us, (not a vector),
+returns a model object to us (not a vector)
 we will need to store the results as a list columm.
-This can work because lists are super vectors, and so they are legitimate 
+This can work because both vector and lists are legitimate 
 data structures for data frame columns. 
 To make this work, 
 we have to put each model object in a list using the `list` function.
