@@ -53,7 +53,7 @@ Note that clustering is a fundamentally different kind of task
 than classification or regression. 
 In particular, both classification and regression are *supervised tasks* 
 \index{classification}\index{regression}\index{supervised} 
-where there is a *response variables* (a category label or value), 
+where there is a *response variable* (a category label or value), 
 and we have examples of past data with labels/values 
 that help us predict those of future data. 
 By contrast, clustering is an *unsupervised task*, 
@@ -67,7 +67,7 @@ all the articles on Wikipedia with human-made topic labels.
 However, we can still cluster the articles without this information 
 to find groupings corresponding to topics automatically. 
 
-However, because there is no response variable, it is not as easy to evaluate
+Given that there is no response variable, it is not as easy to evaluate
 the "quality" of a clustering.  With classification, we can use a test data set
 to assess prediction performance. In clustering, there is not a single good
 choice for evaluation. In this book, we will use visualization to ascertain the
@@ -79,8 +79,8 @@ there are many possible methods that we could use to cluster our observations
 to look for subgroups. 
 In this book, we will focus on the widely used K-means \index{K-means} algorithm.
 In your future studies, you might encounter hierarchical clustering,
-principle component analysis, multidimensional scaling, and more; 
-see the additional resources section at the end of the next chapter 
+principal component analysis, multidimensional scaling, and more; 
+see the additional resources section at the end of this chapter 
 for where to begin learning more about these other methods.
 
 > There are also so-called *semisupervised* tasks, \index{semisupervised} 
@@ -687,24 +687,20 @@ and the other holding the clustering model object in a list column.
 penguin_clust_ks
 ```
 
-> If we wanted to get one of the clusterings out 
-> of the list column in the data frame,
-> we can use our familiar friends `slice` and `pull`.
-> However, before we do this, we need to turn `rowwise`.
-> To do that, we use `ungroup` 
-> (predictably, this can also turn `group_by` off as well).
-> 
-> ```{r}
-> penguin_clust_ks |>
->   ungroup() |>
->   slice(1) |>
->   pull(penguin_clusts)
-> ```
+If we wanted to get one of the clusterings out 
+of the list column in the data frame,
+we can use our familiar friends `slice` and `pull`.
+
+```{r}
+penguin_clust_ks |>
+  slice(1) |>
+  pull(penguin_clusts)
+```
 
 Next, we use `mutate` again to apply `glance` \index{glance} 
 to each of the K-means clustering objects to get the clustering statistics 
 (including WSSD). 
-The output of glance is a data frame, 
+The output of `glance` is a data frame, 
 and so we need to create another list column (using `list`) for this to work. 
 This results in a complex data frame with 3 columns, one for K, one for the 
 K-means clustering objects, and one for the clustering statistics:
@@ -718,7 +714,7 @@ penguin_clust_ks <- tibble(k = 1:9) |>
 penguin_clust_ks
 ```
 
-Finally we extract the total WSSD from the `glanced` column. 
+Finally we extract the total WSSD from the column named `glanced`. 
 Given that each item in this list column is a data frame, 
 we will need to use the `unnest` function 
 to unpack the data frames into simpler column data types. 
@@ -756,8 +752,15 @@ via the `nstart` argument (here we use 10 restarts).
 When we do this, K-means clustering will be performed 
 the number of times specified by the `nstart` argument,
 and R will return to us the best clustering from this.
-The more times we perform K-means clustering, 
-the more likely we are to find a lucky, or good clustering (if one exists!).
+The more times we perform K-means clustering,
+the more likely we are to find a good clustering (if one exists).
+What value should you choose for `nstart`? The answer is it depends.
+It depends on the size of your data set, 
+and the speed and size of your computer.
+The larger the `nstart` value the better from an analysis perspective, 
+but there is a trade-off that doing many many clusterings 
+could take a long time.
+So this is something that needs to be balanced.
 
 ```{r 10-choose-k-nstart, fig.height = 4, fig.width = 4.35, message= F, warning = F}
 penguin_clust_ks <- tibble(k = 1:9) |>
@@ -776,14 +779,6 @@ elbow_plot <- ggplot(clustering_statistics, aes(x = k, y = tot.withinss)) +
   scale_x_continuous(breaks = 1:9)
 elbow_plot
 ```
-
-What value should you choose for `nstart`? The answer is it depends.
-It depends on the size of your data set, 
-and the speed and size of your computer.
-The larger the `nstart` value the better from an analysis perspective, 
-but there is a trade-off that doing many many clusterings 
-could take a long time.
-So this is something that needs to be balanced.
 
 ## Additional resources
 - Chapter 10 of [An Introduction to Statistical Learning](https://www.statlearning.com/) [-@james2013introduction] provides a great next stop in the process of learning about clustering and unsupervised learning in general. In the realm of clustering specifically, it provides a great companion introduction to K-means, but also covers *hierarchical* clustering for when you expect there to be subgroups, and then subgroups within subgroups, etc. in your data. In the realm of more general unsupervised learning, it covers *principal components analysis (PCA)*, which is a very popular technique in scientific applications for reducing the number of predictors in a dataset. 
