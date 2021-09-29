@@ -168,7 +168,22 @@ Since we are investigating a relationship between two variables
 (CO$_{\text{2}}$ concentration and date), 
 a scatter plot is a good place to start. 
 Scatter plots show the data as individual points with `x` (horizontal axis) 
-and `y` (vertical axis) coordinates. 
+and `y` (vertical axis) coordinates.
+An example of a scatter plot is shown in Figure \@ref(fig:scatter-plot-sketch).
+
+```{r scatter-plot-sketch, echo = FALSE, fig.width = 3.25, fig.height = 3, fig.align = 'center', fig.cap = "Example of a scatter plot."}
+set.seed(1)
+scatter_data <- tibble(x = seq(0.25, 10, by = 0.5) + rnorm(19, 1, 1.5),
+                       y = seq(0.25, 10, by = 0.5) + rnorm(19, 1, 0.5))
+
+ggplot(scatter_data, aes(x = x, y = y)) +
+  geom_point() +
+  xlim(c(0, 12)) +
+  ylim(c(0, 12)) +
+  theme_classic()
+```
+
+
 Here, we will use the date the measurement was taken as the `x` coordinate 
 and CO$_{\text{2}}$ concentration as the `y` coordinate. 
 When using the `ggplot2` package, 
@@ -208,8 +223,24 @@ co2_scatter
 Certainly, the visualization in Figure \@ref(fig:03-data-co2-scatter) shows a clear upward trend in the atmospheric concentration of CO$_{\text{2}}$ over time.
 This plot answers the first part of our question in the affirmative, but that appears to be the only conclusion one can make from the scatter visualization. 
 However, since time is an ordered quantity, we can try using a line plot instead using the `geom_line` function. Line plots require
-that their `x` coordinate orders the data, and connect the sequence of `x` and `y` coordinates with line segments. Let's again try this with just 
-the default arguments: 
+that their `x` coordinate orders the data, and connect the sequence of `x` and `y` coordinates with line segments. 
+An example of a line plot is shown in Figure \@ref(fig:line-plot-sketch).
+
+```{r line-plot-sketch, echo = FALSE, fig.width = 3.25, fig.height = 3, fig.align = 'center', fig.cap = "Example of a line plot."}
+set.seed(1)
+line_data <- tibble(x = seq(0.5, 10, by = 1) + rnorm(10, 1, 0.5),
+                       y = seq(0.5, 10, by = 1) + rnorm(10, 1, 0.1))
+
+ggplot(line_data, aes(x = x, y = y)) +
+  geom_line() +
+  xlim(c(0, 12)) +
+  ylim(c(0, 12)) +
+  theme_classic()
+```
+
+
+Let's now try tp visualize the `co2_df` as a line plot 
+with just the default arguments: 
 \index{ggplot!geom\_line}
 
 ```{r 03-data-co2-line, warning=FALSE, message=FALSE, fig.cap = "Line plot of atmospheric concentration of CO$_{2}$ over time"}
@@ -284,17 +315,40 @@ and finally increases again until the end of the year. In Hawaii, there are two 
 Therefore, the oscillating pattern in CO$_{\text{2}}$ matches up fairly closely with the two seasons.
 
 
-### The island landmass data set with bar plots
+### The island landmass data set with bar plot
 The `islands.csv` data set \index{Island landmasses} contains a list of Earth's landmasses as well as their area (in thousands of square miles) [@islandsdata]. 
 
 **Question:** \index{question!visualization} Are the continents (North / South America, Africa, Europe, Asia, Australia, Antarctica) Earth's seven largest landmasses? If so, what are the next few largest landmasses after those?
+
 ```{r 03-data-islands, warning=FALSE, message=FALSE}
 # islands data
 islands_df <- read_csv("data/islands.csv")
 islands_df
 ```
-Here, we have a list of Earth's landmasses, and are trying to compare their sizes. The right type of visualization to answer this
-question is a bar plot, specified by the `geom_bar` function in `ggplot2`. However, by default, `geom_bar` sets the heights
+
+Here, we have a list of Earth's landmasses, 
+and are trying to compare their sizes. 
+The right type of visualization to answer this question is a bar plot. 
+A bar plot uses a rectangle to encode the value a summary statistic 
+(usually a size, count, proportion or percentage).
+They are particulary useful for comparing summary statistics between different
+groups of a categorical variable.
+An example of a bar plot is shown in Figure \@ref(fig:bar-plot-sketch).
+
+```{r bar-plot-sketch, echo = FALSE, fig.width = 3.25, fig.height = 3, fig.align = 'center', fig.cap = "Example of a bar plot."}
+set.seed(1)
+bar_data <- tibble(count = c(35, 27, 21),
+                   category = as.factor(c("Group 1", "Group 2", "Group 3")))
+
+bar_data
+ggplot(bar_data, aes(y = count, x = category)) +
+  geom_bar(stat = "identity") +
+  theme_classic()
+```
+
+We specify that we would like to use a bar plot
+via the `geom_bar` function in `ggplot2`. 
+However, by default, `geom_bar` sets the heights
 of bars to the number of times a value appears in a data frame (its *count*); here, we want to plot exactly the values in the data frame, i.e.,
 the landmass sizes. So we have to pass the `stat = "identity"` argument to `geom_bar`:
 \index{ggplot!geom\_bar}
