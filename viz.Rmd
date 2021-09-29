@@ -99,7 +99,7 @@ and then how to create the visualization in R \index{ggplot} using `ggplot2`.  T
 
 
 
-```{r 03-tidyverse,, warning=FALSE, message=FALSE}
+```{r 03-tidyverse, warning=FALSE, message=FALSE}
 library(tidyverse)
 ```
 
@@ -108,23 +108,75 @@ options(warn = -1)
 ```
 
 
-### The Mauna Loa CO2 data set 
- The [Mauna Loa CO2 data set](https://www.esrl.noaa.gov/gmd/ccgg/trends/data.html), curated by [Dr. Pieter Tans, NOAA/GML](https://www.esrl.noaa.gov/gmd/staff/Pieter.Tans/) and [Dr. Ralph Keeling, Scripps Institution of Oceanography](https://scrippsco2.ucsd.edu/)
-records the atmospheric concentration of carbon dioxide (CO2, in parts per million) at the Mauna Loa research station in \index{Mauna Loa CO2} Hawaii from 1959 onwards [@maunadata].
+### The Mauna Loa CO$_{\text{2}}$ data set 
+The [Mauna Loa CO$_{\text{2}}$ data set](https://www.esrl.noaa.gov/gmd/ccgg/trends/data.html), 
+curated by [Dr. Pieter Tans, NOAA/GML](https://www.esrl.noaa.gov/gmd/staff/Pieter.Tans/) 
+and [Dr. Ralph Keeling, Scripps Institution of Oceanography](https://scrippsco2.ucsd.edu/)
+records the atmospheric concentration of carbon dioxide 
+(CO$_{\text{2}}$, in parts per million) 
+at the Mauna Loa research station in \index{Mauna Loa CO2} Hawaii 
+from 1959 onwards [@maunadata].
+For this book, we are going to focus on the last 40 years of the data set,
+1980-2020.
 
-**Question:** \index{question!visualization} Does the concentration of atmospheric CO2 change over time, and are there any interesting patterns to note?
+**Question:** \index{question!visualization} 
+Does the concentration of atmospheric CO$_{\text{2}}$ change over time, 
+and are there any interesting patterns to note?
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+# convert year and month to date column
+# note: eventually move this to the data script
+library(lubridate)
+read_csv("data/mauna_loa.csv") |>
+  unite(col = "date_measured", year:month, remove = TRUE, sep = "-") |>
+  mutate(date_measured = ym(date_measured)) |>
+  select(-date_decimal) |>
+  filter(ppm > 0, date_measured > date("1980/01/01")) |>
+  #filter(ppm > 0, date_measured > interval(ymd("1980/01/01"), ymd("2021-01-01"))) |>
+  write_csv("data/mauna_loa_data.csv")
+```
+
+To get started, we read in and take a look at the data:
+
 ```{r 03-data-co2, warning=FALSE, message=FALSE}
 # mauna loa carbon dioxide data
-co2_df <- read_csv("data/mauna_loa.csv") |>
-  filter(ppm > 0, date_decimal < 2000)
+co2_df <- read_csv("data/mauna_loa_data.csv")
 co2_df
 ```
 
-Since we are investigating a relationship between two variables (CO2 concentration and date), a scatter plot is a good place to start. Scatter plots 
-show the data as individual points with `x` (horizontal axis) and `y` (vertical axis) coordinates. Here, we will use the decimal
- date as the `x` coordinate 
-and CO2 concentration as the `y` coordinate. When using the `ggplot2` package, we create the plot object with the `ggplot` function; there are 
-a few basic aspects of a plot that we need to specify:
+We see we have two columns available to us; `date_measured` and `ppm`. 
+The `date_measured` column holds the date the measurement was taken, 
+and is of type `date`.
+The `ppm` columns holds the value of $CO_2$ in parts per million 
+that was measured on each date, and is type `double`.
+
+> **Note:** `read_csv` was able to parse the `date_measured` column into the
+> `date` vector type because it was entered 
+> in the international standard date format, 
+> called ISO 8601, which lists dates as `year-month-day`.
+> `date` vectors are `double` vectors with special properties that allow 
+> them to handle dates correctly.
+> For example, `date` type vectors allow functions like `ggplot` 
+> to treat them as numeric dates and not a character vectors, 
+> even though they contain non-numeric characters 
+> (e.g., `-` in the `date_measured` column in the `co2_df` data frame).
+> This means R it will not accidentally plot the dates in the wrong order 
+> (i.e., not alphanumerically as would happen if it was a character vector). 
+> An in depth study of dates and times is beyond the scope of the book, 
+> but we invite readers who are interested to learn more 
+> to see the Dates and times chapter of R for Data Science [@wickham2016r]
+> (linked to in our Additional Resources section at the end of this chapter).
+
+Since we are investigating a relationship between two variables 
+(CO$_{\text{2}}$ concentration and date), 
+a scatter plot is a good place to start. 
+Scatter plots show the data as individual points with `x` (horizontal axis) 
+and `y` (vertical axis) coordinates. 
+Here, we will use the date the measurement was taken as the `x` coordinate 
+and CO$_{\text{2}}$ concentration as the `y` coordinate. 
+When using the `ggplot2` package, 
+we create the plot object with the `ggplot` function; 
+there are a few basic aspects of a plot that we need to specify:
 \index{ggplot!aesthetic mapping}
 \index{ggplot!geometric object}
 
@@ -132,35 +184,39 @@ a few basic aspects of a plot that we need to specify:
     - here, we specify the `co2_df` data frame
 - the *aesthetic mapping*: tells `ggplot` how the columns in the data frame map to properties of the visualization
     - to create an aesthetic mapping, we use the `aes` function
-    - here, we set the plot `x` axis to the `date_decimal` variable, and the plot `y` axis to the `ppm` variable
+    - here, we set the plot `x` axis to the `date_measured` variable, and the plot `y` axis to the `ppm` variable
 - the *geometric object*: specifies how the mapped data should be displayed
     - to create a geometric object, we use a `geom_*` function (see the [ggplot reference](https://ggplot2.tidyverse.org/reference/) for a list of geometric objects)
-    - here, we use the `geom_point` function to visualize our data as a scatterplot
+    - here, we use the `geom_point` function to visualize our data as a scatter plot
 
- We can see in Figure \@ref(fig:03-ggplot-function-scatter) how each of these aspects map to our code for creating a basic scatter plot for our `co2_df` data. 
-```{r 03-ggplot-function-scatter, echo=FALSE, fig.cap = "Creating a scatterplot with the ggplot function", message =F}
+We can see in Figure \@ref(fig:03-ggplot-function-scatter) 
+how each of these aspects map to our code
+for creating a basic scatter plot for our `co2_df` data.
+ 
+```{r 03-ggplot-function-scatter, echo=FALSE, fig.cap = "Creating a scatter plot with the ggplot function", message =F}
 knitr::include_graphics("img/ggplot_function_scatter.jpeg")
 ```
+
 We could pass many other possible arguments to the aesthetic mapping and geometric object to change how the plot looks. For 
 the purposes of quickly testing things out to see what they look like, though, we can just go with the default settings:
 \index{ggplot!aes}
 \index{ggplot!geom\_point}
 
-```{r 03-data-co2-scatter, warning=FALSE, message=FALSE, fig.cap = "Scatter plot of atmospheric concentration of CO2 over time"}
-co2_scatter <- ggplot(co2_df, aes(x = date_decimal, y = ppm)) +
+```{r 03-data-co2-scatter, warning=FALSE, message=FALSE, fig.height = 4, fig.width = 6, fig.cap = "Scatter plot of atmospheric concentration of CO$_{2}$ over time"}
+co2_scatter <- ggplot(co2_df, aes(x = date_measured, y = ppm)) +
   geom_point()
 co2_scatter
 ```
 
-Certainly, the visualization in Figure \@ref(fig:03-data-co2-scatter) shows a clear upward trend in the atmospheric concentration of CO2 over time.
+Certainly, the visualization in Figure \@ref(fig:03-data-co2-scatter) shows a clear upward trend in the atmospheric concentration of CO$_{\text{2}}$ over time.
 This plot answers the first part of our question in the affirmative, but that appears to be the only conclusion one can make from the scatter visualization. 
 However, since time is an ordered quantity, we can try using a line plot instead using the `geom_line` function. Line plots require
 that their `x` coordinate orders the data, and connect the sequence of `x` and `y` coordinates with line segments. Let's again try this with just 
 the default arguments: 
 \index{ggplot!geom\_line}
 
-```{r 03-data-co2-line, warning=FALSE, message=FALSE, fig.cap = "Line plot of atmospheric concentration of CO2 over time"}
-co2_line <- ggplot(co2_df, aes(x = date_decimal, y = ppm)) +
+```{r 03-data-co2-line, warning=FALSE, message=FALSE, fig.cap = "Line plot of atmospheric concentration of CO$_{2}$ over time"}
+co2_line <- ggplot(co2_df, aes(x = date_measured, y = ppm)) +
   geom_line()
 co2_line
 ```
@@ -176,8 +232,8 @@ To add axis labels, we use the `xlab` and `ylab` functions. To change the font s
 \index{ggplot!xlab,ylab}
 \index{ggplot!theme}
 
-```{r 03-data-co2-line-2, warning=FALSE, message=FALSE, fig.cap = "Line plot of atmospheric concentration of CO2 over time with clearer axes and labels"}
-co2_line <- ggplot(co2_df, aes(x = date_decimal, y = ppm)) +
+```{r 03-data-co2-line-2, warning=FALSE, message=FALSE, fig.cap = "Line plot of atmospheric concentration of CO$_{2}$ over time with clearer axes and labels"}
+co2_line <- ggplot(co2_df, aes(x = date_measured, y = ppm)) +
   geom_line() +
   xlab("Year") +
   ylab("Atmospheric CO2 (ppm)") +
@@ -187,23 +243,40 @@ co2_line
 
 Finally, let's see if we can better understand the oscillation by changing the visualization slightly. Note that it is totally fine to use a small number of visualizations to answer different aspects of the question you are trying to answer. We will accomplish
 this by using *scales*, \index{ggplot!scales} another important feature of `ggplot2` that easily transforms the different variables and set limits.
-We scale the horizontal axis using the `scale_x_continuous` function, and the vertical axis with the `scale_y_continuous` function.
-We can transform the axis by passing the `trans` argument, and set limits by passing the `limits` argument. In particular, here, we 
-will use the `scale_x_continuous` function with the `limits` argument to zoom in on just five years of data (say, 1990-1995):
+We scale the horizontal axis using the `xlim` function,
+and the vertical axis with the `ylim` function.
+In particular, here, we will use the `xlim` function to zoom in 
+on just five years of data (say, 1990-1995).
+`xlim` takes a vector of length two 
+to specify the upper and lower bounds to limit the axis. 
+We can create that using the `c` function.
+Note that it is important that the vector given to `xlim` must be of the same
+type as the data that is mapped to that axis. 
+Here, we have a mapped a date to the x-axis, 
+and so we need to use the `date` function 
+(from the `tidyverse` `lubridate` R package) 
+to convert the character strings we provide to `c` to `date` vectors.
 
-```{r 03-data-co2-line-3, warning=FALSE, message=FALSE, fig.cap = "Line plot of atmospheric concentration of CO2 from 1990 to 1995 only"}
-co2_line <- ggplot(co2_df, aes(x = date_decimal, y = ppm)) +
+> **Note:** 
+> `lubridate` is a package that is installed by the `tidyverse` metapackage,
+> but is not loaded by it. 
+> Hence we need to load it separately in the code below.
+
+```{r 03-data-co2-line-3, warning = FALSE, message = FALSE, fig.cap = "Line plot of atmospheric concentration of CO$_{2}$ from 1990 to 1995 only"}
+library(lubridate)
+
+co2_line <- ggplot(co2_df, aes(x = date_measured, y = ppm)) +
   geom_line() +
   xlab("Year") +
   ylab("Atmospheric CO2 (ppm)") +
-  scale_x_continuous(limits = c(1990, 1995)) +
+  xlim(c(date("1990-01-01"), date("1994-12-01"))) +
   theme(text = element_text(size = 18))
 co2_line
 ```
 
-Interesting! It seems that each year, the atmospheric CO2 increases until it reaches its peak somewhere around April, decreases until around late September, 
+Interesting! It seems that each year, the atmospheric CO$_{\text{2}}$ increases until it reaches its peak somewhere around April, decreases until around late September, 
 and finally increases again until the end of the year. In Hawaii, there are two seasons: summer from May through October, and winter from November through April.
-Therefore, the oscillating pattern in CO2 matches up fairly closely with the two seasons.
+Therefore, the oscillating pattern in CO$_{\text{2}}$ matches up fairly closely with the two seasons.
 
 
 ### The island landmass data set
@@ -620,12 +693,12 @@ Regardless of where it appears, a good way to discuss your visualization is as a
 Below are two examples of how one might take these four steps in describing the example visualizations that appeared earlier in this chapter.
 Each of the steps is denoted by its numeral in parentheses, e.g. (3).
 
-**Mauna Loa Atmospheric CO2 Measurements:** (1) \index{Mauna Loa CO2} Many current forms of energy generation and conversion---from automotive engines to natural gas power plants---rely on burning
-fossil fuels and produce greenhouse gases, typically primarily carbon dioxide (CO2), as a byproduct. Too much of these gases in the Earth's atmosphere will cause it to trap
-more heat from the sun, leading to global warming. (2) In order to assess how quickly the atmospheric concentration of CO2 is increasing over time, we (3) used a data set from
-the Mauna Loa observatory from Hawaii, consisting of CO2 measurements from 1959 to the present. We plotted the measured concentration of CO2 (on the vertical axis) over time
+**Mauna Loa Atmospheric CO$_{\text{2}}$ Measurements:** (1) \index{Mauna Loa CO2} Many current forms of energy generation and conversion---from automotive engines to natural gas power plants---rely on burning
+fossil fuels and produce greenhouse gases, typically primarily carbon dioxide (CO$_{\text{2}}$), as a byproduct. Too much of these gases in the Earth's atmosphere will cause it to trap
+more heat from the sun, leading to global warming. (2) In order to assess how quickly the atmospheric concentration of CO$_{\text{2}}$ is increasing over time, we (3) used a data set from
+the Mauna Loa observatory from Hawaii, consisting of CO$_{\text{2}}$ measurements from 1959 to the present. We plotted the measured concentration of CO$_{\text{2}}$ (on the vertical axis) over time
 (on the horizontal axis). From this plot, you can see a clear, increasing, and generally linear trend over time. There is also a periodic oscillation that occurs once per year and
-aligns with Hawaii's seasons, with an amplitude that is small relative to the growth in the overall trend. This shows that atmospheric CO2 is clearly increasing over 
+aligns with Hawaii's seasons, with an amplitude that is small relative to the growth in the overall trend. This shows that atmospheric CO$_{\text{2}}$ is clearly increasing over 
 time, and (4) it is perhaps worth investigating more into the causes.
 
 **Michelson Light Speed Experiments:** (1) \index{Michelson speed of light} Our modern understanding of the physics of light has advanced significantly from the 
@@ -726,3 +799,9 @@ knitr::include_graphics("img/faithful_zoom.svg")
 - The [`ggplot2` page on the tidyverse website](https://ggplot2.tidyverse.org) is where you should look if you want to learn more about the functions in this chapter, the full set of arguments you can use, and other related functions. The site also provides a very nice cheat sheet that summarizes many of the data wrangling functions from this chapter.
 - The [Fundamentals of Data Visualization](https://serialmentor.com/dataviz/) has a wealth of information on designing effective visualizations. It is not specific to any particular programming language or library. If you want to improve your visualization skills, this is the next place to look.
 - [R for Data Science](https://r4ds.had.co.nz/) has a chapter on [creating visualizations using `ggplot2`](https://r4ds.had.co.nz/data-visualisation.html). This reference is specific to R and `ggplot2`, but provides a much more detailed introduction to the full set of tools that `ggplot2` provides. This chapter is where you should look if you want to learn how to make more intricate visualizations in `ggplot2` than what is included in this chapter.
+- [R for Data Science](https://r4ds.had.co.nz/) has a chapter on 
+[dates and times](https://r4ds.had.co.nz/dates-and-times.html). 
+This chapter is where you should look if you want to learn about `date` vectors,
+including how to create them, 
+and how to use them to effectively handle durations, periods and intervals
+using the `lubridate` package.
