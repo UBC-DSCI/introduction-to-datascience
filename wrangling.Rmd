@@ -115,26 +115,28 @@ year
 
 Table: (#tab:datatype-table) Basic data types in R
 
-| Data type | Description | Example |
-| ---       | ----------  |---------|
-| character | Letters or numbers surrounded by quotes | "1" , "Hello world!" |
-| double | Numbers with decimals values | 1.2333 |
-| integer | Numbers that do not contain decimals | 1L, 20L (where "L" tells R to store as an integer) |
-| logical | A value of true and false | `TRUE`, `FALSE` |
-| factor | Used to represent data with a limited number of values | a `color` variable with levels `red`, `green` and `orange` |
+| Data type | Abbreviation | Description | Example |
+| --------- | ------------ |------------ |---------|
+| character | chr | Letters or numbers surrounded by quotes | "1" , "Hello world!" |
+| double | dbl | Numbers with decimals values | 1.2333 |
+| integer | int | Numbers that do not contain decimals | 1L, 20L (where "L" tells R to store as an integer) |
+| logical | lgl | A value of true and false | `TRUE`, `FALSE` |
+| factor | fct | Used to represent data with a limited number of values | a `color` variable with levels `red`, `green` and `orange` |
 
 > Integer and double data types both fall under the class "Numeric".
 > Most of the time when working with numbers in R they will be double types. For
 > instance, a double data type is the default when you create a vector of
-> numbers using `c()`, and when you read in whole numbers via `read_csv`. There
-> are other basic data types in R, such as *raw* and *complex*, which we won't
-> cover in this textbook. We will go into more details about factors in Chapter
-> \@ref(viz).
+> numbers using `c()`, and when you read in whole numbers via `read_csv`. 
+> Factors help us represent categorical data. Factors can be ordered or 
+> unordered, and even though factors look like characters, they are integers
+> underneath. They contain a set of values, known as levels. 
+> Storing something as a factor helps ensure that R will treat the data correctly.
+> There are other basic data types in R, such as *raw* and *complex*, which we
+> won't cover in this textbook.
 
 ### What is a list?
 
-Lists are also objects in R that have multiple, ordered elements, 
-you can think of them as super-vectors. 
+Lists are also objects in R that have multiple, ordered elements.
 Vectors and lists differ by the requirement of element type
 consistency. All elements within a single vector must be of the same type (e.g.,
 all elements are characters), whereas elements within a single list can be of
@@ -146,25 +148,16 @@ because lists can contain other lists.
 knitr::include_graphics("img/vec_vs_list/vec_vs_list.001.jpeg")
 ```
 
-> Note that there are actually two types of vectors in R: *atomic vectors* and
-> *lists*. Though when people say “vector”, they are *usually* referring to
-> atomic vectors. Confusing, we know! You can think of **atom**ic vectors as
-> the “atoms” of R since they are built from R’s most fundamental data types.
-
-
 ### What does this have to do with data frames?
 
-As mentioned earlier, 
-a data frame is a special type of object in R whose columns are vectors. 
-In particular, 
-a data frame is really a special subtype of list where the elements 
-can only be vectors, and the vectors must be of the same length. 
-Although the columns of a data frame can only be vectors, 
-and vector elements must be of the same data type, 
-not all columns in a data frame need to be of the same type. 
+A data frame is really a special subtype of list where the elements 
+must be either a vectors or a list, 
+and these elements must be of the same length. 
+Not all columns in a data frame need to be of the same type. 
 Figure \@ref(fig:02-dataframe) shows a data frame where
 the columns are vectors of different types, 
-but the elements are the same data type within each column. 
+but because the columns in this example are vectors, 
+the elements must be the same data type within each column. 
 Representing data with data frames enables us to work with our 
 data in a tabular manner easily. 
 It also allows us to have columns (containing qualities or values) 
@@ -179,6 +172,17 @@ along with each name rather than sorting the columns independently.
 ``` {r 02-dataframe, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Data frame and vector types", fig.retina = 2, out.width = "650pt"}
 knitr::include_graphics("img/dataframe/dataframe.001.jpeg")
 ```
+
+> **Note:** In this book we have chosen to use the term "vector" to refer to 
+> the data structure that is technically called an atomic vector 
+> (e.g. character, integer, double, logical, etc).
+> We have made this decision because this is how this data type 
+> is most commonly referred to by the R community.
+> Formally, vectors is an umbrella term that encompasses both atomic vector 
+> and list objects in R.
+> Confusing we know and agree!
+> We encourage readers who are enthusiastic to learn more 
+> to read the Vectors chapter of the Advanced R book [@wickham2019advanced].
 
 The functions from the `tidyverse` package that we are using often give us a
 special class of data frame called a *tibble*. Tibbles have some additional
@@ -800,8 +804,8 @@ However, suppose we didn't use the `convert` argument
 and needed to modify the column type some other way?
 Below we create such a situation 
 so that we can demonstrate how we can use `mutate`
-to change the column types of a dataframe. 
-`mutate` is a useful function to modify or create new dataframe columns.
+to change the column types of a data frame. 
+`mutate` is a useful function to modify or create new data frame columns.
 
 ``` {r warning=FALSE, message=FALSE}
 lang_messy <- read_csv("data/region_lang_top5_cities_messy.csv")
@@ -885,7 +889,7 @@ was English in the 2016 Canadian census was
 `r format(round(number_most_home/toronto_popn, 2), scientific = FALSE, big.mark = ",")`
 in Toronto.
 
-Let's now use `mutate` to create a new column in our dataframe 
+Let's now use `mutate` to create a new column in our data frame 
 that holds the proportion of people who speak English 
 for our five cities of focus in this chapter. 
 To accomplish this, we will need to do 2 tasks 
@@ -906,7 +910,7 @@ city_pops
 
 And next, we will filter the `official_langs` data frame 
 so that we only keep the rows where the language is English.
-We will name the new dataframe we get from this `english_langs`:
+We will name the new data frame we get from this `english_langs`:
 
 ```{r}
 english_langs <- filter(official_langs, language == "English")
@@ -928,7 +932,7 @@ english_langs
 
 > Note: one important thing about the computation that we did above was
 that we had to ensure that we ordered the `city_pops` vector in the
-same order as the cities were listed in the `english_langs` dataframe.
+same order as the cities were listed in the `english_langs` data frame.
 This is because R will perform the division computation we did by dividing 
 each element of the `most_at_home` column by each element of the 
 `city_pops` vector - matching them up by position.
@@ -939,7 +943,7 @@ a technique called joins.
 We link to resources that discuss this in the Additional
 Resources section at the end of the chapter.
 
-## Creating a visualization with tidy data
+#### Creating a visualization with tidy data {-}
 
 Now that we have cleaned and wrangled our data, we can make visualizations or do 
 statistical analyses to answer questions about our data! Let's suppose we want to
@@ -1109,15 +1113,15 @@ For example, we can pipe together three functions to:
 
 - `filter` rows to include only those where the counts of the language most spoken at home are greater than 10,000, 
 - `select` only the columns corresponding to `region`, `language` and `most_at_home`, and
-- `arrange` the dataframe rows in order by counts of the language most spoken at home 
+- `arrange` the data frame rows in order by counts of the language most spoken at home 
 from smallest to largest.
 
 > **Note:** 
 > As we saw in Chapter \@ref(intro), 
 > we can use the `tidyverse` `arrange` function 
-> to order the rows in the dataframe by the values of one or more columns. 
+> to order the rows in the data frame by the values of one or more columns. 
 > Here we pass the column name `most_at_home` to arrange 
-> to order the dataframe rows by the values in that column, in ascending order.
+> to order the data frame rows by the values in that column, in ascending order.
 
 ``` {r}
 large_region_lang <- filter(tidy_lang, most_at_home > 10000) |>
@@ -1159,7 +1163,7 @@ and pipe that into more functions after that.
 
 ## Aggregating data with `summarize`
 
-### Calculating summary statistics on columns:
+### Calculating summary statistics on columns
 
 As a part of many data analyses, we need to calculate a summary value for the
 data (a *summary statistic*). 
@@ -1211,24 +1215,24 @@ primary language at home is spoken by
 `r format(lang_summary$max_most_at_home[1], scientific = FALSE, big.mark = ",")`
 people.
 
-#### Calculating summary statistics when there are NA's
+#### Calculating summary statistics when there are `NA`s {-}
 
 When we use base R statistical summary functions 
 (e.g., `max`, `mix`, `mean`, `sum`, etc) with `summarize`, 
 R will return to us `NA` when we apply functions to columns that 
-contain `NA`'ss in the data frame. 
+contain `NA`s in the data frame. 
 Usually that is not what we want to happen, 
-instead we'd usually like R to ignore the NA's 
+instead we'd usually like R to ignore the `NA`s 
 and calculate the summary statistic using all of the other values, 
-that are not `NA`'s, in the column.
+that are not `NA`s, in the column.
 
 How can we do that? 
 In this case of pairing base R statistical summary functions with `summarize`, 
-we can avoid getting R to return NA's by adding the argument `na.rm = TRUE` 
+we can avoid getting R to return `NA`s by adding the argument `na.rm = TRUE` 
 to the base R statistical summary function we are applying. 
 We show an example of this below.
 
-First we create a seemingly innocuous NA 
+First we create a seemingly innocuous `NA` 
 in the first row of the `region_lang` data frame, 
 in the `most_at_home column`:
 
@@ -1256,7 +1260,7 @@ summarize(region_lang_na,
           max_most_at_home = max(most_at_home, na.rm = TRUE))
 ```
 
-### Calculating summary statistics on columns for groups of rows:
+### Calculating summary statistics on columns for groups of rows
 
 A common pairing with `summarize` is `group_by`. Pairing these functions
 together can let you summarize values for subgroups within a data set,
@@ -1268,7 +1272,7 @@ image_read("img/summarize/summarize.002.jpeg") |>
 ```
 
 For example, 
-here, we can use `group_by` to group the regions of the `tidy_lang` dataframe
+here, we can use `group_by` to group the regions of the `tidy_lang` data frame
 and then calculate the minimum and maximum number of Canadians 
 reporting the language as the primary language at home 
 for each of the regions in the data set.
@@ -1313,7 +1317,7 @@ First we will see how we can do this using `summarize` + `across`.
 Then we will also explore how we can use a more general iteration function, 
 `map`, to also accomplish this.
 
-#### `summarize` + `across` for calculating summary statistics on many columns
+#### `summarize` + `across` for calculating summary statistics on many columns {-}
 
 To summarize statistics across many columns, we can use the 
 `summarize` function we have just recently learned about.
@@ -1332,14 +1336,14 @@ region_lang |>
 ``` 
 
 > **Note on calculating summary statistics with `summarize` + `across`** 
-> **when there are NA's**:
+> **when there are `NA`s**:
 > 
 > Similarly to when we use base R statistical summary functions 
 > (e.g., `max`, `mix`, `mean`, `sum`, etc) with `summarize` alone, 
 > the use of the `summarize` + `across` functions paired 
 > with base R statistical summary functions
-> also return NA's when we apply them to columns that 
-> contain NAs in the data frame. 
+> also return `NA`s when we apply them to columns that 
+> contain `NA`s in the data frame. 
 > 
 > To avoid this, again we need to add the argument `na.rm = TRUE`,
 > but in this case we need to use it a little bit differently.
@@ -1352,7 +1356,7 @@ region_lang |>
 >   summarize(across(mother_tongue:lang_known, max, na.rm = TRUE))
 > ```
 
-#### `map` for calculating summary statistics on many columns
+#### `map` for calculating summary statistics on many columns {-}
 
 An alternative to `summarize` and `across` 
 for applying a function to many columns is the `map` family of functions.
@@ -1416,13 +1420,13 @@ region_lang |>
 Which `map` function you choose depends on what you want to do with the
 output; you don't always have to pick `map_dfc`!
 
-> **Note on calculating summary statistics with `map` when there are NA's**:
+> **Note on calculating summary statistics with `map` when there are `NA`s**:
 > 
 > Similarly to when we use base R statistical summary functions 
 > (e.g., `max`, `mix`, `mean`, `sum`, etc) with `summarize`, 
 > `map` functions paired with base R statistical summary functions
-> also return NA's when we apply them to columns that 
-> contain NAs in the data frame.
+> also return `NA`s when we apply them to columns that 
+> contain `NA`s in the data frame.
 > 
 > To avoid this, again we need to add the argument `na.rm = TRUE`.
 > When we use this with `map` we do this by adding a `,` 
@@ -1443,7 +1447,50 @@ or a list, and even to lists of data frames, or nested data frames.
 To learn more about them see the resource linked to in the Additional Resources
 section at the end of this chapter.
 
-## Apply functions across columns within one row with `rowwise`
+## Apply functions across many columns with `mutate` and `across`
+
+Sometimes we need to apply a function to many columns in a data frame. 
+This is a common task when converting units of measurement across many columns, 
+and when standardizing data before modelling. 
+We illustrate such a data transformation in Figure \@ref(fig:mutate-across).
+
+```{r mutate-across, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "`mutate` and `across` is useful for applying functions across many columns. The darker, top row of each table represents the column headers.", out.width="100%", fig.retina = 2}
+image_read("img/summarize/summarize.005.jpeg") |> 
+  image_crop("2000x475+0+300")
+```
+
+For example, 
+imagine that we wanted to convert all the numeric columns 
+in the `region_lang` data frame from double type to integer type 
+using the `as.integer` function.
+When we revisit the `region_lang` data frame, 
+we can see that this would be the columns from `mother_tongue` to `lang_known`.
+
+```{r}
+region_lang
+```
+
+To accomplish such a task, we can use `mutate` paired with `across`.
+This works in a similar way for column selection, 
+as we saw when we used `summarize` + `across` earlier.
+As we did above, 
+we again use `across` to specify the columns using `select` syntax
+as well as the function we want to apply on the specified columns.
+However, a key difference here is that we are using `mutate`, 
+which means that we get back the same data frame (with the same number of rows).
+Just the values in the mutated columns are different.
+
+```{r}
+region_lang |> 
+  mutate(across(mother_tongue:lang_known, as.integer))
+```
+
+We see that we get back a data frame
+with the same number of columns and rows,
+the only thing that changes is the tranformation we applied 
+to the specified columns (here `mother_tongue` to `lang_known`).
+
+## Apply functions across columns within one row with `rowwise` and `mutate`
 
 What if you want to apply a function across columns but within one row? 
 We illustrate such a data transformation in Figure \@ref(fig:rowwise).
@@ -1462,7 +1509,7 @@ We will use the aptly named function `rowwise` in combination with `mutate`
 to accomplish this task. 
 
 Before we apply `rowwise` we will `select` only the count columns 
-so we can see all the columns in the dataframe's output easily in the book. 
+so we can see all the columns in the data frame's output easily in the book. 
 So for this demonstration, the data set we are operating on looks like this:
 
 ```{r}
@@ -1493,7 +1540,7 @@ in each region in the `region_lang` data set.
 Similar to `group_by`, 
 `rowwise` doesn't do anything when it is called by itself, 
 however, we can apply `rowwise` in combination 
-with other functions to change how these other functions operate on the data.  
+with other functions to change how these other functions operate on the data.
 Notice if we used `mutate` without `rowwise`, 
 we would have computed the maximum value across *all* rows 
 rather than the maximum value for *each* row. 
