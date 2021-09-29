@@ -1443,7 +1443,50 @@ or a list, and even to lists of data frames, or nested data frames.
 To learn more about them see the resource linked to in the Additional Resources
 section at the end of this chapter.
 
-## Apply functions across columns within one row with `rowwise`
+## Apply functions across many columns with `mutate` and `across`
+
+Sometimes we need to apply a function to many columns in a data frame. 
+This is a common task when converting units of measurement across many columns, 
+and when standardizing data before modelling. 
+We illustrate such a data transformation in Figure \@ref(fig:mutate-across).
+
+```{r mutate-across, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "`mutate` and `across` is useful for applying functions across many columns. The darker, top row of each table represents the column headers.", out.width="100%", fig.retina = 2}
+image_read("img/summarize/summarize.005.jpeg") |> 
+  image_crop("2000x475+0+300")
+```
+
+For example, 
+imagine that we wanted to convert all the numeric columns 
+in the `region_lang` data frame from double type to integer type 
+using the `as.integer` function.
+When we revisit the `region_lang` data frame, 
+we can see that this would be the columns from `mother_tongue` to `lang_known`.
+
+```{r}
+region_lang
+```
+
+To accomplish such a task, we can use `mutate` paired with `across`.
+This works in a similar way for column selection, 
+as we saw when we used `summarize` + `across` earlier.
+As we did above, 
+we again use `across` to specify the columns using `select` syntax
+as well as the function we want to apply on the specified columns.
+However, a key difference here is that we are using `mutate`, 
+which means that we get back the same data frame (with the same number of rows).
+Just the values in the mutated columns are different.
+
+```{r}
+region_lang |> 
+  mutate(across(mother_tongue:lang_known, as.integer))
+```
+
+We see that we get back a data frame
+with the same number of columns and rows,
+the only thing that changes is the tranformation we applied 
+to the specified columns (here `mother_tongue` to `lang_known`).
+
+## Apply functions across columns within one row with `rowwise` and `mutate`
 
 What if you want to apply a function across columns but within one row? 
 We illustrate such a data transformation in Figure \@ref(fig:rowwise).
@@ -1493,7 +1536,7 @@ in each region in the `region_lang` data set.
 Similar to `group_by`, 
 `rowwise` doesn't do anything when it is called by itself, 
 however, we can apply `rowwise` in combination 
-with other functions to change how these other functions operate on the data.  
+with other functions to change how these other functions operate on the data.
 Notice if we used `mutate` without `rowwise`, 
 we would have computed the maximum value across *all* rows 
 rather than the maximum value for *each* row. 
