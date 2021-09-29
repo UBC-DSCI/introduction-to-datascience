@@ -137,6 +137,7 @@ bookdown::gitbook:
 
 #### Bibliography
 - do not put "et al" or "and others"; always use the full list of authors, BibTeX will choose how to abbreviate
+- read https://trevorcampbell.me/html/bibtex.html and make sure our bib follows this convention
 
 #### Naming conventions
 - K-means (not $K$-\*, K means, Kmeans)
