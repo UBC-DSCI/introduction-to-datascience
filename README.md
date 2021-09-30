@@ -154,7 +154,7 @@ bookdown::gitbook:
 - data set (not dataset)
 - scatter plot (not scatterplot)
 - bar plot (not bar chart)
-- capitalize all initialisms and acronyms (URL not url, API not api, $K$-NN not $k$-nn)
+- capitalize all initialisms and acronyms (URL not url, API not api, K-NN not k-nn)
 - response variable (not target, output, label)
 - predictor variable (not explanatory, feature)
 - numerical variable (not quantitative variable)
