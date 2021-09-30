@@ -96,6 +96,10 @@ making it easier for them to understand and remember your message quickly.
 This section will cover examples of how to choose and refine a visualization given a data set and a question that you want to answer, 
 and then how to create the visualization in R \index{ggplot} using `ggplot2`.  To use the `ggplot2` package, we need to load the `tidyverse` metapackage.
 
+```{r other-libraries, include = FALSE}
+library(cowplot)
+```
+
 ```{r 03-tidyverse, warning=FALSE, message=FALSE}
 library(tidyverse)
 ```
@@ -764,7 +768,75 @@ morley_hist
 Wow, impressive! These measurements of the speed of light from 1879 had errors around *0.05%* of the true speed. Figure \@ref(fig:03-data-morley-hist-5) shows you that even though experiments 2 and 5 were perhaps the most accurate, all of the experiments did quite an 
 admirable job given the technology available at the time.
 
-### Adding layers to a `ggplot` plot object
+#### Choosing a binwidth for histograms {-}
+
+When you create a histogram in R, the default number of bins used is 30.
+Is this the number you should always use? The answer here is no.
+The right number of bins really depends on 
+what makes sense for the problem you're working on.
+It should help you answer the question you are asking.
+Setting the number of bins is possible 
+via the `bins` argument in `geom_histogram`, 
+however the number of bins depends on both the question you are asking 
+as well as the number of observations you have in your data.
+Instead of choosing the number of bins, 
+we suggest you choose the bin width that makes sense for your problem.
+This can be set via the `binwidth` argument in `geom_histogram`.
+
+Choosing the correct bin width for your problem 
+is something that commonly takes iteration.
+It's usually a good idea to try out several bin widths.
+Let's do that here for the histogram we have been working on.
+In Figure \@ref(fig:03-data-morley-hist-binwidth)
+we compare the default number of bins with three histograms where we set the 
+`binwidth` in `geom_histogram` to 0.001, 0.01 and 0.1.
+We can see that in this case, both the default number of bins 
+and the binwidth of 0.01 are effective for helping answer our question.
+Whereas the bin widths of 0.001 and 0.1 are too small and too big, respectively.
+
+```{r 03-data-morley-hist-binwidth, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 10, fig.cap = "Histogram of relative accuracy split vertically by experiment with clearer axes and labels"}
+morley_hist_default <- ggplot(morley_rel, aes(x = relative_accuracy, fill = factor(Expt))) +
+  geom_histogram(position = "identity") +
+  facet_grid(rows = vars(Expt)) +
+  geom_vline(xintercept = 0, linetype = "dashed", size = 1.0) +
+  labs(x = "Relative Accuracy (%)", y = "# Measurements", fill = "Experiment ID") +
+  theme(legend.position = "none") +
+  ggtitle("Default bin width (bins = 30)")
+
+morley_hist_big <- ggplot(morley_rel, aes(x = relative_accuracy, fill = factor(Expt))) +
+  geom_histogram(position = "identity", binwidth = 0.1) +
+  facet_grid(rows = vars(Expt)) +
+  geom_vline(xintercept = 0, linetype = "dashed", size = 1.0) +
+  labs(x = "Relative Accuracy (%)", y = "# Measurements", fill = "Experiment ID") +
+  theme(legend.position = "none") +
+  ggtitle( "binwidth = 0.1")
+
+morley_hist_med <- ggplot(morley_rel, aes(x = relative_accuracy, fill = factor(Expt))) +
+  geom_histogram(position = "identity", binwidth = 0.01) +
+  facet_grid(rows = vars(Expt)) +
+  geom_vline(xintercept = 0, linetype = "dashed", size = 1.0) +
+  labs(x = "Relative Accuracy (%)", y = "# Measurements", fill = "Experiment ID") +
+  theme(legend.position = "none") +
+  ggtitle("binwidth = 0.01")
+
+morley_hist_small <- ggplot(morley_rel, aes(x = relative_accuracy, fill = factor(Expt))) +
+  geom_histogram(position = "identity", binwidth = 0.001) +
+  facet_grid(rows = vars(Expt)) +
+  geom_vline(xintercept = 0, linetype = "dashed", size = 1.0) +
+  labs(x = "Relative Accuracy (%)", y = "# Measurements", fill = "Experiment ID") +
+  theme(legend.position = "none") +
+  ggtitle("binwidth = 0.001")
+
+plot_grid(morley_hist_default, 
+          morley_hist_small, 
+          morley_hist_med, 
+          morley_hist_big, 
+          ncol = 2)
+```
+
+
+
+#### Adding layers to a `ggplot` plot object {-}
 
 What if we want to add onto a `ggplot` plot object later in our analysis?
 Do we need to copy and paste the code we wrote previously 
@@ -777,7 +849,7 @@ named `morley_rel`, we can call the name of that plot, then the `+` operator,
 and then add our code to create a title for the plot 
 (using the `ggtitle` function):
 
-```{r 03-data-morley-hist-6, warning = FALSE, message = FALSE, fig.height = 7, fig.cap = "Histogram of relative accuracy split vertically by experiment with a descriptive title highlighting the take home message of the visualization."}
+```{r 03-data-morley-hist-addlayer, warning = FALSE, message = FALSE, fig.height = 7, fig.cap = "Histogram of relative accuracy split vertically by experiment with a descriptive title highlighting the take home message of the visualization."}
 morley_hist_title <- morley_hist +
   ggtitle("Morley's speed of light experiments \n were accurate to about 0.05%")
 morley_hist_title
@@ -832,8 +904,6 @@ The horizontal axis shows the accuracy of the measurements relative to the true 
 From this visualization, you can see that most results had relative errors of at most 0.05%. You can also see that experiments 1 and 3 had
 measurements that were the farthest from the true value, and experiment 5 tended to provide the most consistently accurate result. (4) It would be
 worth further investigating the differences between these experiments to see why they produced different results.
-
-
 
 ## Saving the visualization
 #### *Choose the right output format for your needs* {-}
