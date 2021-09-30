@@ -185,6 +185,7 @@ These are absolute last steps when rendering the PDF output:
 - Fix incorrect indenting. LaTeX will indent for a new paragraph if there is an extra whitespace line, so these should be deleted if no paragraph break is desired.
 - Look for `??` in the PDF (broken refs)
 - Look in the index for near-duplicates, and merge if needed
+- Look for / fix raw LaTeX code (search for backslash and curly brace in the final PDF)
 - Make sure the 3D figures (and the text around them that refers to clicking and dragging) are properly modified for the PDF output
 - Make sure all markdown label-replaced URLs (of the form `[blah](url)`) will make 
   sense in the hardcopy book version (i.e. nothing like "click this"). Many links appear in the additional resources: make sure the 
