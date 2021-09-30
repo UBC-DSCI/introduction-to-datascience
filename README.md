@@ -74,6 +74,10 @@ The same comments regarding passwords and `sudo` as above apply here.
 - make sure we have permission to use all external resources that we use
 - remove all references to "clicking on things" in the HTML version of the book (e.g. "click this link to ...")
 - When we introduce a new term, use `**bolding**` to typeset it (but only the first introduction of the term)
+- for symbols as part of the text, make sure you give them their full name and surround with parentheses so that they
+  don't "disappear" in the rest of the text. So for example, if I have a `,` in the text, I should do
+  something like  "here is some text about the comma (`,`)". Or for `<-`, we should do "something like this assignment operator (`<-`)".
+  There are likely exceptions to this rule though.
 
 #### Code blocks
 - Use the knitr label format `##-[name with only alphanumeric + hyphens]` where 
@@ -131,6 +135,7 @@ bookdown::gitbook:
 #### Tables
 - make sure all tables get capitalized labels ("Table \\@ref(blah)", not "table below" or "table above")
 - make sure all tables get captions
+- make sure the row + column spacing is reasonable
 
 #### Note boxes
 - note boxes should be typeset as quote boxes using `>` and start with **Note:**
@@ -148,6 +153,7 @@ bookdown::gitbook:
 - data frame (not dataframe)
 - data set (not dataset)
 - scatter plot (not scatterplot)
+- bar plot (not bar chart)
 - capitalize all initialisms and acronyms (URL not url, API not api, $K$-NN not $k$-nn)
 - response variable (not target, output, label)
 - predictor variable (not explanatory, feature)
