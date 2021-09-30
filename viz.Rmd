@@ -340,7 +340,6 @@ set.seed(1)
 bar_data <- tibble(count = c(35, 27, 21),
                    category = as.factor(c("Group 1", "Group 2", "Group 3")))
 
-bar_data
 ggplot(bar_data, aes(y = count, x = category)) +
   geom_bar(stat = "identity") +
   theme_classic()
@@ -627,7 +626,18 @@ In this experimental data, Michelson was trying to measure just a single quantit
 contains many measurements of this single quantity. To tell how accurate the experiments were, we need to visualize the 
 distribution of the measurements (i.e., all their possible values and how often each occurs). We can do this using a *histogram*. A histogram \index{ggplot!histogram} helps us visualize how a 
 particular variable is distributed in a data set by separating the data into bins, and then using vertical bars 
-to show how many data points fell in each bin. To create a histogram in `ggplot2` we will use the `geom_histogram` geometric
+to show how many data points fell in each bin. 
+An example of a histogram is shown in Figure \@ref(fig:histogram-sketch).
+
+```{r histogram-sketch, echo = FALSE, fig.width = 3.25, fig.height = 3, fig.align = 'center', fig.cap = "Example of a histogram."}
+histogram_data <- tibble(measurements = rnorm(200, 25, 5))
+
+ggplot(histogram_data, aes(x = measurements)) +
+  geom_histogram(bins = 20) +
+  theme_classic()
+```
+
+To create a histogram in `ggplot2` we will use the `geom_histogram` geometric
 object, setting the `x` axis to the `Speed` measurement variable; and as we did before, let's use the default arguments just to see how things look:
 
 ```{r 03-data-morley-hist, warning=FALSE, message=FALSE, fig.cap = "Histogram of Michelson's speed of light data"}
@@ -715,7 +725,7 @@ To answer this question, we'll use the `mutate` function to transform our data i
 morley_rel <- mutate(morley, relative_accuracy = 100 * ((299000 + Speed) - 299792.458) / (299792.458))
 morley_hist <- ggplot(morley_rel, aes(x = relative_accuracy, fill = factor(Expt))) +
   geom_histogram(position = "identity") +
-  facet_grid(Expt ~ .) +
+  facet_grid(rows = vars(Expt)) +
   geom_vline(xintercept = 0, linetype = "dashed", size = 1.0) +
   labs(x = "Relative Accuracy (%)", y = "# Measurements", fill = "Experiment ID") +
   theme(text = element_text(size = 18))
