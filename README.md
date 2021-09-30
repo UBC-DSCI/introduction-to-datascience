@@ -182,6 +182,7 @@ These are absolute last steps when rendering the PDF output:
 - Look for and fix bad line wraps in code and text
 - Look for and fix bad figure placement (falling off page, going over the side)
 - Look for and fix large whitespace sections where LaTeX doesn't want to break the next paragraph (usually `\allowdisplaybreaks` helps)
+- Fix incorrect indenting. LaTeX will indent for a new paragraph if there is an extra whitespace line, so these should be deleted if no paragraph break is desired.
 - Look for `??` in the PDF (broken refs)
 - Look in the index for near-duplicates, and merge if needed
 - Make sure the 3D figures (and the text around them that refers to clicking and dragging) are properly modified for the PDF output
