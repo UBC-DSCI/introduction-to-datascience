@@ -381,7 +381,7 @@ An example of a bar plot is shown in Figure \@ref(fig:bar-plot-sketch).
 ```{r bar-plot-sketch, echo = FALSE, fig.width = 3.25, fig.height = 3, fig.align = 'center', fig.cap = "Example of a bar plot."}
 set.seed(1)
 bar_data <- tibble(count = c(35, 27, 21),
-                   category = as.factor(c("Group 1", "Group 2", "Group 3")))
+                   category = as_factor(c("Group 1", "Group 2", "Group 3")))
 
 ggplot(bar_data, aes(y = count, x = category)) +
   geom_bar(stat = "identity") +
@@ -464,8 +464,8 @@ and continents are coloured differently than other landmasses, making it quite c
 The `faithful` data set \index{Old Faithful} contains measurements 
 of the waiting time between eruptions 
 and the subsequent eruption duration (in minutes). 
-The `faithful` data set is available in base R as a data frame 
-under the name `faithful` so it does not need to be loaded.
+The `faithful` data set is available in base R as a data frame,
+so it does not need to be loaded.
 We convert it to a tibble to take advantage of the nicer print output 
 these specialized data frames provide.
 
@@ -674,18 +674,34 @@ ggplot(can_lang, aes(
 ```
 
 ### The Michelson speed of light data set with histograms
-The `morley` data set \index{Michelson speed of light} contains measurements of the speed of light (in kilometres per second with 299,000 subtracted) from the year 1879 
-for five experiments, each with 20 consecutive runs [@lightdata]. This data set is available in base R under the name `morley` so it does not need to be loaded.
+The `morley` data set \index{Michelson speed of light} 
+contains measurements of the speed of light 
+collected in experiments performed in 1879.
+Five experiments were performed, 
+and in each experiment 20 runs were performed - 
+meaning that 20 measurements of the speed of light were collected 
+in each experiment [@lightdata].
+
+The `morley` data set is available in base R as a data frame,
+so it does not need to be loaded.
+We convert it to a tibble to take advantage of the nicer print output 
+these specialized data frames provide.
+An additional thing to know about this data set, 
+is that because the speed of light is a very large number 
+(the true value is 299,792.458 km/sec) the data is coded
+to be the measured speed of light minus 299,000.
+Doing this allows us to explore the variability in the measurements 
+collected on the speed of light. 
+If we were to focus on the entire large number, 
+these smaller differences would become not noticeable, 
+even though in this case they are quite important. 
 
 **Question:** \index{question!visualization} Given what we know now about the speed of 
 light (299,792.458 kilometres per second), how accurate were each of the experiments?
-```{r 03-data-morley-tibble, echo = F, warning=FALSE, message=FALSE}
-# michelson morley experimental data
-morley <- as.tibble(morley)
-```
 
 ```{r 03-data-morley, warning=FALSE, message=FALSE}
 # michelson morley experimental data
+morley <- as_tibble(morley)
 morley
 ```
 
@@ -723,7 +739,7 @@ we will add a vertical line with the `geom_vline` function
 To draw a vertical line with `geom_vline`, 
 we need to specify where on the x-axis the line should be drawn. 
 We can do this by setting the `xintercept` argument. 
-Here we set it to the true value of light speed: 792.458. 
+Here we set it to the true value of light speed minus 299, 000 (so it is coded the same way as the measurements in the `morley` data frame): 792.458. 
 We also would like to fine tune this vertical line, 
 styling it so that is dashed and 1 point in thickness. 
 We do this by setting `linetype = "dashed"` and `size = 1`, respectively. 
@@ -753,11 +769,11 @@ morley_hist <- ggplot(morley, aes(x = Speed, fill = Expt)) +
 morley_hist
 ```
 
-Wait a second; the histogram is still all the same colour! What is going on here? If we look at the printed `morley` data, the column `Expt` is an integer (we see the label `<int>` underneath the `Expt` column name). But we want to treat it as a categorical variable.  To fix this issue we can write `factor(Expt)` in the `fill` aesthetic mapping. Recall that factors are a special categorical type of variable in R that are often used for class label data. By writing `factor(Expt)` we are ensuring that R will treat this variable as a factor and the colour will be mapped discretely.
+Wait a second; the histogram is still all the same colour! What is going on here? If we look at the printed `morley` data, the column `Expt` is an integer (we see the label `<int>` underneath the `Expt` column name). But we want to treat it as a categorical variable.  To fix this issue we can write `as_factor(Expt)` in the `fill` aesthetic mapping. Recall that factors are a special categorical type of variable in R that are often used for class label data. By writing `as_factor(Expt)` we are ensuring that R will treat this variable as a factor and the colour will be mapped discretely.
 \index{factor!usage in ggplot}
 
 ```{r 03-data-morley-hist-with-factor, warning=FALSE, message=FALSE, fig.cap = "Histogram of Michelson's speed of light data coloured by experiment as factor"}
-morley_hist <- ggplot(morley, aes(x = Speed, fill = factor(Expt))) +
+morley_hist <- ggplot(morley, aes(x = Speed, fill = as_factor(Expt))) +
   geom_histogram(position = "identity", alpha = 0.5) +
   geom_vline(xintercept = 792.458, linetype = "dashed", size = 1.0)
 morley_hist
@@ -788,7 +804,7 @@ in the context of the data frame.
 \index{ggplot!facet\_grid}
 
 ```{r 03-data-morley-hist-4, warning=FALSE, message=FALSE, fig.height = 7, fig.cap = "Histogram of Michelson's speed of light data split vertically by experiment"}
-morley_hist <- ggplot(morley, aes(x = Speed, fill = factor(Expt))) +
+morley_hist <- ggplot(morley, aes(x = Speed, fill = as_factor(Expt))) +
   geom_histogram(position = "identity") +
   facet_grid(rows = vars(Expt)) +
   geom_vline(xintercept = 792.458, linetype = "dashed", size = 1.0)
@@ -805,7 +821,7 @@ To answer this question, we'll use the `mutate` function to transform our data i
 
 ```{r 03-data-morley-hist-5, warning=FALSE, message=FALSE, fig.height = 7, fig.cap = "Histogram of relative accuracy split vertically by experiment with clearer axes and labels"}
 morley_rel <- mutate(morley, relative_accuracy = 100 * ((299000 + Speed) - 299792.458) / (299792.458))
-morley_hist <- ggplot(morley_rel, aes(x = relative_accuracy, fill = factor(Expt))) +
+morley_hist <- ggplot(morley_rel, aes(x = relative_accuracy, fill = as_factor(Expt))) +
   geom_histogram(position = "identity") +
   facet_grid(rows = vars(Expt)) +
   geom_vline(xintercept = 0, linetype = "dashed", size = 1.0) +
@@ -843,8 +859,8 @@ We can see that in this case, both the default number of bins
 and the binwidth of 0.01 are effective for helping answer our question.
 Whereas the bin widths of 0.001 and 0.1 are too small and too big, respectively.
 
-```{r 03-data-morley-hist-binwidth, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 10, fig.cap = "Histogram of relative accuracy split vertically by experiment with clearer axes and labels"}
-morley_hist_default <- ggplot(morley_rel, aes(x = relative_accuracy, fill = factor(Expt))) +
+```{r 03-data-morley-hist-binwidth, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 10, fig.cap = "Effect of varying bin width on histograms."}
+morley_hist_default <- ggplot(morley_rel, aes(x = relative_accuracy, fill = as_factor(Expt))) +
   geom_histogram(position = "identity") +
   facet_grid(rows = vars(Expt)) +
   geom_vline(xintercept = 0, linetype = "dashed", size = 1.0) +
@@ -852,7 +868,7 @@ morley_hist_default <- ggplot(morley_rel, aes(x = relative_accuracy, fill = fact
   theme(legend.position = "none") +
   ggtitle("Default bin width (bins = 30)")
 
-morley_hist_big <- ggplot(morley_rel, aes(x = relative_accuracy, fill = factor(Expt))) +
+morley_hist_big <- ggplot(morley_rel, aes(x = relative_accuracy, fill = as_factor(Expt))) +
   geom_histogram(position = "identity", binwidth = 0.1) +
   facet_grid(rows = vars(Expt)) +
   geom_vline(xintercept = 0, linetype = "dashed", size = 1.0) +
@@ -860,7 +876,7 @@ morley_hist_big <- ggplot(morley_rel, aes(x = relative_accuracy, fill = factor(E
   theme(legend.position = "none") +
   ggtitle( "binwidth = 0.1")
 
-morley_hist_med <- ggplot(morley_rel, aes(x = relative_accuracy, fill = factor(Expt))) +
+morley_hist_med <- ggplot(morley_rel, aes(x = relative_accuracy, fill = as_factor(Expt))) +
   geom_histogram(position = "identity", binwidth = 0.01) +
   facet_grid(rows = vars(Expt)) +
   geom_vline(xintercept = 0, linetype = "dashed", size = 1.0) +
@@ -868,7 +884,7 @@ morley_hist_med <- ggplot(morley_rel, aes(x = relative_accuracy, fill = factor(E
   theme(legend.position = "none") +
   ggtitle("binwidth = 0.01")
 
-morley_hist_small <- ggplot(morley_rel, aes(x = relative_accuracy, fill = factor(Expt))) +
+morley_hist_small <- ggplot(morley_rel, aes(x = relative_accuracy, fill = as_factor(Expt))) +
   geom_histogram(position = "identity", binwidth = 0.001) +
   facet_grid(rows = vars(Expt)) +
   geom_vline(xintercept = 0, linetype = "dashed", size = 1.0) +
