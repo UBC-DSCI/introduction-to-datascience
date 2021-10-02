@@ -354,117 +354,6 @@ And finally, we work on adding details and refinements to the painting.
 In our data visualization this would be when we fine tune axis labels,
 change the font, adjust the point size, and do other related things.
 
-### The island landmass data set with bar plot
-The `islands.csv` data set \index{Island landmasses} contains a list of Earth's landmasses as well as their area (in thousands of square miles) [@islandsdata]. 
-
-**Question:** \index{question!visualization} Are the continents (North / South America, Africa, Europe, Asia, Australia, Antarctica) Earth's seven largest landmasses? If so, what are the next few largest landmasses after those?
-
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
-islands_df <- read_csv("data/islands.csv")
-continents <- c("Africa", "Antarctica", "Asia", "Australia", 
-                "Europe", "North America", "South America")
-islands_df <- mutate(islands_df, 
-                     landmass_type = ifelse(landmass %in% continents, "Continent", "Other"))
-write_csv(islands_df, "data/islands.csv")
-```
-
-```{r 03-data-islands, warning=FALSE, message=FALSE}
-# islands data
-islands_df <- read_csv("data/islands.csv")
-islands_df
-```
-
-Here, we have a data frame of Earth's landmasses, 
-and are trying to compare their sizes. 
-The right type of visualization to answer this question is a bar plot. 
-A bar plot uses a rectangle to encode the value a summary statistic 
-(usually a size, count, proportion or percentage).
-They are particularly useful for comparing summary statistics between different
-groups of a categorical variable.
-An example of a bar plot is shown in Figure \@ref(fig:bar-plot-sketch).
-
-```{r bar-plot-sketch, echo = FALSE, fig.width = 3.25, fig.height = 3, fig.align = 'center', fig.cap = "Example of a bar plot."}
-set.seed(1)
-bar_data <- tibble(count = c(35, 27, 21),
-                   category = as_factor(c("Group 1", "Group 2", "Group 3")))
-
-ggplot(bar_data, aes(y = count, x = category)) +
-  geom_bar(stat = "identity") +
-  theme_classic()
-```
-
-We specify that we would like to use a bar plot
-via the `geom_bar` function in `ggplot2`. 
-However, by default, `geom_bar` sets the heights
-of bars to the number of times a value appears in a data frame (its *count*); here, we want to plot exactly the values in the data frame, i.e.,
-the landmass sizes. So we have to pass the `stat = "identity"` argument to `geom_bar`:
-\index{ggplot!geom\_bar}
-
-```{r 03-data-islands-bar, warning=FALSE, message=FALSE,  fig.cap = "Bar plot of all Earth's landmasses' size with squished labels"}
-islands_bar <- ggplot(islands_df, aes(x = landmass, y = size)) +
-  geom_bar(stat = "identity")
-islands_bar
-```
-
-Alright, not bad! The plot in Figure \@ref(fig:03-data-islands-bar) is definitely the right kind of visualization, as we can clearly see and compare sizes of landmasses. The major issues are that the smaller landmasses' sizes are hard to distinguish, and the names of the landmasses are obscuring each other as they have been squished into too little space. But remember that the question we asked was only about the largest landmasses; let's make the plot a little bit clearer by keeping only the largest 12 landmasses. We do this using the `slice_max` function.
-Then to help us make sure the labels have enough space, we'll use horizontal bars instead of vertical ones. We do this by swapping the `x` and `y` variables:
-\index{slice\_max}
-
-```{r 03-data-islands-bar-2, warning=FALSE, message=FALSE, fig.cap = "Bar plot of size for Earth's largest 12 landmasses"}
-islands_top12 <- slice_max(islands_df, order_by = size, n = 12)
-islands_bar <- ggplot(islands_top12, aes(x = size, y = landmass)) +
-  geom_bar(stat = "identity") 
-islands_bar
-```
-
-The plot in Figure \@ref(fig:03-data-islands-bar-2) is definitely clearer now, 
-and allows us to answer our question 
-("are the top 7 largest landmasses continents?") in the affirmative. 
-But the question could be made clearer from the plot 
-by organizing the bars not by alphabetical order
-but by size, and to colour them based on whether they are a continent. 
-The data for this is stored in the `landmass_type` column. 
-To use this to colour the bars, 
-we add the `fill` argument to the aesthetic mapping 
-and set it to `landmass_type`. 
-
-To organize the landmasses by their `size` variable, 
-we will use the `tidyverse` `fct_reorder` function
-in the aesthetic mapping to organize the landmasses by their `size` variable.
-The first argument passed to `fct_reorder` is the factor columns's name, 
-whose level's we would like to reorder (here `landmass`). 
-The second argument passed is the column name 
-that holds the values we would like to use to do the ordering (here `size`).
-`fct_reorder` orders by that column in ascending order by default, 
-but this can be changed to sorting in descending order 
-by setting  `.desc = TRUE`.
-We do this here so that the largest bar will closet to the axis line,
-as that is more visually appealing.
-
-To label the x and y axes, we shift from using `xlab` and `ylab`, 
-to specifying these within the `labs` function. 
-We do this here because we would also like to change the legend label.
-The default label is the column name of the column being mapped to `fill`,
-however `landmass_type` is not very human readable or visually pleasing.
-Thus we use the `fill` argument inside `labs` to change that to "Type".
-Finally, we again \index{ggplot!reorder} use the `theme` function 
-to change the font size:
-
-```{r 03-data-islands-bar-4, warning = FALSE, message = FALSE, fig.width = 8, fig.cap = "Bar plot of size for Earth's largest 12 landmasses coloured by whether its a continent with clearer axes and labels"}
-islands_bar <- ggplot(islands_top12, 
-                      aes(x = size,
-                          y = fct_reorder(landmass, size, .desc = TRUE), 
-                          fill = landmass_type)) +
-  geom_bar(stat = "identity") +
-  labs(x = "Size (1000 square mi)", y = "Landmass",  fill = "Type") +
-  theme(text = element_text(size = 16))
-islands_bar
-```
-
-The plot in Figure \@ref(fig:03-data-islands-bar-4) is now a very effective visualization for answering our original questions. Landmasses are organized by their size,
-and continents are coloured differently than other landmasses, making it quite clear that continents are the largest seven landmasses.
-
-
 ### The Old Faithful eruption/waiting time data set with scatter plots
 The `faithful` data set \index{Old Faithful} contains measurements 
 of the waiting time between eruptions 
@@ -677,6 +566,116 @@ ggplot(can_lang, aes(
   scale_y_log10(labels = comma) + 
   scale_color_brewer(palette = "RdYlBu")
 ```
+
+### The island landmass data set with bar plot
+The `islands.csv` data set \index{Island landmasses} contains a list of Earth's landmasses as well as their area (in thousands of square miles) [@islandsdata]. 
+
+**Question:** \index{question!visualization} Are the continents (North / South America, Africa, Europe, Asia, Australia, Antarctica) Earth's seven largest landmasses? If so, what are the next few largest landmasses after those?
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+islands_df <- read_csv("data/islands.csv")
+continents <- c("Africa", "Antarctica", "Asia", "Australia", 
+                "Europe", "North America", "South America")
+islands_df <- mutate(islands_df, 
+                     landmass_type = ifelse(landmass %in% continents, "Continent", "Other"))
+write_csv(islands_df, "data/islands.csv")
+```
+
+```{r 03-data-islands, warning=FALSE, message=FALSE}
+# islands data
+islands_df <- read_csv("data/islands.csv")
+islands_df
+```
+
+Here, we have a data frame of Earth's landmasses, 
+and are trying to compare their sizes. 
+The right type of visualization to answer this question is a bar plot. 
+A bar plot uses a rectangle to encode the value a summary statistic 
+(usually a size, count, proportion or percentage).
+They are particularly useful for comparing summary statistics between different
+groups of a categorical variable.
+An example of a bar plot is shown in Figure \@ref(fig:bar-plot-sketch).
+
+```{r bar-plot-sketch, echo = FALSE, fig.width = 3.25, fig.height = 3, fig.align = 'center', fig.cap = "Example of a bar plot."}
+set.seed(1)
+bar_data <- tibble(count = c(35, 27, 21),
+                   category = as_factor(c("Group 1", "Group 2", "Group 3")))
+
+ggplot(bar_data, aes(y = count, x = category)) +
+  geom_bar(stat = "identity") +
+  theme_classic()
+```
+
+We specify that we would like to use a bar plot
+via the `geom_bar` function in `ggplot2`. 
+However, by default, `geom_bar` sets the heights
+of bars to the number of times a value appears in a data frame (its *count*); here, we want to plot exactly the values in the data frame, i.e.,
+the landmass sizes. So we have to pass the `stat = "identity"` argument to `geom_bar`:
+\index{ggplot!geom\_bar}
+
+```{r 03-data-islands-bar, warning=FALSE, message=FALSE,  fig.cap = "Bar plot of all Earth's landmasses' size with squished labels"}
+islands_bar <- ggplot(islands_df, aes(x = landmass, y = size)) +
+  geom_bar(stat = "identity")
+islands_bar
+```
+
+Alright, not bad! The plot in Figure \@ref(fig:03-data-islands-bar) is definitely the right kind of visualization, as we can clearly see and compare sizes of landmasses. The major issues are that the smaller landmasses' sizes are hard to distinguish, and the names of the landmasses are obscuring each other as they have been squished into too little space. But remember that the question we asked was only about the largest landmasses; let's make the plot a little bit clearer by keeping only the largest 12 landmasses. We do this using the `slice_max` function.
+Then to help us make sure the labels have enough space, we'll use horizontal bars instead of vertical ones. We do this by swapping the `x` and `y` variables:
+\index{slice\_max}
+
+```{r 03-data-islands-bar-2, warning=FALSE, message=FALSE, fig.cap = "Bar plot of size for Earth's largest 12 landmasses"}
+islands_top12 <- slice_max(islands_df, order_by = size, n = 12)
+islands_bar <- ggplot(islands_top12, aes(x = size, y = landmass)) +
+  geom_bar(stat = "identity") 
+islands_bar
+```
+
+The plot in Figure \@ref(fig:03-data-islands-bar-2) is definitely clearer now, 
+and allows us to answer our question 
+("are the top 7 largest landmasses continents?") in the affirmative. 
+But the question could be made clearer from the plot 
+by organizing the bars not by alphabetical order
+but by size, and to colour them based on whether they are a continent. 
+The data for this is stored in the `landmass_type` column. 
+To use this to colour the bars, 
+we add the `fill` argument to the aesthetic mapping 
+and set it to `landmass_type`. 
+
+To organize the landmasses by their `size` variable, 
+we will use the `tidyverse` `fct_reorder` function
+in the aesthetic mapping to organize the landmasses by their `size` variable.
+The first argument passed to `fct_reorder` is the factor columns's name, 
+whose level's we would like to reorder (here `landmass`). 
+The second argument passed is the column name 
+that holds the values we would like to use to do the ordering (here `size`).
+`fct_reorder` orders by that column in ascending order by default, 
+but this can be changed to sorting in descending order 
+by setting  `.desc = TRUE`.
+We do this here so that the largest bar will closet to the axis line,
+as that is more visually appealing.
+
+To label the x and y axes, we shift from using `xlab` and `ylab`, 
+to specifying these within the `labs` function. 
+We do this here because we would also like to change the legend label.
+The default label is the column name of the column being mapped to `fill`,
+however `landmass_type` is not very human readable or visually pleasing.
+Thus we use the `fill` argument inside `labs` to change that to "Type".
+Finally, we again \index{ggplot!reorder} use the `theme` function 
+to change the font size:
+
+```{r 03-data-islands-bar-4, warning = FALSE, message = FALSE, fig.width = 8, fig.cap = "Bar plot of size for Earth's largest 12 landmasses coloured by whether its a continent with clearer axes and labels"}
+islands_bar <- ggplot(islands_top12, 
+                      aes(x = size,
+                          y = fct_reorder(landmass, size, .desc = TRUE), 
+                          fill = landmass_type)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Size (1000 square mi)", y = "Landmass",  fill = "Type") +
+  theme(text = element_text(size = 16))
+islands_bar
+```
+
+The plot in Figure \@ref(fig:03-data-islands-bar-4) is now a very effective visualization for answering our original questions. Landmasses are organized by their size,
+and continents are coloured differently than other landmasses, making it quite clear that continents are the largest seven landmasses.
 
 ### The Michelson speed of light data set with histograms
 The `morley` data set \index{Michelson speed of light} 
