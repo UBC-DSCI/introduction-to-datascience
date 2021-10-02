@@ -418,14 +418,16 @@ We will begin with a scatter plot of the `mother_tongue` and `most_at_home` colu
 ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
   geom_point()
 ``` 
+
 To improve the interpretability of the data visualization in Figure \@ref(fig:03-mother-tongue-vs-most-at-home) we should replace the default axis names with a more informative labels. We can use `\n` to create a line break in the axis names so the words after `\n` are printed on a new line. This will make the axes labels on the plots more readable.
-\index{escape character}
+\index{escape character} We should also increase the font size again further improve readability.
 
 ```{r 03-mother-tongue-vs-most-at-home-labs, fig.width=5.75, fig.height=5, warning=FALSE, fig.cap = "Scatter plot of number of Canadians reporting a language as their mother tongue vs the primary language at home with x and y labels"}
 ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
   geom_point() +
   labs(x = "Language spoken most at home \n (number of Canadian residents)",
-       y = "Mother tongue \n (number of Canadian residents)")
+       y = "Mother tongue \n (number of Canadian residents)") +
+  theme(text = element_text(size = 14))
 ```
 
 Most of the data points from the 214 observations in this data set are bunched up in the lower left-handside of the visualization in Figure \@ref(fig:03-mother-tongue-vs-most-at-home-labs). The data is clumped because many more people in Canada speak the two languages represented by the points in the upper right corner. By filtering the data, we can confirm these two points correspond to the two official languages (English and French):
@@ -435,28 +437,64 @@ can_lang |>
   filter(language == "English" | language == "French")
 ```
 
+To answer our question, 
+we will need to adjust the scale of the x 
+and y axes so that they are on a log scale. 
+Doing this can help make patterns in the data more interpretable.
+Here we are adjusting the scale of the x 
+and y axes on a $log$ scale with base 10. 
+Notice that $log_{10}(10) = 1$, $log_{10}(100) = 2$, and $log_{10}(1000) = 3$. 
+On the logarithmic scale, \index{ggplot!logarithmic scaling} 
+the values 10, 100 and 1000 are all the same distance apart 
+so we see that applying this function is moving big values closer together 
+and moving small values farther apart.
+Therefore by adjusting the scale in this way 
+we are highlighting the differences between small values, 
+which allows us to better see the relationship in 
+Figure \@ref(fig:03-mother-tongue-vs-most-at-home-scale).
+Log transformations are not the only way you can transform the data! 
+Notice if you write `log(0)` in R you get `-Inf`. 
+So if you have lots of zeros in your data you will want to do something else, 
+which is beyond the scope of the book. 
 
-To answer our question, we will need to adjust the scale of the x and y axes so that they are on a log scale. Doing this can help make patterns in the data more interpretable.
+Given that the x and y axes have large numbers, formatting them so that they 
+have commas increases their readability. 
+We can do this in R using the `label_comma` function from the `scales` package.
+This is passed to the `labels` argument of the `scale_x_log10` 
+and `scale_x_log10` functions.
 
-```{r 03-mother-tongue-vs-most-at-home-scale, fig.width=5.75, fig.height=5, warning=FALSE, fig.cap = "Scatter plot of number of Canadians reporting a language as their mother tongue vs the primary language at home with log adjusted x and y axes"}
+```{r 03-mother-tongue-vs-most-at-home-scale, message = FALSE, warning =  FALSE, fig.width = 5.75, fig.height = 5, fig.cap = "Scatter plot of number of Canadians reporting a language as their mother tongue vs the primary language at home with log adjusted x and y axes"}
 library(scales)
 
 ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
   geom_point() +
   labs(x = "Language spoken most at home \n (number of Canadian residents)",
        y = "Mother tongue \n (number of Canadian residents)") +
-  scale_x_log10(labels = comma) +
-  scale_y_log10(labels = comma)
+  theme(text = element_text(size = 16)) +
+  scale_x_log10(labels = label_comma()) +
+  scale_y_log10(labels = label_comma())
 ```
-> Here we are adjusting the scale of the x and y axes on a $log$ scale with base 10. 
-> Notice that $log_{10}(10) = 1$, $log_{10}(100) = 2$, and $log_{10}(1000) = 3$. 
-On the logarithmic scale, \index{ggplot!logarithmic scaling} the values 
-10, 100 and 1000 are all the same distance apart so we see that applying this function
-is moving big values closer together and moving small values farther apart.
-> Therefore by adjusting the scale in this way we are highlighting the differences between small values, which allows us to better see the relationship in Figure \@ref(fig:03-mother-tongue-vs-most-at-home-scale).
-> Log transformations are not the only way you can transform the data! Notice if you write `log(0)` in R you get `-Inf` so if you have lots of zeros in your data you will want to do something else, which is beyond the scope of the book. 
 
-From the visualization in Figure \@ref(fig:03-mother-tongue-vs-most-at-home-scale), we see that for the 214 languages in this data set, as the number of people who have a language as their mother tongue increases, so does the number of people who speak that language at home. When we see two variables do this, we call this a *positive relationship*. Because the points are fairly close together, we can say that the relationship is strong. Because drawing a straight line through these  points would fit the pattern we observe quite well, we say that it's linear.
+From the visualization 
+in Figure \@ref(fig:03-mother-tongue-vs-most-at-home-scale), 
+we see that for the 214 languages in this data set, 
+as the number of people who have a language as their mother tongue increases, 
+so does the number of people who speak that language at home. 
+When we see two variables moving in the same direction 
+(as x increases, y increases), we call this a *positive relationship*.
+If instead, we saw two variables moving in the opposite direction 
+(as x increases, y decreases), we would call this a *negative relationship*.
+Another possibility here, is to observe no relationship. 
+This is when y neither nor decreases across the values of x.
+Because the points are fairly close together, 
+we can say that the relationship is strong. 
+If instead, we saw that the points were spread much further apart, 
+we would say that the relationship was weak.
+Because drawing a straight line through these points 
+would fit the pattern we observe quite well, we say that it's linear.
+If instead, drawing a straight line through these points 
+did not fit the observed pattern of the data, 
+we would say that it is non-linear.
 
 ```{r 03-changing_the_units, include = FALSE}
 english_mother_tongue <- can_lang |>
@@ -465,8 +503,16 @@ english_mother_tongue <- can_lang |>
 census_popn <- 35151728
 ```
 
-Similar to our example in chapter 1, we can convert the counts to percentages to make them more understandable. Changing the units allows us to better interpret the numbers in our data set. We can do this by dividing the number of people reporting a given language as their mother tongue or primary language at home by the number of people who live in Canada and multiplying by 100\%. For example, the percentage of people who reported that their mother tongue was English in the 
-2016 Canadian census was `r  format(english_mother_tongue, scientific = FALSE, big.mark = ",") ` / `r  format(census_popn, scientific = FALSE, big.mark = ",")` $\times$ `r 100` \% =
+Similar to our example in Chapter \@ref(wrangling), 
+we can convert the counts to percentages to give them context 
+and make them more meaningful. 
+Changing the units allows us to better interpret the numbers in our data set. 
+We can do this by dividing the number of people reporting a given language 
+as their mother tongue or primary language at home 
+by the number of people who live in Canada and multiplying by 100\%. 
+For example, 
+the percentage of people who reported that their mother tongue was English 
+in the 2016 Canadian census was `r  format(english_mother_tongue, scientific = FALSE, big.mark = ",") ` / `r  format(census_popn, scientific = FALSE, big.mark = ",")` $\times$ `r 100` \% =
 `r format(round(english_mother_tongue/census_popn*100, 2), scientific = FALSE, big.mark = ",")`\%.
 
 Below we use `mutate` to calculate the percentage of people reporting a given language as their mother tongue and primary language at home for all the languages in the `can_lang` data set. Since the new columns are appended to the end of the data table, we selected the new columns after the transformation so you can clearly see the mutated output from the table.
@@ -487,8 +533,9 @@ Finally, let's visualize the data now that we have represented it as percentages
 ```{r 03-mother-tongue-vs-most-at-home-scale-props, fig.width=5.75, fig.height=5, warning=FALSE, fig.cap = "Scatter plot of percentage of Canadians reporting a language as their mother tongue vs the primary language at home"}
 ggplot(can_lang, aes(x = most_at_home_percent, y = mother_tongue_percent)) +
   geom_point() +
-  labs(x = "Language spoken most at home \n (number of Canadian residents)",
-       y = "Mother tongue \n (number of Canadian residents)") +
+  labs(x = "Language spoken most at home \n (percentage of Canadian residents)",
+       y = "Mother tongue \n (percentage of Canadian residents)") +
+  theme(text = element_text(size = 14)) +
   scale_x_log10(labels = comma) +
   scale_y_log10(labels = comma)
 ```
@@ -496,33 +543,37 @@ ggplot(can_lang, aes(x = most_at_home_percent, y = mother_tongue_percent)) +
 Now we'll move onto the second part of our exploratory data analysis question: when considering the relationship between the number of people who have a language as their mother tongue and the number of people who speak that language at home, is there a pattern in the strength of this relationship in the higher-level language categories (Official languages, Aboriginal languages, or non-official and non-Aboriginal languages)? One common way to explore this is to colour the data points on the scatter plot we have already created by group. For example, given that we have the higher-level language category for each language recorded in the 2016 Canadian census, we can colour the points in our previous 
 scatter plot to represent each language's higher-level language category.
 
-Here we want to distinguish the values according to the `category` group with which they belong.  
+Here we want to distinguish the values according to the `category` group with which they belong.
 We can add an argument to the `aes` function, specifying that the `category` column should colour the points. Adding this argument will colour the points according to their group and add a legend at the side of the plot. 
 
 ```{r 03-scatter-colour-by-category, fig.width=7.75, fig.height=4, warning=FALSE,  fig.cap = "Scatter plot of percentage of Canadians reporting a language as their mother tongue vs the primary language at home coloured by language category"}
 ggplot(can_lang, aes(x = most_at_home_percent, y = mother_tongue_percent, color = category)) +
   geom_point() +
-  labs(x = "Language spoken most at home \n (number of Canadian residents)",
-       y = "Mother tongue \n (number of Canadian residents)") +
+  labs(x = "Language spoken most at home \n (percentage of Canadian residents)",
+       y = "Mother tongue \n (percentage of Canadian residents)") +
+  theme(text = element_text(size = 14)) +
   scale_x_log10(labels = comma) +
   scale_y_log10(labels = comma)
 ```
 
-In Figure \@ref(fig:03-scatter-colour-by-category), the points are coloured with the default `ggplot2` colour palette. But what if you want to use different colours? In R, one package that provides alternative colour palettes \index{color palette} is `RColorBrewer` [@RColorBrewer]. You can visualize the list of colour palettes that `RColorBrewer` has to offer with the `display.brewer.all` function. You can also print a list of colour blind friendly palettes by adding `colorblindFriendly = TRUE` to the function.
+In Figure \@ref(fig:03-scatter-colour-by-category), the points are coloured with the default `ggplot2` colour palette. But what if you want to use different colours? In R, one package that provides alternative colour palettes \index{color palette} is `RColorBrewer` [@RColorBrewer]. You can visualize the list of colour palettes that `RColorBrewer` has to offer with the `display.brewer.all` function. You can also print a list of colour blind friendly palettes by adding `colorblindFriendly = TRUE` to the function. 
 
-```{r}
+```{r rcolourbrewer, fig.height = 8, fig.cap = "Color palettes available from the `RColorBrewer` R package."}
 library(RColorBrewer)
 display.brewer.all(colorblindFriendly = TRUE)
 ```
 
-From the output above, we can choose the colour palette we want to use in our plot. 
-To change the colour palette, we add the `scale_colour_brewer` layer indicating the palette we want to use. 
+From Figure \@ref(fig:rcolourbrewer), 
+we can choose the colour palette we want to use in our plot. 
+To change the colour palette, 
+we add the `scale_colour_brewer` layer indicating the palette we want to use. 
 
 ```{r scatter-colour-by-category-palette, fig.width=7.75, fig.height=4, warning=FALSE,  fig.cap = "Scatter plot of percentage of Canadians reporting a language as their mother tongue vs the primary language at home coloured by language category with colour blind friendly colours"}
 ggplot(can_lang, aes(x = most_at_home_percent, y = mother_tongue_percent, color = category)) +
   geom_point() +
-  labs(x = "Language spoken most at home \n (number of Canadian residents)",
-       y = "Mother tongue \n (number of Canadian residents)") +
+  labs(x = "Language spoken most at home \n (percentage of Canadian residents)",
+       y = "Mother tongue \n (percentage of Canadian residents)") +
+  theme(text = element_text(size = 14)) +
   scale_x_log10(labels = comma) +
   scale_y_log10(labels = comma) +
   scale_color_brewer(palette = "RdYlBu")
@@ -568,8 +619,9 @@ ggplot(can_lang, aes(
   shape = category
 )) + # map categories to different shapes
   geom_point(alpha = 0.6) + # set the transparency of the points
-  labs(x = "Language spoken most at home \n (number of Canadian residents)",
-       y = "Mother tongue \n (number of Canadian residents)") +
+  labs(x = "Language spoken most at home \n (percentage of Canadian residents)",
+       y = "Mother tongue \n (percentage of Canadian residents)") +
+  theme(text = element_text(size = 14)) +
   scale_x_log10(labels = comma) +
   scale_y_log10(labels = comma) + 
   scale_color_brewer(palette = "RdYlBu")
