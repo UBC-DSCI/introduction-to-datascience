@@ -27,7 +27,7 @@ By the end of the chapter, readers will be able to:
     - scales
 - Use the `ggplot2` package in R to create and refine the above visualizations using:
     - geometric objects: `geom_point`, `geom_line`, `geom_histogram`, `geom_bar`, `geom_vline`, `geom_hline`
-    - scales: `scale_x_continuous`, `scale_y_continuous`
+    - scales: `xlim`, `ylim`
     - aesthetic mappings: `x`, `y`, `fill`, `colour`, `shape`
     - labelling: `xlab`, `ylab`, `labs`
     - font control and legend positioning: `theme`
@@ -285,7 +285,7 @@ To add axis labels, we use the `xlab` and `ylab` functions. To change the font s
 > An in-depth discussion of the `theme` function is beyond the scope of this book,
 > however we invite readers who are interested to learn more 
 > to read the `theme` function documentation
-> (linked to in our Additional Resources section at the end of this chapter).
+> (linked to in our additional resources section at the end of this chapter).
 
 ```{r 03-data-co2-line-2, warning=FALSE, message=FALSE, fig.cap = "Line plot of atmospheric concentration of CO$_{2}$ over time with clearer axes and labels"}
 co2_line <- ggplot(co2_df, aes(x = date_measured, y = ppm)) +
@@ -302,7 +302,7 @@ this by using *scales*, \index{ggplot!scales} another important feature of `ggpl
 We scale the horizontal axis using the `xlim` function,
 and the vertical axis with the `ylim` function.
 In particular, here, we will use the `xlim` function to zoom in 
-on just five years of data (say, 1990-1995).
+on just five years of data (say, 1990-1994).
 `xlim` takes a vector of length two 
 to specify the upper and lower bounds to limit the axis. 
 We can create that using the `c` function.
@@ -318,14 +318,14 @@ to convert the character strings we provide to `c` to `date` vectors.
 > but is not loaded by it. 
 > Hence we need to load it separately in the code below.
 
-```{r 03-data-co2-line-3, warning = FALSE, message = FALSE, fig.cap = "Line plot of atmospheric concentration of CO$_{2}$ from 1990 to 1995 only"}
+```{r 03-data-co2-line-3, warning = FALSE, message = FALSE, fig.cap = "Line plot of atmospheric concentration of CO$_{2}$ from 1990 to 1994 only"}
 library(lubridate)
 
 co2_line <- ggplot(co2_df, aes(x = date_measured, y = ppm)) +
   geom_line() +
   xlab("Year") +
   ylab("Atmospheric CO2 (ppm)") +
-  xlim(c(date("1990-01-01"), date("1994-12-01"))) +
+  xlim(c(date("1990-01-01"), date("1993-12-01"))) +
   theme(text = element_text(size = 16))
 co2_line
 ```
@@ -364,7 +364,9 @@ so it does not need to be loaded.
 We convert it to a tibble to take advantage of the nicer print output 
 these specialized data frames provide.
 
-**Question:** \index{question!visualization} Is there a relationship between the waiting time before an eruption to the duration of the eruption? 
+**Question:** \index{question!visualization} 
+Is there a relationship between the waiting time before an eruption 
+and the duration of the eruption? 
 
 ```{r 03-data-faithful, warning=FALSE, message=FALSE}
 # old faithful eruption time / wait time data
@@ -372,7 +374,12 @@ faithful <- as_tibble(faithful)
 faithful
 ```
 
-Here again, we investigate the relationship between two quantitative variables (waiting time and eruption time). But if you look at the output of the data frame, you'll notice that neither of the columns are ordered. So, in this case, let's start again with a scatter plot:
+Here again, we investigate the relationship between two quantitative variables 
+(waiting time and eruption time). 
+But if you look at the output of the data frame, 
+you'll notice that unlike time in the Mauna Loa CO$_{\text{2}}$ data set,
+neither of the variables here have a natural order to them.
+So, in this case, let's start again with a scatter plot:
 
 ```{r 03-data-faithful-scatter, warning=FALSE, message=FALSE, fig.cap = "Scatter plot of waiting time and eruption time"}
 faithful_scatter <- ggplot(faithful, aes(x = waiting, y = eruptions)) +
@@ -591,7 +598,7 @@ islands_df
 Here, we have a data frame of Earth's landmasses, 
 and are trying to compare their sizes. 
 The right type of visualization to answer this question is a bar plot. 
-A bar plot uses a rectangle to encode the value a summary statistic 
+In a bar plot, the height of the bar represents the value of a summary statistic 
 (usually a size, count, proportion or percentage).
 They are particularly useful for comparing summary statistics between different
 groups of a categorical variable.
@@ -645,21 +652,21 @@ and set it to `landmass_type`.
 To organize the landmasses by their `size` variable, 
 we will use the `tidyverse` `fct_reorder` function
 in the aesthetic mapping to organize the landmasses by their `size` variable.
-The first argument passed to `fct_reorder` is the factor columns's name, 
-whose level's we would like to reorder (here `landmass`). 
+The first argument passed to `fct_reorder` is the factor column's name, 
+whose levels we would like to reorder (here `landmass`). 
 The second argument passed is the column name 
 that holds the values we would like to use to do the ordering (here `size`).
 `fct_reorder` orders by that column in ascending order by default, 
 but this can be changed to sorting in descending order 
 by setting  `.desc = TRUE`.
-We do this here so that the largest bar will closet to the axis line,
-as that is more visually appealing.
+We do this here so that the largest bar will closest to the axis line,
+which is more visually appealing.
 
 To label the x and y axes, we shift from using `xlab` and `ylab`, 
 to specifying these within the `labs` function. 
 We do this here because we would also like to change the legend label.
 The default label is the column name of the column being mapped to `fill`,
-however `landmass_type` is not very human readable or visually pleasing.
+however `landmass_type` is not proper English (and so is less readable).
 Thus we use the `fill` argument inside `labs` to change that to "Type".
 Finally, we again \index{ggplot!reorder} use the `theme` function 
 to change the font size:
