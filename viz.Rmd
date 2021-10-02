@@ -3,6 +3,13 @@ output: html_document
 editor_options: 
   chunk_output_type: console
 ---
+
+```{r viz-setup, include = FALSE}
+library(tidyverse)
+library(cowplot)
+library(knitr)
+```
+
 # Effective data visualization {#viz}
 
 ## Overview 
@@ -59,12 +66,12 @@ as we have not learned the tools necessary to do that properly just yet.
 
 As with most coding tasks, it is totally fine (and quite common) to make mistakes and iterate a few times before you find the right visualization for your data and question. There are [many different kinds of plotting graphics](https://serialmentor.com/dataviz/directory-of-visualizations.html) available to use. For the kinds we will introduce in this book, the general rules of thumb are:
 
-
 There are [many different plotting graphics available to use]((https://serialmentor.com/dataviz/directory-of-visualizations.html)). 
 The type of plot you create depends on your data 
 and the question you want to answer. 
-In general, for the kinds of plots we will introduce in this book, 
-the guiding principles of when to use what type of plot are as follows:
+In general, the guiding principles of when to use what type of plot, 
+for those introduced in this book (Figure \@ref(fig:plot-sketches)), 
+are as follows:
 
 \index{visualization!line}
 \index{visualization!histogram}
@@ -75,6 +82,48 @@ the guiding principles of when to use what type of plot are as follows:
 - **line plots** visualize trends with respect to an independent, ordered quantity (e.g. time)
 - **bar plots** visualize comparisons of amounts
 - **histograms** visualize the distribution of one quantitative variable (i.e., all its possible values and how often they occur) \index{distribution}
+
+```{r plot-sketches, echo = FALSE, fig.width = 4.6, fig.height = 4.75, fig.align = 'center', fig.cap = "Examples of a scatter, line and bar plots, as well as histograms."}
+set.seed(1)
+
+scatter_plot <- tibble(x = seq(0.25, 10, by = 0.5) + rnorm(20, 1, 1.5),
+                       y = seq(0.25, 10, by = 0.5) + rnorm(20, 1, 0.5)) |>
+  ggplot(aes(x = x, y = y)) +
+  geom_point() +
+  scale_x_continuous(limits = c(0, 12), breaks = seq(0, 12, by = 3)) +
+  scale_y_continuous(limits = c(0, 12), breaks = seq(0, 12, by = 3)) +
+  ggtitle("Scatter plot") +
+  theme_classic()
+
+line_plot <- tibble(x = seq(0.5, 10, by = 1) + rnorm(10, 1, 0.5),
+                       y = seq(0.5, 10, by = 1) + rnorm(10, 1, 0.1)) |>
+  ggplot(aes(x = x, y = y)) +
+  geom_line() +
+  scale_x_continuous(limits = c(0, 12), breaks = seq(0, 12, by = 3)) +
+  scale_y_continuous(limits = c(0, 12), breaks = seq(0, 12, by = 3)) +
+  ggtitle("Line plot") +
+  theme_classic()
+
+bar_plot <- tibble(count = c(35, 27, 21),
+                   category = as_factor(c("Group 1", "Group 2", "Group 3"))) |>
+  ggplot(aes(y = count, x = category)) +
+  geom_bar(stat = "identity") +
+  ggtitle("Bar plot") +
+  theme_classic()
+
+histogram_plot <- tibble(measurements = rnorm(200, 25, 5)) |>
+  ggplot(aes(x = measurements)) +
+  geom_histogram(binwidth = 3) +
+  ggtitle("Histogram") +
+  theme_classic()
+
+plot_grid(scatter_plot,
+          line_plot,
+          bar_plot,
+          histogram_plot,
+          ncol = 2, 
+          greedy = FALSE)
+```
 
 All types of visualization have their (mis)uses, but three kinds are usually hard to understand or are easily replaced with an oft-better alternative.
 In particular, you should avoid **pie charts**; it is generally better to use bars, as it is easier to compare bar heights than pie slice sizes.
@@ -113,11 +162,6 @@ making it easier for them to understand and remember your message quickly.
 
 This section will cover examples of how to choose and refine a visualization given a data set and a question that you want to answer, 
 and then how to create the visualization in R \index{ggplot} using `ggplot2`.  To use the `ggplot2` package, we need to load the `tidyverse` metapackage.
-
-```{r other-libraries, include = FALSE}
-library(cowplot)
-library(knitr)
-```
 
 ```{r 03-tidyverse, warning=FALSE, message=FALSE}
 library(tidyverse)
@@ -192,20 +236,6 @@ Since we are investigating a relationship between two variables
 a scatter plot is a good place to start. 
 Scatter plots show the data as individual points with `x` (horizontal axis) 
 and `y` (vertical axis) coordinates.
-An example of a scatter plot is shown in Figure \@ref(fig:scatter-plot-sketch).
-
-```{r scatter-plot-sketch, echo = FALSE, fig.width = 3.25, fig.height = 3, fig.align = 'center', fig.cap = "Example of a scatter plot."}
-set.seed(1)
-scatter_data <- tibble(x = seq(0.25, 10, by = 0.5) + rnorm(19, 1, 1.5),
-                       y = seq(0.25, 10, by = 0.5) + rnorm(19, 1, 0.5))
-
-ggplot(scatter_data, aes(x = x, y = y)) +
-  geom_point() +
-  xlim(c(0, 12)) +
-  ylim(c(0, 12)) +
-  theme_classic()
-```
-
 
 Here, we will use the date the measurement was taken as the `x` coordinate 
 and CO$_{\text{2}}$ concentration as the `y` coordinate. 
@@ -244,24 +274,28 @@ co2_scatter <- ggplot(co2_df, aes(x = date_measured, y = ppm)) +
 co2_scatter
 ```
 
-Certainly, the visualization in Figure \@ref(fig:03-data-co2-scatter) shows a clear upward trend in the atmospheric concentration of CO$_{\text{2}}$ over time.
-This plot answers the first part of our question in the affirmative, but that appears to be the only conclusion one can make from the scatter visualization. 
-However, since time is an ordered quantity, we can try using a line plot instead using the `geom_line` function. Line plots require
-that their `x` coordinate orders the data, and connect the sequence of `x` and `y` coordinates with line segments. 
-An example of a line plot is shown in Figure \@ref(fig:line-plot-sketch).
+Certainly, the visualization in Figure \@ref(fig:03-data-co2-scatter) 
+shows a clear upward trend 
+in the atmospheric concentration of CO$_{\text{2}}$ over time.
+This plot answers the first part of our question in the affirmative, 
+but that appears to be the only conclusion one can make 
+from the scatter visualization. 
 
-```{r line-plot-sketch, echo = FALSE, fig.width = 3.25, fig.height = 3, fig.align = 'center', fig.cap = "Example of a line plot."}
-set.seed(1)
-line_data <- tibble(x = seq(0.5, 10, by = 1) + rnorm(10, 1, 0.5),
-                       y = seq(0.5, 10, by = 1) + rnorm(10, 1, 0.1))
-
-ggplot(line_data, aes(x = x, y = y)) +
-  geom_line() +
-  xlim(c(0, 12)) +
-  ylim(c(0, 12)) +
-  theme_classic()
-```
-
+One important thing to note about this data is that one of the variables
+we are exploring is time.
+Time is a special kind of quantitative variable 
+because it forces additional structure on the data&mdash;the 
+data points have a natural, or inherent order. 
+Specifically, each observation in the data set has a predecessor 
+and a successor.
+In such a case, the order of the observations matter&mdash;changing their order 
+will alter the meaning of the data.
+Given this, we typically use a line plot 
+to connect the observations when we are visualizing time.
+This helps illustrate the temporal order of the observations.
+We can create a line plot in `ggplot` using the `geom_line` function. 
+Line plots require that their `x` coordinate orders the data, 
+and connect the sequence of `x` and `y` coordinates with line segments. 
 
 Let's now try to visualize the `co2_df` as a line plot 
 with just the default arguments: 
@@ -675,17 +709,6 @@ In a bar plot, the height of the bar represents the value of a summary statistic
 (usually a size, count, proportion or percentage).
 They are particularly useful for comparing summary statistics between different
 groups of a categorical variable.
-An example of a bar plot is shown in Figure \@ref(fig:bar-plot-sketch).
-
-```{r bar-plot-sketch, echo = FALSE, fig.width = 3.25, fig.height = 3, fig.align = 'center', fig.cap = "Example of a bar plot."}
-set.seed(1)
-bar_data <- tibble(count = c(35, 27, 21),
-                   category = as_factor(c("Group 1", "Group 2", "Group 3")))
-
-ggplot(bar_data, aes(y = count, x = category)) +
-  geom_bar(stat = "identity") +
-  theme_classic()
-```
 
 We specify that we would like to use a bar plot
 via the `geom_bar` function in `ggplot2`. 
@@ -802,15 +825,6 @@ A histogram \index{ggplot!histogram}
 helps us visualize how a particular variable is distributed in a data set 
 by separating the data into bins, 
 and then using vertical bars to show how many data points fell in each bin. 
-An example of a histogram is shown in Figure \@ref(fig:histogram-sketch).
-
-```{r histogram-sketch, echo = FALSE, fig.width = 3.25, fig.height = 3, fig.align = 'center', fig.cap = "Example of a histogram."}
-histogram_data <- tibble(measurements = rnorm(200, 25, 5))
-
-ggplot(histogram_data, aes(x = measurements)) +
-  geom_histogram() +
-  theme_classic()
-```
 
 To create a histogram in `ggplot2` we will use the `geom_histogram` geometric
 object, setting the `x` axis to the `Speed` measurement variable; and as we did before, let's use the default arguments just to see how things look:
