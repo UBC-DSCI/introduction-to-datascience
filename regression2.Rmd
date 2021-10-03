@@ -119,8 +119,18 @@ prediction <- predict(small_model, data.frame(sqft = 2000))
 
 small_plot +
   geom_vline(xintercept = 2000, linetype = "dotted") +
-  geom_point(aes(x = 2000, y = prediction[[1]], color = "red", size = 2.5)) +
-  annotate("text", x = 2350, y = prediction[[1]]-30000, label=paste("$", format(round(prediction[[1]]), big.mark=",", nsmall=0, scientific = FALSE), sep=""))+
+  geom_point(aes(x = 2000, 
+                 y = prediction[[1]], 
+                 color = "red", size = 2.5)) +
+  annotate("text", 
+           x = 2350, 
+           y = prediction[[1]]-30000, 
+           label=paste("$", 
+                       format(round(prediction[[1]]),
+                              big.mark=",", 
+                              nsmall=0, 
+                              scientific = FALSE),
+                       sep="")) +
   theme(legend.position = "none")
 ```
 
@@ -149,8 +159,11 @@ we use RMSPE&mdash;the same measure of predictive performance we used with KNN r
 ```{r 08-verticalDistToMin,  echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of sale price versus size with red lines denoting the vertical distances between the predicted values and the observed data points"}
 small_sacramento <- small_sacramento |>
   mutate(predicted = predict(small_model))
+
 small_plot +
-  geom_segment(data = small_sacramento, aes(xend = sqft, yend = predicted), colour = "red")
+  geom_segment(data = small_sacramento, 
+               aes(xend = sqft, yend = predicted), 
+               colour = "red")
 ```
 
 
@@ -425,11 +438,16 @@ shown in Figure \@ref(fig:08-3DlinReg).
 
 ```{r 08-3DlinReg, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Linear regression plane of best fit overlaid on top of the data (using price, house size, and number of bedrooms as predictors)"}
 library(plotly)
-xvals <- seq(from = min(sacramento_train$sqft), to = max(sacramento_train$sqft), length = 50)
-yvals <- seq(from = min(sacramento_train$beds), to = max(sacramento_train$beds), length = 50)
+xvals <- seq(from = min(sacramento_train$sqft), 
+             to = max(sacramento_train$sqft), 
+             length = 50)
+yvals <- seq(from = min(sacramento_train$beds), 
+             to = max(sacramento_train$beds), 
+             length = 50)
 
 zvals <- mlm_fit |>
-  predict(crossing(xvals, yvals) |> mutate(sqft = xvals, beds = yvals)) |>
+  predict(crossing(xvals, yvals) |> 
+            mutate(sqft = xvals, beds = yvals)) |>
   pull(.pred)
 
 zvalsm <- matrix(zvals, nrow = length(xvals))
@@ -479,9 +497,15 @@ where:
 Finally, we can fill in the values for $\beta_0$, $\beta_1$ and $\beta_2$ from the model output above
 to create the equation of the plane of best fit to the data: 
 ```{r 08-lm-multi-get-coeffs-hidden, echo = FALSE}
-icept <- format(round(mcoeffs |> filter(term == "(Intercept)") |> pull(estimate)), scientific = FALSE)
-sqftc <- format(round(mcoeffs |> filter(term == "sqft") |> pull(estimate)), scientific = FALSE)
-bedsc <- format(round(mcoeffs |> filter(term == "beds") |> pull(estimate)), scientific = FALSE)
+icept <- format(round(mcoeffs |> 
+                        filter(term == "(Intercept)") |> 
+                        pull(estimate)), scientific = FALSE)
+sqftc <- format(round(mcoeffs |> 
+                        filter(term == "sqft") |> 
+                        pull(estimate)), scientific = FALSE)
+bedsc <- format(round(mcoeffs |> 
+                        filter(term == "beds") |> 
+                        pull(estimate)), scientific = FALSE)
 ```
 
 $$\text{house sale price} = `r icept` + `r sqftc`\cdot (\text{house size})  `r bedsc` \cdot (\text{number of bedrooms})$$
@@ -543,19 +567,21 @@ we plot the new line of best fit including the outlier. You can see how differen
 is from the blue line, which is entirely caused by that one extra outlier data point.
 
 ```{r 08-lm-outlier, fig.height = 4, fig.width = 5, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of a subset of the data, with outlier highlighted in red"}
-
 sacramento_train_small <- sacramento_train |> sample_n(100)
-
 sacramento_outlier <- tibble(sqft = 5000, price = 50000)
 
 lm_plot_outlier <- ggplot(sacramento_train_small, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
-  geom_point(data = sacramento_outlier, mapping = aes(x = sqft, y = price), color="red", size = 2.5) +
+  geom_point(data = sacramento_outlier, 
+             mapping = aes(x = sqft, y = price), color="red", size = 2.5) +
   xlab("House size (square feet)") +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
   geom_smooth(method = "lm", se = FALSE) + 
-  geom_smooth(data = sacramento_train_small |> add_row(sqft = 5000, price = 50000), method = "lm", se = FALSE, color = "red")
+  geom_smooth(data = sacramento_train_small |> 
+                add_row(sqft = 5000, price = 50000), 
+              method = "lm", se = FALSE, color = "red")
+
 lm_plot_outlier
 ```
 
@@ -570,22 +596,28 @@ Nevertheless, it is still important when working with linear regression to criti
 think about how much any individual data point is influencing the model.
 
 ```{r 08-lm-outlier-2, fig.height = 4, fig.width = 5, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of the full data, with outlier highlighted in red"}
-
 sacramento_outlier <- tibble(sqft = 5000, price = 50000)
 
 lm_plot_outlier_large <- ggplot(sacramento_train, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
-  geom_point(data = sacramento_outlier, mapping = aes(x = sqft, y = price), color="red", size = 2.5) +
+  geom_point(data = sacramento_outlier, 
+             mapping = aes(x = sqft, y = price), 
+             color="red", 
+             size = 2.5) +
   xlab("House size (square feet)") +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
   geom_smooth(method = "lm", se = FALSE) + 
-  geom_smooth(data = sacramento_train |> add_row(sqft = 5000, price = 50000), method = "lm", se = FALSE, color = "red")
+  geom_smooth(data = sacramento_train |> 
+                add_row(sqft = 5000, price = 50000), 
+              method = "lm", 
+              se = FALSE, 
+              color = "red")
+
 lm_plot_outlier_large
 ```
 
 ### Multicollinearity
-
 
 The second, and much more subtle, issue can occur when performing multivariable
 linear regression.  In particular, if you include multiple predictors that are \index{colinear}\index{multicolinear|see{colinear}}
@@ -598,11 +630,16 @@ not agree exactly, but they are very strongly linearly related to each other,
 as shown in Figure \@ref(fig:08-lm-multicol).
 
 ```{r 08-lm-multicol, fig.height = 4, fig.width = 5, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of the with possible outlier highlighted in red"}
-
 sacramento_train <- sacramento_train |>
-                          mutate(sqft1 = sqft + 100*sample(1000000, size=nrow(sacramento_train), replace=TRUE)/1000000) %>%
-                          mutate(sqft2 = sqft + 100*sample(1000000, size=nrow(sacramento_train), replace=TRUE)/1000000) %>%
-                          mutate(sqft3 = sqft + 100*sample(1000000, size=nrow(sacramento_train), replace=TRUE)/1000000) 
+                          mutate(sqft1 = sqft + 100 * sample(1000000,
+                                                             size=nrow(sacramento_train),
+                                                             replace=TRUE)/1000000) |>
+                          mutate(sqft2 = sqft + 100 * sample(1000000, 
+                                                             size=nrow(sacramento_train),
+                                                             replace=TRUE)/1000000) |>
+                          mutate(sqft3 = sqft + 100 * sample(1000000, 
+                                                             size=nrow(sacramento_train),
+                                                             replace=TRUE)/1000000) 
 
 lm_plot_multicol_1 <- ggplot(sacramento_train) +
   geom_point(aes(x = sqft, y = sqft1), alpha=0.4)+
@@ -613,34 +650,68 @@ lm_plot_multicol_1
 
 ```{r 08-lm-multicol-2, echo = FALSE, warning = FALSE}
 lm_recipe1 <- recipe(price ~ sqft + sqft1, data = sacramento_train)
+
 lm_fit1 <- workflow() |>
   add_recipe(lm_recipe1) |>
   add_model(lm_spec) |>
   fit(data = sacramento_train)
+
 coeffs <- tidy(pull_workflow_fit(lm_fit1))
-icept1 <- format(round(coeffs |> filter(term == "(Intercept)") %>% pull(estimate)), scientific = FALSE)
-sqft1 <- format(round(coeffs |> filter(term == "sqft") %>% pull(estimate)), scientific = FALSE)
-sqft11 <- format(round(coeffs |> filter(term == "sqft1") %>% pull(estimate)), scientific = FALSE)
+
+icept1 <- format(round(coeffs |> 
+                         filter(term == "(Intercept)") |>  
+                         pull(estimate)), 
+                 scientific = FALSE)
+sqft1 <- format(round(coeffs |> 
+                        filter(term == "sqft") |>  
+                        pull(estimate)), 
+                scientific = FALSE)
+sqft11 <- format(round(coeffs |> 
+                         filter(term == "sqft1") |>  
+                         pull(estimate)), 
+                 scientific = FALSE)
 
 lm_recipe2 <- recipe(price ~ sqft + sqft2, data = sacramento_train)
+
 lm_fit2 <- workflow() |>
   add_recipe(lm_recipe2) |>
   add_model(lm_spec) |>
   fit(data = sacramento_train)
+
 coeffs <- tidy(pull_workflow_fit(lm_fit2))
-icept2 <- format(round(coeffs |> filter(term == "(Intercept)") |> pull(estimate)), scientific = FALSE)
-sqft2 <- format(round(coeffs |> filter(term == "sqft") |> pull(estimate)), scientific = FALSE)
-sqft22 <- format(round(coeffs |> filter(term == "sqft2") |> pull(estimate)), scientific = FALSE)
+icept2 <- format(round(coeffs |> 
+                         filter(term == "(Intercept)") |> 
+                         pull(estimate)), 
+                 scientific = FALSE)
+sqft2 <- format(round(coeffs |> 
+                        filter(term == "sqft") |> 
+                        pull(estimate)), 
+                scientific = FALSE)
+sqft22 <- format(round(coeffs |> 
+                         filter(term == "sqft2") |> 
+                         pull(estimate)), 
+                 scientific = FALSE)
 
 lm_recipe3 <- recipe(price ~ sqft + sqft3, data = sacramento_train)
+
 lm_fit3 <- workflow() |>
   add_recipe(lm_recipe3) |>
   add_model(lm_spec) |>
   fit(data = sacramento_train)
+
 coeffs <- tidy(pull_workflow_fit(lm_fit3))
-icept3 <- format(round(coeffs |> filter(term == "(Intercept)") |> pull(estimate)), scientific = FALSE)
-sqft3 <- format(round(coeffs |> filter(term == "sqft") |> pull(estimate)), scientific = FALSE)
-sqft33 <- format(round(coeffs |> filter(term == "sqft3") |> pull(estimate)), scientific = FALSE)
+icept3 <- format(round(coeffs |> 
+                         filter(term == "(Intercept)") |> 
+                         pull(estimate)), 
+                 scientific = FALSE)
+sqft3 <- format(round(coeffs |> 
+                        filter(term == "sqft") |> 
+                        pull(estimate)), 
+                scientific = FALSE)
+sqft33 <- format(round(coeffs |> 
+                         filter(term == "sqft3") |> 
+                         pull(estimate)), 
+                 scientific = FALSE)
 
 ```
 
@@ -679,12 +750,17 @@ with two variables---`x` and `y`---with a nonlinear relationship between the two
 will not be fully captured by simple linear regression, as shown in Figure \@ref(fig:08-predictor-design).
 ```{r 08-predictor-design-df, echo = FALSE, message = FALSE, warning = FALSE}
 set.seed(1)
-df = tibble(x = sample(10000, 100, replace=TRUE)/10000)
-df <- df |> mutate(y = x^3 + 0.2*sample(10000, 100, replace=TRUE)/10000 - 0.1)
+
+df = tibble(x = sample(10000, 100, replace=TRUE) / 10000)
+
+df <- df |> 
+  mutate(y = x^3 + 0.2 * sample(10000, 100, replace=TRUE)/10000 - 0.1)
 ```
+
 ```{r 08-predictor-design-df-2, message = FALSE, warning = FALSE}
 df
 ```
+
 <center>
 ```{r 08-predictor-design, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Example of a dataset with a nonlinear relationship between the predictor and the response"}
 curve_plt <- ggplot(df, aes(x = x, y = y)) +
@@ -695,14 +771,17 @@ curve_plt <- ggplot(df, aes(x = x, y = y)) +
 curve_plt
 ```
 </center>
+
 Instead of trying to predict the response `y` using a linear regression on `x`,
 we might have some scientific background about our problem to suggest that `y`
 should be a cubic function of `x`. So before performing regression,
 we might *create a new predictor variable* `z` using the `mutate` function: \index{predictor design}
+
 ```{r 08-predictor-design-3, message = FALSE, warning = FALSE}
 df <- df |>
         mutate(z = x^3)
 ```
+
 Then we can perform linear regression for `y` using the predictor variable `z`,
 as shown in Figure \@ref(fig:08-predictor-design-2).
 Here you can see that the transformed predictor `z` helps the 
@@ -710,6 +789,7 @@ linear regression model make more accurate predictions.
 Note that none of the `y` response values have changed between Figures \@ref(fig:08-predictor-design)
 and \@ref(fig:08-predictor-design-2); the only change is that the `x` values
 have been replaced by `z` values.
+
 <center>
 ```{r 08-predictor-design-2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Relationship between the transformed predictor and the response"}
 curve_plt2 <- ggplot(df, aes(x = z, y = y)) +
