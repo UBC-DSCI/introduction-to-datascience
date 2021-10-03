@@ -8,8 +8,8 @@ in scientific disciplines known as *linear regression*. This chapter provides an
 to the basic concept of linear regression, shows how to use `tidymodels` to perform linear regression in R,
 and characterizes its strengths and weaknesses compared to KNN regression. The focus is, as usual,
 on the case where there is a single predictor and single response variable of interest; but the chapter
-concludes with an example using linear regression when there is more than one
-predictor.
+ concludes with an example using *multivariable linear regression* when there is more than one
+ predictor.
 
 ## Chapter learning objectives 
 By the end of the chapter, readers will be able to:
@@ -31,8 +31,8 @@ both of these limitations. Linear regression is also much more commonly used in 
 in scientific applications, because it provides an interpretable mathematical equation that describes
 the relationship between the predictor and response variables. In this first part of the chapter, we will focus on *simple* linear regression,
 which involves only one predictor variable and one response variable; later on, we will consider
-linear regression involving multiple predictor variables.
-Like KNN regression, simple linear regression involves
+ *multivariable* linear regression, which involves multiple predictor variables.
+ Like KNN regression, simple linear regression involves
 predicting a numerical response variable (like race time, house price, or height);
 but *how* it makes those predictions for a new observation is quite different from KNN regression.
  Instead of looking at the K nearest neighbours and averaging
@@ -374,21 +374,22 @@ which obviously does not match reality. On the other hand, the trend of increasi
 house size corresponding to increasing house price probably continues for large houses, 
 so the "flat" extrapolation of KNN likely does not match reality. 
 
-## Linear regression with multiple predictors
+## Multivariable linear regression
 
 As in KNN classification and KNN regression, we can move beyond the simple
-case of only one predictor to the case with multiple predictors. \index{linear regression!regression with multiple predictors}\index{linear regression!regression with multiple predictors equation|see{plane equation}}
+case of only one predictor to the case with multiple predictors, 
+known as *multivariable linear regression*. \index{regression!multivariable linear}\index{regression!multivariable linear equation|see{plane equation}}
 To do this, we follow a very similar approach to what we did for
 KNN regression: we just add more predictors to the model formula in the 
 recipe. But recall that we do not need to use cross-validation to choose any parameters,
 nor do we need to standardize (i.e., center and scale) the data for linear regression. 
 Note once again that we have the same concerns regarding multiple predictors
-as in the settings of KNN regression and classification that had many predictors: more predictors is **not** always
+ as in the settings of multivariable KNN regression and classification: more predictors is **not** always
 better. But because the same predictor selection 
 algorithm from the classification chapter extends to the setting of linear regression,
 it will not be covered again in this chapter.
 
-We will demonstrate linear regression with many predictors using the Sacramento real estate  \index{Sacramento real estate}
+We will demonstrate multivariable linear regression using the Sacramento real estate  \index{Sacramento real estate}
 data with both house size
 (measured in square feet) as well as number of bedrooms as our predictors, and
 continue to use house sale price as our response variable. We will start by 
@@ -485,14 +486,14 @@ bedsc <- format(round(mcoeffs |> filter(term == "beds") |> pull(estimate)), scie
 
 $$\text{house sale price} = `r icept` + `r sqftc`\cdot (\text{house size})  `r bedsc` \cdot (\text{number of bedrooms})$$
 
-This model is more interpretable than the comparable KNN
+This model is more interpretable than the multivariable KNN
 regression model; we can write a mathematical equation that explains how
 each predictor is affecting the predictions. But as always, we should 
-question how well linear regression with many predictors is doing compared to
-the other tools we have, such as linear regression with one predictor
-and KNN regression with many predictors. If this comparison is part of 
+question how well multivariable linear regression is doing compared to
+the other tools we have, such as simple linear regression 
+and multivariable KNN regression. If this comparison is part of
 the model tuning process&mdash;for example, if we are trying
-out many different sets of predictors for linear
+ out many different sets of predictors for multivariable linear
 and KNN regression&mdash;we must perform this comparison using
 cross-validation on only our training data. But if we have already
 decided on a small number (e.g., 2 or 3) of tuned candidate models and
@@ -503,10 +504,9 @@ error of the methods on the test data.
 lm_mult_test_results
 ```
 
-
-For the linear regression model with two predictors, we obtain an RMSPE \index{RMSPE} 
+We obtain an RMSPE \index{RMSPE} for the multivariable linear regression model 
 of `r format(lm_mult_test_results |> filter(.metric == 'rmse') |> pull(.estimate), big.mark=",", nsmall=0, scientific = FALSE)`. This prediction error
-is less than the prediction error for the KNN regression model that also had two predictors,
+ is less than the prediction error for the multivariable KNN regression model,
 indicating that we should likely choose linear regression for predictions of
 house sale price on this data set. Revisiting the simple linear regression model
 with only a single predictor from earlier in this chapter, we see that the RMSPE for that model was 
@@ -519,7 +519,7 @@ test data.
 
 ## Multicollinearity and outliers
 
-What can go wrong when performing linear regression? 
+What can go wrong when performing (possibly multivariable) linear regression? 
 This section will introduce two common issues&mdash;*outliers* and *collinear predictors*&mdash;and 
 illustrate their impact on predictions.
 
@@ -586,8 +586,9 @@ lm_plot_outlier_large
 
 ### Multicollinearity
 
-The second, and much more subtle, issue can occur when performing
-linear regression with many predictors.  In particular, if you include multiple predictors that are \index{colinear}\index{multicolinear|see{colinear}}
+
+The second, and much more subtle, issue can occur when performing multivariable
+linear regression.  In particular, if you include multiple predictors that are \index{colinear}\index{multicolinear|see{colinear}}
 strongly linearly related to one another, the coefficients that describe the
 plane of best fit can be very unreliable&mdash;small changes to the data can
 result in large changes in the coefficients. Consider an extreme example using
@@ -643,7 +644,7 @@ sqft33 <- format(round(coeffs |> filter(term == "sqft3") |> pull(estimate)), sci
 
 ```
 
-If we again fit the linear regression model with two predictors on this data, then the plane of best fit
+ If we again fit the multivariable linear regression model on this data, then the plane of best fit
 has regression coefficients that are very sensitive to the exact values in the data. For example,
 if we change the data ever so slightly&mdash;e.g., by running cross validation, which splits
 up the data randomly into different chunks&mdash;the coefficients vary by large amounts:
@@ -654,7 +655,7 @@ Best Fit 2: $\text{house sale price} = `r icept2` + `r sqft2`\cdot (\text{house 
 
 Best Fit 3: $\text{house sale price} = `r icept3` + `r sqft3`\cdot (\text{house size 1 (ft$^2$)}) + `r sqft33` \cdot (\text{house size 2 (ft$^2$)}).$
 
-Therefore, when performing linear regression with many predictors, it is important to avoid including very
+ Therefore, when performing multivariable linear regression, it is important to avoid including very
 linearly related predictors. However, techniques for doing so are beyond the scope of this
 book; see the list of additional resources at the end of this chapter to find out where you can learn more.
 
