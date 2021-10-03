@@ -183,7 +183,7 @@ As usual, we start by loading packages, setting the seed, loading data, and putt
 can come back to after we choose our final model. Let's take care of that now.
 \index{seed!set.seed}
 
-```{r 08-test-train-split}
+```{r 08-test-train-split, message = FALSE, warning = FALSE}
 library(tidyverse)
 library(tidymodels)
 
@@ -209,6 +209,7 @@ lm_fit <- workflow() |>
   add_recipe(lm_recipe) |>
   add_model(lm_spec) |>
   fit(data = sacramento_train)
+
 lm_fit
 ```
 
@@ -235,6 +236,7 @@ lm_test_results <- lm_fit |>
   predict(sacramento_test) |>
   bind_cols(sacramento_test) |>
   metrics(truth = price, estimate = .pred)
+
 lm_test_results
 ```
 
@@ -255,13 +257,13 @@ to the plot that we are not interested in at this point; we provide the argument
 tell `geom_smooth` not to show that information. Figure \@ref(fig:08-lm-predict-all) displays the result.
 
 ```{r 08-lm-predict-all, fig.height = 4, fig.width = 5, warning = FALSE, message = FALSE, fig.cap = "Scatter plot of sale price versus size with line of best fit for the full Sacramento housing data"}
-
 lm_plot_final <- ggplot(sacramento_train, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
   xlab("House size (square feet)") +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
   geom_smooth(method = "lm", se = FALSE)
+
 lm_plot_final
 ```
 
@@ -274,6 +276,7 @@ the `tidy` function to convert the result into a data frame:
 coeffs <- lm_fit %>%
              pull_workflow_fit() %>%
              tidy()
+
 coeffs
 ```
 
@@ -419,6 +422,7 @@ mlm_fit <- workflow() |>
   add_recipe(mlm_recipe) |>
   add_model(lm_spec) |>
   fit(data = sacramento_train)
+
 mlm_fit
 ```
 
@@ -429,6 +433,7 @@ lm_mult_test_results <- mlm_fit |>
   predict(sacramento_test) |>
   bind_cols(sacramento_test) |>
   metrics(truth = price, estimate = .pred)
+
 lm_mult_test_results
 ```
 Our model's test error as assessed by RMSPE
@@ -483,6 +488,7 @@ as shown below:
 mcoeffs <- mlm_fit %>%
              pull_workflow_fit() %>%
              tidy()
+
 mcoeffs
 ```
 And then use those slopes to write a mathematical equation to describe the prediction plane: \index{plane equation}
@@ -566,7 +572,7 @@ the data point is an *outlier*. In blue we plot the original line of best fit, a
 we plot the new line of best fit including the outlier. You can see how different the red line
 is from the blue line, which is entirely caused by that one extra outlier data point.
 
-```{r 08-lm-outlier, fig.height = 4, fig.width = 5, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of a subset of the data, with outlier highlighted in red"}
+```{r 08-lm-outlier, fig.height = 4, fig.width = 5, message = FALSE, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of a subset of the data, with outlier highlighted in red"}
 sacramento_train_small <- sacramento_train |> sample_n(100)
 sacramento_outlier <- tibble(sqft = 5000, price = 50000)
 
@@ -595,7 +601,7 @@ changes much less when adding the outlier.
 Nevertheless, it is still important when working with linear regression to critically
 think about how much any individual data point is influencing the model.
 
-```{r 08-lm-outlier-2, fig.height = 4, fig.width = 5, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of the full data, with outlier highlighted in red"}
+```{r 08-lm-outlier-2, fig.height = 4, fig.width = 5, warning = FALSE, message = FALSE, echo = FALSE, fig.cap = "Scatter plot of the full data, with outlier highlighted in red"}
 sacramento_outlier <- tibble(sqft = 5000, price = 50000)
 
 lm_plot_outlier_large <- ggplot(sacramento_train, aes(x = sqft, y = price)) +
