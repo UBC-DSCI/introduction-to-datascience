@@ -78,6 +78,7 @@ The same comments regarding passwords and `sudo` as above apply here.
   don't "disappear" in the rest of the text. So for example, if I have a `,` in the text, I should do
   something like  "here is some text about the comma (`,`)". Or for `<-`, we should do "something like this assignment operator (`<-`)".
   There are likely exceptions to this rule though.
+- Book titles in the text should be typeset in italics (e.g. *R for Data Science*)
 
 #### Code blocks
 - Use the knitr label format `##-[name with only alphanumeric + hyphens]` where 
