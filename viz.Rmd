@@ -216,7 +216,6 @@ read_csv("data/mauna_loa.csv") |>
   mutate(date_measured = ym(date_measured)) |>
   select(-date_decimal) |>
   filter(ppm > 0, date_measured > date("1980/01/01")) |>
-  #filter(ppm > 0, date_measured > interval(ymd("1980/01/01"), ymd("2021-01-01"))) |>
   write_csv("data/mauna_loa_data.csv")
 ```
 
@@ -291,6 +290,7 @@ knitr::include_graphics("img/ggplot_function_scatter.jpeg")
 ```{r 03-data-co2-scatter, warning=FALSE, message=FALSE, fig.height = 4, fig.width = 6, fig.cap = "Scatter plot of atmospheric concentration of CO$_{2}$ over time"}
 co2_scatter <- ggplot(co2_df, aes(x = date_measured, y = ppm)) +
   geom_point()
+
 co2_scatter
 ```
 
@@ -321,6 +321,7 @@ with just the default arguments:
 ```{r 03-data-co2-line, warning=FALSE, message=FALSE, fig.cap = "Line plot of atmospheric concentration of CO$_{2}$ over time"}
 co2_line <- ggplot(co2_df, aes(x = date_measured, y = ppm)) +
   geom_line()
+
 co2_line
 ```
 
@@ -393,6 +394,7 @@ co2_line <- ggplot(co2_df, aes(x = date_measured, y = ppm)) +
   ylab("Atmospheric CO2 (ppm)") +
   xlim(c(date("1990-01-01"), date("1993-12-01"))) +
   theme(text = element_text(size = 16))
+
 co2_line
 ```
 
@@ -455,6 +457,7 @@ The result is shown in Figure \@ref(fig:03-data-faithful-scatter).
 ```{r 03-data-faithful-scatter, warning=FALSE, message=FALSE, fig.cap = "Scatter plot of waiting time and eruption time"}
 faithful_scatter <- ggplot(faithful, aes(x = waiting, y = eruptions)) +
   geom_point()
+
 faithful_scatter
 ```
 
@@ -470,6 +473,7 @@ faithful_scatter <- ggplot(faithful, aes(x = waiting, y = eruptions)) +
   geom_point() +
   labs(x = "Waiting Time (mins)", y = "Eruption Duration (mins)") +
   theme(text = element_text(size = 16))
+
 faithful_scatter
 ```
 
@@ -517,12 +521,18 @@ ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
        y = "Mother tongue \n (number of Canadian residents)") +
   theme(text = element_text(size = 14))
 ```
+
 ```{r mother-tongue-hidden-summaries, echo = FALSE, warning = FALSE, message = FALSE}
 numlang_speakers <- can_lang |> 
               select(mother_tongue) |> 
-              summarize(maxsp = max(mother_tongue), minsp = min(mother_tongue))
-maxlang_speakers <- numlang_speakers |> pull(maxsp)
-minlang_speakers <- numlang_speakers |> pull(minsp)
+              summarize(maxsp = max(mother_tongue), 
+                        minsp = min(mother_tongue))
+
+maxlang_speakers <- numlang_speakers |> 
+  pull(maxsp)
+
+minlang_speakers <- numlang_speakers |> 
+  pull(minsp)
 ```
 
 Okay! The axes and labels in Figure \@ref(fig:03-mother-tongue-vs-most-at-home-labs) are
@@ -584,6 +594,7 @@ ggplot(can_lang, aes(x = most_at_home, y = mother_tongue)) +
 english_mother_tongue <- can_lang |>
   filter(language == "English") |>
   pull(mother_tongue)
+
 census_popn <- 35151728
 ```
 
@@ -614,6 +625,7 @@ can_lang <- can_lang |>
     mother_tongue_percent = (mother_tongue / 35151728)*100,
     most_at_home_percent = (most_at_home / 35151728)*100
   )
+
 can_lang |> 
   select(mother_tongue_percent, most_at_home_percent)
 ```
@@ -721,7 +733,9 @@ visual redundancy&mdash;i.e., conveying the same information with both scatter p
 further improve the clarity and accessibility of your visualization.
 
 ```{r scatter-color-by-category-palette, fig.width=7.75, fig.height=4, warning=FALSE,  fig.cap = "Scatter plot of percentage of Canadians reporting a language as their mother tongue vs the primary language at home colored by language category with color-blind friendly colors"}
-ggplot(can_lang, aes(x = most_at_home_percent, y = mother_tongue_percent, color = category, shape = category)) +
+ggplot(can_lang, aes(x = most_at_home_percent, 
+                     y = mother_tongue_percent, 
+                     color = category, shape = category)) +
   geom_point() +
   labs(x = "Language spoken most at home \n (percentage of Canadian residents)",
        y = "Mother tongue \n (percentage of Canadian residents)") +
@@ -808,8 +822,11 @@ The `islands.csv` data set \index{Island landmasses} contains a list of Earth's 
 islands_df <- read_csv("data/islands.csv")
 continents <- c("Africa", "Antarctica", "Asia", "Australia", 
                 "Europe", "North America", "South America")
+
 islands_df <- mutate(islands_df, 
-                     landmass_type = ifelse(landmass %in% continents, "Continent", "Other"))
+                     landmass_type = ifelse(landmass %in% continents, 
+                                            "Continent", "Other"))
+
 write_csv(islands_df, "data/islands.csv")
 ```
 
@@ -838,6 +855,7 @@ shown in Figure \@ref(fig:03-data-islands-bar).
 ```{r 03-data-islands-bar, warning=FALSE, message=FALSE,  fig.cap = "Bar plot of all Earth's landmasses' size with squished labels"}
 islands_bar <- ggplot(islands_df, aes(x = landmass, y = size)) +
   geom_bar(stat = "identity")
+
 islands_bar
 ```
 
@@ -857,6 +875,7 @@ swapping the `x` and `y` variables:
 islands_top12 <- slice_max(islands_df, order_by = size, n = 12)
 islands_bar <- ggplot(islands_top12, aes(x = size, y = landmass)) +
   geom_bar(stat = "identity") 
+
 islands_bar
 ```
 
@@ -903,6 +922,7 @@ islands_bar <- ggplot(islands_top12,
   geom_bar(stat = "identity") +
   labs(x = "Size (1000 square mi)", y = "Landmass",  fill = "Type") +
   theme(text = element_text(size = 16))
+
 islands_bar
 ```
 
@@ -961,6 +981,7 @@ let's use the default arguments just to see how things look.
 ```{r 03-data-morley-hist, warning=FALSE, message=FALSE, fig.cap = "Histogram of Michelson's speed of light data"}
 morley_hist <- ggplot(morley, aes(x = Speed)) +
   geom_histogram()
+
 morley_hist
 ```
 
@@ -991,6 +1012,7 @@ while *horizontal lines* are used to denote quantities on the *vertical axis*.
 morley_hist <- ggplot(morley, aes(x = Speed)) +
   geom_histogram() +
   geom_vline(xintercept = 792.458, linetype = "dashed", size = 1)
+
 morley_hist
 ```
 
@@ -1019,6 +1041,7 @@ when they are colored by another categorical variable).
 morley_hist <- ggplot(morley, aes(x = Speed, fill = Expt)) +
   geom_histogram(alpha = 0.5, position = "identity") +
   geom_vline(xintercept = 792.458, linetype = "dashed", size = 1.0)
+
 morley_hist
 ```
 
@@ -1042,6 +1065,7 @@ and the color will be mapped discretely.
 morley_hist <- ggplot(morley, aes(x = Speed, fill = as_factor(Expt))) +
   geom_histogram(alpha = 0.5, position = "identity") +
   geom_vline(xintercept = 792.458, linetype = "dashed", size = 1.0)
+
 morley_hist
 ```
 
@@ -1081,6 +1105,7 @@ morley_hist <- ggplot(morley, aes(x = Speed, fill = as_factor(Expt))) +
   geom_histogram() +
   facet_grid(rows = vars(Expt)) +
   geom_vline(xintercept = 792.458, linetype = "dashed", size = 1.0)
+
 morley_hist
 ```
 
@@ -1101,13 +1126,21 @@ To answer this question, we'll use the `mutate` function to transform our data i
 \index{ggplot!labs}\index{ggplot!theme}
 
 ```{r 03-data-morley-hist-5, warning=FALSE, message=FALSE, fig.height = 7, fig.cap = "Histogram of relative accuracy split vertically by experiment with clearer axes and labels"}
-morley_rel <- mutate(morley, relative_accuracy = 100 * ((299000 + Speed) - 299792.458) / (299792.458))
-morley_hist <- ggplot(morley_rel, aes(x = relative_accuracy, fill = as_factor(Expt))) +
+morley_rel <- mutate(morley, 
+                     relative_accuracy = 100 * 
+                       ((299000 + Speed) - 299792.458) / (299792.458))
+
+morley_hist <- ggplot(morley_rel, 
+                      aes(x = relative_accuracy, 
+                          fill = as_factor(Expt))) +
   geom_histogram() +
   facet_grid(rows = vars(Expt)) +
   geom_vline(xintercept = 0, linetype = "dashed", size = 1.0) +
-  labs(x = "Relative Accuracy (%)", y = "# Measurements", fill = "Experiment ID") +
+  labs(x = "Relative Accuracy (%)", 
+       y = "# Measurements", 
+       fill = "Experiment ID") +
   theme(text = element_text(size = 14))
+
 morley_hist
 ```
 
@@ -1149,35 +1182,51 @@ and the binwidth of 0.01 are effective for helping answer our question.
 On the other hand, the bin widths of 0.001 and 0.1 are too small and too big, respectively.
 
 ```{r 03-data-morley-hist-binwidth, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 10, fig.cap = "Effect of varying bin width on histograms."}
-morley_hist_default <- ggplot(morley_rel, aes(x = relative_accuracy, fill = as_factor(Expt))) +
+morley_hist_default <- ggplot(morley_rel, 
+                              aes(x = relative_accuracy, 
+                                  fill = as_factor(Expt))) +
   geom_histogram() +
   facet_grid(rows = vars(Expt)) +
   geom_vline(xintercept = 0, linetype = "dashed", size = 1.0) +
-  labs(x = "Relative Accuracy (%)", y = "# Measurements", fill = "Experiment ID") +
+  labs(x = "Relative Accuracy (%)", 
+       y = "# Measurements", 
+       fill = "Experiment ID") +
   theme(legend.position = "none") +
   ggtitle("Default bin width (bins = 30)")
 
-morley_hist_big <- ggplot(morley_rel, aes(x = relative_accuracy, fill = as_factor(Expt))) +
+morley_hist_big <- ggplot(morley_rel, 
+                          aes(x = relative_accuracy, 
+                              fill = as_factor(Expt))) +
   geom_histogram(binwidth = 0.1) +
   facet_grid(rows = vars(Expt)) +
   geom_vline(xintercept = 0, linetype = "dashed", size = 1.0) +
-  labs(x = "Relative Accuracy (%)", y = "# Measurements", fill = "Experiment ID") +
+  labs(x = "Relative Accuracy (%)", 
+       y = "# Measurements", 
+       fill = "Experiment ID") +
   theme(legend.position = "none") +
   ggtitle( "binwidth = 0.1")
 
-morley_hist_med <- ggplot(morley_rel, aes(x = relative_accuracy, fill = as_factor(Expt))) +
+morley_hist_med <- ggplot(morley_rel, 
+                          aes(x = relative_accuracy, 
+                              fill = as_factor(Expt))) +
   geom_histogram(binwidth = 0.01) +
   facet_grid(rows = vars(Expt)) +
   geom_vline(xintercept = 0, linetype = "dashed", size = 1.0) +
-  labs(x = "Relative Accuracy (%)", y = "# Measurements", fill = "Experiment ID") +
+  labs(x = "Relative Accuracy (%)", 
+       y = "# Measurements", 
+       fill = "Experiment ID") +
   theme(legend.position = "none") +
   ggtitle("binwidth = 0.01")
 
-morley_hist_small <- ggplot(morley_rel, aes(x = relative_accuracy, fill = as_factor(Expt))) +
+morley_hist_small <- ggplot(morley_rel, 
+                            aes(x = relative_accuracy, 
+                                fill = as_factor(Expt))) +
   geom_histogram(binwidth = 0.001) +
   facet_grid(rows = vars(Expt)) +
   geom_vline(xintercept = 0, linetype = "dashed", size = 1.0) +
-  labs(x = "Relative Accuracy (%)", y = "# Measurements", fill = "Experiment ID") +
+  labs(x = "Relative Accuracy (%)", 
+       y = "# Measurements", 
+       fill = "Experiment ID") +
   theme(legend.position = "none") +
   ggtitle("binwidth = 0.001")
 
@@ -1200,7 +1249,8 @@ we can use the `+` operator to add a title layer with the `ggtitle` function.
 
 ```{r 03-data-morley-hist-addlayer, warning = FALSE, message = FALSE, fig.height = 7, fig.cap = "Histogram of relative accuracy split vertically by experiment with a descriptive title highlighting the take home message of the visualization."}
 morley_hist_title <- morley_hist +
-  ggtitle("Michelson's speed of light experiments \n were accurate to about 0.05%")
+  ggtitle("Speed of light experiments \n were accurate to about 0.05%")
+
 morley_hist_title
 ```
 
@@ -1369,13 +1419,19 @@ file_sizes <- tibble(`Image type` = c("Bitmap / Raster",
                         "Bitmap / Raster",
                         "Vector / Scalable Graphics"),
        `File type` = c("PNG", "JPG", "BMP", "TIFF", "SVG"),
-       `Image size` = c(paste(round(file.info("img/faithful_plot.png")["size"] / 1000000, 2), "MB"),
-                        paste(round(file.info("img/faithful_plot.jpg")["size"] / 1000000, 2), "MB"),
-                        paste(round(file.info("img/faithful_plot.bmp")["size"] / 1000000, 2), "MB"),
-                        paste(round(file.info("img/faithful_plot.tiff")["size"] / 1000000, 2), "MB"),
-                        paste(round(file.info("img/faithful_plot.svg")["size"] / 1000000, 2), "MB")))
+       `Image size` = c(paste(round(file.info("img/faithful_plot.png")["size"] 
+                                    / 1000000, 2), "MB"),
+                        paste(round(file.info("img/faithful_plot.jpg")["size"] 
+                                    / 1000000, 2), "MB"),
+                        paste(round(file.info("img/faithful_plot.bmp")["size"] 
+                                    / 1000000, 2), "MB"),
+                        paste(round(file.info("img/faithful_plot.tiff")["size"] 
+                                    / 1000000, 2), "MB"),
+                        paste(round(file.info("img/faithful_plot.svg")["size"] 
+                                    / 1000000, 2), "MB")))
 kable(file_sizes,
-      caption = "File sizes of `faithful_plot` when saved as different file formats.")
+      caption = paste0("File sizes of `faithful_plot`",
+                       "when saved as different file formats."))
 ```
 
 Take a look at the file sizes in Table \@ref(tab:filesizes).
