@@ -8,8 +8,8 @@ in scientific disciplines known as *linear regression*. This chapter provides an
 to the basic concept of linear regression, shows how to use `tidymodels` to perform linear regression in R,
 and characterizes its strengths and weaknesses compared to KNN regression. The focus is, as usual,
 on the case where there is a single predictor and single response variable of interest; but the chapter
-concludes with an example using *multivariate linear regression* when there is more than one
-predictor.
+ concludes with an example using *multivariable linear regression* when there is more than one
+ predictor.
 
 ## Chapter learning objectives 
 By the end of the chapter, readers will be able to:
@@ -31,8 +31,8 @@ both of these limitations. Linear regression is also much more commonly used in 
 in scientific applications, because it provides an interpretable mathematical equation that describes
 the relationship between the predictor and response variables. In this first part of the chapter, we will focus on *simple* linear regression,
 which involves only one predictor variable and one response variable; later on, we will consider
-*multivariate* linear regression, which involves multiple predictor variables.
-Like KNN regression, simple linear regression involves
+ *multivariable* linear regression, which involves multiple predictor variables.
+ Like KNN regression, simple linear regression involves
 predicting a numerical response variable (like race time, house price, or height);
 but *how* it makes those predictions for a new observation is quite different from KNN regression.
  Instead of looking at the K nearest neighbours and averaging
@@ -51,7 +51,7 @@ straight line of best fit through the training data and then
 > logistic regression. After reading this chapter, see the "Additional Resources" section at the end of the
 > classification chapters to learn more about logistic regression. \index{regression!logistic}
 
-Let's return to the Sacramento housing data \index{Sacramento real estate} from the previous chapter to learn
+Let's return to the Sacramento housing data \index{Sacramento real estate} from the Chapter \@ref(regression1) to learn
 how to apply linear regression and compare it to KNN regression. For now, we
 will consider 
 a smaller version of the housing data to help make our visualizations clear.
@@ -119,8 +119,18 @@ prediction <- predict(small_model, data.frame(sqft = 2000))
 
 small_plot +
   geom_vline(xintercept = 2000, linetype = "dotted") +
-  geom_point(aes(x = 2000, y = prediction[[1]], color = "red", size = 2.5)) +
-  annotate("text", x = 2350, y = prediction[[1]]-30000, label=paste("$", format(round(prediction[[1]]), big.mark=",", nsmall=0, scientific = FALSE), sep=""))+
+  geom_point(aes(x = 2000, 
+                 y = prediction[[1]], 
+                 color = "red", size = 2.5)) +
+  annotate("text", 
+           x = 2350, 
+           y = prediction[[1]]-30000, 
+           label=paste("$", 
+                       format(round(prediction[[1]]),
+                              big.mark=",", 
+                              nsmall=0, 
+                              scientific = FALSE),
+                       sep="")) +
   theme(legend.position = "none")
 ```
 
@@ -149,8 +159,11 @@ we use RMSPE&mdash;the same measure of predictive performance we used with KNN r
 ```{r 08-verticalDistToMin,  echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of sale price versus size with red lines denoting the vertical distances between the predicted values and the observed data points"}
 small_sacramento <- small_sacramento |>
   mutate(predicted = predict(small_model))
+
 small_plot +
-  geom_segment(data = small_sacramento, aes(xend = sqft, yend = predicted), colour = "red")
+  geom_segment(data = small_sacramento, 
+               aes(xend = sqft, yend = predicted), 
+               colour = "red")
 ```
 
 
@@ -166,18 +179,11 @@ Below we illustrate how we can use the usual `tidymodels` workflow to predict ho
 price given house size using a simple linear regression approach using the full
 Sacramento real estate data set.
 
-> An additional difference that you will notice below is that we do not standardize \index{standardization}
-> (i.e., scale and center) our predictors. In K-nearest neighbours models, recall that 
-> the model fit changes depending on whether we standardize first or not. In linear regression,
-> standardization does not affect the fit (it *does* affect the coefficients in the equation, though!).
-> So you can standardize if you want&mdash;it won't hurt anything&mdash;but if you leave the
-> predictors in their original form, the best fit coefficients are usually easier to interpret afterward.
-
 As usual, we start by loading packages, setting the seed, loading data, and putting some test data away in a lock box that we
 can come back to after we choose our final model. Let's take care of that now.
 \index{seed!set.seed}
 
-```{r 08-test-train-split}
+```{r 08-test-train-split, message = FALSE, warning = FALSE}
 library(tidyverse)
 library(tidymodels)
 
@@ -203,8 +209,19 @@ lm_fit <- workflow() |>
   add_recipe(lm_recipe) |>
   add_model(lm_spec) |>
   fit(data = sacramento_train)
+
 lm_fit
 ```
+
+> **Note:** An additional difference that you will notice here is that we do
+> not standardize \index{standardization} (i.e., scale and center) our
+> predictors. In K-nearest neighbours models, recall that the model fit changes
+> depending on whether we standardize first or not. In linear regression,
+> standardization does not affect the fit (it *does* affect the coefficients in
+> the equation, though!).  So you can standardize if you want&mdash;it won't
+> hurt anything&mdash;but if you leave the predictors in their original form,
+> the best fit coefficients are usually easier to interpret afterward.
+
 Our coefficients are 
 (intercept) $\beta_0=$ `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), scientific=FALSE)`
 and (slope) $\beta_1=$ `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`.
@@ -221,6 +238,7 @@ lm_test_results <- lm_fit |>
   predict(sacramento_test) |>
   bind_cols(sacramento_test) |>
   metrics(truth = price, estimate = .pred)
+
 lm_test_results
 ```
 
@@ -241,13 +259,13 @@ to the plot that we are not interested in at this point; we provide the argument
 tell `geom_smooth` not to show that information. Figure \@ref(fig:08-lm-predict-all) displays the result.
 
 ```{r 08-lm-predict-all, fig.height = 4, fig.width = 5, warning = FALSE, message = FALSE, fig.cap = "Scatter plot of sale price versus size with line of best fit for the full Sacramento housing data"}
-
 lm_plot_final <- ggplot(sacramento_train, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
   xlab("House size (square feet)") +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
   geom_smooth(method = "lm", se = FALSE)
+
 lm_plot_final
 ```
 
@@ -260,6 +278,7 @@ the `tidy` function to convert the result into a data frame:
 coeffs <- lm_fit %>%
              pull_workflow_fit() %>%
              tidy()
+
 coeffs
 ```
 
@@ -373,22 +392,22 @@ which obviously does not match reality. On the other hand, the trend of increasi
 house size corresponding to increasing house price probably continues for large houses, 
 so the "flat" extrapolation of KNN likely does not match reality. 
 
-## Multivariate linear regression
+## Multivariable linear regression
 
 As in KNN classification and KNN regression, we can move beyond the simple
-case of only one predictor to the case with multiple predictors,
-known as *multivariate linear regression*. \index{regression!multivariate linear}\index{regression!multivariate linear equation|see{plane equation}}
+case of only one predictor to the case with multiple predictors, 
+known as *multivariable linear regression*. \index{regression!multivariable linear}\index{regression!multivariable linear equation|see{plane equation}}
 To do this, we follow a very similar approach to what we did for
 KNN regression: we just add more predictors to the model formula in the 
 recipe. But recall that we do not need to use cross-validation to choose any parameters,
 nor do we need to standardize (i.e., center and scale) the data for linear regression. 
 Note once again that we have the same concerns regarding multiple predictors
-as in the settings of multivariate KNN regression and classification: more predictors is **not** always
+ as in the settings of multivariable KNN regression and classification: more predictors is **not** always
 better. But because the same predictor selection 
 algorithm from the classification chapter extends to the setting of linear regression,
 it will not be covered again in this chapter.
 
-We will demonstrate multivariate linear regression using the Sacramento real estate  \index{Sacramento real estate}
+We will demonstrate multivariable linear regression using the Sacramento real estate  \index{Sacramento real estate}
 data with both house size
 (measured in square feet) as well as number of bedrooms as our predictors, and
 continue to use house sale price as our response variable. We will start by 
@@ -405,6 +424,7 @@ mlm_fit <- workflow() |>
   add_recipe(mlm_recipe) |>
   add_model(lm_spec) |>
   fit(data = sacramento_train)
+
 mlm_fit
 ```
 
@@ -415,6 +435,7 @@ lm_mult_test_results <- mlm_fit |>
   predict(sacramento_test) |>
   bind_cols(sacramento_test) |>
   metrics(truth = price, estimate = .pred)
+
 lm_mult_test_results
 ```
 Our model's test error as assessed by RMSPE
@@ -424,11 +445,16 @@ shown in Figure \@ref(fig:08-3DlinReg).
 
 ```{r 08-3DlinReg, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Linear regression plane of best fit overlaid on top of the data (using price, house size, and number of bedrooms as predictors)"}
 library(plotly)
-xvals <- seq(from = min(sacramento_train$sqft), to = max(sacramento_train$sqft), length = 50)
-yvals <- seq(from = min(sacramento_train$beds), to = max(sacramento_train$beds), length = 50)
+xvals <- seq(from = min(sacramento_train$sqft), 
+             to = max(sacramento_train$sqft), 
+             length = 50)
+yvals <- seq(from = min(sacramento_train$beds), 
+             to = max(sacramento_train$beds), 
+             length = 50)
 
 zvals <- mlm_fit |>
-  predict(crossing(xvals, yvals) |> mutate(sqft = xvals, beds = yvals)) |>
+  predict(crossing(xvals, yvals) |> 
+            mutate(sqft = xvals, beds = yvals)) |>
   pull(.pred)
 
 zvalsm <- matrix(zvals, nrow = length(xvals))
@@ -464,6 +490,7 @@ as shown below:
 mcoeffs <- mlm_fit %>%
              pull_workflow_fit() %>%
              tidy()
+
 mcoeffs
 ```
 And then use those slopes to write a mathematical equation to describe the prediction plane: \index{plane equation}
@@ -478,21 +505,27 @@ where:
 Finally, we can fill in the values for $\beta_0$, $\beta_1$ and $\beta_2$ from the model output above
 to create the equation of the plane of best fit to the data: 
 ```{r 08-lm-multi-get-coeffs-hidden, echo = FALSE}
-icept <- format(round(mcoeffs |> filter(term == "(Intercept)") |> pull(estimate)), scientific = FALSE)
-sqftc <- format(round(mcoeffs |> filter(term == "sqft") |> pull(estimate)), scientific = FALSE)
-bedsc <- format(round(mcoeffs |> filter(term == "beds") |> pull(estimate)), scientific = FALSE)
+icept <- format(round(mcoeffs |> 
+                        filter(term == "(Intercept)") |> 
+                        pull(estimate)), scientific = FALSE)
+sqftc <- format(round(mcoeffs |> 
+                        filter(term == "sqft") |> 
+                        pull(estimate)), scientific = FALSE)
+bedsc <- format(round(mcoeffs |> 
+                        filter(term == "beds") |> 
+                        pull(estimate)), scientific = FALSE)
 ```
 
 $$\text{house sale price} = `r icept` + `r sqftc`\cdot (\text{house size})  `r bedsc` \cdot (\text{number of bedrooms})$$
 
-This model is more interpretable than the multivariate KNN
+This model is more interpretable than the multivariable KNN
 regression model; we can write a mathematical equation that explains how
 each predictor is affecting the predictions. But as always, we should 
-question how well multivariate linear regression is doing compared to
+question how well multivariable linear regression is doing compared to
 the other tools we have, such as simple linear regression 
-and multivariate KNN regression. If this comparison is part of 
+and multivariable KNN regression. If this comparison is part of
 the model tuning process&mdash;for example, if we are trying
-out many different sets of predictors for multivariate linear
+ out many different sets of predictors for multivariable linear
 and KNN regression&mdash;we must perform this comparison using
 cross-validation on only our training data. But if we have already
 decided on a small number (e.g., 2 or 3) of tuned candidate models and
@@ -503,10 +536,9 @@ error of the methods on the test data.
 lm_mult_test_results
 ```
 
-
-We obtain an RMSPE \index{RMSPE} for the multivariate linear regression model 
+We obtain an RMSPE \index{RMSPE} for the multivariable linear regression model 
 of `r format(lm_mult_test_results |> filter(.metric == 'rmse') |> pull(.estimate), big.mark=",", nsmall=0, scientific = FALSE)`. This prediction error
-is less than the prediction error for the multivariate KNN regression model,
+ is less than the prediction error for the multivariable KNN regression model,
 indicating that we should likely choose linear regression for predictions of
 house sale price on this data set. Revisiting the simple linear regression model
 with only a single predictor from earlier in this chapter, we see that the RMSPE for that model was 
@@ -519,7 +551,7 @@ test data.
 
 ## Multicollinearity and outliers
 
-What can go wrong when performing (possibly multivariate) linear regression? 
+What can go wrong when performing (possibly multivariable) linear regression? 
 This section will introduce two common issues&mdash;*outliers* and *collinear predictors*&mdash;and 
 illustrate their impact on predictions.
 
@@ -542,20 +574,22 @@ the data point is an *outlier*. In blue we plot the original line of best fit, a
 we plot the new line of best fit including the outlier. You can see how different the red line
 is from the blue line, which is entirely caused by that one extra outlier data point.
 
-```{r 08-lm-outlier, fig.height = 4, fig.width = 5, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of a subset of the data, with outlier highlighted in red"}
-
+```{r 08-lm-outlier, fig.height = 4, fig.width = 5, message = FALSE, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of a subset of the data, with outlier highlighted in red"}
 sacramento_train_small <- sacramento_train |> sample_n(100)
-
 sacramento_outlier <- tibble(sqft = 5000, price = 50000)
 
 lm_plot_outlier <- ggplot(sacramento_train_small, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
-  geom_point(data = sacramento_outlier, mapping = aes(x = sqft, y = price), color="red", size = 2.5) +
+  geom_point(data = sacramento_outlier, 
+             mapping = aes(x = sqft, y = price), color="red", size = 2.5) +
   xlab("House size (square feet)") +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
   geom_smooth(method = "lm", se = FALSE) + 
-  geom_smooth(data = sacramento_train_small |> add_row(sqft = 5000, price = 50000), method = "lm", se = FALSE, color = "red")
+  geom_smooth(data = sacramento_train_small |> 
+                add_row(sqft = 5000, price = 50000), 
+              method = "lm", se = FALSE, color = "red")
+
 lm_plot_outlier
 ```
 
@@ -569,24 +603,31 @@ changes much less when adding the outlier.
 Nevertheless, it is still important when working with linear regression to critically
 think about how much any individual data point is influencing the model.
 
-```{r 08-lm-outlier-2, fig.height = 4, fig.width = 5, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of the full data, with outlier highlighted in red"}
-
+```{r 08-lm-outlier-2, fig.height = 4, fig.width = 5, warning = FALSE, message = FALSE, echo = FALSE, fig.cap = "Scatter plot of the full data, with outlier highlighted in red"}
 sacramento_outlier <- tibble(sqft = 5000, price = 50000)
 
 lm_plot_outlier_large <- ggplot(sacramento_train, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
-  geom_point(data = sacramento_outlier, mapping = aes(x = sqft, y = price), color="red", size = 2.5) +
+  geom_point(data = sacramento_outlier, 
+             mapping = aes(x = sqft, y = price), 
+             color="red", 
+             size = 2.5) +
   xlab("House size (square feet)") +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
   geom_smooth(method = "lm", se = FALSE) + 
-  geom_smooth(data = sacramento_train |> add_row(sqft = 5000, price = 50000), method = "lm", se = FALSE, color = "red")
+  geom_smooth(data = sacramento_train |> 
+                add_row(sqft = 5000, price = 50000), 
+              method = "lm", 
+              se = FALSE, 
+              color = "red")
+
 lm_plot_outlier_large
 ```
 
 ### Multicollinearity
 
-The second, and much more subtle, issue can occur when performing multivariate
+The second, and much more subtle, issue can occur when performing multivariable
 linear regression.  In particular, if you include multiple predictors that are \index{colinear}\index{multicolinear|see{colinear}}
 strongly linearly related to one another, the coefficients that describe the
 plane of best fit can be very unreliable&mdash;small changes to the data can
@@ -597,11 +638,16 @@ not agree exactly, but they are very strongly linearly related to each other,
 as shown in Figure \@ref(fig:08-lm-multicol).
 
 ```{r 08-lm-multicol, fig.height = 4, fig.width = 5, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of the with possible outlier highlighted in red"}
-
 sacramento_train <- sacramento_train |>
-                          mutate(sqft1 = sqft + 100*sample(1000000, size=nrow(sacramento_train), replace=TRUE)/1000000) %>%
-                          mutate(sqft2 = sqft + 100*sample(1000000, size=nrow(sacramento_train), replace=TRUE)/1000000) %>%
-                          mutate(sqft3 = sqft + 100*sample(1000000, size=nrow(sacramento_train), replace=TRUE)/1000000) 
+                          mutate(sqft1 = sqft + 100 * sample(1000000,
+                                                             size=nrow(sacramento_train),
+                                                             replace=TRUE)/1000000) |>
+                          mutate(sqft2 = sqft + 100 * sample(1000000, 
+                                                             size=nrow(sacramento_train),
+                                                             replace=TRUE)/1000000) |>
+                          mutate(sqft3 = sqft + 100 * sample(1000000, 
+                                                             size=nrow(sacramento_train),
+                                                             replace=TRUE)/1000000) 
 
 lm_plot_multicol_1 <- ggplot(sacramento_train) +
   geom_point(aes(x = sqft, y = sqft1), alpha=0.4)+
@@ -612,38 +658,72 @@ lm_plot_multicol_1
 
 ```{r 08-lm-multicol-2, echo = FALSE, warning = FALSE}
 lm_recipe1 <- recipe(price ~ sqft + sqft1, data = sacramento_train)
+
 lm_fit1 <- workflow() |>
   add_recipe(lm_recipe1) |>
   add_model(lm_spec) |>
   fit(data = sacramento_train)
+
 coeffs <- tidy(pull_workflow_fit(lm_fit1))
-icept1 <- format(round(coeffs |> filter(term == "(Intercept)") %>% pull(estimate)), scientific = FALSE)
-sqft1 <- format(round(coeffs |> filter(term == "sqft") %>% pull(estimate)), scientific = FALSE)
-sqft11 <- format(round(coeffs |> filter(term == "sqft1") %>% pull(estimate)), scientific = FALSE)
+
+icept1 <- format(round(coeffs |> 
+                         filter(term == "(Intercept)") |>  
+                         pull(estimate)), 
+                 scientific = FALSE)
+sqft1 <- format(round(coeffs |> 
+                        filter(term == "sqft") |>  
+                        pull(estimate)), 
+                scientific = FALSE)
+sqft11 <- format(round(coeffs |> 
+                         filter(term == "sqft1") |>  
+                         pull(estimate)), 
+                 scientific = FALSE)
 
 lm_recipe2 <- recipe(price ~ sqft + sqft2, data = sacramento_train)
+
 lm_fit2 <- workflow() |>
   add_recipe(lm_recipe2) |>
   add_model(lm_spec) |>
   fit(data = sacramento_train)
+
 coeffs <- tidy(pull_workflow_fit(lm_fit2))
-icept2 <- format(round(coeffs |> filter(term == "(Intercept)") |> pull(estimate)), scientific = FALSE)
-sqft2 <- format(round(coeffs |> filter(term == "sqft") |> pull(estimate)), scientific = FALSE)
-sqft22 <- format(round(coeffs |> filter(term == "sqft2") |> pull(estimate)), scientific = FALSE)
+icept2 <- format(round(coeffs |> 
+                         filter(term == "(Intercept)") |> 
+                         pull(estimate)), 
+                 scientific = FALSE)
+sqft2 <- format(round(coeffs |> 
+                        filter(term == "sqft") |> 
+                        pull(estimate)), 
+                scientific = FALSE)
+sqft22 <- format(round(coeffs |> 
+                         filter(term == "sqft2") |> 
+                         pull(estimate)), 
+                 scientific = FALSE)
 
 lm_recipe3 <- recipe(price ~ sqft + sqft3, data = sacramento_train)
+
 lm_fit3 <- workflow() |>
   add_recipe(lm_recipe3) |>
   add_model(lm_spec) |>
   fit(data = sacramento_train)
+
 coeffs <- tidy(pull_workflow_fit(lm_fit3))
-icept3 <- format(round(coeffs |> filter(term == "(Intercept)") |> pull(estimate)), scientific = FALSE)
-sqft3 <- format(round(coeffs |> filter(term == "sqft") |> pull(estimate)), scientific = FALSE)
-sqft33 <- format(round(coeffs |> filter(term == "sqft3") |> pull(estimate)), scientific = FALSE)
+icept3 <- format(round(coeffs |> 
+                         filter(term == "(Intercept)") |> 
+                         pull(estimate)), 
+                 scientific = FALSE)
+sqft3 <- format(round(coeffs |> 
+                        filter(term == "sqft") |> 
+                        pull(estimate)), 
+                scientific = FALSE)
+sqft33 <- format(round(coeffs |> 
+                         filter(term == "sqft3") |> 
+                         pull(estimate)), 
+                 scientific = FALSE)
 
 ```
 
-If we again fit the multivariate linear regression model on this data, then the plane of best fit
+ If we again fit the multivariable linear regression model on this data, then the plane of best fit
 has regression coefficients that are very sensitive to the exact values in the data. For example,
 if we change the data ever so slightly&mdash;e.g., by running cross validation, which splits
 up the data randomly into different chunks&mdash;the coefficients vary by large amounts:
@@ -654,7 +734,7 @@ Best Fit 2: $\text{house sale price} = `r icept2` + `r sqft2`\cdot (\text{house 
 
 Best Fit 3: $\text{house sale price} = `r icept3` + `r sqft3`\cdot (\text{house size 1 (ft$^2$)}) + `r sqft33` \cdot (\text{house size 2 (ft$^2$)}).$
 
-Therefore, when performing multivariate linear regression, it is important to avoid including very
+ Therefore, when performing multivariable linear regression, it is important to avoid including very
 linearly related predictors. However, techniques for doing so are beyond the scope of this
 book; see the list of additional resources at the end of this chapter to find out where you can learn more.
 
@@ -678,12 +758,17 @@ with two variables---`x` and `y`---with a nonlinear relationship between the two
 will not be fully captured by simple linear regression, as shown in Figure \@ref(fig:08-predictor-design).
 ```{r 08-predictor-design-df, echo = FALSE, message = FALSE, warning = FALSE}
 set.seed(1)
-df = tibble(x = sample(10000, 100, replace=TRUE)/10000)
-df <- df |> mutate(y = x^3 + 0.2*sample(10000, 100, replace=TRUE)/10000 - 0.1)
+
+df = tibble(x = sample(10000, 100, replace=TRUE) / 10000)
+
+df <- df |> 
+  mutate(y = x^3 + 0.2 * sample(10000, 100, replace=TRUE)/10000 - 0.1)
 ```
+
 ```{r 08-predictor-design-df-2, message = FALSE, warning = FALSE}
 df
 ```
+
 <center>
 ```{r 08-predictor-design, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Example of a dataset with a nonlinear relationship between the predictor and the response"}
 curve_plt <- ggplot(df, aes(x = x, y = y)) +
@@ -694,14 +779,17 @@ curve_plt <- ggplot(df, aes(x = x, y = y)) +
 curve_plt
 ```
 </center>
+
 Instead of trying to predict the response `y` using a linear regression on `x`,
 we might have some scientific background about our problem to suggest that `y`
 should be a cubic function of `x`. So before performing regression,
 we might *create a new predictor variable* `z` using the `mutate` function: \index{predictor design}
+
 ```{r 08-predictor-design-3, message = FALSE, warning = FALSE}
 df <- df |>
         mutate(z = x^3)
 ```
+
 Then we can perform linear regression for `y` using the predictor variable `z`,
 as shown in Figure \@ref(fig:08-predictor-design-2).
 Here you can see that the transformed predictor `z` helps the 
@@ -709,6 +797,7 @@ linear regression model make more accurate predictions.
 Note that none of the `y` response values have changed between Figures \@ref(fig:08-predictor-design)
 and \@ref(fig:08-predictor-design-2); the only change is that the `x` values
 have been replaced by `z` values.
+
 <center>
 ```{r 08-predictor-design-2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Relationship between the transformed predictor and the response"}
 curve_plt2 <- ggplot(df, aes(x = z, y = y)) +
