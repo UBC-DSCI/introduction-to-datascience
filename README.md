@@ -137,6 +137,7 @@ bookdown::gitbook:
 - make sure all tables get capitalized labels ("Table \\@ref(blah)", not "table below" or "table above")
 - make sure all tables get captions
 - make sure the row + column spacing is reasonable
+- Do not put links in table captions, it breaks pdf rendering
 
 #### Note boxes
 - note boxes should be typeset as quote boxes using `>` and start with **Note:**
@@ -176,6 +177,10 @@ Generally the book uses American spelling. Some common British vs American and C
 - z vs s: summarize (not summarise)
 - c vs s: defense (not defence)
 - er vs re: center (not centre)
+
+#### Whitespace
+We need a line of whitespace before and after. This is for readability, 
+and it is essential for figure captions.
 
 #### PDF Output
 These are absolute last steps when rendering the PDF output:
