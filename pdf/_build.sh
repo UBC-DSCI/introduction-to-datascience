@@ -4,6 +4,7 @@
 rm preface-text.Rmd \
   intro.Rmd \
   reading.Rmd \
+  wrangling.Rmd \
   references.Rmd \
   printindex.tex
 rm -rf data img
@@ -13,6 +14,7 @@ cp ../references.bib .
 cp ../preface-text.Rmd .
 cp ../intro.Rmd .
 cp ../reading.Rmd .
+cp ../wrangling.Rmd .
 cp ../references.Rmd .
 cp ../printindex.tex .
 cp -r ../data .
