@@ -1,4 +1,4 @@
-# Regression I: K-nearest neighbours {#regression1}
+# Regression I: K-nearest neighbors {#regression1}
 
 ## Overview 
 
@@ -9,7 +9,7 @@ This is unlike the past two chapters, which focused on predicting categorical
 variables via classification. However, regression does have many similarities
 to classification: for example, just as in the case of classification,
 we will split our data into training, validation, and test sets, we will 
-use `tidymodels` workflows, we will use a K-nearest neighbours (KNN) 
+use `tidymodels` workflows, we will use a K-nearest neighbors (KNN) 
 approach to make predictions, and we will use cross-validation to choose K.
 Because of how similar these procedures are, make sure to read Chapters
 \@ref(classification) and \@ref(classification2) before reading 
@@ -26,13 +26,13 @@ however that is beyond the scope of this book.
 By the end of the chapter, readers will be able to:
 
 * Recognize situations where a simple regression analysis would be appropriate for making predictions.
-* Explain the K-nearest neighbour (KNN) regression algorithm and describe how it differs from KNN classification.
+* Explain the K-nearest neighbor (KNN) regression algorithm and describe how it differs from KNN classification.
 * Interpret the output of a KNN regression.
-* In a dataset with two or more variables, perform K-nearest neighbour regression in R using a `tidymodels` workflow
-* Execute cross-validation in R to choose the number of neighbours.
+* In a dataset with two or more variables, perform K-nearest neighbor regression in R using a `tidymodels` workflow
+* Execute cross-validation in R to choose the number of neighbors.
 * Evaluate KNN regression prediction accuracy in R using a test data set and the root mean squared prediction error (RMSPE).
 * In the context of KNN regression, compare and contrast goodness of fit and prediction properties (namely RMSE vs RMSPE).
-* Describe the advantages and disadvantages of K-nearest neighbours regression.
+* Describe the advantages and disadvantages of K-nearest neighbors regression.
 
 ## The regression problem
 
@@ -49,7 +49,7 @@ numerical, and so predicting them given past data is considered a regression pro
 Just like in the \index{classification!comparison to regression} 
 classification setting, there are many possible methods that we can use 
 to predict numerical response variables. In this chapter we will
-focus on the **K-nearest neighbours** algorithm, and in the next chapter
+focus on the **K-nearest neighbors** algorithm, and in the next chapter
 we will study **linear regression**.
 In your future studies, you might encounter regression trees, splines,
 and general local regression methods; see the additional resources
@@ -61,18 +61,18 @@ a regression model predicts a new observation's response variable based on the r
 for similar observations in the data set of past observations. When building a regression model,
 we first split the data into training and test sets, in order to ensure that we assess the performance
 of our method on observations not seen during training. And finally, we can use cross-validation to evaluate different
-choices of model parameters (e.g., K in a K-nearest neighbours model). The major difference
+choices of model parameters (e.g., K in a K-nearest neighbors model). The major difference
 is that we are now predicting numerical variables instead of categorical variables.
 
 > You can usually tell whether a \index{categorical variable}\index{numerical variable}
 > variable is numerical or categorical---and therefore whether you
 > need to perform regression or classification---by taking two response variables X and Y from your
-> data, and asking the question "is response variable X *more* than response variable Y?"
+> data, and asking the question, "is response variable X *more* than response variable Y?"
 > If the variable is categorical, the question will make no sense ("is blue more than red?",
 > or "is benign more than malignant?"). If the variable is numerical, it will make sense
 > ("is 1.5 hours more than 2.25 hours?", or "is \$500,000 more than \$400,000?").
-> Be careful when applying this heuristic, though: sometimes a categorical variables will be encoded as
-> numbers in your data (e.g. "1" represents "benign", and "0" represents "malignant"). In these cases
+> Be careful when applying this heuristic, though: sometimes categorical variables will be encoded as
+> numbers in your data (e.g., "1" represents "benign", and "0" represents "malignant"). In these cases
 > you have to ask the question about the *meaning* of the labels ("benign" and "malignant"), not their values ("1" and "0"). 
 
 ## Exploring a data set
@@ -109,7 +109,7 @@ want to predict (sale price) on the y-axis.
 \index{ggplot!geom\_point}
 \index{visualization!scatter}
 
-```{r 07-edaRegr, message = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square feet)"}
+```{r 07-edaRegr, message = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square feet)."}
 eda <- ggplot(sacramento, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
   xlab("House size (square feet)") +
@@ -128,13 +128,13 @@ that a larger house size *causes* a higher sale price; just that house price
 tends to increase with house size, and that we may be able to use the latter to 
 predict the former.
 
-## K-nearest neighbours regression
+## K-nearest neighbors regression
 
 Much like in the case of classification, 
-we can use a K-nearest neighbours-based \index{K-nearest neighbors!regression} 
+we can use a K-nearest neighbors-based \index{K-nearest neighbors!regression} 
 approach in regression to make predictions. 
 Let's take a small sample of the data in Figure \@ref(fig:07-edaRegr) 
-and walk through how K-nearest neighbours (K-NN) works
+and walk through how K-nearest neighbors (KNN) works
 in a regression context before we dive in to creating our model and assessing
 how well it predicts house sale price. This subsample is taken to allow us to
 illustrate the mechanics of KNN regression with a few data points; later in
@@ -163,7 +163,7 @@ you can see that we have no
 observations of a house of size *exactly* 2,000 square feet. How can we predict
 the sale price? 
 
-```{r 07-small-eda-regr, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with vertical line indicating 2,000 square feet on x-axis"}
+```{r 07-small-eda-regr, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with vertical line indicating 2,000 square feet on x-axis."}
 small_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
   geom_point() +
   xlab("House size (square feet)") +
@@ -175,27 +175,27 @@ small_plot
 ```
 
 We will employ the same intuition from the classification chapter, and use the
-neighbouring points to the new point of interest to suggest/predict what its
+neighboring points to the new point of interest to suggest/predict what its
 sale price might be. 
 For the example shown in Figure \@ref(fig:07-small-eda-regr), 
-we find and label the 5 nearest neighbours to our observation 
+we find and label the 5 nearest neighbors to our observation 
 of a house that is 2,000 square feet.
 \index{mutate}\index{slice}\index{arrange}\index{abs}
 
 ```{r 07-find-k3}
-nearest_neighbours <- small_sacramento |>
+nearest_neighbors <- small_sacramento |>
   mutate(diff = abs(2000 - sqft)) |>
   arrange(diff) |>
   slice(1:5) #subset the first 5 rows
 
-nearest_neighbours
+nearest_neighbors
 ```
 
-```{r 07-knn3-example, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with lines to 5 nearest neighbours"}
-nearest_neighbours <- mutate(nearest_neighbours, twothou = rep(2000, 5))
+```{r 07-knn3-example, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with lines to 5 nearest neighbors."}
+nearest_neighbors <- mutate(nearest_neighbors, twothou = rep(2000, 5))
 nn_plot <- small_plot +
   geom_segment(
-    data = nearest_neighbours,
+    data = nearest_neighbors,
     aes(x = twothou, xend = sqft, y = price, yend = price), color = "orange"
   )
 
@@ -203,21 +203,21 @@ nn_plot
 ```
 
 Figure \@ref(fig:07-knn3-example) illustrates the difference between the house sizes
-of the 5 nearest neighbours (in terms of house size) to our new
-2,000 square-foot house of interest. Now that we have obtained these nearest neighbours, 
+of the 5 nearest neighbors (in terms of house size) to our new
+2,000 square-foot house of interest. Now that we have obtained these nearest neighbors, 
 we can use their values to predict the
 sale price for the new home.  Specifically, we can take the mean (or
 average) of these 5 values as our predicted value, as illustrated by
 the red point in Figure \@ref(fig:07-predictedViz-knn).
 
 ```{r 07-predicted-knn}
-prediction <- nearest_neighbours |>
+prediction <- nearest_neighbors |>
   summarise(predicted = mean(price))
 
 prediction
 ```
 
-```{r 07-predictedViz-knn, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with predicted price for a 2,000 square-foot house based on 5 nearest neighbours represented as a red dot"}
+```{r 07-predictedViz-knn, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with predicted price for a 2,000 square-foot house based on 5 nearest neighbors represented as a red dot."}
 nn_plot +
   geom_point(aes(x = 2000, y = prediction[[1]]), color = "red", size = 2.5)
 ```
@@ -235,7 +235,7 @@ One strength of the KNN regression algorithm
 that we would like to draw attention to at this point
 is its ability to work well with non-linear relationships
 (i.e., if the relationship is not a straight line).
-This stems from the use of nearest neighbours to predict values.
+This stems from the use of nearest neighbors to predict values.
 The algorithm really has very few assumptions 
 about what the data must look like for it to work.
 
@@ -271,7 +271,7 @@ where:
 
 - $n$ is the number of observations
 - $y_i$ is the observed value for the $i^\text{th}$ observation
-- $\hat{y}_i$ is the forcasted/predicted value for the $i^\text{th}$ observation
+- $\hat{y}_i$ is the forecasted/predicted value for the $i^\text{th}$ observation
 
 In other words, we compute the *squared* difference between the predicted and true response 
 value for each observation in our test (or validation) set, compute the average, and then finally
@@ -284,7 +284,7 @@ want to make sure that we are only adding up positive values, with larger positi
 mistakes.
 If the predictions are very close to the true values, then
 RMSPE will be small. If, on the other-hand, the predictions are very
-different to the true values, then RMSPE will be quite large. When we
+different from the true values, then RMSPE will be quite large. When we
 use cross validation, we will choose the $K$ that gives
 us the smallest RMSPE.
 
@@ -344,7 +344,7 @@ errors_plot
 > **RMSPE versus RMSE**
 When using many code packages (`tidymodels` included), the evaluation output 
 we will get to assess the prediction quality of
-our KNN regression models is labelled "RMSE", or "root mean squared
+our KNN regression models is labeled "RMSE", or "root mean squared
 error". Why is this so, and why not just RMSPE? \index{RMSPE!comparison with RMSE}
 In statistics, we try to be very precise with our
 language to indicate whether we are calculating the prediction error on the
@@ -363,7 +363,7 @@ Note that we include standardization
 in our preprocessing to build good habits, but since we only have one 
 predictor it is technically not necessary; there is no risk of comparing two predictors
 of different scales.
-Next we create a model specification for K-nearest neighbours regression. Note 
+Next we create a model specification for K-nearest neighbors regression. Note 
 that we use `set_mode("regression")`
 now in the model specification to denote a regression problem, as opposed to the classification
 problems from the previous chapters. 
@@ -393,9 +393,9 @@ sacr_wkflw <- workflow() |>
 sacr_wkflw
 ```
 
-Next we run cross validation for a grid of numbers of neighbours ranging from 1 to 200. 
+Next we run cross validation for a grid of numbers of neighbors ranging from 1 to 200. 
 The following code tunes
-the model and returns the RMSPE for each number of neighbours. In the output of the `sacr_results`
+the model and returns the RMSPE for each number of neighbors. In the output of the `sacr_results`
 results data frame, we see that the `neighbors` variable contains the value of $K$,
 the mean (`mean`) contains the value of the RMSPE estimated via cross-validation,
 and the standard error (`std_err`) contains a value corresponding to a measure of how uncertain we are in the mean value. A detailed treatment of this
@@ -417,17 +417,17 @@ sacr_results <- sacr_wkflw |>
 sacr_results
 ```
 
-```{r 07-choose-k-knn-plot, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Effect of the number of neighbours on the RMSPE"} 
+```{r 07-choose-k-knn-plot, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Effect of the number of neighbors on the RMSPE."} 
 sacr_tunek_plot <- ggplot(sacr_results, aes(x = neighbors, y = mean)) +
   geom_point() +
   geom_line() +
-  labs(x = "Neighbours", y = "RMSPE")
+  labs(x = "Neighbors", y = "RMSPE")
 
 sacr_tunek_plot
 ```
 
-Figure \@ref(fig:07-choose-k-knn-plot) visualizes how the RMSPE varies with the number of neighbours $K$.
-We take the *minimum* RMSPE to find the best setting for the number of neighbours:
+Figure \@ref(fig:07-choose-k-knn-plot) visualizes how the RMSPE varies with the number of neighbors $K$.
+We take the *minimum* RMSPE to find the best setting for the number of neighbors:
 
 ```{r 07-choose-k-knn-results-2}
 # show only the row of minimum RMSPE
@@ -444,7 +444,7 @@ kmin <- sacr_min |> pull(neighbors)
 ```
 
 ## Underfitting and overfitting
-Similar to the setting of classification, by setting the number of neighbours
+Similar to the setting of classification, by setting the number of neighbors
 to be too small or too large, we cause the RMSPE to increase, as shown in
 Figure \@ref(fig:07-choose-k-knn-plot). What is happening here? 
 
@@ -455,7 +455,7 @@ For each model, we predict prices for the range of possible home sizes we
 observed in the data set (here 500 to 5,000 square feet) and we plot the
 predicted prices as a blue line.
 
-```{r 07-howK, echo = FALSE, warning = FALSE, fig.height = 12, fig.width = 10,fig.cap = "Predicted values for house price (represented as a blue line) from KNN regression models for six different values for $K$"}
+```{r 07-howK, echo = FALSE, warning = FALSE, fig.height = 12, fig.width = 10,fig.cap = "Predicted values for house price (represented as a blue line) from KNN regression models for six different values for $K$."}
 gridvals <- c(1, 3, kmin, 41, 250, 932)
 
 plots <- list()
@@ -512,7 +512,7 @@ Because the model follows the training data so closely, it will not make accurat
 predictions on new observations which, generally, will not have the same fluctuations
 as the original training data.
 Recall from the classification
-chapters that this behaviour&mdash;where the model is influenced too much
+chapters that this behavior&mdash;where the model is influenced too much
 by the noisy data&mdash;is called *overfitting*; we use this same term 
 in the context of regression. \index{overfitting!regression}
 
@@ -521,14 +521,14 @@ say, $K$ = 250 or 932?
 In this case the blue line becomes extremely smooth, and actually becomes flat
 once $K$ is equal to the number of datapoints in the entire data set. 
 This happens because our predicted values for a given x value (here home
-size), depend on many neighbouring observations; in the case where $K$ is equal 
+size), depend on many neighboring observations; in the case where $K$ is equal 
 to the size of the dataset, the prediction is just the mean of the house prices
 in the dataset (completely ignoring the house size). 
 In contrast to the $K=1$ example, 
 the smooth, inflexible blue line does not follow the training observations very closely.
 In other words, the model is *not influenced enough* by the training data.
 Recall from the classification
-chapters that this behaviour is called *underfitting*; we again use this same
+chapters that this behavior is called *underfitting*; we again use this same
 term in the context of regression.  \index{underfitting!regression}
 
 Ideally, what we want is neither of the two situations discussed above. Instead,
@@ -541,7 +541,7 @@ the other values for $K$, in particular $K$ = `r sacr_min |> pull(neighbors)`
 we can see it achieves this goal: it follows the increasing trend of house price
 versus house size, but is not influenced too much by the idiosyncratic variations
 in price. All of this is similar to how
-the choice of $K$ affects K-nearest neighbours classification, as discussed in the previous
+the choice of $K$ affects K-nearest neighbors classification, as discussed in the previous
 chapter. 
 
 ## Evaluating on the test set
@@ -549,7 +549,7 @@ chapter.
 To assess how well our model might do at predicting on unseen data, we will
 assess its RMSPE on the test data. To do this, we will first
 re-train our KNN regression model on the entire training data set, 
-using $K =$ `r sacr_min |> pull(neighbors)` neighbours. Then we will
+using $K =$ `r sacr_min |> pull(neighbors)` neighbors. Then we will
 use `predict` to make predictions on the test data, and use the `metrics`
 function again to compute the summary of regression quality. Because
 we specify that we are performing regression in `set_mode`, the `metrics`
@@ -600,7 +600,7 @@ the range of house sizes we might encounter in the Sacramento area&mdash;from 50
 You have already seen a few plots like this in this chapter, but here we also provide the code that generated it
 as a learning challenge.
 
-```{r 07-predict-all, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Predicted values of house price (blue line) for the final KNN regression model"}
+```{r 07-predict-all, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Predicted values of house price (blue line) for the final KNN regression model."}
 sacr_preds <- tibble(sqft = seq(from = 500, to = 5000, by = 10))
 
 sacr_preds <- sacr_fit |>
@@ -631,7 +631,7 @@ variables on a small scale. But since the `recipe` we built above scales and cen
 all predictor variables, this is handled for us.
 
 Note that we also have the same concern regarding the selection of predictors
-in KNN regression as in KNN classification: more predictors is **not** always
+in KNN regression as in KNN classification: more predictors are **not** always
 better, and the choice of which predictors to use has a potentially large influence
 on the quality of predictions. Fortunately, we can use the predictor selection 
 algorithm from the classification chapter in KNN regression as well.
@@ -647,7 +647,7 @@ visualizing the data, before we start modeling the data. Figure \@ref(fig:07-bed
 shows that the number of bedrooms might provide useful information
 to help predict the sale price of a house.
 
-```{r 07-bedscatter, fig.height = 5, fig.width = 6, fig.cap = "Scatter plot of the sale price of houses versus the number of bedrooms"}
+```{r 07-bedscatter, fig.height = 5, fig.width = 6, fig.cap = "Scatter plot of the sale price of houses versus the number of bedrooms."}
 plot_beds <- sacramento |>
              ggplot(aes(x = beds, y = price)) +
              geom_point(alpha = 0.4) +
@@ -666,7 +666,7 @@ size. Let's do that now!
 
 First we'll build a new model specification and recipe for the analysis. Note that
 we use the formula `price ~ sqft + beds` to denote that we have two predictors,
-and set `neighbors = tune()` to tell `tidymodels` to tune the number of neighbours for us.
+and set `neighbors = tune()` to tell `tidymodels` to tune the number of neighbors for us.
 
 ```{r 07-mult-setup}
 sacr_recipe <- recipe(price ~ sqft + beds, data = sacramento_train) |>
@@ -679,7 +679,7 @@ sacr_spec <- nearest_neighbor(weight_func = "rectangular",
   set_mode("regression")
 ```
 
-Next, we'll use 5-fold cross-validation to choose the number of neighbours via the minimum RMSPE:
+Next, we'll use 5-fold cross-validation to choose the number of neighbors via the minimum RMSPE:
 
 ```{r 07-mult-cv}
 gridvals <- tibble(neighbors = seq(1, 200))
@@ -741,7 +741,7 @@ of `r format(round(knn_mult_mets |> pull(.estimate)), big.mark=",", nsmall=0, sc
 Figure \@ref(fig:07-knn-mult-viz) visualizes the model's predictions overlaid on top of the data. This 
 time the predictions are a surface in 3-D space, instead of a line in 2-D space, as we have 2
 predictors instead of 1.  
-```{r 07-knn-mult-viz, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "KNN regression model’s predictions represented as a surface in 3-D space overlaid on top of the data using three predictors (price, house size, and the number of bedrooms)"}
+```{r 07-knn-mult-viz, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "KNN regression model’s predictions represented as a surface in 3-D space overlaid on top of the data using three predictors (price, house size, and the number of bedrooms)."}
 library(plotly)
 
 xvals <- seq(from = min(sacramento_train$sqft), 
@@ -794,13 +794,13 @@ bedrooms, we would predict the same price for these two houses.
 As with KNN classification (or any prediction algorithm for that matter), KNN 
 regression has both strengths and weaknesses. Some are listed here:
 
-**Strengths:** K-nearest neighbours regression
+**Strengths:** K-nearest neighbors regression
 
 1. is a simple, intuitive algorithm
 2. requires few assumptions about what the data must look like 
 3. works well with non-linear relationships (i.e., if the relationship is not a straight line)
 
-**Weaknesses:** K-nearest neighbours regression
+**Weaknesses:** K-nearest neighbors regression
 
 1. becomes very slow as the training data gets larger
 2. may not perform well with a large number of predictors
