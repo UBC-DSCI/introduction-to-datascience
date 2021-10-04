@@ -178,6 +178,10 @@ Generally the book uses American spelling. Some common British vs American and C
 - c vs s: defense (not defence)
 - er vs re: center (not centre)
 
+#### Whitespace
+We need a line of whitespace before and after. This is for readability, 
+and it is essential for figure captions.
+
 #### PDF Output
 These are absolute last steps when rendering the PDF output:
 - Look for and fix bad line breaks (e.g. with only one word on the next line, orphans, and widows)
