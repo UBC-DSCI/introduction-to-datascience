@@ -14,7 +14,7 @@ rm preface-text.Rmd \
   inference.Rmd \
   jupyter.Rmd \
   version-control.Rmd \
-  setup.Rmd .
+  setup.Rmd \
   references.Rmd \
   printindex.tex
 rm -rf data img
@@ -57,7 +57,7 @@ rm preface-text.Rmd \
   inference.Rmd \
   jupyter.Rmd \
   version-control.Rmd \
-  setup.Rmd .
+  setup.Rmd \
   references.Rmd \
   printindex.tex
 rm -rf data img

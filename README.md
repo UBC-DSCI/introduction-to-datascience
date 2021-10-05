@@ -138,6 +138,7 @@ bookdown::gitbook:
 - make sure all tables get captions
 - make sure the row + column spacing is reasonable
 - Do not put links in table captions, it breaks pdf rendering
+- Do not put underscores in table captions, it breaks pdf rendering
 
 #### Note boxes
 - note boxes should be typeset as quote boxes using `>` and start with **Note:**
