@@ -127,11 +127,12 @@ bookdown::gitbook:
 - make sure all figures get (capitalized) labels ("Figure \\@ref(blah)", not "figure below" or "figure above")
 - make sure all figures get captions
 - specify image widths in terms of linewidth percent (e.g. `out.width="70%"`)
-- center align all images
+- center align all images via `fig.align = "center"`
 - make sure we have permission for every figure/logo that we use
 - Make sure all figures follow the visualization principles in Chapter 4
 - Make sure axes are set appropriately to not inflate/deflate differences artificially *where it does not compromise clarity* (e.g. in the classification
   chapter there are a few examples where zoomed-in accuracy axes are better than using the full range 0 to 1)
+- 
 
 #### Tables
 - make sure all tables get capitalized labels ("Table \\@ref(blah)", not "table below" or "table above")
