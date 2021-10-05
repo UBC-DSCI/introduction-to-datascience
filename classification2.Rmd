@@ -1,5 +1,11 @@
 # Classification II: evaluation & tuning {#classification2}
 
+```{r classification2-setup}
+library(gridExtra)
+
+knitr::opts_chunk$set(fig.align = "center")
+```
+
 ## Overview 
 This chapter continues the introduction to predictive modeling through
 classification. While the previous chapter covered training and data
@@ -101,39 +107,49 @@ to randomly pick 10 numbers from 0 to 9 in R using the `sample` \index{sample!fu
 but we want it to be reproducible. Before using the sample function,
 we call `set.seed`, and pass it any integer as an argument. 
 Here, we pass in the number `1`.
+
 ```{r}
 set.seed(1)
 random_numbers <- sample(0:9, 10, replace=TRUE)
 random_numbers
 ```
+
 You can see that `random_numbers` is a list of 10 numbers
 from 0 to 9 that, from all appearances, looks random. If 
 we run the `sample` function again, we will 
 get a fresh batch of 10 numbers that also look random.
+
 ```{r}
 random_numbers <- sample(0:9, 10, replace=TRUE)
 random_numbers
 ```
+
 If we want to force R to produce the same sequences of random numbers,
 we can simply call the `set.seed` function again with the same argument
 value.
+
 ```{r}
 set.seed(1)
 random_numbers <- sample(0:9, 10, replace=TRUE)
 random_numbers
+
 random_numbers <- sample(0:9, 10, replace=TRUE)
 random_numbers
 ```
+
 And if we choose 
 a different value for the seed&mdash;say, 4235&mdash;we
 obtain a different sequence of random numbers.
+
 ```{r}
 set.seed(4235)
 random_numbers <- sample(0:9, 10, replace=TRUE)
 random_numbers
+
 random_numbers <- sample(0:9, 10, replace=TRUE)
 random_numbers
 ```
+
 In other words, even though the sequences of numbers that R is generating *look*
 random, they are totally determined when we set a seed value! 
 
@@ -181,7 +197,8 @@ set.seed(1)
 
 # load data
 cancer <- read_csv("data/unscaled_wdbc.csv") |>
-  mutate(Class = as_factor(Class)) # convert the character Class variable to the factor datatype
+  # convert the character Class variable to the factor datatype
+  mutate(Class = as_factor(Class)) 
 
 # create scatter plot of tumor cell concavity versus smoothness,
 # labeling the points be diagnosis class
@@ -189,7 +206,8 @@ perim_concav <- cancer |>
   ggplot(aes(x = Smoothness, y = Concavity, color = Class)) +
   geom_point(alpha = 0.5) +
   labs(color = "Diagnosis") +
-  scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2"))
+  scale_color_manual(labels = c("Malignant", "Benign"), 
+                     values = c("orange2", "steelblue2"))
 
 perim_concav
 ```
@@ -232,6 +250,7 @@ seed earlier in the chapter, the split will be reproducible.
 # hidden seed
 set.seed(1)
 ```
+
 ```{r 06-initial-split}
 cancer_split <- initial_split(cancer, prop = 0.75, strata = Class)
 cancer_train <- training(cancer_split)
@@ -261,14 +280,13 @@ data are benign and `r round(filter(train_prop, Class == "M")$proportion, 2)*100
 are malignant indicating that our class proportions were roughly preserved when we split the data.
 
 ```{r 06-train-proportion}
-cancer_proportions <- cancer_train %>%
-                      group_by(Class) %>%
-                      summarize(n = n()) %>%
+cancer_proportions <- cancer_train |>
+                      group_by(Class) |>
+                      summarize(n = n()) |>
                       mutate(percent = 100*n/nrow(cancer_train))
+
 cancer_proportions
 ```
-
-
 
 ### Preprocess the data
 
@@ -304,6 +322,7 @@ use `fit` with the training data `cancer_train` to build the classifier.
 # hidden seed
 set.seed(1)
 ```
+
 ```{r 06-create-K-nearest neighbor-classifier}
 knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 3) |>
   set_engine("kknn") |>
@@ -329,6 +348,7 @@ classifier.
 ```{r 06-predict-test}
 cancer_test_predictions <- predict(knn_fit, cancer_test) |>
   bind_cols(cancer_test)
+
 cancer_test_predictions
 ```
 
@@ -345,8 +365,8 @@ cancer_test_predictions |>
 ```
 
 ```{r 06-accuracy-2, echo = FALSE, warning = FALSE}
-cancer_acc_1 <- cancer_test_predictions %>% 
-                metrics(truth = Class, estimate = .pred_class) %>% 
+cancer_acc_1 <- cancer_test_predictions |> 
+                metrics(truth = Class, estimate = .pred_class) |> 
                 filter(.metric == 'accuracy')
 ```
 
@@ -362,15 +382,16 @@ the table of predicted labels and correct labels, using the `conf_mat` function:
 ```{r 06-confusionmat}
 confusion <- cancer_test_predictions |>
              conf_mat(truth = Class, estimate = .pred_class)
+
 confusion
 ```
 
 ```{r 06-confusionmat-2, echo = FALSE}
-confusionmt <- confusion %>% tidy()
-confu11 <- (confusionmt %>% filter(name == "cell_1_1"))$value
-confu12 <- (confusionmt %>% filter(name == "cell_1_2"))$value
-confu21 <- (confusionmt %>% filter(name == "cell_2_1"))$value
-confu22 <- (confusionmt %>% filter(name == "cell_2_2"))$value
+confusionmt <- confusion |> tidy()
+confu11 <- (confusionmt |> filter(name == "cell_1_1"))$value
+confu12 <- (confusionmt |> filter(name == "cell_1_2"))$value
+confu21 <- (confusionmt |> filter(name == "cell_2_1"))$value
+confu22 <- (confusionmt |> filter(name == "cell_2_2"))$value
 ```
 
 The confusion matrix shows `r confu11` observations were correctly predicted 
@@ -414,12 +435,14 @@ mean the classifier is working well enough for your application.
 
 As an example, in the breast cancer data, recall the proportions of benign and malignant
 observations in the training data are as follows:
+
 ```{r 06-proportions}
 cancer_proportions
 ```
+
 ```{r 06-proportions-2, echo = FALSE, warning = FALSE}
-cancer_propn_1 <- cancer_proportions %>%
-                filter(Class == 'B') %>%
+cancer_propn_1 <- cancer_proportions |>
+                filter(Class == 'B') |>
                 select(percent)
 ```
 
@@ -497,13 +520,15 @@ split.
 # hidden seed
 set.seed(1)
 ```
+
 ```{r 06-five-splits}
 # create the 25/75 split of the training data into training and validation
 cancer_split <- initial_split(cancer_train, prop = 0.75, strata = Class)
 cancer_subtrain <- training(cancer_split)
 cancer_validation <- testing(cancer_split)
 
-# recreate the standardization recipe from before (since it must be based on the training data)
+# recreate the standardization recipe from before 
+# (since it must be based on the training data)
 cancer_recipe <- recipe(Class ~ Smoothness + Concavity, data = cancer_subtrain) %>%
   step_scale(all_predictors()) %>%
   step_center(all_predictors())
@@ -526,6 +551,7 @@ acc <- validation_predicted %>%
   pull()
 acc
 ```
+
 ```{r 06-five-splits-loop, echo = FALSE, message = FALSE, warning = FALSE}
 accuracies <- c()
 for (i in 1:5) {
@@ -536,8 +562,10 @@ for (i in 1:5) {
   cancer_subtrain <- training(cancer_split)
   cancer_validation <- testing(cancer_split)
 
-  # recreate the standardization recipe from before (since it must be based on the training data)
-  cancer_recipe <- recipe(Class ~ Smoothness + Concavity, data = cancer_subtrain) |>
+  # recreate the standardization recipe from before 
+  # (since it must be based on the training data)
+  cancer_recipe <- recipe(Class ~ Smoothness + Concavity, 
+                          data = cancer_subtrain) |>
     step_scale(all_predictors()) |>
     step_center(all_predictors())
 
@@ -560,6 +588,7 @@ for (i in 1:5) {
   accuracies <- append(accuracies, acc_)
 }
 ```
+
 The accuracy estimate using this split is `r round(100*acc,1)`%.
 Now we repeat the above code 4 more times, which generates 4 more splits.
 Therefore we get five different shuffles of the data, and therefore five different values for
@@ -592,20 +621,26 @@ function: `vfold_cv`. \index{tidymodels!vfold\_cv}\index{cross validation!vfold\
 automatically. We set the `strata` argument to the categorical label variable
 (here, `Class`) to ensure that the training and validation subsets contain the
 right proportions of each category of observation.
+
 ```{r 06-vfold}
 cancer_vfold <- vfold_cv(cancer_train, v = 5, strata = Class)
 cancer_vfold
 ```
+
 Then, when we create our data analysis workflow, we use the `fit_resamples` function \index{cross validation!fit\_resamples}\index{tidymodels!fit\_resamples}
 instead of the `fit` function for training. This runs cross-validation on each
 train/validation split. 
+
 ```{r 06-vfold-workflow-seed, echo = FALSE, warning = FALSE, message = FALSE}
 # hidden seed
 set.seed(1)
 ```
+
 ```{r 06-vfold-workflow}
-# recreate the standardization recipe from before (since it must be based on the training data)
-cancer_recipe <- recipe(Class ~ Smoothness + Concavity, data = cancer_train) |>
+# recreate the standardization recipe from before 
+# (since it must be based on the training data)
+cancer_recipe <- recipe(Class ~ Smoothness + Concavity, 
+                        data = cancer_train) |>
   step_scale(all_predictors()) |>
   step_center(all_predictors())
 
@@ -654,7 +689,8 @@ vfold_metrics <- workflow() |>
                   add_recipe(cancer_recipe) |>
                   add_model(knn_spec) |>
                   fit_resamples(resamples = cancer_vfold) |>
-                  collect_metrics() 
+                  collect_metrics()
+
 vfold_metrics
 ```
 
@@ -677,11 +713,14 @@ of $K$ in a reasonable range, and then pick the value of $K$ that gives us the
 best accuracy. The `tidymodels` package collection provides a very simple
 syntax for tuning models: each parameter in the model to be tuned should be specified
 as `tune()` in the model specification rather than given a particular value.
+
 ```{r 06-range-cross-val}
-knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = tune()) |>
+knn_spec <- nearest_neighbor(weight_func = "rectangular", 
+                             neighbors = tune()) |>
   set_engine("kknn") |>
   set_mode("classification")
 ```
+
 Then instead of using `fit` or `fit_resamples`, we will use the `tune_grid` function \index{cross validation!tune\_grid}\index{tidymodels!tune\_grid}
 to fit the model for each value in a range of parameter values. 
 In particular, we first create a data frame with a `neighbors`
@@ -689,12 +728,15 @@ variable that contains the sequence of values of $K$ to try; below we create the
 data frame with the `neighbors` variable containing each value from $K=1$ to $K=15$ using 
 the `seq` function.
 Then we pass that data frame to the `grid` argument of `tune_grid`.
+
 ```{r 06-range-cross-val-2-seed, echo = FALSE, warning = FALSE, message = FALSE}
 # hidden seed
 set.seed(1)
 ```
+
 ```{r 06-range-cross-val-2}
 k_vals <- tibble(neighbors = seq(from = 1, to = 15, by = 1))
+
 knn_results <- workflow() |>
   add_recipe(cancer_recipe) |>
   add_model(knn_spec) |>
@@ -710,13 +752,16 @@ accuracies
 We can select the best value of the number of neighbors (i.e., the one that results
 in the highest classifier accuracy estimate) by plotting the accuracy versus $K$ 
 in Figure \@ref(fig:06-find-k).
+
 ```{r 06-find-k, fig.height = 4, fig.width = 5, fig.cap= "Plot of estimated accuracy versus the number of neighbors."}
 accuracy_vs_k <- ggplot(accuracies, aes(x = neighbors, y = mean)) +
   geom_point() +
   geom_line() +
   labs(x = "Neighbors", y = "Accuracy Estimate")
+
 accuracy_vs_k
 ```
+
 Setting the number of 
 neighbors to $K =$ `r (accuracies %>% arrange(desc(mean)) %>% head(1))$neighbors`
 provides the highest accuracy (`r (accuracies %>% arrange(desc(mean)) %>% slice(1) %>% pull(mean) %>% round(4))*100`%). But there is no exact or perfect answer here;
@@ -753,8 +798,10 @@ we vary $K$ from 1 to almost the number of observations in the data set.
 # hidden seed
 set.seed(1)
 ```
+
 ```{r 06-lots-of-ks, message = FALSE, fig.height = 4, fig.width = 5, fig.cap="Plot of accuracy estimate versus number of neighbors for many K values."}
 k_lots <- tibble(neighbors = seq(from = 1, to = 385, by = 10))
+
 knn_results <- workflow() |>
   add_recipe(cancer_recipe) |>
   add_model(knn_spec) |>
@@ -768,6 +815,7 @@ accuracy_vs_k_lots <- ggplot(accuracies, aes(x = neighbors, y = mean)) +
   geom_point() +
   geom_line() +
   labs(x = "Neighbors", y = "Accuracy Estimate")
+
 accuracy_vs_k_lots
 ```
 
@@ -800,14 +848,13 @@ a balance between the two. You can see these two effects in Figure
 \@ref(fig:06-decision-grid-K), which shows how the classifier changes as 
 we set the number of neighbors $K$ to 1, 7, 20, and 300.
 
-<center>
 ```{r 06-decision-grid-K, echo = FALSE, message = FALSE, fig.height = 7, fig.width = 10, fig.cap = "Effect of K in overfitting and underfitting."}
-library(gridExtra)
 ks <- c(1, 7, 20, 300)
 plots <- list()
 
 for (i in 1:length(ks)) {
-  knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = ks[[i]]) |>
+  knn_spec <- nearest_neighbor(weight_func = "rectangular", 
+                               neighbors = ks[[i]]) |>
     set_engine("kknn") |>
     set_mode("classification")
 
@@ -817,24 +864,39 @@ for (i in 1:length(ks)) {
     fit(data = cancer_train)
 
   # create a prediction pt grid
-  smo_grid <- seq(min(cancer_train$Smoothness), max(cancer_train$Smoothness), length.out = 100)
-  con_grid <- seq(min(cancer_train$Concavity), max(cancer_train$Concavity), length.out = 100)
-  scgrid <- as_tibble(expand.grid(Smoothness = smo_grid, Concavity = con_grid))
+  smo_grid <- seq(min(cancer_train$Smoothness), 
+                  max(cancer_train$Smoothness), 
+                  length.out = 100)
+  con_grid <- seq(min(cancer_train$Concavity), 
+                  max(cancer_train$Concavity), 
+                  length.out = 100)
+  scgrid <- as_tibble(expand.grid(Smoothness = smo_grid, 
+                                  Concavity = con_grid))
   knnPredGrid <- predict(knn_fit, scgrid)
-  prediction_table <- bind_cols(knnPredGrid, scgrid) |> rename(Class = .pred_class)
+  prediction_table <- bind_cols(knnPredGrid, scgrid) |> 
+    rename(Class = .pred_class)
 
   # plot
   plots[[i]] <-
     ggplot() +
-    geom_point(data = cancer_train, mapping = aes(x = Smoothness, y = Concavity, color = Class), alpha = 0.75) +
-    geom_point(data = prediction_table, mapping = aes(x = Smoothness, y = Concavity, color = Class), alpha = 0.02, size = 5.) +
+    geom_point(data = cancer_train, 
+               mapping = aes(x = Smoothness, 
+                             y = Concavity, 
+                             color = Class), 
+               alpha = 0.75) +
+    geom_point(data = prediction_table, 
+               mapping = aes(x = Smoothness, 
+                             y = Concavity, 
+                             color = Class), 
+               alpha = 0.02, 
+               size = 5.) +
     labs(color = "Diagnosis") +
     ggtitle(paste("K = ", ks[[i]])) +
-    scale_color_manual(labels = c("Malignant", "Benign"), values = c("orange2", "steelblue2"))
+    scale_color_manual(labels = c("Malignant", "Benign"), 
+                       values = c("orange2", "steelblue2"))
 }
 grid.arrange(grobs = plots)
 ```
-</center>
 
 ## Summary
 
@@ -909,8 +971,7 @@ no meaningful relationship with the `Class` variable.
 
 ```{r 06-irrelevant-gendata, echo = FALSE, warning = FALSE}
 set.seed(4)
-cancer_irrelevant <- cancer %>% select(Class, Smoothness, Concavity, Perimeter)
-
+cancer_irrelevant <- cancer |> select(Class, Smoothness, Concavity, Perimeter)
 
 for (i in 1:500) {
     # create column
@@ -919,6 +980,7 @@ for (i in 1:500) {
 	add_column( !!paste("Irrelevant", i, sep="") := col)
 }
 ```
+
 ```{r 06-irrelevant-printdata, warning = FALSE}
 cancer_irrelevant %>% 
       select(Class, Smoothness, Concavity, Perimeter, Irrelevant1, Irrelevant2)
@@ -937,48 +999,50 @@ variables there are, the more (random) influence they have, and the more they
 corrupt the set of nearest neighbors that vote on the class of the new
 observation to predict.  
 
-<center>
 ```{r 06-performance-irrelevant-features, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "100%", fig.cap = "Effect of inclusion of irrelevant predictors."}
 # get accuracies after including k irrelevant features
 ks <- c(0, 5, 10, 15, 20, 40)
 fixedaccs <- list()
 accs <- list()
 nghbrs <- list()
+
 for (i in 1:length(ks)) {
-  knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = tune()) %>%
-     set_engine("kknn") %>%
+  knn_spec <- nearest_neighbor(weight_func = "rectangular", 
+                               neighbors = tune()) |>
+     set_engine("kknn") |>
      set_mode("classification")
 
-  cancer_irrelevant_subset <- cancer_irrelevant %>% select(1:(3+ks[[i]]))
+  cancer_irrelevant_subset <- cancer_irrelevant |> select(1:(3+ks[[i]]))
 
   cancer_vfold <- vfold_cv(cancer_irrelevant_subset, v = 5, strata = Class)
 
-  cancer_recipe <- recipe(Class ~ ., data = cancer_irrelevant_subset) %>%
-      step_scale(all_predictors()) %>%
+  cancer_recipe <- recipe(Class ~ ., data = cancer_irrelevant_subset) |>
+      step_scale(all_predictors()) |>
       step_center(all_predictors())
   
-  res <- workflow() %>%
-    add_recipe(cancer_recipe) %>%
-    add_model(knn_spec) %>%
-    tune_grid(resamples = cancer_vfold, grid = 20) %>%
-    collect_metrics() %>%
-    filter(.metric == "accuracy") %>%
-    arrange(desc(mean)) %>%
+  res <- workflow() |>
+    add_recipe(cancer_recipe) |>
+    add_model(knn_spec) |>
+    tune_grid(resamples = cancer_vfold, grid = 20) |>
+    collect_metrics() |>
+    filter(.metric == "accuracy") |>
+    arrange(desc(mean)) |>
     head(1)
   accs[[i]] <- res$mean
   nghbrs[[i]] <- res$neighbors
 
-  knn_spec_fixed <- nearest_neighbor(weight_func = "rectangular", neighbors = 3) %>%
-     set_engine("kknn") %>%
+  knn_spec_fixed <- nearest_neighbor(weight_func = "rectangular", 
+                                     neighbors = 3) |>
+     set_engine("kknn") |>
      set_mode("classification")
 
-  res <- workflow() %>%
-    add_recipe(cancer_recipe) %>%
-    add_model(knn_spec_fixed) %>%
-    tune_grid(resamples = cancer_vfold, grid = 1) %>%
-    collect_metrics() %>%
-    filter(.metric == "accuracy") %>%
-    arrange(desc(mean)) %>%
+  res <- workflow() |>
+    add_recipe(cancer_recipe) |>
+    add_model(knn_spec_fixed) |>
+    tune_grid(resamples = cancer_vfold, grid = 1) |>
+    collect_metrics() |>
+    filter(.metric == "accuracy") |>
+    arrange(desc(mean)) |>
     head(1)
   fixedaccs[[i]] <- res$mean
 }
@@ -1007,11 +1071,11 @@ res <- tibble(ks = ks, accs = accs, fixedaccs = fixedaccs, nghbrs = nghbrs)
 
 plt_irrelevant_accuracies <- ggplot(res) +
               geom_line(mapping = aes(x=ks, y=accs)) +
-              labs(x = "Number of Irrelevant Predictors", y = "Model Accuracy Estimate") 
+              labs(x = "Number of Irrelevant Predictors", 
+                   y = "Model Accuracy Estimate") 
 
 plt_irrelevant_accuracies
 ```
-</center>
 
 Although the accuracy decreases as expected, one surprising thing about 
 Figure \@ref(fig:06-performance-irrelevant-features) is that it shows that the method
@@ -1027,16 +1091,22 @@ this evidence; if we fix the number of neighbors to $K=3$, the accuracy falls of
 ```{r 06-neighbors-irrelevant-features, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "100%", fig.cap = "Tuned number of neighbors for varying number of irrelevant predictors."}
 plt_irrelevant_nghbrs <- ggplot(res) +
               geom_line(mapping = aes(x=ks, y=nghbrs)) +
-              labs(x = "Number of Irrelevant Predictors", y = "Number of neighbors")
+              labs(x = "Number of Irrelevant Predictors", 
+                   y = "Number of neighbors")
+
 plt_irrelevant_nghbrs
 ```
 
 ```{r 06-fixed-irrelevant-features, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "100%", fig.cap = "Accuracy versus number of irrelevant predictors for tuned and untuned number of neighbors."}
-res_tmp <- res %>% pivot_longer(cols=c("accs", "fixedaccs"), names_to="Type", values_to="accuracy")
+res_tmp <- res %>% pivot_longer(cols=c("accs", "fixedaccs"), 
+                                names_to="Type", 
+                                values_to="accuracy")
+
 plt_irrelevant_nghbrs <- ggplot(res_tmp) +
               geom_line(mapping = aes(x=ks, y=accuracy, color=Type)) +
               labs(x = "Number of Irrelevant Predictors", y = "Accuracy") + 
               scale_color_discrete(labels= c("Tuned K", "K = 3"))
+
 plt_irrelevant_nghbrs
 ```
 
@@ -1125,17 +1195,27 @@ Here we will load the modified version of the cancer data with irrelevant
 predictors, and select `Smoothness`, `Concavity`, `Perimeter`, `Irrelevant1`, `Irrelevant2`, and `Irrelevant3`
 as potential predictors, and the `Class` variable as the label.
 We will also extract the column names for the full set of predictor variables.
+
 ```{r 06-fwdsel-seed, echo = FALSE, warning = FALSE, message = FALSE}
 # hidden seed
 set.seed(1)
 ```
+
 ```{r 06-fwdsel, warning = FALSE}
-cancer_subset <- cancer_irrelevant %>% 
-  select(Class, Smoothness, Concavity, Perimeter, Irrelevant1, Irrelevant2, Irrelevant3)
-names <- colnames(cancer_subset %>% select(-Class))
+cancer_subset <- cancer_irrelevant |> 
+  select(Class, 
+         Smoothness, 
+         Concavity, 
+         Perimeter, 
+         Irrelevant1, 
+         Irrelevant2, 
+         Irrelevant3)
+
+names <- colnames(cancer_subset |> select(-Class))
 
 cancer_subset
 ```
+
 The key idea of the forward selection code is to use the `paste` function (which concatenates strings
 separated by spaces) to create a model formula for each subset of predictors for which we want to build a model.
 The `collapse` argument tells `paste` what to put between the items in the list;
@@ -1143,6 +1223,7 @@ to make a formula, we need to put a `+` symbol between each variable.
 As an example, let's make a model formula for all the predictors,
 which should output something like
 `Class ~ Smoothness + Concavity + Perimeter + Irrelevant1 + Irrelevant2 + Irrelevant3`:
+
 ```{r}
 example_formula <- paste("Class", "~", paste(names, collapse="+"))
 example_formula
@@ -1167,13 +1248,17 @@ and finally records the estimated accuracy.
 # hidden seed
 set.seed(1)
 ```
+
 ```{r 06-fwdsel-2, warning = FALSE}
 # create an empty tibble to store the results
-accuracies <- tibble(size = integer(), model_string = character(), accuracy = numeric())
+accuracies <- tibble(size = integer(), 
+                     model_string = character(), 
+                     accuracy = numeric())
 
 # create a model specification
-knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = tune()) %>%
-     set_engine("kknn") %>%
+knn_spec <- nearest_neighbor(weight_func = "rectangular", 
+                             neighbors = tune()) |>
+     set_engine("kknn") |>
      set_mode("classification")
 
 # create a 5-fold cross-validation object
@@ -1196,19 +1281,21 @@ for (i in 1:n_total) {
         model_string <- paste("Class", "~", paste(preds_new, collapse="+"))
 
         # create a recipe from the model string
-        cancer_recipe <- recipe(as.formula(model_string), data = cancer_subset) %>%
-                          step_scale(all_predictors()) %>%
+        cancer_recipe <- recipe(as.formula(model_string), 
+                                data = cancer_subset) |>
+                          step_scale(all_predictors()) |>
                           step_center(all_predictors())
 
-        # tune the KNN classifier with these predictors, and collect the accuracy for the best K
-        acc <- workflow() %>%
-          add_recipe(cancer_recipe) %>%
-          add_model(knn_spec) %>%
-          tune_grid(resamples = cancer_vfold, grid = 10) %>%
-          collect_metrics() %>%
-          filter(.metric == "accuracy") %>%
+        # tune the KNN classifier with these predictors, 
+        # and collect the accuracy for the best K
+        acc <- workflow() |>
+          add_recipe(cancer_recipe) |>
+          add_model(knn_spec) |>
+          tune_grid(resamples = cancer_vfold, grid = 10) |>
+          collect_metrics() |>
+          filter(.metric == "accuracy") |>
           summarize(mx = max(mean))
-        acc <- acc$mx %>% unlist()
+        acc <- acc$mx |> unlist()
 
         # add this result to the dataframe
         accs[[j]] <- acc
@@ -1216,10 +1303,13 @@ for (i in 1:n_total) {
     }
     jstar <- which.max(unlist(accs))
     accuracies <- accuracies %>% 
-      add_row(size = i, model_string = models[[jstar]], accuracy = accs[[jstar]])
+      add_row(size = i, 
+              model_string = models[[jstar]], 
+              accuracy = accs[[jstar]])
     selected <- c(selected, names[[jstar]])
     names <- names[-jstar]
 }
+
 accuracies
 ```
 
@@ -1244,7 +1334,7 @@ where the elbow occurs, and whether adding a variable provides a meaningful incr
 > process! 
 
 ```{r 06-fwdsel-3, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "100%", fig.cap = "Estimated accuracy versus the number of predictors for the sequence of models built using forward selection."}
-fwd_sel_accuracies_plot <- accuracies %>%
+fwd_sel_accuracies_plot <- accuracies |>
   ggplot(aes(x = size, y = accuracy)) +
   geom_line() +
   labs(x = "Number of Predictors", y = "Estimated Accuracy")
