@@ -1,5 +1,12 @@
 # Regression II: linear regression {#regression2}
 
+```{r regression2-setup, echo = FALSE, message = FALSE, warning = FALSE}
+library(knitr)
+library(plotly)
+
+knitr::opts_chunk$set(fig.align = "center")
+```
+
 ## Overview 
 Up to this point, we have solved all of our predictive problems---both classification
 and regression---using K-nearest neighbors (KNN)-based approaches. In the context of regression, 
@@ -83,6 +90,7 @@ small_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
   geom_smooth(method = "lm", se = FALSE)
+
 small_plot
 ```
 
@@ -166,7 +174,6 @@ small_plot +
                colour = "red")
 ```
 
-
 ## Linear regression in R
 
 We can perform simple linear regression in R using `tidymodels` \index{tidymodels} in a
@@ -226,7 +233,9 @@ Our coefficients are
 (intercept) $\beta_0=$ `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), scientific=FALSE)`
 and (slope) $\beta_1=$ `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`.
 This means that the equation of the line of best fit is
+
 $$\text{house sale price} = `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), scientific=FALSE)` + `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`\cdot (\text{house size}).$$
+
 In other words, the model predicts that houses 
 start at \$`r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), big.mark=",", nsmall=0, scientific=FALSE)` for 0 square feet, and that
 every extra square foot increases the cost of 
@@ -438,13 +447,13 @@ lm_mult_test_results <- mlm_fit |>
 
 lm_mult_test_results
 ```
+
 Our model's test error as assessed by RMSPE
 is `r format(round(lm_mult_test_results %>% filter(.metric == 'rmse') %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`.
 In the case of two predictors, we can plot the predictions made by our linear regression creates a *plane* of best fit, as
 shown in Figure \@ref(fig:08-3DlinReg).
 
 ```{r 08-3DlinReg, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Linear regression plane of best fit overlaid on top of the data (using price, house size, and number of bedrooms as predictors)."}
-library(plotly)
 xvals <- seq(from = min(sacramento_train$sqft), 
              to = max(sacramento_train$sqft), 
              length = 50)
@@ -459,7 +468,7 @@ zvals <- mlm_fit |>
 
 zvalsm <- matrix(zvals, nrow = length(xvals))
 
-plot_ly() |>
+plot_3d <- plot_ly() |>
   add_markers(
     data = sacramento_train,
     x = ~sqft,
@@ -478,7 +487,14 @@ plot_ly() |>
     z = ~zvalsm,
     colorbar = list(title = "Price (USD)")
   )
+
+if(!is_latex_output()){  
+  plot_3d
+} else {
+  knitr::include_graphics("img/plot3d_linear_regression.png")
+}
 ```
+
 We see that the predictions from linear regression with two predictors form a
 flat plane. This is the hallmark of linear regression, and differs from the 
 wiggly, flexible surface we get from other methods such as KNN regression. 
@@ -486,6 +502,7 @@ wiggly, flexible surface we get from other methods such as KNN regression.
 predictor, we can get slopes/intercept from linear regression, and thus describe the
 plane mathematically. We can extract those slope values from our model object
 as shown below:
+
 ```{r 08-lm-multi-get-coeffs}
 mcoeffs <- mlm_fit %>%
              pull_workflow_fit() %>%
@@ -493,6 +510,7 @@ mcoeffs <- mlm_fit %>%
 
 mcoeffs
 ```
+
 And then use those slopes to write a mathematical equation to describe the prediction plane: \index{plane equation}
 
 $$\text{house sale price} = \beta_0 + \beta_1\cdot(\text{house size}) + \beta_2\cdot(\text{number of bedrooms}),$$
@@ -504,6 +522,7 @@ where:
 
 Finally, we can fill in the values for $\beta_0$, $\beta_1$ and $\beta_2$ from the model output above
 to create the equation of the plane of best fit to the data: 
+
 ```{r 08-lm-multi-get-coeffs-hidden, echo = FALSE}
 icept <- format(round(mcoeffs |> 
                         filter(term == "(Intercept)") |> 
@@ -756,6 +775,7 @@ meaningful relationship with the response variable, but that relationship does n
 the assumptions of the regression method you have chosen. For example, a data frame `df`
 with two variables---`x` and `y`---with a nonlinear relationship between the two variables
 will not be fully captured by simple linear regression, as shown in Figure \@ref(fig:08-predictor-design).
+
 ```{r 08-predictor-design-df, echo = FALSE, message = FALSE, warning = FALSE}
 set.seed(1)
 
@@ -769,7 +789,6 @@ df <- df |>
 df
 ```
 
-<center>
 ```{r 08-predictor-design, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Example of a data set with a nonlinear relationship between the predictor and the response."}
 curve_plt <- ggplot(df, aes(x = x, y = y)) +
   geom_point() +
@@ -778,7 +797,6 @@ curve_plt <- ggplot(df, aes(x = x, y = y)) +
   geom_smooth(method = "lm", se = FALSE)
 curve_plt
 ```
-</center>
 
 Instead of trying to predict the response `y` using a linear regression on `x`,
 we might have some scientific background about our problem to suggest that `y`
@@ -798,16 +816,15 @@ Note that none of the `y` response values have changed between Figures \@ref(fig
 and \@ref(fig:08-predictor-design-2); the only change is that the `x` values
 have been replaced by `z` values.
 
-<center>
 ```{r 08-predictor-design-2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Relationship between the transformed predictor and the response."}
 curve_plt2 <- ggplot(df, aes(x = z, y = y)) +
   geom_point() +
   xlab("z = x^3") +
   ylab("y") +
   geom_smooth(method = "lm", se = FALSE)
+
 curve_plt2
 ```
-</center>
  
 The process of
 transforming predictors (and potentially combining multiple predictors in the process)
