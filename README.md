@@ -1,7 +1,7 @@
 ## Introduction to Data Science
 This is the source for the Introduction to Data Science textbook.
 
-## Setup and Build to html
+## Setup and Build
 
 In order to build the book, you need to first install Docker 
 (instructions here: [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/)).
@@ -32,7 +32,7 @@ To build the **PDF version** of the book, instead run
 ```
 This command again spawns a docker container and runs `pdf/_build_pdf.r` inside the container.
 
-### With RStudio
+### With RStudio (HTML only)
 
 1. Run RStudio inside the `ubcdsci/intro-to-ds` docker container:
     - in terminal, navigate to the root of this project repo
@@ -58,10 +58,6 @@ This command again spawns a docker container and runs `pdf/_build_pdf.r` inside 
     ```
     bookdown::render_book('index.Rmd', 'bookdown::gitbook')
     ```
-
-## Setup and Build to pdf
-
-1. Run `bash _build-pdf.sh` (note: this script does not have sudo in it)
 
 ## Style Guide
 
