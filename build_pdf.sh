@@ -25,7 +25,7 @@ cp -r img/ pdf/
 docker run --rm -m 4g -v $(pwd):/home/rstudio/introduction-to-datascience ubcdsci/intro-to-ds:v0.12.0 /bin/bash -c "cd /home/rstudio/introduction-to-datascience/pdf; Rscript _build_pdf.r"
 
 # clean files in pdf dir
-rm -rf references.bib
+rm -rf pdf/references.bib
 rm -rf pdf/preface-text.Rmd 
 rm -rf pdf/intro.Rmd 
 rm -rf pdf/reading.Rmd 
