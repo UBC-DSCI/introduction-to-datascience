@@ -1,7 +1,7 @@
 ## Introduction to Data Science
 This is the source for the Introduction to Data Science textbook.
 
-## Setup and Build
+## Setup and Build to html
 
 In order to build the book, you need to first install Docker 
 (instructions here: [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/)).
@@ -61,6 +61,10 @@ The same comments regarding passwords and `sudo` as above apply here.
     ```
     bookdown::render_book('index.Rmd', 'bookdown::gitbook')
     ```
+
+## Setup and Build to pdf
+
+1. Run `bash _build-pdf.sh` (note: this script does not have sudo in it)
 
 ## Style Guide
 
