@@ -1,5 +1,5 @@
 # Copyright (c) UBC-DSCI Development Team.
-FROM rocker/verse:4.1.0
+FROM rocker/verse:4.1.1
 
 # install system dependencies
 RUN apt-get update --fix-missing \
