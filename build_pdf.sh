@@ -18,8 +18,8 @@ cp version-control.Rmd pdf/
 cp setup.Rmd pdf/
 cp references.Rmd pdf/
 cp printindex.tex pdf/
-cp -r data/ pdf/
-cp -r img/ pdf/
+cp -r data/ pdf/data
+cp -r img/ pdf/img
 
 # Build the book with bookdown
 docker run --rm -m 4g -v $(pwd):/home/rstudio/introduction-to-datascience ubcdsci/intro-to-ds:v0.12.0 /bin/bash -c "cd /home/rstudio/introduction-to-datascience/pdf; Rscript _build_pdf.r"
