@@ -117,6 +117,18 @@ bookdown::gitbook:
 - when saying that students will do things in code, always say "in R"
 - "you will be able to" (not "students will be able to", "the reader will be able to")
 
+#### Captions
+- If you have special characters (particularly underscores, quotation marks, plus signs, other LaTeX math symbols) make sure to separate
+  the caption out of the code chunk like so
+  ```
+  (ref:blah)
+  
+  \`\`\`
+  {r blah, other_options}
+  code here
+  \`\`\`
+  ```
+
 #### Equations
 - make sure all equations get capitalized labels ("Equation \\@ref(blah)", not "equation below" or "equation above")
 
