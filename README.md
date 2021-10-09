@@ -1,5 +1,5 @@
-## Introduction to Data Science
-This is the source for the Introduction to Data Science textbook.
+## Data Science: A First Introduction 
+This is the source for the *Data Science: A First Introduction* textbook.
 
 ## Setup and Build
 
