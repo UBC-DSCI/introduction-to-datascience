@@ -229,4 +229,5 @@ docker run --rm -it -p 8888:8888 -v $PWD:/home/rstudio/introduction-to-datascien
 
 ## License Information
 
-[Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+This textbook is offered under the [Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0) License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+See [the license file](LICENSE.md) for more information. 
