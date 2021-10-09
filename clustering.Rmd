@@ -194,8 +194,9 @@ In this chapter, we will focus on the *K-means* algorithm,
 \index{K-means} a widely-used and often very effective clustering method, 
 combined with the *elbow method* \index{elbow method} 
 for selecting the number of clusters. 
-This procedure will separate the data into the following groups 
-denoted by color:
+This procedure will separate the data into groups;
+Figure \@ref(fig:10-toy-example-clustering) shows these groups
+denoted by colored scatter points.
 
 ```{r 10-toy-example-clustering, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of standardized bill length versus standardized flipper length with colored groups."}
 ggplot(data, aes(y = bill_length_standardized, 
@@ -399,15 +400,7 @@ all_clusters_base
 We begin the K-means \index{K-means!algorithm} algorithm by picking K, 
 and randomly assigning a roughly equal number of observations 
 to each of the K clusters.
-Then K-means consists of two major steps that attempt to minimize the
-sum of WSSDs over all the clusters, i.e., the \index{WSSD!total} *total WSSD*:
-
-1. **Center update:** Compute the center of each cluster.
-2. **Label update:** Reassign each data point to the cluster with the nearest center.
-
-These two steps are repeated until the cluster assignments no longer change.
-For example, in the penguin data example, 
-our random initialization might look like this:
+An example random initialization is shown in Figure \@ref(fig:10-toy-kmeans-init).
 
 ```{r 10-toy-kmeans-init, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.cap = "Random initialization of labels."}
 set.seed(14)
@@ -425,7 +418,14 @@ plt_lbl <- ggplot(penguin_data, aes(y = bill_length_standardized,
 plt_lbl
 ```
 
-And we show what the first four iterations of K-means would look like in  
+Then K-means consists of two major steps that attempt to minimize the
+sum of WSSDs over all the clusters, i.e., the \index{WSSD!total} *total WSSD*:
+
+1. **Center update:** Compute the center of each cluster.
+2. **Label update:** Reassign each data point to the cluster with the nearest center.
+
+These two steps are repeated until the cluster assignments no longer change.
+We show what the first four iterations of K-means would look like in  
 Figure \@ref(fig:10-toy-kmeans-iter). 
 There each row corresponds to an iteration,
 where the left column depicts the center update, 
@@ -775,9 +775,9 @@ clustered_data
 ```
 
 Now that we have this information in a tidy data frame, we can make a visualization
-of the cluster assignments for each point:
+of the cluster assignments for each point, as shown in Figure \@ref(fig:10-plot-clusters-2).
 
-```{r 10-plot-clusters-2, fig.height = 4, fig.width = 4.35}
+```{r 10-plot-clusters-2, fig.height = 4, fig.width = 4.35, fig.align = "center"}
 cluster_plot <- ggplot(clustered_data,
   aes(x = flipper_length_mm, 
       y = bill_length_mm, 
@@ -843,8 +843,9 @@ we could use a familiar friend: `pull`.
 `pull` will return to us a data frame column as a simpler data structure,
 here that would be a list.
 And then to extract the first item of the list, 
-we can use the `pluck` function; 
-passing it the index for the element we would like to extract (here 1).
+we can use the `pluck` function. We pass  
+it the index for the element we would like to extract 
+(here, `1`).
 
 ```{r}
 penguin_clust_ks |>
@@ -882,10 +883,9 @@ clustering_statistics
 ```
 
 Now that we have `tot.withinss` and `k` as columns in a data frame, we can make a line plot 
-and search for the "elbow" to find which value of K to use. 
+(Figure \@ref(fig:10-plot-choose-k)) and search for the "elbow" to find which value of K to use. 
 
-
-```{r 10-plot-choose-k, fig.height = 4, fig.width = 4.35}
+```{r 10-plot-choose-k, fig.height = 4, fig.width = 4.35, fig.align = "center"}
 elbow_plot <- ggplot(clustering_statistics, aes(x = k, y = tot.withinss)) +
   geom_point() +
   geom_line() +
@@ -904,15 +904,16 @@ Unfortunately, for K = 8 we had an unlucky initialization
 and found a bad clustering! \index{K-means!restart,nstart} 
 We can help prevent finding a bad clustering 
 by trying a few different random initializations 
-via the `nstart` argument (here we use 10 restarts). 
+via the `nstart` argument (Figure \@ref(fig:10-choose-k-nstart) 
+shows a setup where we use 10 restarts). 
 When we do this, K-means clustering will be performed 
 the number of times specified by the `nstart` argument,
 and R will return to us the best clustering from this.
 The more times we perform K-means clustering,
 the more likely we are to find a good clustering (if one exists).
-What value should you choose for `nstart`? The answer is it depends.
-It depends on the size of your data set, 
-and the speed and size of your computer.
+What value should you choose for `nstart`? The answer is that it depends
+on many factors: the size and characteristics of your data set,
+as well as the speed and size of your computer.
 The larger the `nstart` value the better from an analysis perspective, 
 but there is a trade-off that doing many clusterings 
 could take a long time.
