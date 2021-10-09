@@ -118,6 +118,7 @@ bookdown::gitbook:
 - "you will be able to" (not "students will be able to", "the reader will be able to")
 
 #### Captions
+- captions should be sentence formatted and end with a period
 - If you have special characters (particularly underscores, quotation marks, plus signs, other LaTeX math symbols) make sure to separate
   the caption out of the code chunk like so
   ```
