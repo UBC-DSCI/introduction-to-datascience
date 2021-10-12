@@ -1,6 +1,12 @@
 ## Data Science: A First Introduction 
 This is the source for the *Data Science: A First Introduction* textbook.
 
+## License Information
+
+This textbook is offered under 
+the [Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0) License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+See [the license file](LICENSE.md) for more information. 
+
 ## Setup and Build
 
 In order to build the book, you need to first install Docker 
@@ -228,7 +234,3 @@ docker run --rm -it -p 8888:8888 -v $PWD:/home/rstudio/introduction-to-datascien
 - `data/` stores datasets processed during compile
 - `docs/.nojekyll` tells github's static site builder not to run [Jekyll](https://jekyllrb.com/). This avoids Jekyll deleting the folder `docs/_main_files` (as it starts with an underscore)
 
-## License Information
-
-This textbook is offered under the [Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0) License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
-See [the license file](LICENSE.md) for more information. 
