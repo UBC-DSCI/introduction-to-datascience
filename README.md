@@ -1,5 +1,11 @@
-## Introduction to Data Science
-This is the source for the Introduction to Data Science textbook.
+## Data Science: A First Introduction 
+This is the source for the *Data Science: A First Introduction* textbook.
+
+## License Information
+
+This textbook is offered under 
+the [Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0) License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+See [the license file](LICENSE.md) for more information. 
 
 ## Setup and Build
 
@@ -20,22 +26,19 @@ We provide instructions for both methods here.
 
 To build the **html version** of the book, navigate to the repository root folder and run
 ```
-./build.sh
+./build_html.sh
 ``` 
 from the command line. This command automatically spawns a docker container
-with the `ubcdsci/intro-to-ds` image, runs the script `build.R` from within the container,
-and then stops the container. It may ask you for a password; this is the password for the
-`sudo` command on your computer. Typically this is just your usual computer user account password.
-But if your setup doesn't require you to use `sudo` to start a docker container, you can just
-open `build.sh` and delete the word `sudo` at the start of the script.
+with the `ubcdsci/intro-to-ds` image, runs the script `_build_html.r` from within the container,
+and then stops the container. 
 
 To build the **PDF version** of the book, instead run
 ```
-./pdfbuild.sh
+./build_pdf.sh
 ```
-The same comments regarding passwords and `sudo` as above apply here.
+This command again spawns a docker container and runs `pdf/_build_pdf.r` inside the container.
 
-### With RStudio
+### With RStudio (HTML only)
 
 1. Run RStudio inside the `ubcdsci/intro-to-ds` docker container:
     - in terminal, navigate to the root of this project repo
@@ -120,6 +123,19 @@ bookdown::gitbook:
 - when saying that students will do things in code, always say "in R"
 - "you will be able to" (not "students will be able to", "the reader will be able to")
 
+#### Captions
+- captions should be sentence formatted and end with a period
+- If you have special characters (particularly underscores, quotation marks, plus signs, other LaTeX math symbols) make sure to separate
+  the caption out of the code chunk like so
+  ```
+  (ref:blah)
+  
+  \`\`\`
+  {r blah, other_options}
+  code here
+  \`\`\`
+  ```
+
 #### Equations
 - make sure all equations get capitalized labels ("Equation \\@ref(blah)", not "equation below" or "equation above")
 
@@ -127,16 +143,19 @@ bookdown::gitbook:
 - make sure all figures get (capitalized) labels ("Figure \\@ref(blah)", not "figure below" or "figure above")
 - make sure all figures get captions
 - specify image widths in terms of linewidth percent (e.g. `out.width="70%"`)
-- center align all images
+- center align all images via `fig.align = "center"`
 - make sure we have permission for every figure/logo that we use
 - Make sure all figures follow the visualization principles in Chapter 4
 - Make sure axes are set appropriately to not inflate/deflate differences artificially *where it does not compromise clarity* (e.g. in the classification
   chapter there are a few examples where zoomed-in accuracy axes are better than using the full range 0 to 1)
+- 
 
 #### Tables
 - make sure all tables get capitalized labels ("Table \\@ref(blah)", not "table below" or "table above")
 - make sure all tables get captions
 - make sure the row + column spacing is reasonable
+- Do not put links in table captions, it breaks pdf rendering
+- Do not put underscores in table captions, it breaks pdf rendering
 
 #### Note boxes
 - note boxes should be typeset as quote boxes using `>` and start with **Note:**
@@ -178,6 +197,10 @@ Generally the book uses American spelling. Some common British vs American and C
 - c vs s: defense (not defence)
 - er vs re: center (not centre)
 
+#### Whitespace
+We need a line of whitespace before and after code fences (code surrounded by three backticks above and below). This is for readability, 
+and it is essential for figure captions.
+
 #### PDF Output
 These are absolute last steps when rendering the PDF output:
 - Look for and fix bad line breaks (e.g. with only one word on the next line, orphans, and widows)
@@ -211,6 +234,3 @@ docker run --rm -it -p 8888:8888 -v $PWD:/home/rstudio/introduction-to-datascien
 - `data/` stores datasets processed during compile
 - `docs/.nojekyll` tells github's static site builder not to run [Jekyll](https://jekyllrb.com/). This avoids Jekyll deleting the folder `docs/_main_files` (as it starts with an underscore)
 
-## License Information
-
-[Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)](https://creativecommons.org/licenses/by-nc-sa/4.0/)

@@ -1,9 +1,17 @@
+\mainmatter
+
 # R and the tidyverse {#intro}
+
+```{r intro-setup, include=FALSE}
+# set as default because for some reason it breaks the pdf in this chapter
+knitr::opts_chunk$set(fig.align = "default")
+```
+
 ## Overview
 
 This chapter provides an introduction to data science and the R programming language.
-The goal here is to get your hands dirty right from the start: we will walk through an entire data analysis,
-and along the way introduce different types of data analysis questions, some fundamental programming 
+The goal here is to get your hands dirty right from the start! We will walk through an entire data analysis,
+and along the way introduce different types of data analysis question, some fundamental programming 
 concepts in R, and the basics of loading, cleaning, and visualizing data. In the following chapters, we will
 dig into each of these steps in much more detail; but for now, let's jump in to see how much we can do 
 with data science!
@@ -41,7 +49,7 @@ Canada's [Calls to Action](http://trc.ca/assets/pdf/Calls_to_Action_English2.pdf
 The data set we will study in this chapter is taken from 
 [the {canlang} R data package](https://ttimbers.github.io/canlang/) [@timbers2020canlang], which has
 population language data collected during the 2016 Canadian census [@cancensus2016]. 
-In this data there are 214 languages recorded, each having 6 different properties:
+In this data, there are 214 languages recorded, each having six different properties:
 
 1. `category`: Higher-level language category, describing whether the language is an Official Canadian language, an Aboriginal (i.e., Indigenous) language, or a Non-Official and Non-Aboriginal language.
 2. `language`: The name of the language.
@@ -57,8 +65,8 @@ then we might ask the following question, which we wish to answer using our data
 *Which ten Aboriginal languages were most often reported in 2016 as mother
 tongues in Canada, and how many people speak each of them?* 
 
-> **A note about the *data* in data science!** 
-> Data science\index{data science!good practices} cannot be done without a deep understanding of the data and
+> **Note:** Data science\index{data science!good practices} cannot be done without 
+> a deep understanding of the data and
 > problem domain. In this book, we have simplified the data sets used in our
 > examples to concentrate on methods and fundamental concepts. But in real
 > life, you cannot and should not do data science without a domain expert.
@@ -84,10 +92,10 @@ the analysis as well as the selection of appropriate tools.\index{question!data 
 \index{causal question!definition}
 \index{mechanistic question!definition}
 
-Table: (\#tab:questions-table) Types of data analysis question. From [What is the question?](https://science.sciencemag.org/content/347/6228/1314) [@leek2015question] and [The Art of Data Science](https://leanpub.com/artofdatascience) [@peng2015art].
+Table: (\#tab:questions-table) Types of data analysis question [@leek2015question; @peng2015art].
 
-| Question type | Description | Example |
-|---------------|-------------|---------|
+|Question type|    Description         |     Example        |
+|-------------|------------------------|--------------------|
 | Descriptive | A question that asks about summarized characteristics of a data set without interpretation (i.e., report a fact). | How many people live in each province and territory in Canada? |
 | Exploratory | A question asks if there are patterns, trends, or relationships within a single data set. Often used to propose hypotheses for future study. | Does political party voting change with indicators of wealth in a set of data collected on 2,000 people living in Canada? |
 | Predictive | A question that asks about predicting measurements or labels for individuals (people or things). The focus is on what things predict some outcome, but not what causes the outcome. | What political party will someone vote for in the next Canadian election? |
@@ -116,7 +124,7 @@ This is covered in detail in Chapter \@ref(viz), but again appears regularly thr
 3. **Classification:** \index{classification!overview} predicting a class or category for a new observation.
 Classification is used to answer predictive questions.
 For example, you might use classification to answer the following question:
-*given measurements of a tumour's average cell area and perimeter, is the tumour benign or malignant?*
+*given measurements of a tumor's average cell area and perimeter, is the tumor benign or malignant?*
 Classification is covered in Chapters \@ref(classification) and \@ref(classification2).
 4. **Regression:**  \index{regression!overview} predicting a quantitative value for a new observation. 
 Regression is also used to answer predictive questions.
@@ -128,7 +136,7 @@ dataset. Clustering is often used to answer exploratory questions.
 For example, you might use clustering to answer the following question:
 *what products are commonly bought together on Amazon?*
 Clustering is covered in Chapter \@ref(clustering).
-6. **Estimation:**  \index{estimation!overview} taking measurements for small number of items from a large group 
+6. **Estimation:**  \index{estimation!overview} taking measurements for a small number of items from a large group 
  and making a good guess for the average or proportion for the large group. Estimation 
 is used to answer inferential questions.
 For example, you might use estimation to answer the following question:
@@ -162,8 +170,7 @@ collect the data on, e.g., voters, cities, etc. We refer to the columns as \inde
 **variables**; these are the characteristics of those observations, e.g., voters' political
 affiliations, cities' populations, etc. 
 
-
-```{r img-spreadsheet-vs-dataframe, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "A spreadsheet versus a data frame in R", out.width="850pt", fig.retina = 2}
+```{r img-spreadsheet-vs-dataframe, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "A spreadsheet versus a data frame in R.", out.width="100%", fig.retina = 2}
 knitr::include_graphics("img/spreadsheet_vs_dataframe.PNG")
 ```
 
@@ -176,11 +183,20 @@ spreadsheet programs like Microsoft Excel and Google Sheets.  For example, the
 If we were to open this data in a plain text editor (a program like Notepad that just shows
 text with no formatting), we would see each row on its own line, and each entry in the table separated by a comma:
 
-```{bash, echo=FALSE, comment=NA}
-head -n 10 data/can_lang.csv
+```code
+category,language,mother_tongue,most_at_home,most_at_work,lang_known
+Aboriginal languages,"Aboriginal languages, n.o.s.",590,235,30,665
+Non-Official & Non-Aboriginal languages,Afrikaans,10260,4785,85,23415
+Non-Official & Non-Aboriginal languages,"Afro-Asiatic languages, n.i.e.",1150,44
+Non-Official & Non-Aboriginal languages,Akan (Twi),13460,5985,25,22150
+Non-Official & Non-Aboriginal languages,Albanian,26895,13135,345,31930
+Aboriginal languages,"Algonquian languages, n.i.e.",45,10,0,120
+Aboriginal languages,Algonquin,1260,370,40,2480
+Non-Official & Non-Aboriginal languages,American Sign Language,2685,3020,1145,21
+Non-Official & Non-Aboriginal languages,Amharic,22465,12785,200,33670
 ```
 
-To load this data into R so that we can do things with it (e.g, perform
+To load this data into R so that we can do things with it (e.g., perform
 analyses or create data visualizations), we will need to use a *function.* \index{function} A
 function is a special word in R that takes instructions (we call these
 *arguments*) \index{argument} and does something. The function we will use to load a `.csv` file
@@ -204,17 +220,18 @@ using the `library` function. \index{library} The `tidyverse` \index{tidyverse} 
 functions that we will use throughout this book to load, clean, wrangle, 
 and visualize data. 
 
-```{r load_tidyverse, message = TRUE, warning = TRUE}
+```{r load-tidyverse, message = TRUE, warning = TRUE}
 library(tidyverse)
 ```
-> **In case you want to know more (optional):** Notice that we got some extra
+
+> **Note:** You may have noticed that we got some extra
 > output from R saying `Attaching packages` and `Conflicts` below our code
 > line. These are examples of *messages* in R, which give the user more
 > information that might be handy to know. The `Attaching packages` message is
 > natural when loading `tidyverse`, since `tidyverse` actually automatically
 > causes other packages to be imported too, such as `dplyr`.  In the future
 > when we load `tidyverse` in this book we will silence these messages to help
-> with readability of the book.  The `Conflicts` message is also totally normal
+> with the readability of the book.  The `Conflicts` message is also totally normal
 > in this circumstance.  This message tells you if functions from different
 > packages share the same name, which is confusing to R.  For example, in this
 > case, the `dplyr` package and the `stats` package both provide a function
@@ -236,15 +253,17 @@ file satisfies everything else that the `read_csv` function expects in the defau
 use-case. Figure \@ref(fig:img-read-csv) describes how we use the `read_csv`
 to read data into R. 
 
-``` {r img-read-csv, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the read_csv function", out.width="1100pt", fig.retina = 2}
+(ref:img-read-csv) Syntax for the `read_csv` function.
+
+``` {r img-read-csv, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "(ref:img-read-csv)", fig.retina = 2, out.width="100%"}
 knitr::include_graphics("img/read_csv_function.jpeg")
 ```
 
-```{r load_can_lang_data, warning=F, message=F}
+```{r load-can-lang-data, warning = FALSE, message = FALSE}
 read_csv("data/can_lang.csv")
 ```
 
-> **In case you want to know more (optional):** There is another function
+> **Note:** There is another function
 > that also loads csv files named `read.csv`. We will *always* use 
 > `read_csv` in this book, as it is designed to play nicely with all of the 
 > other `tidyverse` functions, which we will use extensively. Be
@@ -262,7 +281,7 @@ to the data frame that `read_csv` outputs,
 so that we can refer to it later for analysis and visualization.
 
 The way to assign a name to a value in R is via the *assignment symbol* `<-`. 
-\index{assignsymb@\texttt{<-}|see{assignment symbol}}\index{assignment symbol}
+\index{aaaassignsymb@\texttt{<-}|see{assignment symbol}}\index{assignment symbol}
 On the left side of the assignment symbol you put the name that you want
 to use, and on the right side of the assignment symbol
 you put the value that you want the name to refer to.
@@ -281,7 +300,7 @@ we do not need to surround the name we are creating  with quotes. This is
 because we are formally telling R that this special word denotes
 the value of whatever is on the right hand side.
 Only characters and words that act as *values* on the right hand side of the assignment
-symbol&mdash;e.g., the file name `"data/can_lang.csv"` that we specified before, or `"Alice"` above&mdash;&mdash;need 
+symbol&mdash;e.g., the file name `"data/can_lang.csv"` that we specified before, or `"Alice"` above&mdash;need 
 to be surrounded by quotes.
 
 After making the assignment, we can use the special name words we have created in
@@ -298,7 +317,7 @@ Other symbols won't work since they have their own meanings in R. For example,
 the `+` symbol, R will complain and we will get an error!
 
 ```{r, eval = F}
-na+me <- 1
+na + me <- 1
 ```
 ```
 Error: unexpected assignment in "na+me <-"
@@ -317,7 +336,7 @@ Guide](https://principles.tidyverse.org/names-attribute.html#universal-names)
 `can_lang` to the 2016 Canadian census language data frame that we get from
 `read_csv`. 
 
-```{r load_data_with_name, message=FALSE}
+```{r load-data-with-name, message=FALSE}
 can_lang <- read_csv("data/can_lang.csv")
 ```
 
@@ -371,7 +390,9 @@ is a string *value* \index{string} and not one of the special words that make up
 programming language, nor one of the names we have given to data frames in the
 code we have already written. 
 
-``` {r img-filter, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the filter function", out.width="1100pt", fig.retina = 2}
+(ref:img-filter) Syntax for the `filter` function.
+
+```{r img-filter, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "(ref:img-filter)", fig.retina = 2, out.width="100%"}
 knitr::include_graphics("img/filter_function.jpeg")
 ```
 
@@ -404,7 +425,9 @@ able to name things in R is useful: you can see that we are using the
 result of our earlier `filter` step (which we named `aboriginal_lang`) here 
 in the next step of the analysis!
 
-``` {r img-select, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the select function", out.width="1100pt", fig.retina = 2}
+(ref:img-select) Syntax for the `select` function.
+
+``` {r img-select, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "(ref:img-select)", out.width="100%", fig.retina = 2}
 knitr::include_graphics("img/select_function.jpeg")
 ```
 
@@ -413,6 +436,7 @@ knitr::include_graphics("img/select_function.jpeg")
 selected_lang <- select(aboriginal_lang, language, mother_tongue)
 selected_lang
 ```
+
 ### Using `arrange` to order and `slice` to select rows by index number
 
 We have used `filter` and `select` to obtain a table with only the Aboriginal
@@ -432,7 +456,9 @@ language, we will use the `arrange` function to order the rows in our
 arrange the rows in descending order (from largest to smallest),
 so we pass the column to the `desc` function before using it as an argument. 
 
-``` {r img-arrange, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Syntax for the arrange function", out.width="1100pt", fig.retina = 2}
+(ref:img-arrange) Syntax for the `arrange` function.
+
+``` {r img-arrange, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "(ref:img-arrange)", out.width="100%", fig.retina = 2}
 knitr::include_graphics("img/arrange_function.jpeg")
 ```
 
@@ -486,20 +512,22 @@ function and its common usage is illustrated in Figure \@ref(fig:img-ggplot).
 Figure \@ref(fig:barplot-mother-tongue) shows the resulting bar plot
 generated by following the instructions in Figure \@ref(fig:img-ggplot).
 
-```{r img-ggplot, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Creating a bar plot with the ggplot function", out.width="1100pt", fig.retina = 2}
+(ref:img-ggplot) Creating a bar plot with the `ggplot` function.
+
+```{r img-ggplot, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "(ref:img-ggplot)", out.width="100%", fig.retina = 2}
 knitr::include_graphics("img/ggplot_function.jpeg")
 ```
 
-```{r barplot-mother-tongue, fig.width=5.75, fig.height=4, warning=FALSE, fig.cap = "Bar plot of the ten Aboriginal languages most often reported by Canadians as their mother tongue"}
+```{r barplot-mother-tongue, fig.width=5.75, fig.height=4, warning=FALSE, fig.cap = "Bar plot of the ten Aboriginal languages most often reported by Canadians as their mother tongue."}
 ggplot(ten_lang, aes(x = language, y = mother_tongue)) +
   geom_bar(stat = "identity")
 ```
 
-> **In case you have used R before and are curious:** The vast majority of the
+> **Note:** The vast majority of the
 > time, a single expression in R must be contained in a single line of code.
 > However, there *are* a small number of situations in which you can have a
 > single R expression span multiple lines. Above is one such case: here, R knows that a line cannot
-> end with a `+` symbol, \index{plussymb@$+$} and so it keeps reading the next line to figure out
+> end with a `+` symbol, \index{aaaplussymb@$+$|see{ggplot (add layer)}} and so it keeps reading the next line to figure out
 > what the right hand side of the `+` symbol should be.  We could, of course,
 > put all of the added layers on one line of code, but splitting them across
 > multiple lines helps a lot with code readability. \index{multi-line expression}
@@ -530,7 +558,7 @@ words (e.g. `"Mother Tongue (Number of Canadians, 2016 Census)"`) as arguments t
 layers to format the plot further, and we will explore these in Chapter
 \@ref(viz).
 
-```{r barplot-mother-tongue-labs, fig.width=5.75, fig.height=4, warning=FALSE, fig.cap = "Bar plot of the ten Aboriginal languages most often reported by Canadians as their mother tongue with x and y labels"}
+```{r barplot-mother-tongue-labs, fig.width=5.75, fig.height=4, warning=FALSE, fig.cap = "Bar plot of the ten Aboriginal languages most often reported by Canadians as their mother tongue with x and y labels."}
 ggplot(ten_lang, aes(x = language, y = mother_tongue)) +
   geom_bar(stat = "identity") +
   xlab("Language") +
@@ -544,11 +572,11 @@ currently making it difficult to read the different language names.
 One solution is to rotate the plot such that the bars are horizontal rather than vertical.
 To accomplish this, we will swap the x and y coordinate axes:
 
-```{r barplot-mother-tongue-flipped, fig.width=5.75, fig.height=4, warning=FALSE, fig.cap = "Horizontal bar plot of the ten Aboriginal languages most often reported by Canadians as their mother tongue"}
+```{r barplot-mother-tongue-flipped, fig.width=5.75, fig.height=4, warning=FALSE, fig.cap = "Horizontal bar plot of the ten Aboriginal languages most often reported by Canadians as their mother tongue."}
 ggplot(ten_lang, aes(x = mother_tongue, y = language)) +
   geom_bar(stat = "identity") +
   xlab("Mother Tongue (Number of Canadians, 2016 Census)") +
-  ylab("Language") 
+  ylab("Language")
 ```
 
 Another big step forward, as shown in Figure \@ref(fig:barplot-mother-tongue-flipped)! There 
@@ -560,11 +588,12 @@ each language, rather than in alphabetical order. We can reorder the bars using
 the `reorder` \index{reorder} function, which orders a variable (here `language`) based on the
 values of the second variable (`mother_tongue`). 
 
-```{r barplot-mother-tongue-reorder, fig.width=5.75, fig.height=4, warning=FALSE, fig.cap = "Bar plot of the ten Aboriginal languages most often reported by Canadians as their mother tongue with bars reordered"}
-ggplot(ten_lang, aes(x = mother_tongue, y = reorder(language, mother_tongue))) +
+```{r barplot-mother-tongue-reorder, fig.width=5.75, fig.height=4, warning=FALSE, fig.cap = "Bar plot of the ten Aboriginal languages most often reported by Canadians as their mother tongue with bars reordered."}
+ggplot(ten_lang, aes(x = mother_tongue,
+                     y = reorder(language, mother_tongue))) +
   geom_bar(stat = "identity") +
   xlab("Mother Tongue (Number of Canadians, 2016 Census)") +
-    ylab("Language") 
+  ylab("Language")
 ```
 
 Figure \@ref(fig:barplot-mother-tongue-reorder) provides a very clear and well-organized
@@ -573,32 +602,32 @@ were, according to the 2016 Candian census, and how many people speak each of th
 instance, we can see that the Aboriginal language most often reported was Cree
 n.o.s. with over 60,000 Canadian residents reporting it as their mother tongue.
 
-> "n.o.s." means "not otherwise specified", so Cree n.o.s. refers to
+> **Note:** "n.o.s." means "not otherwise specified", so Cree n.o.s. refers to
 > individuals who reported Cree as their mother tongue. In this data set, the
 > Cree languages include the following categories: Cree n.o.s., Swampy Cree,
 > Plains Cree, Woods Cree, and a 'Cree not included elsewhere' category (which
 > includes Moose Cree, Northern East Cree and Southern East Cree)
-> [@language2018]. 
+> [@language2016]. 
 
 ### Putting it all together
 
 In the block of code below, we put everything from this chapter together, with a few
 modifications. In particular, we have
 added a few more layers to make the data visualization even more effective.
-Specifically, we changed the colour of the bars and changed the background from
+Specifically, we changed the color of the bars and changed the background from
 grey to white to improve the contrast. We have also actually skipped the
 `select` step that we did above; since you specify the variable names to plot
 in the `ggplot` function, you don't actually need to `select` the columns in advance
 when creating a visualization. And finally, we provided *comments* next to 
 many of the lines of code below using the
-hash symbol `#`. When R sees a `#` sign, \index{comment} \index{commentsymb@\#|see{comment}} it 
+hash symbol `#`. When R sees a `#` sign, \index{comment} \index{aaacommentsymb@\#|see{comment}} it 
 will ignore all of the text that
 comes after the symbol on that line. So you can use comments to explain lines 
 of code for others, and perhaps more importantly, your future self!
 It's good practice to get in the habit of
 commenting your code to improve its readability.
 
-```{r nachos-to-cheesecake, fig.width=7.75, fig.height=4, warning=FALSE, message=FALSE, fig.cap = "Putting it all together: bar plot of the ten Aboriginal languages most often reported by Canadians as their mother tongue"}
+```{r nachos-to-cheesecake, fig.width=7.75, fig.height=4, warning=FALSE, message=FALSE, fig.cap = "Putting it all together: bar plot of the ten Aboriginal languages most often reported by Canadians as their mother tongue."}
 library(tidyverse)
 
 # load the data set
@@ -610,10 +639,8 @@ arranged_lang <- arrange(aboriginal_lang, by = desc(mother_tongue))
 ten_lang <- slice(arranged_lang, 1:10)
 
 # create the visualization
-ggplot(ten_lang, aes(
-  x = mother_tongue,
-  y = reorder(language, mother_tongue)  # make sure the plot orders the bars by size
-)) +
+ggplot(ten_lang, aes(x = mother_tongue,
+                     y = reorder(language, mother_tongue))) +
   geom_bar(stat = "identity", fill = "steelblue") +
   xlab("Mother Tongue (Number of Canadians, 2016 Census)") +
   ylab("Language") +
@@ -634,7 +661,7 @@ There are many R functions in the `tidyverse` package (and beyond!), and
 nobody can be expected to remember what every one of them does
 nor all of the arguments we have to give them. Fortunately R provides 
 the `?` symbol, which 
-\index{questionmark@? symbol|see{documentation}}
+\index{aaaquestionmark@?|see{documentation}}
 \index{help|see{documentation}}
 \index{documentation} provides an easy way to pull up the documentation for 
 most functions quickly. To use the `?` symbol to access documentation, you 
@@ -655,6 +682,7 @@ to you, and slowly but surely you will become more adept at understanding and na
 documentation like that shown in Figure \@ref(fig:01-help). But do keep in mind that the documentation
 is not written to *teach* you about a function; it is just there as a reference to *remind*
 you about the different arguments and usage of functions that you have already learned about elsewhere.
-```{r 01-help, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "The documentation for the `filter` function, including a high-level description, a list of arguments and their meanings, and more.", fig.retina = 2}
+
+```{r 01-help, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "The documentation for the `filter` function, including a high-level description, a list of arguments and their meanings, and more.", fig.retina = 2, out.width="100%"}
 knitr::include_graphics("img/help-filter.png")
 ```

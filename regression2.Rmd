@@ -1,8 +1,15 @@
 # Regression II: linear regression {#regression2}
 
+```{r regression2-setup, echo = FALSE, message = FALSE, warning = FALSE}
+library(knitr)
+library(plotly)
+
+knitr::opts_chunk$set(fig.align = "center")
+```
+
 ## Overview 
 Up to this point, we have solved all of our predictive problems---both classification
-and regression---using K-nearest neighbours (KNN)-based approaches. In the context of regression, 
+and regression---using K-nearest neighbors (KNN)-based approaches. In the context of regression, 
 there is another method commonly used 
 in scientific disciplines known as *linear regression*. This chapter provides an introduction
 to the basic concept of linear regression, shows how to use `tidymodels` to perform linear regression in R,
@@ -16,7 +23,7 @@ By the end of the chapter, readers will be able to:
 
 * Use R and `tidymodels` to fit a linear regression model on training data.
 * Evaluate the linear regression model on test data.
-* Compare and contrast predictions obtained from K-nearest neighbour regression to those obtained using linear regression from the same dataset.
+* Compare and contrast predictions obtained from K-nearest neighbor regression to those obtained using linear regression from the same data set.
 * In R, overlay predictions from linear regression on a scatter plot of data using `geom_smooth`.
 
 ## Simple linear regression
@@ -24,7 +31,7 @@ By the end of the chapter, readers will be able to:
 At the end of the previous chapter, we noted some limitations of KNN regression.
 While the method is simple and easy to understand, KNN regression does not
 predict well beyond the range of the predictors in the training data, and
-the method gets significantly slower as the training dataset grows.
+the method gets significantly slower as the training data set grows.
 \index{regression!linear}
 Fortunately, there is an alternative to KNN regression---*linear regression*---that addresses
 both of these limitations. Linear regression is also much more commonly used in practice, especially
@@ -35,12 +42,12 @@ which involves only one predictor variable and one response variable; later on, 
  Like KNN regression, simple linear regression involves
 predicting a numerical response variable (like race time, house price, or height);
 but *how* it makes those predictions for a new observation is quite different from KNN regression.
- Instead of looking at the K nearest neighbours and averaging
+ Instead of looking at the K nearest neighbors and averaging
 over their values for a prediction, in simple linear regression, we create a 
 straight line of best fit through the training data and then
 "look up" the prediction using the line.
 
-> **Note:** although we did not cover it in earlier chapters, there 
+> **Note:** Although we did not cover it in earlier chapters, there 
 > is another popular method for classification called *logistic
 > regression* (it is used for classification even though the name, somewhat confusingly,
 > has the word "regression" in it). In logistic regression---similar to linear regression---you
@@ -51,7 +58,7 @@ straight line of best fit through the training data and then
 > logistic regression. After reading this chapter, see the "Additional Resources" section at the end of the
 > classification chapters to learn more about logistic regression. \index{regression!logistic}
 
-Let's return to the Sacramento housing data \index{Sacramento real estate} from the Chapter \@ref(regression1) to learn
+Let's return to the Sacramento housing data \index{Sacramento real estate} from Chapter \@ref(regression1) to learn
 how to apply linear regression and compare it to KNN regression. For now, we
 will consider 
 a smaller version of the housing data to help make our visualizations clear.
@@ -64,7 +71,7 @@ to draw the straight line of best fit through our existing data points.
 The small subset of data as well as the line of best fit are shown
 in Figure \@ref(fig:08-lin-reg1).
 
-```{r 08-lin-reg1, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of sale price versus size with line of best fit for subset of the Sacramento housing data"}
+```{r 08-lin-reg1, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of sale price versus size with line of best fit for subset of the Sacramento housing data."}
 library(tidyverse)
 library(tidymodels)
 library(scales)
@@ -83,6 +90,7 @@ small_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
   geom_smooth(method = "lm", se = FALSE)
+
 small_plot
 ```
 
@@ -113,7 +121,7 @@ above to evaluate the predicted sale price given the value we have for the
 predictor variable&mdash;here 2,000 square feet. Figure
 \@ref(fig:08-lin-reg2) demonstrates this process.
 
-```{r 08-lin-reg2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of sale price versus size with line of best fit and a red dot at the predicted sale price for a 2000 square foot home"}
+```{r 08-lin-reg2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of sale price versus size with line of best fit and a red dot at the predicted sale price for a 2000 square foot home."}
 small_model <- lm(price ~ sqft, data = small_sacramento)
 prediction <- predict(small_model, data.frame(sqft = 2000))
 
@@ -141,7 +149,7 @@ exactly does simple linear regression choose the line of best fit? Many
 different lines could be drawn through the data points. 
 Some plausible examples are shown in Figure \@ref(fig:08-several-lines).
 
-```{r 08-several-lines, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5,  fig.cap = "Scatter plot of sale price versus size with many possible lines that could be drawn through the data points"}
+```{r 08-several-lines, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5,  fig.cap = "Scatter plot of sale price versus size with many possible lines that could be drawn through the data points."}
 small_plot +
   geom_abline(intercept = -64542.23, slope = 190, color = "green") +
   geom_abline(intercept = -6900, slope = 175, color = "purple") +
@@ -156,7 +164,7 @@ accuracy of a simple linear regression model,
 we use RMSPE&mdash;the same measure of predictive performance we used with KNN regression.
 \index{RMSPE}
 
-```{r 08-verticalDistToMin,  echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of sale price versus size with red lines denoting the vertical distances between the predicted values and the observed data points"}
+```{r 08-verticalDistToMin,  echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of sale price versus size with red lines denoting the vertical distances between the predicted values and the observed data points."}
 small_sacramento <- small_sacramento |>
   mutate(predicted = predict(small_model))
 
@@ -165,7 +173,6 @@ small_plot +
                aes(xend = sqft, yend = predicted), 
                colour = "red")
 ```
-
 
 ## Linear regression in R
 
@@ -215,7 +222,7 @@ lm_fit
 
 > **Note:** An additional difference that you will notice here is that we do
 > not standardize \index{standardization} (i.e., scale and center) our
-> predictors. In K-nearest neighbours models, recall that the model fit changes
+> predictors. In K-nearest neighbors models, recall that the model fit changes
 > depending on whether we standardize first or not. In linear regression,
 > standardization does not affect the fit (it *does* affect the coefficients in
 > the equation, though!).  So you can standardize if you want&mdash;it won't
@@ -226,7 +233,9 @@ Our coefficients are
 (intercept) $\beta_0=$ `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), scientific=FALSE)`
 and (slope) $\beta_1=$ `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`.
 This means that the equation of the line of best fit is
+
 $$\text{house sale price} = `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), scientific=FALSE)` + `r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[2]), scientific=FALSE)`\cdot (\text{house size}).$$
+
 In other words, the model predicts that houses 
 start at \$`r format(round(pull(tidy(pull_workflow_fit(lm_fit)), estimate)[1]), big.mark=",", nsmall=0, scientific=FALSE)` for 0 square feet, and that
 every extra square foot increases the cost of 
@@ -258,7 +267,7 @@ linear regression predicted line of best fit. By default `geom_smooth` adds some
 to the plot that we are not interested in at this point; we provide the argument `se = FALSE` to
 tell `geom_smooth` not to show that information. Figure \@ref(fig:08-lm-predict-all) displays the result.
 
-```{r 08-lm-predict-all, fig.height = 4, fig.width = 5, warning = FALSE, message = FALSE, fig.cap = "Scatter plot of sale price versus size with line of best fit for the full Sacramento housing data"}
+```{r 08-lm-predict-all, fig.height = 4, fig.width = 5, warning = FALSE, message = FALSE, fig.cap = "Scatter plot of sale price versus size with line of best fit for the full Sacramento housing data."}
 lm_plot_final <- ggplot(sacramento_train, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
   xlab("House size (square feet)") +
@@ -291,7 +300,7 @@ simple linear regression model predictions for the Sacramento real estate data
 (predicting price from house size) and the "best" KNN regression model
 obtained from the same problem, shown in Figure \@ref(fig:08-compareRegression).
 
-```{r 08-compareRegression, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 4, fig.width = 10, fig.cap = "Comparison of simple linear regression and KNN regression"}
+```{r 08-compareRegression, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 4, fig.width = 10, fig.cap = "Comparison of simple linear regression and KNN regression."}
 set.seed(1234)
 sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 30) |>
   set_engine("kknn") |>
@@ -362,9 +371,9 @@ interpretability from its wiggly line.
 
 There can however also be a disadvantage to using a simple linear regression
 model in some cases, particularly when the relationship between the target and
-the predictor is not linear, but instead some other shape (e.g. curved or oscillating). In 
+the predictor is not linear, but instead some other shape (e.g., curved or oscillating). In 
 these cases the prediction model from a simple linear regression
-will underfit \index{underfitting!regression} (have high bias), meaning that model/predicted values does not
+will underfit \index{underfitting!regression} (have high bias), meaning that model/predicted values do not
 match the actual observed values very well. Such a model would probably have a
 quite high RMSE when assessing model goodness of fit on the training data and
 a quite high RMPSE when assessing model prediction quality on a test data
@@ -387,7 +396,7 @@ data is known as *extrapolation*; \index{extrapolation} KNN and linear models be
 when extrapolating. Depending on the application, the flat
 or constant slope trend may make more sense. For example, if our housing
 data were slightly different, the linear model may have actually predicted 
-a *negative* price for a small houses (if the intercept $\beta_0$ was negative),
+a *negative* price for a small house (if the intercept $\beta_0$ was negative),
 which obviously does not match reality. On the other hand, the trend of increasing
 house size corresponding to increasing house price probably continues for large houses, 
 so the "flat" extrapolation of KNN likely does not match reality. 
@@ -402,7 +411,7 @@ KNN regression: we just add more predictors to the model formula in the
 recipe. But recall that we do not need to use cross-validation to choose any parameters,
 nor do we need to standardize (i.e., center and scale) the data for linear regression. 
 Note once again that we have the same concerns regarding multiple predictors
- as in the settings of multivariable KNN regression and classification: more predictors is **not** always
+ as in the settings of multivariable KNN regression and classification: having more predictors is **not** always
 better. But because the same predictor selection 
 algorithm from the classification chapter extends to the setting of linear regression,
 it will not be covered again in this chapter.
@@ -438,13 +447,13 @@ lm_mult_test_results <- mlm_fit |>
 
 lm_mult_test_results
 ```
+
 Our model's test error as assessed by RMSPE
 is `r format(round(lm_mult_test_results %>% filter(.metric == 'rmse') %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`.
 In the case of two predictors, we can plot the predictions made by our linear regression creates a *plane* of best fit, as
 shown in Figure \@ref(fig:08-3DlinReg).
 
-```{r 08-3DlinReg, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Linear regression plane of best fit overlaid on top of the data (using price, house size, and number of bedrooms as predictors)"}
-library(plotly)
+```{r 08-3DlinReg, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Linear regression plane of best fit overlaid on top of the data (using price, house size, and number of bedrooms as predictors). Note that in general we recommend against using 3D visualizations; here we use a 3D visualization only to illustrate what the regression plane looks like for learning purposes.", out.width="80%"}
 xvals <- seq(from = min(sacramento_train$sqft), 
              to = max(sacramento_train$sqft), 
              length = 50)
@@ -459,7 +468,7 @@ zvals <- mlm_fit |>
 
 zvalsm <- matrix(zvals, nrow = length(xvals))
 
-plot_ly() |>
+plot_3d <- plot_ly() |>
   add_markers(
     data = sacramento_train,
     x = ~sqft,
@@ -478,7 +487,14 @@ plot_ly() |>
     z = ~zvalsm,
     colorbar = list(title = "Price (USD)")
   )
+
+if(!is_latex_output()){  
+  plot_3d
+} else {
+  knitr::include_graphics("img/plot3d_linear_regression.png")
+}
 ```
+
 We see that the predictions from linear regression with two predictors form a
 flat plane. This is the hallmark of linear regression, and differs from the 
 wiggly, flexible surface we get from other methods such as KNN regression. 
@@ -486,6 +502,7 @@ wiggly, flexible surface we get from other methods such as KNN regression.
 predictor, we can get slopes/intercept from linear regression, and thus describe the
 plane mathematically. We can extract those slope values from our model object
 as shown below:
+
 ```{r 08-lm-multi-get-coeffs}
 mcoeffs <- mlm_fit %>%
              pull_workflow_fit() %>%
@@ -493,6 +510,7 @@ mcoeffs <- mlm_fit %>%
 
 mcoeffs
 ```
+
 And then use those slopes to write a mathematical equation to describe the prediction plane: \index{plane equation}
 
 $$\text{house sale price} = \beta_0 + \beta_1\cdot(\text{house size}) + \beta_2\cdot(\text{number of bedrooms}),$$
@@ -504,6 +522,7 @@ where:
 
 Finally, we can fill in the values for $\beta_0$, $\beta_1$ and $\beta_2$ from the model output above
 to create the equation of the plane of best fit to the data: 
+
 ```{r 08-lm-multi-get-coeffs-hidden, echo = FALSE}
 icept <- format(round(mcoeffs |> 
                         filter(term == "(Intercept)") |> 
@@ -574,7 +593,7 @@ the data point is an *outlier*. In blue we plot the original line of best fit, a
 we plot the new line of best fit including the outlier. You can see how different the red line
 is from the blue line, which is entirely caused by that one extra outlier data point.
 
-```{r 08-lm-outlier, fig.height = 4, fig.width = 5, message = FALSE, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of a subset of the data, with outlier highlighted in red"}
+```{r 08-lm-outlier, fig.height = 4, fig.width = 5, message = FALSE, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of a subset of the data, with outlier highlighted in red."}
 sacramento_train_small <- sacramento_train |> sample_n(100)
 sacramento_outlier <- tibble(sqft = 5000, price = 50000)
 
@@ -595,7 +614,7 @@ lm_plot_outlier
 
 Fortunately, if you have enough data, the inclusion of one or two
 outliers&mdash;as long as their values are not *too* wild&mdash;will
-typically not have a large an effect on the line of best fit. Figure
+typically not have a large effect on the line of best fit. Figure
 \@ref(fig:08-lm-outlier-2) shows how that same outlier data point from earlier
 influences the line of best fit when we are working with the entire original
 Sacramento training data. You can see that with this larger data set, the line
@@ -603,7 +622,7 @@ changes much less when adding the outlier.
 Nevertheless, it is still important when working with linear regression to critically
 think about how much any individual data point is influencing the model.
 
-```{r 08-lm-outlier-2, fig.height = 4, fig.width = 5, warning = FALSE, message = FALSE, echo = FALSE, fig.cap = "Scatter plot of the full data, with outlier highlighted in red"}
+```{r 08-lm-outlier-2, fig.height = 4, fig.width = 5, warning = FALSE, message = FALSE, echo = FALSE, fig.cap = "Scatter plot of the full data, with outlier highlighted in red."}
 sacramento_outlier <- tibble(sqft = 5000, price = 50000)
 
 lm_plot_outlier_large <- ggplot(sacramento_train, aes(x = sqft, y = price)) +
@@ -637,7 +656,7 @@ Since the two people are each slightly inaccurate, the two measurements might
 not agree exactly, but they are very strongly linearly related to each other,
 as shown in Figure \@ref(fig:08-lm-multicol).
 
-```{r 08-lm-multicol, fig.height = 4, fig.width = 5, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of the with possible outlier highlighted in red"}
+```{r 08-lm-multicol, fig.height = 4, fig.width = 5, warning = FALSE, echo = FALSE, fig.cap = "Scatter plot of the with possible outlier highlighted in red."}
 sacramento_train <- sacramento_train |>
                           mutate(sqft1 = sqft + 100 * sample(1000000,
                                                              size=nrow(sacramento_train),
@@ -745,7 +764,7 @@ that seems to have a meaningful and nearly linear relationship with our response
 But what should we do if we cannot immediately find such a nice variable?
 Well, sometimes it is just a fact that the variables in the data do not have enough of 
 a relationship with the response variable to provide useful predictions. For example,
-if the only available predictor was "the current house owner's favourite ice cream flavour",
+if the only available predictor was "the current house owner's favorite ice cream flavor",
 we likely would have little hope of using that variable to predict the house's sale price
 (barring any future remarkable scientific discoveries about the relationship between 
 the housing market and homeowner ice cream preferences). In cases like these, 
@@ -753,9 +772,10 @@ the only option is to obtain measurements of more useful variables.
 
 There are, however, a wide variety of cases where the predictor variables do have a 
 meaningful relationship with the response variable, but that relationship does not fit
-the assumptions of the regression method you have chosen. For example, a dataframe `df`
+the assumptions of the regression method you have chosen. For example, a data frame `df`
 with two variables---`x` and `y`---with a nonlinear relationship between the two variables
 will not be fully captured by simple linear regression, as shown in Figure \@ref(fig:08-predictor-design).
+
 ```{r 08-predictor-design-df, echo = FALSE, message = FALSE, warning = FALSE}
 set.seed(1)
 
@@ -769,8 +789,7 @@ df <- df |>
 df
 ```
 
-<center>
-```{r 08-predictor-design, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Example of a dataset with a nonlinear relationship between the predictor and the response"}
+```{r 08-predictor-design, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Example of a data set with a nonlinear relationship between the predictor and the response."}
 curve_plt <- ggplot(df, aes(x = x, y = y)) +
   geom_point() +
   xlab("x") +
@@ -778,7 +797,6 @@ curve_plt <- ggplot(df, aes(x = x, y = y)) +
   geom_smooth(method = "lm", se = FALSE)
 curve_plt
 ```
-</center>
 
 Instead of trying to predict the response `y` using a linear regression on `x`,
 we might have some scientific background about our problem to suggest that `y`
@@ -798,16 +816,15 @@ Note that none of the `y` response values have changed between Figures \@ref(fig
 and \@ref(fig:08-predictor-design-2); the only change is that the `x` values
 have been replaced by `z` values.
 
-<center>
-```{r 08-predictor-design-2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Relationship between the transformed predictor and the response"}
+```{r 08-predictor-design-2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Relationship between the transformed predictor and the response."}
 curve_plt2 <- ggplot(df, aes(x = z, y = y)) +
   geom_point() +
-  xlab("z = x^3") +
+  xlab(paste0("z = ", expression(x^3))) +
   ylab("y") +
   geom_smooth(method = "lm", se = FALSE)
+
 curve_plt2
 ```
-</center>
  
 The process of
 transforming predictors (and potentially combining multiple predictors in the process)
@@ -817,7 +834,7 @@ a deep understanding of the problem---as well as the wrangling tools
 from previous chapters---to engineer useful new features that improve
 predictive performance.
 
-> Note that feature engineering
+> **Note:** Feature engineering
 > is *part of tuning your model*, and as such you must not use your test data
 > to evaluate the quality of the features you produce. You are free to use
 > cross-validation, though!
