@@ -27,7 +27,9 @@ RUN apt-get update -qq && install2.r --error \
     svglite \
     tidymodels \
     reticulate \ 
-    kknn
+    kknn \
+    fontawesome \
+    rsvg
     
 RUN Rscript -e "devtools::install_github('ttimbers/canlang@0.0.1')"
 
