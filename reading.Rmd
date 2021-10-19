@@ -481,11 +481,9 @@ relational databases and use the R programming language
 to obtain data. In this book, we will give examples of how to do this
 using R with SQLite and PostgreSQL databases.
 
-### Connecting to a database
+### Reading data from a SQLite database
 
-#### Reading data from a SQLite database
-
-SQLite \index{database!SQLite} is probably the simplest relational database
+SQLite \index{database!SQLite} is probably the simplest relational database system
 that one can use in combination with R. SQLite databases are self-contained and
 usually stored and accessed locally on one computer. Data is usually stored in
 a file with a `.db` extension. Similar to Excel files, these are not plain text
@@ -495,50 +493,50 @@ The first thing you need to do to read data into R from a database is to
 connect to the database. We do that using the `dbConnect` function from the
 `DBI` (database interface) package. \index{database!connect} This does not read
 in the data, but simply tells R where the database is and opens up a
-communication channel.
+communication channel that R can use to send SQL commands to the database.
 
 ```{r}
 library(DBI)
 
-con_lang_data <- dbConnect(RSQLite::SQLite(), "data/can_lang.db")
+conn_lang_data <- dbConnect(RSQLite::SQLite(), "data/can_lang.db")
 ```
 
-Often relational databases have many tables; thus, anytime 
-you want to access data from a
-relational database, you need to know the table names. You can get the names of
+Often relational databases have many tables; thus, in order to retrieve
+data from a database, you need to know the name of the table 
+in which the data is stored. You can get the names of
 all the tables in the database using the `dbListTables` \index{database!tables}
 function:
 
 ```{r}
-tables <- dbListTables(con_lang_data)
+tables <- dbListTables(conn_lang_data)
 tables
 ```
 
-We only get one table name returned from calling `dbListTables`, which tells us
+The `dbListTables` function returned only one name, which tells us
 that there is only one table in this database. To reference a table in the
-database to do things like select columns and filter rows, we use the `tbl`
-function \index{database!tbl} from the `dbplyr` package. The package `dbplyr`
-\index{dbplyr|see{database}}\index{database!dbplyr} allows us to work with data
-stored in databases as if they were local data frames, which is useful because
-we can do a lot with big data sets without actually having to bring these vast
-amounts of data into your computer! 
+database (so that we can perform operations like selecting columns and filtering rows), we 
+use the `tbl` function \index{database!tbl} from the `dbplyr` package. The object returned
+by the `tbl` function \index{dbplyr|see{database}}\index{database!dbplyr} allows us to work with data
+stored in databases as if they were just regular data frames; but secretly, behind
+the scenes, `dbplyr` is turning your function calls (e.g., `select` and `filter`)
+into SQL queries!
 
 ```{r}
 library(dbplyr)
 
-lang_db <- tbl(con_lang_data, "lang")
+lang_db <- tbl(conn_lang_data, "lang")
 lang_db 
 ```
 
 Although it looks like we just got a data frame from the database, we didn't!
-It's a *reference*, showing us data that is still in the SQLite database. It
-does this because databases are often more efficient at selecting, filtering
-and joining large data sets than R. And typically, the database will not even
-be stored on your computer but rather a more powerful machine somewhere on the
+It's a *reference*; the data is still stored only in the SQLite database. The
+`dbplyr` package works this way because databases are often more efficient at selecting, filtering
+and joining large data sets than R. And typically the database will not even
+be stored on your computer, but rather a more powerful machine somewhere on the
 web. So R is lazy and waits to bring this data into memory until you explicitly
-tell it to using the `collect` \index{database!collect} function from the
-`dbplyr` package. Figure \@ref(fig:01-ref-vs-tibble) highlights the difference
-between a `tibble` object in R and the output we just got. Notice in the table
+tell it to using the `collect` \index{database!collect} function. 
+Figure \@ref(fig:01-ref-vs-tibble) highlights the difference
+between a `tibble` object in R and the output we just created. Notice in the table
 on the right, the first two lines of the output indicate the source is SQL. The
 last line doesn't show how many rows there are (R is trying to avoid performing
 expensive query operations), whereas the output for the `tibble` object does. 
@@ -548,40 +546,50 @@ knitr::include_graphics("img/ref_vs_tibble.jpeg")
 ```
 
 We can look at the SQL commands that are sent to the database when we write 
-`tbl(con_lang_data, "lang")` in R with the `show_query` function from the
+`tbl(conn_lang_data, "lang")` in R with the `show_query` function from the
 `dbplyr` package. \index{database!show\_query}
 
 ```{r}
-show_query(tbl(con_lang_data, "lang"))
+show_query(tbl(conn_lang_data, "lang"))
 ```
 
-From the output above, we can see the SQL code sent to the database. When we
-write `tbl(con_lang_data, "lang")` in R, in the background, the function is
-translating the R code into SQL, asking the database, and then translating the
-response back to us. So instead of us needing to know the SQL code ourselves
-and switching back and forth between R and SQL code, the `dbplyr` package does
-that for us. 
+The output above shows the SQL code that is sent to the database. When we
+write `tbl(conn_lang_data, "lang")` in R, in the background, the function is
+translating the R code into SQL, sending that SQL to the database, and then translating the
+response for us. So `dbplyr` does all the hard work of translating from R to SQL and back for us; 
+we can just stick with R! 
 
-Now we will filter for only rows in the Aboriginal languages category according
-to the 2016 Canada Census, and then use `collect` to finally bring this data
-into R as a data frame. \index{filter}
+With our `lang_db` table reference for the 2016 Canadian Census data in hand, we 
+can mostly continue onward as if it were a regular data frame. For example, 
+we can use the `filter` function
+to obtain only certain rows. Below we filter the data to include only Aboriginal languages.
 
 ```{r}
 aboriginal_lang_db <- filter(lang_db, category == "Aboriginal languages")
 aboriginal_lang_db 
 ```
 
+Above you can again see the hints that this data is not actually stored in R yet:
+the source is a `lazy query [?? x 6]` and the output says `... with more rows` at the end
+(both indicating that R does not know how many rows there are in total!),
+and a database type `sqlite 3.36.0` is listed.
+In order to actually retrieve this data in R as a data frame,
+we use the `collect` function. \index{filter}
+Below you will see that after running `collect`, R knows that the retrieved
+data has 67 rows, and there is no database listed any more.
+
 ```{r}
 aboriginal_lang_data <- collect(aboriginal_lang_db)
 aboriginal_lang_data
 ```
 
-Why bother to use the `collect` function? The data looks pretty similar in both
-outputs shown above. And `dbplyr` provides lots of functions similar to
-`filter` that you can use to directly feed the database reference (what `tbl`
-gives you) into downstream analysis functions (e.g., `ggplot2` for data
-visualization and `lm` for linear regression modeling). However, this does not
-work in *every* case; look what happens when we try to use `nrow` to count rows
+Aside from knowing the number of rows, the data looks pretty similar in both
+outputs shown above. And `dbplyr` provides many more functions (not just `filter`) 
+that you can use to directly feed the database reference (`lang_db`) into 
+downstream analysis functions (e.g., `ggplot2` for data visualization). 
+But `dbplyr` does not provide *every* function that we need for analysis;
+we do eventually need to call `collect`.
+For example, look what happens when we try to use `nrow` to count rows
 in a data frame: \index{nrow}
 
 ```{r}
@@ -600,16 +608,17 @@ tail(aboriginal_lang_db)
 Additionally, some operations will not work to extract columns or single values
 from the reference given by the `tbl` function. Thus, once you have finished
 your data wrangling of the `tbl` database reference object, it is advisable to
-bring it into your local machine's memory using `collect` as a data frame.
-Usually, databases are very big! Reading the object into your local machine may
-give an error or take a lot of time to run so be careful if you plan to do
-this. This is one reason we may want to filter rows or select columns first
-before reading it in!
+bring it into R as a data frame using `collect`.
+But be very careful using `collect`: databases are often *very* big,
+and reading an entire table into R might take a long time to run or even possibly
+crash your machine. So make sure you use `filter` and `select` on the database table
+to reduce the data to a reasonable size before using `collect` to read it into R!
  
-#### Reading data from a PostgreSQL database 
+### Reading data from a PostgreSQL database 
 
 PostgreSQL (also called Postgres) \index{database!PostgreSQL} is a very popular
-and open-source option for relational database software. Unlike SQLite,
+and open-source option for relational database software. 
+Unlike SQLite,
 PostgreSQL uses a client–server database engine, as it was designed to be used
 and accessed on a network. This means that you have to provide more information
 to R when connecting to Postgres databases. The additional information that you
@@ -630,19 +639,17 @@ be able to connect to a database using this information.
 
 ```{r, eval = FALSE}
 library(RPostgres)
-can_mov_db_con <- dbConnect(RPostgres::Postgres(), dbname = "can_mov_db",
+conn_mov_data <- dbConnect(RPostgres::Postgres(), dbname = "can_mov_db",
                         host = "fakeserver.stat.ubc.ca", port = 5432,
                         user = "user0001", password = "abc123")
 ```
-
-### Interacting with a database
 
 After opening the connection, everything looks and behaves almost identically
 to when we were using an SQLite database in R. For example, we can again use
 `dbListTables` to find out what tables are in the `can_mov_db` database:
 
 ```{r, eval = FALSE}
-dbListTables(can_mov_db_con)
+dbListTables(conn_mov_data)
 ```
 
 ```
@@ -655,13 +662,13 @@ We see that there are 10 tables in this database. Let's first look at the
 database:
 
 ```{r, eval = FALSE}
-ratings_db <- tbl(can_mov_db_con, "ratings")
+ratings_db <- tbl(conn_mov_data, "ratings")
 ratings_db
 ```
 
 ```
 # Source:   table<ratings> [?? x 3]
-# Database: postgres [user0001@r7k3-mds1.stat.ubc.ca:5432/can_mov_db]
+# Database: postgres [user0001@fakeserver.stat.ubc.ca:5432/can_mov_db]
    title              average_rating num_votes
    <chr>                    <dbl>     <int>
  1 The Grand Seduction       6.6       150
@@ -688,7 +695,7 @@ avg_rating_db
 
 ```
 # Source:   lazy query [?? x 1]
-# Database: postgres [user0001@r7k3-mds1.stat.ubc.ca:5432/can_mov_db]
+# Database: postgres [user0001@fakeserver.stat.ubc.ca:5432/can_mov_db]
    average_rating
             <dbl>
  1            6.6
@@ -740,16 +747,18 @@ that setting since we had to use `dbplyr` to translate `tidyverse`-like
 commands (`filter`, `select`, `head`, etc.) into SQL commands that the database
 understands. Not all `tidyverse` commands can currently be translated with
 SQLite databases. For example, we can compute a mean with an SQLite database
-but can't easily compute a median. So you might be wondering why should we use
+but can't easily compute a median. So you might be wondering: why should we use
 databases at all? 
 
 Databases are beneficial in a large-scale setting:
 
-- they enable storing large data sets across multiple computers with automatic redundancy and backups
-- they allow multiple users to access them simultaneously and remotely without conflicts and errors
+- they enable storing large data sets across multiple computers with backups
 - they provide mechanisms for ensuring data integrity and validating input
-- they provide security to keep data safe
-For example, [there are billions of Google searches conducted daily](https://www.internetlivestats.com/google-search-statistics/). Can you imagine if Google stored all of the data from those queries in a single `.csv file`!? Chaos would ensue! 
+- they provide security and data access control
+- they allow multiple users to access data simultaneously and remotely without conflicts and errors.
+  For example, [there are billions of Google searches conducted daily](https://www.internetlivestats.com/google-search-statistics/). 
+  Can you imagine if Google stored all of the data from those searches in a single `.csv
+  file`!? Chaos would ensue! 
 
 ## Writing data from R to a `.csv` file
 
