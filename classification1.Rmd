@@ -207,7 +207,7 @@ for light orange and `"steelblue2"` for light blue&mdash;and
 We also make the category labels ("B" and "M") more readable by 
 changing them to "Benign" and "Malignant" using the `labels` argument.
 
-```{r 05-scatter, fig.height = 4, fig.width = 5, fig.cap= "Scatter plot of concavity versus perimeter colored by diagnosis label."}
+```{r 05-scatter, out.width = "100%", fig.cap= "Scatter plot of concavity versus perimeter colored by diagnosis label."}
 perim_concav <- cancer %>%
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
   geom_point(alpha = 0.6) +
@@ -215,7 +215,8 @@ perim_concav <- cancer %>%
        y = "Concavity (standardized)",
        color = "Diagnosis") +
   scale_color_manual(labels = c("Malignant", "Benign"), 
-                     values = c("orange2", "steelblue2"))
+                     values = c("orange2", "steelblue2")) + 
+  theme(text = element_text(size = 14))
 perim_concav
 ```
 
@@ -283,7 +284,7 @@ new observation, with standardized perimeter of `r new_point[1]` and standardize
 diagnosis "Class" is unknown. This new observation is depicted by the red, diamond point in
 Figure \@ref(fig:05-knn-1).
 
-```{r 05-knn-1, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with new observation represented as a red diamond."}
+```{r 05-knn-1, echo = FALSE, out.width = "100%", fig.cap="Scatter plot of concavity versus perimeter with new observation represented as a red diamond."}
 perim_concav_with_new_point <-  bind_rows(cancer, 
                                           tibble(Perimeter = new_point[1], 
                                                  Concavity = new_point[2], 
@@ -304,7 +305,8 @@ perim_concav_with_new_point <-  bind_rows(cancer,
                      values= c(16, 16, 18))+ 
   scale_size_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
-                     values= c(2, 2, 2.5))
+                     values= c(2, 2, 2.5)) + 
+  theme(text = element_text(size = 14))
 perim_concav_with_new_point
 ```
 
@@ -315,7 +317,7 @@ then the perimeter and concavity values are similar, and so we may expect that
 they would have the same diagnosis. 
 
 
-```{r 05-knn-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter. The new observation is represented as a red diamond with a line to the one nearest neighbor, which has a malignant label."}
+```{r 05-knn-2, echo = FALSE, out.width = "100%", fig.cap="Scatter plot of concavity versus perimeter. The new observation is represented as a red diamond with a line to the one nearest neighbor, which has a malignant label."}
 perim_concav_with_new_point +
   geom_segment(aes(
     x = new_point[1],
@@ -340,7 +342,7 @@ Does this seem like the right prediction to make for this observation? Probably
 not, if you consider the other nearby points...
 
 
-```{r 05-knn-4, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter. The new observation is represented as a red diamond with a line to the one nearest neighbor, which has a benign label."}
+```{r 05-knn-4, echo = FALSE, out.width = "100%", fig.cap="Scatter plot of concavity versus perimeter. The new observation is represented as a red diamond with a line to the one nearest neighbor, which has a benign label."}
 
 perim_concav_with_new_point2 <- bind_rows(cancer, 
                                           tibble(Perimeter = new_point[1], 
@@ -369,7 +371,8 @@ perim_concav_with_new_point2 +
     y = new_point[2],
     xend = pull(neighbors[1, attrs[1]]),
     yend = pull(neighbors[1, attrs[2]])
-  ), color = "black", size = 0.5)
+  ), color = "black", size = 0.5) + 
+  theme(text = element_text(size = 14))
 ```
 
 To improve the prediction we can consider several
@@ -380,7 +383,7 @@ see that the diagnoses of 2 of the 3 nearest neighbors to our new observation
 are malignant. Therefore we take majority vote and classify our new red, diamond
 observation as malignant. 
 
-```{r 05-knn-5, echo =  FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with three nearest neighbors."}
+```{r 05-knn-5, echo =  FALSE, out.width = "100%", fig.cap="Scatter plot of concavity versus perimeter with three nearest neighbors."}
 perim_concav_with_new_point2 + 
   geom_segment(aes(
     x = new_point[1], y = new_point[2],
@@ -396,7 +399,8 @@ perim_concav_with_new_point2 +
     x = new_point[1], y = new_point[2],
     xend = pull(neighbors[3, attrs[1]]),
     yend = pull(neighbors[3, attrs[2]])
-  ), color = "black", size = 0.5)
+  ), color = "black", size = 0.5) + 
+  theme(text = element_text(size = 14))
 ```
 
 Here we chose the $K=3$ nearest observations, but there is nothing special
@@ -430,7 +434,7 @@ You will see in the `mutate` \index{mutate} step below, we compute the straight-
 distance using the formula above: we square the differences between the two observations' perimeter 
 and concavity coordinates, add the squared differences, and then take the square root.
 
-```{r 05-multiknn-1, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with new observation represented as a red diamond."}
+```{r 05-multiknn-1, echo = FALSE, out.width = "100%", fig.cap="Scatter plot of concavity versus perimeter with new observation represented as a red diamond."}
 perim_concav <- bind_rows(cancer, 
                           tibble(Perimeter = new_point[1], 
                                  Concavity = new_point[2], 
@@ -459,7 +463,8 @@ perim_concav <- bind_rows(cancer,
                      values= c(16, 16, 18))+ 
   scale_size_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
-                     values= c(2, 2, 2.5))
+                     values= c(2, 2, 2.5)) + 
+  theme(text = element_text(size = 14))
 
 perim_concav
 ```
@@ -509,7 +514,7 @@ The result of this computation shows that 3 of the 5 nearest neighbors to our ne
 malignant (`M`); since this is the majority, we classify our new observation as malignant. 
 These 5 neighbors are circled in Figure \@ref(fig:05-multiknn-3).
 
-```{r 05-multiknn-3, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with 5 nearest neighbors circled."}
+```{r 05-multiknn-3, echo = FALSE, out.width = "100%", fig.cap="Scatter plot of concavity versus perimeter with 5 nearest neighbors circled."}
 perim_concav + annotate("path",
   x = new_point[1] + 1.4 * cos(seq(0, 2 * pi,
     length.out = 100
@@ -517,7 +522,7 @@ perim_concav + annotate("path",
   y = new_point[2] + 1.4 * sin(seq(0, 2 * pi,
     length.out = 100
   ))
-)
+) 
 ```
 
 ### More than two explanatory variables 
@@ -937,7 +942,8 @@ unscaled <- ggplot(unscaled_cancer, aes(x = Area,
     x = unlist(new_obs[1]), y = unlist(new_obs[2]),
     xend = unlist(neighbors[3, attrs[1]]),
     yend = unlist(neighbors[3, attrs[2]])
-  ), color = "black", size = 0.5)
+  ), color = "black", size = 0.5) + 
+  theme(text = element_text(size = 14))
 
 # create new scaled obs and get NNs
 new_obs_scaled <- tibble(Area = -0.72, Smoothness = 2.8, Class = "unknown")
@@ -982,7 +988,8 @@ scaled <- ggplot(scaled_cancer, aes(x = Area,
     x = unlist(new_obs_scaled[1]), y = unlist(new_obs_scaled[2]),
     xend = unlist(neighbors_scaled[3, attrs[1]]),
     yend = unlist(neighbors_scaled[3, attrs[2]])
-  ), color = "black", size = 0.5)
+  ), color = "black", size = 0.5) + 
+  theme(text = element_text(size = 14))
 
 gridExtra::grid.arrange(unscaled, scaled, ncol = 2)
 ```
@@ -1019,11 +1026,12 @@ ggplot(unscaled_cancer, aes(x = Area,
     x = unlist(new_obs[1]), y = unlist(new_obs[2]),
     xend = unlist(neighbors[3, attrs[1]]),
     yend = unlist(neighbors[3, attrs[2]])
-  ), color = "black") +   theme_light() +  
+  ), color = "black") +
 # facet_zoom( xlim = c(399.7, 401.6), ylim = c(0.08, 0.14), zoom.size = 2) + 
    facet_zoom(x = ( Area > 380 & Area < 420) , 
               y = (Smoothness > 0.08 & Smoothness < 0.14), zoom.size = 2) + 
-  theme_bw()
+  theme_bw() + 
+  theme(text = element_text(size = 14))
 ```
 
 ### Balancing
@@ -1048,14 +1056,14 @@ function, which takes two arguments: a data frame-like object,
 and the number of rows to select from the top (`n`).
 The new imbalanced data is shown in Figure \@ref(fig:05-unbalanced).
 
-```{r 05-unbalanced-seed, echo = FALSE, fig.height = 4, fig.width = 5, warning = FALSE, message = FALSE}
+```{r 05-unbalanced-seed, echo = FALSE, out.width = "100%", warning = FALSE, message = FALSE}
 # hidden seed here for reproducibility 
 # randomness shouldn't affect much in this use of step_upsample,
 # but just in case...
 set.seed(3)
 ```
 
-```{r 05-unbalanced, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data."}
+```{r 05-unbalanced, out.width = "100%", fig.cap = "Imbalanced data."}
 rare_cancer <- bind_rows(
       filter(cancer, Class == "B"),
       cancer |> filter(Class == "M") |> slice_head(n = 3)
@@ -1069,7 +1077,8 @@ rare_plot <- rare_cancer |>
        y = "Concavity (standardized)",
        color = "Diagnosis") +
   scale_color_manual(labels = c("Malignant", "Benign"), 
-                     values = c("orange2", "steelblue2"))
+                     values = c("orange2", "steelblue2")) + 
+  theme(text = element_text(size = 14))
 
 rare_plot
 ```
@@ -1083,7 +1092,7 @@ benign, and the benign vote will always win. For example, Figure \@ref(fig:05-up
 shows what happens for a new tumor observation that is quite close to three observations
 in the training data that were tagged as malignant.
 
-```{r 05-upsample, echo=FALSE, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data with 7 nearest neighbors to a new observation highlighted."}
+```{r 05-upsample, echo=FALSE, out.width = "100%", fig.cap = "Imbalanced data with 7 nearest neighbors to a new observation highlighted."}
 new_point <- c(2, 2)
 attrs <- c("Perimeter", "Concavity")
 my_distances <- table_with_distances(rare_cancer[, attrs], new_point)
@@ -1108,7 +1117,8 @@ rare_plot <- bind_rows(rare_cancer,
                      values= c(16, 16, 18))+ 
   scale_size_manual(name = "Diagnosis", 
                      labels = c("Benign", "Malignant", "Unknown"),
-                     values= c(2, 2, 2.5))
+                     values= c(2, 2, 2.5)) + 
+  theme(text = element_text(size = 14))
 
 for (i in 1:7) {
   clr <- "steelblue2"
@@ -1135,7 +1145,7 @@ each area of the plot to the predictions the $K$-nearest neighbor
 classifier would make. We can see that the decision is 
 always "benign," corresponding to the blue color.
 
-```{r 05-upsample-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data with background color indicating the decision of the classifier and the points represent the labeled data."}
+```{r 05-upsample-2, echo = FALSE, out.width = "100%", fig.cap = "Imbalanced data with background color indicating the decision of the classifier and the points represent the labeled data."}
 
 knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) |>
   set_engine("kknn") |>
@@ -1174,7 +1184,8 @@ rare_plot <-
        x = "Perimeter (standardized)", 
        y = "Concavity (standardized)") +
   scale_color_manual(labels = c("Malignant", "Benign"), 
-                     values = c("orange2", "steelblue2"))
+                     values = c("orange2", "steelblue2")) + 
+  theme(text = element_text(size = 14))
 
 rare_plot
 ```
@@ -1213,7 +1224,7 @@ classifier would make. We can see that the decision is more reasonable; when the
 to those labeled malignant, the classifier predicts a malignant tumor, and vice versa when they are 
 closer to the benign tumor observations.
 
-```{r 05-upsample-plot, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Upsampled data with background color indicating the decision of the classifier."}
+```{r 05-upsample-plot, echo = FALSE, out.width = "100%", fig.cap = "Upsampled data with background color indicating the decision of the classifier."}
 knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) |>
   set_engine("kknn") |>
   set_mode("classification")
@@ -1243,7 +1254,8 @@ upsampled_plot <-
        x = "Perimeter (standardized)", 
        y = "Concavity (standardized)") +
   scale_color_manual(labels = c("Malignant", "Benign"), 
-                     values = c("orange2", "steelblue2"))
+                     values = c("orange2", "steelblue2")) + 
+  theme(text = element_text(size = 14))
 
 upsampled_plot
 ```
@@ -1323,7 +1335,7 @@ predict the label of each, and visualize the predictions with a colored scatter 
 > textbook. It is included for those readers who would like to use similar
 > visualizations in their own data analyses. 
 
-```{r 05-workflow-plot-show, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of smoothness versus area where background color indicates the decision of the classifier."}
+```{r 05-workflow-plot-show, out.width = "100%", fig.cap = "Scatter plot of smoothness versus area where background color indicates the decision of the classifier."}
 # create the grid of area/smoothness vals, and arrange in a data frame
 are_grid <- seq(min(unscaled_cancer$Area), 
                 max(unscaled_cancer$Area), 
@@ -1359,7 +1371,8 @@ wkflw_plot <-
              size = 5) +
   labs(color = "Diagnosis") +
   scale_color_manual(labels = c("Malignant", "Benign"), 
-                     values = c("orange2", "steelblue2"))
+                     values = c("orange2", "steelblue2")) + 
+  theme(text = element_text(size = 14))
 
 wkflw_plot
 ```
