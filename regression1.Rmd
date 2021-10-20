@@ -124,12 +124,13 @@ want to predict (sale price) on the y-axis.
 > (from the `scales` package)
 > to the `labels` argument of the `scale_y_continuous` function.
 
-```{r 07-edaRegr, message = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square feet)."}
+```{r 07-edaRegr, message = FALSE, out.width = "100%", fig.cap = "Scatter plot of price (USD) versus house size (square feet)."}
 eda <- ggplot(sacramento, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
   xlab("House size (square feet)") +
   ylab("Price (USD)") +
-  scale_y_continuous(labels = dollar_format())
+  scale_y_continuous(labels = dollar_format()) + 
+  theme(text = element_text(size = 14))
 
 eda
 ```
@@ -178,13 +179,14 @@ you can see that we have no
 observations of a house of size *exactly* 2,000 square feet. How can we predict
 the sale price? 
 
-```{r 07-small-eda-regr, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with vertical line indicating 2,000 square feet on x-axis."}
+```{r 07-small-eda-regr, out.width = "100%", fig.cap = "Scatter plot of price (USD) versus house size (square feet) with vertical line indicating 2,000 square feet on x-axis."}
 small_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
   geom_point() +
   xlab("House size (square feet)") +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
-  geom_vline(xintercept = 2000, linetype = "dotted")
+  geom_vline(xintercept = 2000, linetype = "dotted") + 
+  theme(text = element_text(size = 14))
 
 small_plot
 ```
@@ -206,14 +208,15 @@ nearest_neighbors <- small_sacramento |>
 nearest_neighbors
 ```
 
-```{r 07-knn3-example, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with lines to 5 nearest neighbors."}
+```{r 07-knn3-example, echo = FALSE, out.width = "100%", fig.cap = "Scatter plot of price (USD) versus house size (square feet) with lines to 5 nearest neighbors."}
 nearest_neighbors <- mutate(nearest_neighbors, twothou = rep(2000, 5))
 
 nn_plot <- small_plot +
   geom_segment(
     data = nearest_neighbors,
     aes(x = twothou, xend = sqft, y = price, yend = price), color = "orange"
-  )
+  ) + 
+  theme(text = element_text(size = 14))
 
 nn_plot
 ```
@@ -233,9 +236,9 @@ prediction <- nearest_neighbors |>
 prediction
 ```
 
-```{r 07-predictedViz-knn, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with predicted price for a 2,000 square-foot house based on 5 nearest neighbors represented as a red dot."}
+```{r 07-predictedViz-knn, echo = FALSE, out.width = "100%", fig.cap = "Scatter plot of price (USD) versus house size (square feet) with predicted price for a 2,000 square-foot house based on 5 nearest neighbors represented as a red dot."}
 nn_plot +
-  geom_point(aes(x = 2000, y = prediction[[1]]), color = "red", size = 2.5)
+  geom_point(aes(x = 2000, y = prediction[[1]]), color = "red", size = 2.5) 
 ```
 
 Our predicted price is \$`r format(round(prediction[[1]]), big.mark=",", nsmall=0, scientific = FALSE)`
@@ -304,7 +307,7 @@ different from the true values, then RMSPE will be quite large. When we
 use cross validation, we will choose the $K$ that gives
 us the smallest RMSPE.
 
-```{r 07-verticalerrors, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with example predictions (blue line) and the error in those predictions compared with true response values for three selected observations (vertical red lines).", fig.height = 4, fig.width = 5}
+```{r 07-verticalerrors, echo = FALSE, message = FALSE, warning = FALSE, out.width = "100%", fig.cap = "Scatter plot of price (USD) versus house size (square feet) with example predictions (blue line) and the error in those predictions compared with true response values for three selected observations (vertical red lines)."}
 # save the seed
 seedval <- .Random.seed
 
@@ -350,7 +353,8 @@ errors_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
     color = "red") + 
   geom_point(data = sacr_new_preds_hid, 
              aes(x = sqft, y = price), 
-             color = "black")
+             color = "black") + 
+  theme(text = element_text(size = 14))
 
 # restore the seed
 .Random.seed <- seedval
@@ -433,11 +437,12 @@ sacr_results <- sacr_wkflw |>
 sacr_results
 ```
 
-```{r 07-choose-k-knn-plot, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Effect of the number of neighbors on the RMSPE."} 
+```{r 07-choose-k-knn-plot, echo = FALSE, out.width = "100%", fig.cap = "Effect of the number of neighbors on the RMSPE."} 
 sacr_tunek_plot <- ggplot(sacr_results, aes(x = neighbors, y = mean)) +
   geom_point() +
   geom_line() +
-  labs(x = "Neighbors", y = "RMSPE")
+  labs(x = "Neighbors", y = "RMSPE") + 
+  theme(text = element_text(size = 14))
 
 sacr_tunek_plot
 ```
@@ -498,7 +503,8 @@ for (i in 1:6) {
         ylab("Price (USD)") +
         scale_y_continuous(labels = dollar_format()) +
         geom_line(data = sacr_preds, aes(x = sqft, y = .pred), color = "blue") +
-        ggtitle(paste0("K = ", gridvals[[i]]))
+        ggtitle(paste0("K = ", gridvals[[i]])) + 
+  theme(text = element_text(size = 16))
   } else {
       plots[[i]] <- ggplot(sacr_preds, aes(x = sqft, y = price)) +
         geom_point(alpha = 0.4) +
@@ -509,7 +515,8 @@ for (i in 1:6) {
                    mapping = aes(x = sqft), 
                    yintercept = mean(sacr_preds$price), 
                    color = "blue") +
-        ggtitle(paste0("K = ", gridvals[[i]]))
+        ggtitle(paste0("K = ", gridvals[[i]])) + 
+  theme(text = element_text(size = 14))
   }
 }
 
@@ -617,7 +624,7 @@ the range of house sizes we might encounter in the Sacramento area&mdash;from 50
 You have already seen a few plots like this in this chapter, but here we also provide the code that generated it
 as a learning challenge.
 
-```{r 07-predict-all, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Predicted values of house price (blue line) for the final KNN regression model."}
+```{r 07-predict-all, warning = FALSE, out.width = "100%", fig.cap = "Predicted values of house price (blue line) for the final KNN regression model."}
 sacr_preds <- tibble(sqft = seq(from = 500, to = 5000, by = 10))
 
 sacr_preds <- sacr_fit |>
@@ -632,7 +639,8 @@ plot_final <- ggplot(sacramento_train, aes(x = sqft, y = price)) +
   xlab("House size (square feet)") +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
-  ggtitle(paste0("K = ", kmin))
+  ggtitle(paste0("K = ", kmin)) + 
+  theme(text = element_text(size = 14))
 
 plot_final
 ```
@@ -664,11 +672,12 @@ visualizing the data, before we start modeling the data. Figure \@ref(fig:07-bed
 shows that the number of bedrooms might provide useful information
 to help predict the sale price of a house.
 
-```{r 07-bedscatter, fig.height = 5, fig.width = 6, fig.cap = "Scatter plot of the sale price of houses versus the number of bedrooms."}
+```{r 07-bedscatter, out.width = "100%", fig.cap = "Scatter plot of the sale price of houses versus the number of bedrooms."}
 plot_beds <- sacramento |>
              ggplot(aes(x = beds, y = price)) +
              geom_point(alpha = 0.4) +
-             labs(x = 'Number of Bedrooms', y = 'Price (USD)')
+             labs(x = 'Number of Bedrooms', y = 'Price (USD)') + 
+  theme(text = element_text(size = 14))
 plot_beds
 ```
 
