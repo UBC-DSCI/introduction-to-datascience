@@ -77,7 +77,19 @@ RUN tlmgr install amsmath \
     caption \
     sourcecodepro \
     amscls \
-    natbib
+    natbib \
+    float \
+    multirow \
+    wrapfig \
+    colortbl \
+    pdflscape \
+    varwidth \
+    threeparttable \
+    threeparttablex \
+    environ \
+    trimspaces \
+    ulem \
+    makecell
 
 # increase the ImageMagick resource limits
 # this relies on the fact that there is only one place where each of these sizes are used in policy.xml
