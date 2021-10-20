@@ -30,7 +30,8 @@ RUN apt-get update -qq && install2.r --error \
     kknn \
     fontawesome \
     rsvg \
-    reticulate
+    reticulate \
+    kableExtra
 
 RUN Rscript -e "reticulate::install_miniconda()"
 RUN Rscript -e "reticulate::conda_install('r-reticulate', 'python-kaleido')"
