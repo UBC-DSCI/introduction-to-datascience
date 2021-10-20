@@ -5,6 +5,7 @@ library(knitr)
 library(plotly)
 
 knitr::opts_chunk$set(fig.align = "center")
+reticulate::use_miniconda('r-reticulate')
 ```
 
 ## Overview 
@@ -453,7 +454,7 @@ is `r format(round(lm_mult_test_results %>% filter(.metric == 'rmse') %>% pull(.
 In the case of two predictors, we can plot the predictions made by our linear regression creates a *plane* of best fit, as
 shown in Figure \@ref(fig:08-3DlinReg).
 
-```{r 08-3DlinReg, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Linear regression plane of best fit overlaid on top of the data (using price, house size, and number of bedrooms as predictors). Note that in general we recommend against using 3D visualizations; here we use a 3D visualization only to illustrate what the regression plane looks like for learning purposes.", out.width="80%"}
+```{r 08-3DlinReg, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Linear regression plane of best fit overlaid on top of the data (using price, house size, and number of bedrooms as predictors). Note that in general we recommend against using 3D visualizations; here we use a 3D visualization only to illustrate what the regression plane looks like for learning purposes.", out.width="100%"}
 xvals <- seq(from = min(sacramento_train$sqft), 
              to = max(sacramento_train$sqft), 
              length = 50)
@@ -474,12 +475,12 @@ plot_3d <- plot_ly() |>
     x = ~sqft,
     y = ~beds,
     z = ~price,
-    marker = list(size = 5, opacity = 0.4, color = "red")
+    marker = list(size = 2, opacity = 0.4, color = "red")
   ) |>
   layout(scene = list(
-    xaxis = list(title = "House size (square feet)"),
+    xaxis = list(title = "Size (sq ft)"),
     zaxis = list(title = "Price (USD)"),
-    yaxis = list(title = "Number of bedrooms")
+    yaxis = list(title = "Bedrooms")
   )) |>
   add_surface(
     x = ~xvals,
@@ -491,6 +492,9 @@ plot_3d <- plot_ly() |>
 if(!is_latex_output()){  
   plot_3d
 } else {
+  scene = list(camera = list(eye = list(x = -2.1, y = -2.2, z = 0.75)))
+  plot_3d <- plot_3d  %>% layout(scene = scene)
+  save_image(plot_3d, "img/plot3d_linear_regression.png", scale = 10)
   knitr::include_graphics("img/plot3d_linear_regression.png")
 }
 ```
