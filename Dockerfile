@@ -29,8 +29,13 @@ RUN apt-get update -qq && install2.r --error \
     reticulate \ 
     kknn \
     fontawesome \
-    rsvg
-    
+    rsvg \
+    reticulate
+
+RUN Rscript -e "reticulate::install_miniconda()"
+RUN Rscript -e "reticulate::conda_install('r-reticulate', 'python-kaleido')"
+RUN Rscript -e "reticulate::conda_install('r-reticulate', 'plotly', channel = 'plotly')"
+
 RUN Rscript -e "devtools::install_github('ttimbers/canlang@0.0.1')"
 
 # install LaTeX packages
