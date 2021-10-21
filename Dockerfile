@@ -89,7 +89,8 @@ RUN tlmgr install amsmath \
     environ \
     trimspaces \
     ulem \
-    makecell
+    makecell \
+    tabu
 
 # increase the ImageMagick resource limits
 # this relies on the fact that there is only one place where each of these sizes are used in policy.xml
