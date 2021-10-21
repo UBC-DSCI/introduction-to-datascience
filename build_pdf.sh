@@ -2,7 +2,9 @@
 
 # Copy files
 cp references.bib pdf/
+cp authors.Rmd pdf/
 cp preface-text.Rmd pdf/
+cp acknowledgements.Rmd pdf/
 cp intro.Rmd pdf/
 cp reading.Rmd pdf/
 cp wrangling.Rmd pdf/
@@ -26,7 +28,9 @@ docker run --rm -m 5g -v $(pwd):/home/rstudio/introduction-to-datascience ubcdsc
 
 # clean files in pdf dir
 rm -rf pdf/references.bib
-rm -rf pdf/preface-text.Rmd 
+rm -rf pdf/authors.Rmd
+rm -rf pdf/preface-text.Rmd
+rm -rf pdf/acknowledgements.Rmd
 rm -rf pdf/intro.Rmd 
 rm -rf pdf/reading.Rmd 
 rm -rf pdf/wrangling.Rmd 
