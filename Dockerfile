@@ -32,7 +32,8 @@ RUN apt-get update -qq && install2.r --error \
     rsvg \
     reticulate \
     kableExtra \
-    egg
+    egg \
+    ggpubr
 
 RUN Rscript -e "reticulate::install_miniconda()"
 RUN Rscript -e "reticulate::conda_install('r-reticulate', 'python-kaleido')"
