@@ -5,6 +5,23 @@ library(gridExtra)
 library(cowplot)
 
 knitr::opts_chunk$set(fig.align = "center")
+
+print_tidymodels <- function(tidymodels_object) {
+  if(!is_latex_output()) {
+    tidymodels_object
+  } else {
+    output <- capture.output(tidymodels_object)
+    
+    for (i in seq_along(output)) {
+      if (nchar(output[i]) <= 80) {
+        cat(output[i], sep = "\n")
+      } else {
+        cat(str_sub(output[i], start = 1, end = 80), sep = "\n")
+        cat(str_sub(output[i], start = 81, end = nchar(output[i])), sep = "\n")
+      }
+    }
+  }
+}
 ```
 
 ## Overview 
@@ -324,7 +341,7 @@ use `fit` with the training data `cancer_train` to build the classifier.
 set.seed(1)
 ```
 
-```{r 06-create-K-nearest neighbor-classifier}
+```{r 06-create-K-nearest neighbor-classifier, results = 'hide', echo = TRUE}
 knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 3) |>
   set_engine("kknn") |>
   set_mode("classification")
@@ -335,6 +352,10 @@ knn_fit <- workflow() |>
   fit(data = cancer_train)
 
 knn_fit
+```
+
+```{r echo = FALSE}
+print_tidymodels(knn_fit)
 ```
 
 ### Predict the labels in the test set
@@ -530,26 +551,28 @@ cancer_validation <- testing(cancer_split)
 
 # recreate the standardization recipe from before 
 # (since it must be based on the training data)
-cancer_recipe <- recipe(Class ~ Smoothness + Concavity, data = cancer_subtrain) %>%
-  step_scale(all_predictors()) %>%
+cancer_recipe <- recipe(Class ~ Smoothness + Concavity, 
+                        data = cancer_subtrain) |>
+  step_scale(all_predictors()) |>
   step_center(all_predictors())
 
 # fit the knn model (we can reuse the old knn_spec model from before)
-knn_fit <- workflow() %>%
-  add_recipe(cancer_recipe) %>%
-  add_model(knn_spec) %>%
+knn_fit <- workflow() |>
+  add_recipe(cancer_recipe) |>
+  add_model(knn_spec) |>
   fit(data = cancer_subtrain)
 
 # get predictions on the validation data
-validation_predicted <- predict(knn_fit, cancer_validation) %>%
+validation_predicted <- predict(knn_fit, cancer_validation) |>
   bind_cols(cancer_validation)
 
 # compute the accuracy
-acc <- validation_predicted %>%
-  metrics(truth = Class, estimate = .pred_class) %>%
-  filter(.metric == "accuracy") %>%
-  select(.estimate) %>%
+acc <- validation_predicted |>
+  metrics(truth = Class, estimate = .pred_class) |>
+  filter(.metric == "accuracy") |>
+  select(.estimate) |>
   pull()
+
 acc
 ```
 
@@ -699,13 +722,13 @@ vfold_metrics
 ### Parameter value selection
 
 Using 5- and 10-fold cross-validation, we have estimated that the prediction
-accuracy of our classifier is somewhere around `r round(100*(vfold_metrics %>% filter(.metric == "accuracy"))$mean,0)`%. 
+accuracy of our classifier is somewhere around `r round(100*(vfold_metrics |> filter(.metric == "accuracy"))$mean,0)`%. 
 Whether that is good or not
 depends entirely on the downstream application of the data analysis. In the
 present situation, we are trying to predict a tumor diagnosis, with expensive,
 damaging chemo/radiation therapy or patient death as potential consequences of
 misprediction. Hence, we might like to 
-do better than `r round(100*(vfold_metrics %>% filter(.metric == "accuracy"))$mean,0)`% for this application.  
+do better than `r round(100*(vfold_metrics |> filter(.metric == "accuracy"))$mean,0)`% for this application.  
 
 In order to improve our classifier, we have one choice of parameter: the number of
 neighbors, $K$. Since cross-validation helps us evaluate the accuracy of our
@@ -764,13 +787,13 @@ accuracy_vs_k
 ```
 
 Setting the number of 
-neighbors to $K =$ `r (accuracies %>% arrange(desc(mean)) %>% head(1))$neighbors`
-provides the highest accuracy (`r (accuracies %>% arrange(desc(mean)) %>% slice(1) %>% pull(mean) %>% round(4))*100`%). But there is no exact or perfect answer here;
+neighbors to $K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors`
+provides the highest accuracy (`r (accuracies |> arrange(desc(mean)) |> slice(1) |> pull(mean) |> round(4))*100`%). But there is no exact or perfect answer here;
 any selection from $K = 3$ and $15$ would be reasonably justified, as all
 of these differ in classifier accuracy by a small amount. Remember: the
 values you see on this plot are *estimates* of the true accuracy of our
 classifier. Although the 
-$K =$ `r (accuracies %>% arrange(desc(mean)) %>% head(1))$neighbors` value is 
+$K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors` value is 
 higher than the others on this plot,
 that doesn't mean the classifier is actually more accurate with this parameter
 value! Generally, when selecting $K$ (and other parameters for other predictive
@@ -780,12 +803,12 @@ models), we are looking for a value where:
 - changing the value to a nearby one (e.g., adding or subtracting 1) doesn't decrease accuracy too much, so that our choice is reliable in the presence of uncertainty
 - the cost of training the model is not prohibitive (e.g., in our situation, if $K$ is too large, predicting becomes expensive!)
 
-We know that $K =$ `r (accuracies %>% arrange(desc(mean)) %>% head(1))$neighbors` 
+We know that $K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors` 
 provides the highest estimated accuracy. Further, Figure \@ref(fig:06-find-k) shows that the estimated accuracy 
-changes by only a small amount if we increase or decrease $K$ near $K =$ `r (accuracies %>% arrange(desc(mean)) %>% head(1))$neighbors`.
-And finally, $K =$ `r (accuracies %>% arrange(desc(mean)) %>% head(1))$neighbors` does not create a prohibitively expensive
+changes by only a small amount if we increase or decrease $K$ near $K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors`.
+And finally, $K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors` does not create a prohibitively expensive
 computational cost of training. Considering these three points, we would indeed select
-$K =$ `r (accuracies %>% arrange(desc(mean)) %>% head(1))$neighbors` for the classifier.
+$K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors` for the classifier.
 
 ### Under/Overfitting
 
@@ -981,13 +1004,13 @@ cancer_irrelevant <- cancer |> select(Class, Smoothness, Concavity, Perimeter)
 for (i in 1:500) {
     # create column
     col = (sample(2, size=nrow(cancer_irrelevant), replace=TRUE)-1)
-    cancer_irrelevant <- cancer_irrelevant %>% 
+    cancer_irrelevant <- cancer_irrelevant |> 
 	add_column( !!paste("Irrelevant", i, sep="") := col)
 }
 ```
 
 ```{r 06-irrelevant-printdata, warning = FALSE}
-cancer_irrelevant %>% 
+cancer_irrelevant |> 
       select(Class, Smoothness, Concavity, Perimeter, Irrelevant1, Irrelevant2)
 ```
 
@@ -1051,23 +1074,23 @@ for (i in 1:length(ks)) {
     head(1)
   fixedaccs[[i]] <- res$mean
 }
-accs <- accs %>% unlist()
-nghbrs <- nghbrs %>% unlist()
-fixedaccs <- fixedaccs %>% unlist()
+accs <- accs |> unlist()
+nghbrs <- nghbrs |> unlist()
+fixedaccs <- fixedaccs |> unlist()
 
 ## get accuracy if we always just guess the most frequent label
-#base_acc <- cancer_irrelevant %>%
-#                group_by(Class) %>%
-#                summarize(n = n()) %>%
-#                mutate(frac = n/sum(n)) %>%
-#                summarize(mx = max(frac)) %>%
+#base_acc <- cancer_irrelevant |>
+#                group_by(Class) |>
+#                summarize(n = n()) |>
+#                mutate(frac = n/sum(n)) |>
+#                summarize(mx = max(frac)) |>
 #                select(mx)
-#base_acc <- base_acc$mx %>% unlist()
+#base_acc <- base_acc$mx |> unlist()
 
 # plot
 res <- tibble(ks = ks, accs = accs, fixedaccs = fixedaccs, nghbrs = nghbrs)
-#res <- res %>% mutate(base_acc = base_acc)
-#plt_irrelevant_accuracies <- res %>%
+#res <- res |> mutate(base_acc = base_acc)
+#plt_irrelevant_accuracies <- res |>
 #  ggplot() +
 #  geom_line(mapping = aes(x=ks, y=accs, linetype="Tuned KNN")) +
 #  geom_hline(data=res, mapping=aes(yintercept=base_acc, linetype="Always Predict Benign")) +
@@ -1103,7 +1126,7 @@ plt_irrelevant_nghbrs
 ```
 
 ```{r 06-fixed-irrelevant-features, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "100%", fig.cap = "Accuracy versus number of irrelevant predictors for tuned and untuned number of neighbors."}
-res_tmp <- res %>% pivot_longer(cols=c("accs", "fixedaccs"), 
+res_tmp <- res |> pivot_longer(cols=c("accs", "fixedaccs"), 
                                 names_to="Type", 
                                 values_to="accuracy")
 
@@ -1307,7 +1330,7 @@ for (i in 1:n_total) {
         models[[j]] <- model_string
     }
     jstar <- which.max(unlist(accs))
-    accuracies <- accuracies %>% 
+    accuracies <- accuracies |> 
       add_row(size = i, 
               model_string = models[[jstar]], 
               accuracy = accs[[jstar]])

@@ -206,7 +206,7 @@ sacramento_test <- testing(sacramento_split)
 
 Now that we have our training data, we will create the model specification
 and recipe, and fit our simple linear regression model:
-```{r 08-fitLM, fig.height = 4, fig.width = 5}
+```{r 08-fitLM, results = 'hide', echo = TRUE}
 lm_spec <- linear_reg() |>
   set_engine("lm") |>
   set_mode("regression")
@@ -219,6 +219,10 @@ lm_fit <- workflow() |>
   fit(data = sacramento_train)
 
 lm_fit
+```
+
+```{r echo = FALSE}
+print_tidymodels(lm_fit)
 ```
 
 > **Note:** An additional difference that you will notice here is that we do
@@ -285,8 +289,8 @@ it from the workflow using the `pull_workflow_fit` function, and then apply
 the `tidy` function to convert the result into a data frame:
 
 ```{r 08-lm-get-coeffs}
-coeffs <- lm_fit %>%
-             pull_workflow_fit() %>%
+coeffs <- lm_fit |>
+             pull_workflow_fit() |>
              tidy()
 
 coeffs
@@ -429,13 +433,17 @@ mlm_recipe <- recipe(price ~ sqft + beds, data = sacramento_train)
 ```
 
 Now we can build our workflow and fit the model:
-```{r 08-fitlm}
+```{r 08-fitlm, results = 'hide', echo = TRUE}
 mlm_fit <- workflow() |>
   add_recipe(mlm_recipe) |>
   add_model(lm_spec) |>
   fit(data = sacramento_train)
 
 mlm_fit
+```
+
+```{r echo = FALSE}
+print_tidymodels(mlm_fit)
 ```
 
 And finally, we make predictions on the test data set to assess the quality of our model:
@@ -450,7 +458,7 @@ lm_mult_test_results
 ```
 
 Our model's test error as assessed by RMSPE
-is `r format(round(lm_mult_test_results %>% filter(.metric == 'rmse') %>% pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`.
+is `r format(round(lm_mult_test_results |> filter(.metric == 'rmse') |> pull(.estimate)), big.mark=",", nsmall=0, scientific=FALSE)`.
 In the case of two predictors, we can plot the predictions made by our linear regression creates a *plane* of best fit, as
 shown in Figure \@ref(fig:08-3DlinReg).
 
@@ -493,7 +501,7 @@ if(!is_latex_output()){
   plot_3d
 } else {
   scene = list(camera = list(eye = list(x = -2.1, y = -2.2, z = 0.75)))
-  plot_3d <- plot_3d  %>% layout(scene = scene)
+  plot_3d <- plot_3d  |> layout(scene = scene)
   save_image(plot_3d, "img/plot3d_linear_regression.png", scale = 10)
   knitr::include_graphics("img/plot3d_linear_regression.png")
 }
@@ -508,8 +516,8 @@ plane mathematically. We can extract those slope values from our model object
 as shown below:
 
 ```{r 08-lm-multi-get-coeffs}
-mcoeffs <- mlm_fit %>%
-             pull_workflow_fit() %>%
+mcoeffs <- mlm_fit |>
+             pull_workflow_fit() |>
              tidy()
 
 mcoeffs

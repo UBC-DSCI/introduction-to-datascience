@@ -6,6 +6,7 @@ library(plotly)
 library(knitr)
 library(kableExtra)
 library(ggpubr)
+library(stringr)
 
 knitr::opts_chunk$set(echo = TRUE, 
                       fig.align = "center")
@@ -13,6 +14,23 @@ options(knitr.table.format = function() {
   if (knitr::is_latex_output()) 'latex' else 'pandoc'
 })
 reticulate::use_miniconda('r-reticulate')
+
+print_tidymodels <- function(tidymodels_object) {
+  if(!is_latex_output()) {
+    tidymodels_object
+  } else {
+    output <- capture.output(tidymodels_object)
+    
+    for (i in seq_along(output)) {
+      if (nchar(output[i]) <= 80) {
+        cat(output[i], sep = "\n")
+      } else {
+        cat(str_sub(output[i], start = 1, end = 80), sep = "\n")
+        cat(str_sub(output[i], start = 81, end = nchar(output[i])), sep = "\n")
+      }
+    }
+  }
+}
 ```
 
 ## Overview 
@@ -211,7 +229,7 @@ We also make the category labels ("B" and "M") more readable by
 changing them to "Benign" and "Malignant" using the `labels` argument.
 
 ```{r 05-scatter, fig.height = 3.5, fig.width = 4.5, fig.cap= "Scatter plot of concavity versus perimeter colored by diagnosis label."}
-perim_concav <- cancer %>%
+perim_concav <- cancer |>
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
   geom_point(alpha = 0.6) +
   labs(x = "Perimeter (standardized)", 
@@ -290,7 +308,7 @@ Figure \@ref(fig:05-knn-1).
 perim_concav_with_new_point <-  bind_rows(cancer, 
                                           tibble(Perimeter = new_point[1], 
                                                  Concavity = new_point[2], 
-                                                 Class = "unknown")) %>%
+                                                 Class = "unknown")) |>
   ggplot(aes(x = Perimeter, 
              y = Concavity, 
              color = Class, 
@@ -348,7 +366,7 @@ not, if you consider the other nearby points...
 perim_concav_with_new_point2 <- bind_rows(cancer, 
                                           tibble(Perimeter = new_point[1], 
                                                  Concavity = new_point[2], 
-                                                 Class = "unknown")) %>%
+                                                 Class = "unknown")) |>
   ggplot(aes(x = Perimeter, 
              y = Concavity, 
              color = Class, 
@@ -496,11 +514,11 @@ math_table <- tibble(Perimeter = round(tab[1:5,1],2),
                      Concavity = round(tab[1:5,2],2), 
                           dist = round(neighbors[1:5, "Distance"], 2)
                     )
-math_table <- math_table %>% 
+math_table <- math_table |> 
                     mutate(Distance = paste0("$\\sqrt{(", new_obs_Perimeter, " - ", ifelse(Perimeter < 0, "(", ""), Perimeter, ifelse(Perimeter < 0,")",""), ")^2",
                                              " + ",
-                                             "(", new_obs_Concavity, " - ", ifelse(Concavity < 0,"(",""), Concavity, ifelse(Concavity < 0,")",""), ")^2} = ", dist, "$")) %>%
-                    select(-dist) %>%
+                                             "(", new_obs_Concavity, " - ", ifelse(Concavity < 0,"(",""), Concavity, ifelse(Concavity < 0,")",""), ")^2} = ", dist, "$")) |>
+                    select(-dist) |>
                     mutate(Class= tab[1:5, "Class"])
 ```
 
@@ -586,10 +604,10 @@ my_distances_3 <- table_with_distances(cancer[, attrs],
                                        new_obs_3[, attrs])
 neighbors_3 <- cancer[order(my_distances_3$Distance), ]
 
-data <- neighbors_3 %>% select(Perimeter, Concavity, Symmetry) %>% slice(1:5)
+data <- neighbors_3 |> select(Perimeter, Concavity, Symmetry) |> slice(1:5)
 
 # add to the df
-scaled_cancer_3 <- bind_rows(cancer, new_obs_3) %>% 
+scaled_cancer_3 <- bind_rows(cancer, new_obs_3) |> 
   mutate(Class = fct_recode(Class, "Benign" = "B", "Malignant"= "M"))
 
 plot_3d <- scaled_cancer_3 |>
@@ -598,7 +616,7 @@ plot_3d <- scaled_cancer_3 |>
     xaxis = list(title = "Perimeter"),
     yaxis = list(title = "Concavity"),
     zaxis = list(title = "Symmetry")
-  )) %>% 
+  )) |> 
   add_trace(x = ~Perimeter,
             y = ~Concavity,
             z = ~Symmetry,
@@ -628,15 +646,15 @@ x5 <- c(pull(new_obs_3[1]), data$Perimeter[5])
 y5 <- c(pull(new_obs_3[2]), data$Concavity[5])
 z5 <- c(pull(new_obs_3[3]), data$Symmetry[5])
 
-plot_3d <- plot_3d  %>%
+plot_3d <- plot_3d  |>
   add_trace(x = x1, y = y1, z = z1, type = "scatter3d", mode = "lines", 
-            name = "lines", showlegend = FALSE, color = I("steelblue2")) %>%
+            name = "lines", showlegend = FALSE, color = I("steelblue2")) |>
   add_trace(x = x2, y = y2, z = z2, type = "scatter3d", mode = "lines", 
-            name = "lines", showlegend = FALSE, color =  I("steelblue2")) %>%
+            name = "lines", showlegend = FALSE, color =  I("steelblue2")) |>
   add_trace(x = x3, y = y3, z = z3, type = "scatter3d", mode = "lines", 
-            name = "lines", showlegend = FALSE, color =  I("steelblue2")) %>%
+            name = "lines", showlegend = FALSE, color =  I("steelblue2")) |>
   add_trace(x = x4, y = y4, z = z4, type = "scatter3d", mode = "lines", 
-            name = "lines", showlegend = FALSE, color =  I("orange2")) %>%
+            name = "lines", showlegend = FALSE, color =  I("orange2")) |>
   add_trace(x = x5, y = y5, z = z5, type = "scatter3d", mode = "lines", 
             name = "lines", showlegend = FALSE, color =  I("steelblue2"))
 
@@ -644,7 +662,7 @@ if(!is_latex_output()){
   plot_3d
 } else {
   # scene = list(camera = list(eye = list(x=2, y=2, z = 1.5)))
-  # plot_3d <- plot_3d  %>% layout(scene = scene)
+  # plot_3d <- plot_3d  |> layout(scene = scene)
   # save_image(plot_3d, "img/plot3d_knn_classification.png", scale = 10)
   # cannot adjust size of points in this plot for pdf 
   # so using a screenshot for now instead
@@ -731,10 +749,14 @@ data frame, `Class ~ Perimeter + Concavity` and `Class ~ .` are equivalent.
 In general, you can choose individual predictors using the `+` symbol, or you can specify to
 use *all* predictors using the `.` symbol.
 
-```{r 05-tidymodels-4b, tidy = TRUE, tidy.opts=list(width.cutoff = 60)}
+```{r 05-tidymodels-4b, results = 'hide', echo = TRUE}
 knn_fit <- knn_spec |>
   fit(Class ~ ., data = cancer_train)
 knn_fit
+```
+
+```{r echo = FALSE}
+print_tidymodels(knn_fit)
 ```
 
 Here you can see the final trained model summary. It confirms that the computational engine used
@@ -1295,13 +1317,17 @@ and finally we will use the `fit` function to run the whole workflow on the `uns
 Note another difference from earlier here: we do not include a formula in the `fit` function. This \index{tidymodels!fit}
 is again because we included the formula in the recipe, so there is no need to respecify it:
 
-```{r 05-workflow-add, tidy = TRUE, tidy.opts=list(width.cutoff = 60)}
+```{r 05-workflow-add, results = 'hide', echo = TRUE}
 knn_fit <- workflow() |>
   add_recipe(uc_recipe) |>
   add_model(knn_spec) |>
   fit(data = unscaled_cancer)
 
 knn_fit
+```
+
+```{r echo = FALSE}
+print_tidymodels(knn_fit)
 ```
 
 As before, the fit object lists the function that trains the model as well as the "best" settings
