@@ -142,13 +142,16 @@ bookdown::gitbook:
 #### Figures
 - make sure all figures get (capitalized) labels ("Figure \\@ref(blah)", not "figure below" or "figure above")
 - make sure all figures get captions
-- specify image widths in terms of linewidth percent (e.g. `out.width="70%"`)
+- specify image widths of pngs and jpegs in terms of linewidth percent 
+(e.g. `out.width="70%"`),
+for plots we create in R use `fig.width` and `fig.height`.
 - center align all images via `fig.align = "center"`
 - make sure we have permission for every figure/logo that we use
 - Make sure all figures follow the visualization principles in Chapter 4
 - Make sure axes are set appropriately to not inflate/deflate differences artificially *where it does not compromise clarity* (e.g. in the classification
   chapter there are a few examples where zoomed-in accuracy axes are better than using the full range 0 to 1)
-- 
+- Fig size for bar charts should be: `fig.width=5, fig.height=3` (an exception are figs 1.7 & 1.8 so that we can read the axis labels)
+- cropping width for syntax diagrams is 1625 (done using `image_crop`)
 
 #### Tables
 - make sure all tables get capitalized labels ("Table \\@ref(blah)", not "table below" or "table above")

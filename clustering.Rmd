@@ -6,6 +6,8 @@ library(RColorBrewer)
 library(gridExtra)
 library(cowplot)
 library(broom)
+library(egg) # ggarrange
+
 
 #center breaks latex here
 knitr::opts_chunk$set(warning = FALSE, fig.align = "default") 
@@ -164,7 +166,7 @@ penguin_data
 Next, we can create a scatter plot using this data set 
 to see if we can detect subtypes or groups in our data set.
 
-```{r 10-toy-example-plot, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.align = "center", fig.cap = "Scatter plot of standardized bill length versus standardized flipper length."}
+```{r 10-toy-example-plot, warning = FALSE, fig.height = 3.5, fig.width = 3.75, fig.align = "center", fig.cap = "Scatter plot of standardized bill length versus standardized flipper length."}
 ggplot(data, aes(x = flipper_length_standardized, 
                  y = bill_length_standardized)) +
   geom_point() +
@@ -198,7 +200,7 @@ This procedure will separate the data into groups;
 Figure \@ref(fig:10-toy-example-clustering) shows these groups
 denoted by colored scatter points.
 
-```{r 10-toy-example-clustering, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.align = "center", fig.cap = "Scatter plot of standardized bill length versus standardized flipper length with colored groups."}
+```{r 10-toy-example-clustering, echo = FALSE, warning = FALSE, fig.height = 3.5, fig.width = 4.5, fig.align = "center", fig.cap = "Scatter plot of standardized bill length versus standardized flipper length with colored groups."}
 ggplot(data, aes(y = bill_length_standardized, 
                  x = flipper_length_standardized, color = cluster)) +
   geom_point() +
@@ -256,7 +258,7 @@ in Figure \@ref(fig:10-toy-example-clus1-center).
 
 (ref:10-toy-example-clus1-center) Cluster 1 from the `penguin_data` data set example. Observations are in blue, with the cluster center highlighted in red.
 
-```{r 10-toy-example-clus1-center, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.align = "center", fig.cap = "(ref:10-toy-example-clus1-center)"}
+```{r 10-toy-example-clus1-center, echo = FALSE, warning = FALSE, fig.height = 3.5, fig.width = 3.75, fig.align = "center", fig.cap = "(ref:10-toy-example-clus1-center)"}
 base <- ggplot(data, aes(x = flipper_length_standardized, y = bill_length_standardized)) +
   geom_point() +
   xlab("Flipper Length (standardized)") +
@@ -303,7 +305,7 @@ These distances are denoted by lines in Figure \@ref(fig:10-toy-example-clus1-di
 
 (ref:10-toy-example-clus1-dists) Cluster 1 from the `penguin_data` data set example. Observations are in blue, with the cluster center highlighted in red. The distances from the observations to the cluster center are represented as black lines.
 
-```{r 10-toy-example-clus1-dists, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.align = "center", fig.cap = "(ref:10-toy-example-clus1-dists)"}
+```{r 10-toy-example-clus1-dists, echo = FALSE, warning = FALSE, fig.height = 3.5, fig.width = 3.75, fig.align = "center", fig.cap = "(ref:10-toy-example-clus1-dists)"}
 base <- ggplot(clus1) +
   geom_point(aes(y = bill_length_standardized, 
                  x = flipper_length_standardized),
@@ -342,7 +344,7 @@ Figure \@ref(fig:10-toy-example-all-clus-dists).
 
 (ref:10-toy-example-all-clus-dists) All clusters from the `penguin_data` data set example. Observations are in orange, blue, and yellow with the cluster center highlighted in red. The distances from the observations to each of the respective cluster centers are represented as black lines.
 
-```{r 10-toy-example-all-clus-dists, echo = FALSE, warning = FALSE, fig.height = 4, fig.width = 5, fig.align = "center", fig.cap = "(ref:10-toy-example-all-clus-dists)"}
+```{r 10-toy-example-all-clus-dists, echo = FALSE, warning = FALSE, fig.height = 3.5, fig.width = 4.5, fig.align = "center", fig.cap = "(ref:10-toy-example-all-clus-dists)"}
 
 
 all_clusters_base <- data |>
@@ -408,7 +410,7 @@ and randomly assigning a roughly equal number of observations
 to each of the K clusters.
 An example random initialization is shown in Figure \@ref(fig:10-toy-kmeans-init).
 
-```{r 10-toy-kmeans-init, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 4, fig.width = 4.35, fig.align = "center", fig.cap = "Random initialization of labels."}
+```{r 10-toy-kmeans-init, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 3.5, fig.width = 3.75, fig.align = "center", fig.cap = "Random initialization of labels."}
 set.seed(14)
 penguin_data["label"] <- factor(sample(1:3, nrow(penguin_data), replace = TRUE))
 
@@ -437,9 +439,9 @@ There each row corresponds to an iteration,
 where the left column depicts the center update, 
 and the right column depicts the reassignment of data to clusters.
 
-(ref:10-toy-kmeans-iter) First four iterations of K-means clustering on the `penguin_data` example data set. Each row corresponds to an iteration, where the left column depicts the center update, and the right column depicts the reassignment of data to clusters. Cluster centers are indicated by larger points that are outlined in black.
+(ref:10-toy-kmeans-iter) First four iterations of K-means clustering on the `penguin_data` example data set. Each pair of plots corresponds to an iteration. Within the pair, the first plot depicts the center update, and the second plot depicts the reassignment of data to clusters. Cluster centers are indicated by larger points that are outlined in black.
 
-```{r 10-toy-kmeans-iter, echo = FALSE, warning = FALSE, fig.height = 16, fig.width = 8, fig.align = "center", fig.cap = "(ref:10-toy-kmeans-iter)"}
+```{r 10-toy-kmeans-iter, echo = FALSE, warning = FALSE, fig.height = 4.5, fig.width = 8, fig.align = "center", fig.cap = "(ref:10-toy-kmeans-iter)"}
 list_plot_cntrs <- vector(mode = "list", length = 4)
 list_plot_lbls <- vector(mode = "list", length = 4)
 
@@ -454,22 +456,23 @@ for (i in 1:4) {
                                       x = flipper_length_standardized, 
                                       color = label)) +
     geom_point(size = 2) +
-    xlab("Flipper Length (standardized)") +
-    ylab("Bill Length (standardized)") +
+    xlab("Flipper Length\n(standardized)") +
+    ylab("Bill Length\n(standardized)") +
     theme(legend.position = "none") +
     scale_color_manual(values= cbpalette) + 
     geom_point(data = centers, 
                aes(y = bill_length_standardized, 
                                    x = flipper_length_standardized, 
                                    fill = label), 
-               size = 5, 
+               size = 3, 
                shape = 21, 
-               stroke = 2, 
+               stroke = 1, 
                color = "black", 
                fill = cbpalette) +
-    annotate("text", x = -1.15, y = 1.8, label = paste0("Iteration ", i))
+    annotate("text", x = -0.5, y = 1.5, label = paste0("Iteration ", i), size = 5)+ 
+    theme(text = element_text(size = 14))
   
-  if (i == 1) {
+  if (i == 1 | i == 2) {
     plt_ctr <- plt_ctr +
       ggtitle("Center Update")
   }
@@ -488,20 +491,22 @@ for (i in 1:4) {
                         x = flipper_length_standardized, 
                         color = label)) +
     geom_point(size = 2) +
-    xlab("Flipper Length (standardized)") +
-    ylab("Bill Length (standardized)") +
+    xlab("Flipper Length\n(standardized)") +
+    ylab("Bill Length\n(standardized)") +
     theme(legend.position = "none") +
     scale_color_manual(values= cbpalette) +
     geom_point(data = centers, 
                aes(y = bill_length_standardized, 
                    x = flipper_length_standardized, fill = label), 
-               size = 5, 
+               size = 3, 
                shape = 21, 
-               stroke = 2, 
+               stroke = 1, 
                color = "black", 
-               fill = cbpalette) 
+               fill = cbpalette) +
+    annotate("text", x = -0.5, y = 1.5, label = paste0("Iteration ", i), size = 5)+ 
+    theme(text = element_text(size = 14))
 
-  if (i == 1) {
+  if (i == 1 | i ==2) {
     plt_lbl <- plt_lbl +
       ggtitle("Label Update")
   }
@@ -515,9 +520,52 @@ iter_plot_list <- c(list_plot_cntrs[1], list_plot_lbls[1],
                     list_plot_cntrs[3], list_plot_lbls[3],
                     list_plot_cntrs[4], list_plot_lbls[4])
 
-plot_grid(plotlist = iter_plot_list, 
-          ncol = 2,
-          rel_heights = c(1.065, 1, 1, 1))
+ggarrange(iter_plot_list[[1]] +
+               theme(axis.text.x = element_blank(),
+                     axis.ticks.x = element_blank(),
+                     axis.title.x = element_blank(), 
+                     plot.margin = margin(r = 2, b = 2)), 
+          iter_plot_list[[2]] + 
+               theme(axis.text.y = element_blank(),
+                     axis.ticks.y = element_blank(),
+                     axis.title.y = element_blank(),
+                     axis.text.x = element_blank(),
+                     axis.ticks.x = element_blank(),
+                     axis.title.x = element_blank(),
+                     plot.margin = margin(r = 2, l = 2, b = 2) ), 
+          iter_plot_list[[3]] + 
+               theme(axis.text.y = element_blank(),
+                     axis.ticks.y = element_blank(),
+                     axis.title.y = element_blank(),
+                     axis.text.x = element_blank(),
+                     axis.ticks.x = element_blank(),
+                     axis.title.x = element_blank(),
+                     plot.margin = margin(r = 2, l = 2, b = 2)  ),
+          iter_plot_list[[4]] + 
+            theme(axis.text.y = element_blank(),
+                     axis.ticks.y = element_blank(),
+                     axis.title.y = element_blank(), 
+                     axis.text.x = element_blank(),
+                     axis.ticks.x = element_blank(),
+                     axis.title.x = element_blank(),
+                     plot.margin = margin(l = 2, b = 2)  ),
+          iter_plot_list[[5]] +
+               theme(plot.margin = margin(r = 2, t = 2)), 
+          iter_plot_list[[6]] + 
+               theme(axis.text.y = element_blank(),
+                     axis.ticks.y = element_blank(),
+                     axis.title.y = element_blank(),
+                     plot.margin = margin(r = 2, l = 2, t = 2) ), 
+          iter_plot_list[[7]] + 
+               theme(axis.text.y = element_blank(),
+                     axis.ticks.y = element_blank(),
+                     axis.title.y = element_blank(),
+                     plot.margin = margin(r = 2, l = 2, t = 2)  ),
+          iter_plot_list[[8]] + theme(axis.text.y = element_blank(),
+                     axis.ticks.y = element_blank(),
+                     axis.title.y = element_blank(), 
+                     plot.margin = margin(l = 2, t = 2)  ),
+           nrow = 2)
 ```
 
 Note that at this point, we can terminate the algorithm since none of the assignments changed
@@ -546,7 +594,7 @@ These, however, are beyond the scope of this book.
 Unlike the classification and regression models we studied in previous chapters, K-means \index{K-means!restart,nstart} can get "stuck" in a bad solution.
 For example, Figure \@ref(fig:10-toy-kmeans-bad-init) illustrates an unlucky random initialization by K-means.
 
-```{r 10-toy-kmeans-bad-init, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 4, fig.width = 4.35, fig.align = "center", fig.cap = "Random initialization of labels."}
+```{r 10-toy-kmeans-bad-init, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 3.5, fig.width = 3.75, fig.align = "center", fig.cap = "Random initialization of labels."}
 penguin_data <- penguin_data |>
   mutate(label = as_factor(c(3L, 3L, 1L, 1L, 2L, 1L, 2L, 1L, 1L, 
                              1L, 3L, 1L, 2L, 2L, 2L, 3L, 3L, 3L)))
@@ -565,9 +613,9 @@ plt_lbl
 
 Figure \@ref(fig:10-toy-kmeans-bad-iter) shows what the iterations of K-means would look like with the unlucky random initialization shown in Figure \@ref(fig:10-toy-kmeans-bad-init).
 
-(ref:10-toy-kmeans-bad-iter) First five iterations of K-means clustering on the `penguin_data` example data set with a poor random initialization. Each row corresponds to an iteration, where the left column depicts the center update, and the right column depicts the reassignment of data to clusters. Cluster centers are indicated by larger points that are outlined in black.
+(ref:10-toy-kmeans-bad-iter) First five iterations of K-means clustering on the `penguin_data` example data set with a poor random initialization. Each pair of plots corresponds to an iteration. Within the pair, the first plot depicts the center update, and the second plot depicts the reassignment of data to clusters. Cluster centers are indicated by larger points that are outlined in black.
 
-```{r 10-toy-kmeans-bad-iter, echo = FALSE, warning = FALSE, fig.height = 20, fig.width = 8, fig.align = "center", fig.cap = "(ref:10-toy-kmeans-bad-iter)"}
+```{r 10-toy-kmeans-bad-iter, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 6.75, fig.width = 8, fig.align = "center", fig.cap = "(ref:10-toy-kmeans-bad-iter)"}
 list_plot_cntrs <- vector(mode = "list", length = 5)
 list_plot_lbls <- vector(mode = "list", length = 5)
 
@@ -582,21 +630,22 @@ for (i in 1:5) {
                                       x = flipper_length_standardized, 
                                       color = label)) +
     geom_point(size = 2) +
-    xlab("Flipper Length (standardized)") +
-    ylab("Bill Length (standardized)") +
+    xlab("Flipper Length\n(standardized)") +
+    ylab("Bill Length\n(standardized)") +
     theme(legend.position = "none") +
     scale_color_manual(values= cbpalette) + 
     geom_point(data = centers, aes(y = bill_length_standardized, 
                                    x = flipper_length_standardized, 
                                    fill = label), 
-               size = 5, 
+               size = 3, 
                shape = 21, 
-               stroke = 2, 
+               stroke = 1, 
                color = "black", 
                fill = cbpalette) +
-    annotate("text", x = -1.15, y = 1.8, label = paste0("Iteration ", i))
+    annotate("text", x = -0.5, y = 1.5, label = paste0("Iteration ", i), size = 5) + 
+    theme(text = element_text(size = 14))
 
-  if (i == 1) {
+  if (i == 1 | i == 2) {
     plt_ctr <- plt_ctr +
       ggtitle("Center Update")
   }
@@ -614,20 +663,22 @@ for (i in 1:5) {
                                       x = flipper_length_standardized, 
                                       color = label)) +
     geom_point(size = 2) +
-    xlab("Flipper Length (standardized)") +
-    ylab("Bill Length (standardized)") +
+    xlab("Flipper Length\n(standardized)") +
+    ylab("Bill Length\n(standardized)") +
     theme(legend.position = "none") +
     scale_color_manual(values= cbpalette) +
     geom_point(data = centers, aes(y = bill_length_standardized, 
                                    x = flipper_length_standardized, 
                                    fill = label), 
-               size = 5, 
+               size = 3, 
                shape = 21, 
-               stroke = 2, 
+               stroke = 1, 
                color = "black", 
-               fill = cbpalette)
+               fill = cbpalette) +
+    annotate("text", x = -0.5, y = 1.5, label = paste0("Iteration ", i), size = 5) + 
+    theme(text = element_text(size = 14))
 
-  if (i == 1) {
+  if (i == 1 | i == 2) {
     plt_lbl <- plt_lbl +
       ggtitle("Label Update")
   }
@@ -642,9 +693,67 @@ iter_plot_list <- c(list_plot_cntrs[1], list_plot_lbls[1],
                     list_plot_cntrs[4], list_plot_lbls[4],
                     list_plot_cntrs[5], list_plot_lbls[5])
 
-plot_grid(plotlist = iter_plot_list, 
-          ncol = 2,
-          rel_heights = c(1.065, 1, 1, 1, 1))
+ggarrange(iter_plot_list[[1]] +
+               theme(axis.text.x = element_blank(),  #remove x axis
+                     axis.ticks.x = element_blank(),
+                     axis.title.x = element_blank(), 
+                     plot.margin = margin(r = 2, b = 2)), # change margins
+          iter_plot_list[[2]] + 
+               theme(axis.text.y = element_blank(),
+                     axis.ticks.y = element_blank(),
+                     axis.title.y = element_blank(),
+                     axis.text.x = element_blank(),
+                     axis.ticks.x = element_blank(),
+                     axis.title.x = element_blank(),
+                     plot.margin = margin(r = 2, l = 2, b = 2) ), 
+          iter_plot_list[[3]] + 
+               theme(axis.text.y = element_blank(),
+                     axis.ticks.y = element_blank(),
+                     axis.title.y = element_blank(),
+                     axis.text.x = element_blank(),
+                     axis.ticks.x = element_blank(),
+                     axis.title.x = element_blank(),
+                     plot.margin = margin(r = 2, l = 2, b = 2)),
+          iter_plot_list[[4]] + 
+            theme(axis.text.y = element_blank(),
+                     axis.ticks.y = element_blank(),
+                     axis.title.y = element_blank(), 
+                     axis.text.x = element_blank(),
+                     axis.ticks.x = element_blank(),
+                     axis.title.x = element_blank(),
+                     plot.margin = margin(l = 2, b = 2) ),
+          iter_plot_list[[5]] +
+               theme(axis.text.x = element_blank(),
+                     axis.ticks.x = element_blank(),
+                     axis.title.x = element_blank(),
+                     plot.margin = margin(r = 2, t = 2, b = 1)),
+          iter_plot_list[[6]] + 
+               theme(axis.text.y = element_blank(),
+                     axis.ticks.y = element_blank(),
+                     axis.title.y = element_blank(),
+                     axis.text.x = element_blank(),
+                     axis.ticks.x = element_blank(),
+                     axis.title.x = element_blank(),
+                     plot.margin = margin(r = 2, l = 2, t = 2, b = 1) ), 
+          iter_plot_list[[7]] + 
+               theme(axis.text.y = element_blank(),
+                     axis.ticks.y = element_blank(),
+                     axis.title.y = element_blank(),
+                     plot.margin = margin(r = 2, l = 2, t = 2, b = 2)  ),
+          iter_plot_list[[8]] + theme(axis.text.y = element_blank(),
+                     axis.ticks.y = element_blank(),
+                     axis.title.y = element_blank(), 
+                     plot.margin = margin(l = 2, t = 2, b = 2)),  
+          ggplot() + theme_void(), ggplot() + theme_void(), ggplot() + theme_void(), ggplot() + theme_void(), # adding third row of empty plots to change space between third and fourth row
+          iter_plot_list[[9]] + 
+               theme(plot.margin = margin(r = 2)),
+          iter_plot_list[[10]] + 
+            theme(axis.text.y = element_blank(),
+                     axis.ticks.y = element_blank(),
+                     axis.title.y = element_blank(), 
+                     plot.margin = margin(l = 2)  ),
+         heights = c(3, 3, -1, 3),
+          ncol = 4)
 ```
 
 This looks like a relatively bad clustering of the data, but K-means cannot improve it.
@@ -664,7 +773,7 @@ Figure \@ref(fig:10-toy-kmeans-vary-k) illustrates the impact of K
 on K-means clustering of our penguin flipper and bill length data 
 by showing the different clusterings for K's ranging from 1 to 9.
 
-```{r 10-toy-kmeans-vary-k, echo = FALSE, warning = FALSE, fig.height = 10, fig.width = 12, fig.cap = "Clustering of the penguin data for K clusters ranging from 1 to 9. Cluster centers are indicated by larger points that are outlined in black."}
+```{r 10-toy-kmeans-vary-k, echo = FALSE, warning = FALSE, fig.height = 6.25, fig.width = 6, fig.cap = "Clustering of the penguin data for K clusters ranging from 1 to 9. Cluster centers are indicated by larger points that are outlined in black."}
 set.seed(3)
 
 kclusts <- tibble(k = 1:9) |>
@@ -702,18 +811,18 @@ levels(clusters$k) <- clusters_levels
 
 p1 <- ggplot(assignments, aes(flipper_length_standardized, 
                               bill_length_standardized)) +
-  geom_point(aes(color = .cluster, size = 3)) +
+  geom_point(aes(color = .cluster, size = 1)) +
   facet_wrap(~k) +   scale_color_manual(values = cbbPalette) +
   labs(x = "Flipper Length (standardized)", 
        y = "Bill Length (standardized)", 
        color = "Cluster") +
-  theme(text = element_text(size = 20), legend.position = "none") +
+  theme(legend.position = "none") +
   geom_point(data = clusters, 
              aes(fill = cluster), 
              color = "black", 
              size = 5, 
              shape = 21, 
-             stroke = 2) + 
+             stroke = 1) + 
   scale_fill_manual(values = cbbPalette)
 
 p1
@@ -726,7 +835,7 @@ decrease the total WSSD, but by only a *diminishing amount*. If we plot the tota
 clusters, we see that the decrease in total WSSD levels off (or forms an "elbow shape") \index{elbow method} when we reach roughly 
 the right number of clusters (Figure \@ref(fig:10-toy-kmeans-elbow)).
 
-```{r 10-toy-kmeans-elbow, echo = FALSE, warning = FALSE, fig.height = 6, fig.width = 10, fig.cap = "Total WSSD for K clusters ranging from 1 to 9."}
+```{r 10-toy-kmeans-elbow, echo = FALSE, warning = FALSE, fig.align = 'center', fig.height = 3.5, fig.width = 4.5, fig.cap = "Total WSSD for K clusters ranging from 1 to 9."}
 p2 <- ggplot(clusterings, aes(x = k, y = tot.withinss)) +
   geom_point(size = 2) +
   geom_line() +
@@ -737,7 +846,7 @@ p2 <- ggplot(clusterings, aes(x = k, y = tot.withinss)) +
                arrow = arrow(length = unit(0.2, "cm"))) +
   annotate("text", x = 4.4, y = 19, label = "Elbow", size = 7, color = "blue") +
   labs(x = "Number of Clusters", y = "Total WSSD") +
-  theme(text = element_text(size = 20)) +
+  #theme(text = element_text(size = 20)) +
   scale_x_continuous(breaks = 1:9)
 p2
 ```
@@ -790,7 +899,7 @@ earlier, the clustering will be reproducible.
 
 ```{r 10-kmeans-seed, echo = FALSE, warning = FALSE, message = FALSE}
 # hidden seed
-set.seed(1)
+set.seed(1234)
 ```
 
 ```{r 10-kmeans}
@@ -817,7 +926,7 @@ clustered_data
 Now that we have this information in a tidy data frame, we can make a visualization
 of the cluster assignments for each point, as shown in Figure \@ref(fig:10-plot-clusters-2).
 
-```{r 10-plot-clusters-2, fig.height = 4, fig.width = 4.35, fig.align = "center", fig.cap = "The data colored by the cluster assignments returned by K-means."}
+```{r 10-plot-clusters-2, fig.height = 3.5, fig.width = 4.5, fig.align = "center", fig.cap = "The data colored by the cluster assignments returned by K-means."}
 cluster_plot <- ggplot(clustered_data,
   aes(x = flipper_length_mm, 
       y = bill_length_mm, 
@@ -925,7 +1034,7 @@ clustering_statistics
 Now that we have `tot.withinss` and `k` as columns in a data frame, we can make a line plot 
 (Figure \@ref(fig:10-plot-choose-k)) and search for the "elbow" to find which value of K to use. 
 
-```{r 10-plot-choose-k, fig.height = 4, fig.width = 4.35, fig.align = "center", fig.cap = "A plot showing the total WSSD versus the number of clusters."}
+```{r 10-plot-choose-k, fig.height = 3.5, fig.width = 4.5, fig.align = "center", fig.cap = "A plot showing the total WSSD versus the number of clusters."}
 elbow_plot <- ggplot(clustering_statistics, aes(x = k, y = tot.withinss)) +
   geom_point() +
   geom_line() +
@@ -959,7 +1068,7 @@ but there is a trade-off that doing many clusterings
 could take a long time.
 So this is something that needs to be balanced.
 
-```{r 10-choose-k-nstart, fig.height = 4, fig.width = 4.35, message= FALSE, warning = FALSE, fig.align = "center", fig.cap = "A plot showing the total WSSD versus the number of clusters when K-means is run with 10 restarts."}
+```{r 10-choose-k-nstart, fig.height = 3.5, fig.width = 4.5, message= FALSE, warning = FALSE, fig.align = "center", fig.cap = "A plot showing the total WSSD versus the number of clusters when K-means is run with 10 restarts."}
 penguin_clust_ks <- tibble(k = 1:9) |>
   rowwise() |>
   mutate(penguin_clusts = list(kmeans(standardized_data, nstart = 10, k)),
