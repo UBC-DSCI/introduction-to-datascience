@@ -3,8 +3,27 @@
 ```{r regression1-setup, echo = FALSE, message = FALSE, warning = FALSE}
 library(knitr)
 library(plotly)
+library(stringr)
 
 knitr::opts_chunk$set(fig.align = "center")
+reticulate::use_miniconda('r-reticulate')
+
+print_tidymodels <- function(tidymodels_object) {
+  if(!is_latex_output()) {
+    tidymodels_object
+  } else {
+    output <- capture.output(tidymodels_object)
+    
+    for (i in seq_along(output)) {
+      if (nchar(output[i]) <= 80) {
+        cat(output[i], sep = "\n")
+      } else {
+        cat(str_sub(output[i], start = 1, end = 80), sep = "\n")
+        cat(str_sub(output[i], start = 81, end = nchar(output[i])), sep = "\n")
+      }
+    }
+  }
+}
 ```
 
 ## Overview 
@@ -117,7 +136,14 @@ want to predict (sale price) on the y-axis.
 \index{ggplot!geom\_point}
 \index{visualization!scatter}
 
-```{r 07-edaRegr, message = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square feet)."}
+> **Note:** Given that the y-axis unit is dollars in Figure \@ref(fig:07-edaRegr), 
+> we format the axis labels to put dollar signs in front of the house prices, 
+> as well as commas to increase the readability of the larger numbers.
+> We can do this in R by passing the `dollar_format` function 
+> (from the `scales` package)
+> to the `labels` argument of the `scale_y_continuous` function.
+
+```{r 07-edaRegr, message = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap = "Scatter plot of price (USD) versus house size (square feet)."}
 eda <- ggplot(sacramento, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
   xlab("House size (square feet)") +
@@ -171,7 +197,7 @@ you can see that we have no
 observations of a house of size *exactly* 2,000 square feet. How can we predict
 the sale price? 
 
-```{r 07-small-eda-regr, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with vertical line indicating 2,000 square feet on x-axis."}
+```{r 07-small-eda-regr, fig.height = 3.5, fig.width = 4.5, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with vertical line indicating 2,000 square feet on x-axis."}
 small_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
   geom_point() +
   xlab("House size (square feet)") +
@@ -199,7 +225,7 @@ nearest_neighbors <- small_sacramento |>
 nearest_neighbors
 ```
 
-```{r 07-knn3-example, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with lines to 5 nearest neighbors."}
+```{r 07-knn3-example, echo = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with lines to 5 nearest neighbors."}
 nearest_neighbors <- mutate(nearest_neighbors, twothou = rep(2000, 5))
 
 nn_plot <- small_plot +
@@ -226,7 +252,7 @@ prediction <- nearest_neighbors |>
 prediction
 ```
 
-```{r 07-predictedViz-knn, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with predicted price for a 2,000 square-foot house based on 5 nearest neighbors represented as a red dot."}
+```{r 07-predictedViz-knn, echo = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with predicted price for a 2,000 square-foot house based on 5 nearest neighbors represented as a red dot."}
 nn_plot +
   geom_point(aes(x = 2000, y = prediction[[1]]), color = "red", size = 2.5)
 ```
@@ -297,7 +323,7 @@ different from the true values, then RMSPE will be quite large. When we
 use cross validation, we will choose the $K$ that gives
 us the smallest RMSPE.
 
-```{r 07-verticalerrors, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with example predictions (blue line) and the error in those predictions compared with true response values for three selected observations (vertical red lines).", fig.height = 4, fig.width = 5}
+```{r 07-verticalerrors, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with example predictions (blue line) and the error in those predictions compared with true response values for three selected observations (vertical red lines).", fig.height = 3.5, fig.width = 4.5}
 # save the seed
 seedval <- .Random.seed
 
@@ -383,7 +409,7 @@ Then we create a 5-fold cross validation object, and put the recipe and model sp
 in a workflow.
 \index{tidymodels}\index{recipe}\index{workflow}
 
-```{r 07-choose-k-knn}
+```{r 07-choose-k-knn, results = 'hide', echo = TRUE}
 sacr_recipe <- recipe(price ~ sqft, data = sacramento_train) |>
   step_scale(all_predictors()) |>
   step_center(all_predictors())
@@ -400,6 +426,10 @@ sacr_wkflw <- workflow() |>
   add_model(sacr_spec)
 
 sacr_wkflw
+```
+
+```{r echo = FALSE}
+print_tidymodels(sacr_wkflw)
 ```
 
 Next we run cross validation for a grid of numbers of neighbors ranging from 1 to 200. 
@@ -426,7 +456,7 @@ sacr_results <- sacr_wkflw |>
 sacr_results
 ```
 
-```{r 07-choose-k-knn-plot, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Effect of the number of neighbors on the RMSPE."} 
+```{r 07-choose-k-knn-plot, echo = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap = "Effect of the number of neighbors on the RMSPE."} 
 sacr_tunek_plot <- ggplot(sacr_results, aes(x = neighbors, y = mean)) +
   geom_point() +
   geom_line() +
@@ -491,7 +521,8 @@ for (i in 1:6) {
         ylab("Price (USD)") +
         scale_y_continuous(labels = dollar_format()) +
         geom_line(data = sacr_preds, aes(x = sqft, y = .pred), color = "blue") +
-        ggtitle(paste0("K = ", gridvals[[i]]))
+        ggtitle(paste0("K = ", gridvals[[i]])) +
+  theme(text = element_text(size = 16))
   } else {
       plots[[i]] <- ggplot(sacr_preds, aes(x = sqft, y = price)) +
         geom_point(alpha = 0.4) +
@@ -502,7 +533,8 @@ for (i in 1:6) {
                    mapping = aes(x = sqft), 
                    yintercept = mean(sacr_preds$price), 
                    color = "blue") +
-        ggtitle(paste0("K = ", gridvals[[i]]))
+        ggtitle(paste0("K = ", gridvals[[i]])) +
+  theme(text = element_text(size = 16))
   }
 }
 
@@ -610,7 +642,7 @@ the range of house sizes we might encounter in the Sacramento area&mdash;from 50
 You have already seen a few plots like this in this chapter, but here we also provide the code that generated it
 as a learning challenge.
 
-```{r 07-predict-all, warning = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Predicted values of house price (blue line) for the final KNN regression model."}
+```{r 07-predict-all, warning = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap = "Predicted values of house price (blue line) for the final KNN regression model."}
 sacr_preds <- tibble(sqft = seq(from = 500, to = 5000, by = 10))
 
 sacr_preds <- sacr_fit |>
@@ -657,7 +689,7 @@ visualizing the data, before we start modeling the data. Figure \@ref(fig:07-bed
 shows that the number of bedrooms might provide useful information
 to help predict the sale price of a house.
 
-```{r 07-bedscatter, fig.height = 5, fig.width = 6, fig.cap = "Scatter plot of the sale price of houses versus the number of bedrooms."}
+```{r 07-bedscatter, fig.height = 3.5, fig.width = 4.5, fig.cap = "Scatter plot of the sale price of houses versus the number of bedrooms."}
 plot_beds <- sacramento |>
              ggplot(aes(x = beds, y = price)) +
              geom_point(alpha = 0.4) +
@@ -752,7 +784,7 @@ Figure \@ref(fig:07-knn-mult-viz) visualizes the model's predictions overlaid on
 time the predictions are a surface in 3D space, instead of a line in 2D space, as we have 2
 predictors instead of 1.  
 
-```{r 07-knn-mult-viz, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "KNN regression model’s predictions represented as a surface in 3D space overlaid on top of the data using three predictors (price, house size, and the number of bedrooms). Note that in general we recommend against using 3D visualizations; here we use a 3D visualization only to illustrate what the surface of predictions looks like for learning purposes.", out.width="80%"}
+```{r 07-knn-mult-viz, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "KNN regression model’s predictions represented as a surface in 3D space overlaid on top of the data using three predictors (price, house size, and the number of bedrooms). Note that in general we recommend against using 3D visualizations; here we use a 3D visualization only to illustrate what the surface of predictions looks like for learning purposes.", out.width="100%"}
 xvals <- seq(from = min(sacramento_train$sqft), 
              to = max(sacramento_train$sqft), 
              length = 50)
@@ -773,12 +805,12 @@ plot_3d <- plot_ly() |>
     x = ~sqft,
     y = ~beds,
     z = ~price,
-    marker = list(size = 5, opacity = 0.4, color = "red")
+    marker = list(size = 2, opacity = 0.4, color = "red")
   ) |>
   layout(scene = list(
-    xaxis = list(title = "House size (square feet)"),
+    xaxis = list(title = "Size (sq ft)"),
     zaxis = list(title = "Price (USD)"),
-    yaxis = list(title = "Number of bedrooms")
+    yaxis = list(title = "Bedrooms")
   )) |>
   add_surface(
     x = ~xvals,
@@ -790,6 +822,9 @@ plot_3d <- plot_ly() |>
 if(!is_latex_output()){  
   plot_3d
 } else {
+  scene = list(camera = list(eye = list(x = -2.1, y = -2.2, z = 0.75)))
+  plot_3d <- plot_3d  |> layout(scene = scene)
+  save_image(plot_3d, "img/plot3d_knn_regression.png", scale = 10)
   knitr::include_graphics("img/plot3d_knn_regression.png")
 }
 ```
@@ -820,3 +855,13 @@ regression has both strengths and weaknesses. Some are listed here:
 1. becomes very slow as the training data gets larger
 2. may not perform well with a large number of predictors
 3. may not predict well beyond the range of values input in your training data
+
+## Exercises
+
+Practice exercises for the material covered in this chapter 
+can be found in the accompanying [worksheet](https://github.com/UBC-DSCI/data-science-a-first-intro-worksheets/blob/main/worksheet_08/worksheet_08.ipynb).
+The worksheet tries to provide automated feedback 
+and help guide you through the problems. 
+To make sure this functionality works as intended, 
+please follow the instructions for computer setup needed to run the worksheets 
+found in Chapter \@ref(move-to-your-own-machine).

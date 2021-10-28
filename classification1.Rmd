@@ -4,12 +4,33 @@
 library(formatR)
 library(plotly)
 library(knitr)
+library(kableExtra)
+library(ggpubr)
+library(stringr)
 
 knitr::opts_chunk$set(echo = TRUE, 
                       fig.align = "center")
 options(knitr.table.format = function() {
   if (knitr::is_latex_output()) 'latex' else 'pandoc'
 })
+reticulate::use_miniconda('r-reticulate')
+
+print_tidymodels <- function(tidymodels_object) {
+  if(!is_latex_output()) {
+    tidymodels_object
+  } else {
+    output <- capture.output(tidymodels_object)
+    
+    for (i in seq_along(output)) {
+      if (nchar(output[i]) <= 80) {
+        cat(output[i], sep = "\n")
+      } else {
+        cat(str_sub(output[i], start = 1, end = 80), sep = "\n")
+        cat(str_sub(output[i], start = 81, end = nchar(output[i])), sep = "\n")
+      }
+    }
+  }
+}
 ```
 
 ## Overview 
@@ -207,8 +228,8 @@ for light orange and `"steelblue2"` for light blue&mdash;and
 We also make the category labels ("B" and "M") more readable by 
 changing them to "Benign" and "Malignant" using the `labels` argument.
 
-```{r 05-scatter, fig.height = 4, fig.width = 5, fig.cap= "Scatter plot of concavity versus perimeter colored by diagnosis label."}
-perim_concav <- cancer %>%
+```{r 05-scatter, fig.height = 3.5, fig.width = 4.5, fig.cap= "Scatter plot of concavity versus perimeter colored by diagnosis label."}
+perim_concav <- cancer |>
   ggplot(aes(x = Perimeter, y = Concavity, color = Class)) +
   geom_point(alpha = 0.6) +
   labs(x = "Perimeter (standardized)", 
@@ -283,11 +304,11 @@ new observation, with standardized perimeter of `r new_point[1]` and standardize
 diagnosis "Class" is unknown. This new observation is depicted by the red, diamond point in
 Figure \@ref(fig:05-knn-1).
 
-```{r 05-knn-1, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with new observation represented as a red diamond."}
+```{r 05-knn-1, echo = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap="Scatter plot of concavity versus perimeter with new observation represented as a red diamond."}
 perim_concav_with_new_point <-  bind_rows(cancer, 
                                           tibble(Perimeter = new_point[1], 
                                                  Concavity = new_point[2], 
-                                                 Class = "unknown")) %>%
+                                                 Class = "unknown")) |>
   ggplot(aes(x = Perimeter, 
              y = Concavity, 
              color = Class, 
@@ -315,7 +336,7 @@ then the perimeter and concavity values are similar, and so we may expect that
 they would have the same diagnosis. 
 
 
-```{r 05-knn-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter. The new observation is represented as a red diamond with a line to the one nearest neighbor, which has a malignant label."}
+```{r 05-knn-2, echo = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap="Scatter plot of concavity versus perimeter. The new observation is represented as a red diamond with a line to the one nearest neighbor, which has a malignant label."}
 perim_concav_with_new_point +
   geom_segment(aes(
     x = new_point[1],
@@ -340,12 +361,12 @@ Does this seem like the right prediction to make for this observation? Probably
 not, if you consider the other nearby points...
 
 
-```{r 05-knn-4, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter. The new observation is represented as a red diamond with a line to the one nearest neighbor, which has a benign label."}
+```{r 05-knn-4, echo = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap="Scatter plot of concavity versus perimeter. The new observation is represented as a red diamond with a line to the one nearest neighbor, which has a benign label."}
 
 perim_concav_with_new_point2 <- bind_rows(cancer, 
                                           tibble(Perimeter = new_point[1], 
                                                  Concavity = new_point[2], 
-                                                 Class = "unknown")) %>%
+                                                 Class = "unknown")) |>
   ggplot(aes(x = Perimeter, 
              y = Concavity, 
              color = Class, 
@@ -380,7 +401,7 @@ see that the diagnoses of 2 of the 3 nearest neighbors to our new observation
 are malignant. Therefore we take majority vote and classify our new red, diamond
 observation as malignant. 
 
-```{r 05-knn-5, echo =  FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with three nearest neighbors."}
+```{r 05-knn-5, echo =  FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap="Scatter plot of concavity versus perimeter with three nearest neighbors."}
 perim_concav_with_new_point2 + 
   geom_segment(aes(
     x = new_point[1], y = new_point[2],
@@ -430,7 +451,7 @@ You will see in the `mutate` \index{mutate} step below, we compute the straight-
 distance using the formula above: we square the differences between the two observations' perimeter 
 and concavity coordinates, add the squared differences, and then take the square root.
 
-```{r 05-multiknn-1, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with new observation represented as a red diamond."}
+```{r 05-multiknn-1, echo = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap="Scatter plot of concavity versus perimeter with new observation represented as a red diamond."}
 perim_concav <- bind_rows(cancer, 
                           tibble(Perimeter = new_point[1], 
                                  Concavity = new_point[2], 
@@ -493,23 +514,26 @@ math_table <- tibble(Perimeter = round(tab[1:5,1],2),
                      Concavity = round(tab[1:5,2],2), 
                           dist = round(neighbors[1:5, "Distance"], 2)
                     )
-math_table <- math_table %>% 
+math_table <- math_table |> 
                     mutate(Distance = paste0("$\\sqrt{(", new_obs_Perimeter, " - ", ifelse(Perimeter < 0, "(", ""), Perimeter, ifelse(Perimeter < 0,")",""), ")^2",
                                              " + ",
-                                             "(", new_obs_Concavity, " - ", ifelse(Concavity < 0,"(",""), Concavity, ifelse(Concavity < 0,")",""), ")^2} = ", dist, "$")) %>%
-                    select(-dist) %>%
+                                             "(", new_obs_Concavity, " - ", ifelse(Concavity < 0,"(",""), Concavity, ifelse(Concavity < 0,")",""), ")^2} = ", dist, "$")) |>
+                    select(-dist) |>
                     mutate(Class= tab[1:5, "Class"])
 ```
 
 ```{r 05-multiknn-mathtable, echo = FALSE}
-knitr::kable(math_table, booktabs = TRUE, caption = "Evaluating the distances from the new observation to each of its 5 nearest neighbors", escape = FALSE)
+kable(math_table, booktabs = TRUE, 
+      caption = "Evaluating the distances from the new observation to each of its 5 nearest neighbors", 
+      escape = FALSE) |>
+  kable_styling(latex_options = "hold_position")
 ```
 
 The result of this computation shows that 3 of the 5 nearest neighbors to our new observation are
 malignant (`M`); since this is the majority, we classify our new observation as malignant. 
 These 5 neighbors are circled in Figure \@ref(fig:05-multiknn-3).
 
-```{r 05-multiknn-3, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap="Scatter plot of concavity versus perimeter with 5 nearest neighbors circled."}
+```{r 05-multiknn-3, echo = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap="Scatter plot of concavity versus perimeter with 5 nearest neighbors circled."}
 perim_concav + annotate("path",
   x = new_point[1] + 1.4 * cos(seq(0, 2 * pi,
     length.out = 100
@@ -568,7 +592,7 @@ Based on $K=5$ nearest neighbors with these three predictors we would classify t
 Figure \@ref(fig:05-more) shows what the data look like when we visualize them 
 as a 3-dimensional scatter with lines from the new observation to its five nearest neighbors.
 
-```{r 05-more, echo = FALSE, message = FALSE, fig.cap = "3D scatter plot of the standardized symmetry, concavity, and perimeter variables. Note that in general we recommend against using 3D visualizations; here we show the data in 3D only to illustrate what higher dimensions and nearest neighbors look like, for learning purposes.", fig.retina=2, out.width="80%"}
+```{r 05-more, echo = FALSE, message = FALSE, fig.cap = "3D scatter plot of the standardized symmetry, concavity, and perimeter variables. Note that in general we recommend against using 3D visualizations; here we show the data in 3D only to illustrate what higher dimensions and nearest neighbors look like, for learning purposes.", fig.retina=2, out.width="100%"}
 attrs <- c("Perimeter", "Concavity", "Symmetry")
 
 # create new scaled obs and get NNs
@@ -580,10 +604,10 @@ my_distances_3 <- table_with_distances(cancer[, attrs],
                                        new_obs_3[, attrs])
 neighbors_3 <- cancer[order(my_distances_3$Distance), ]
 
-data <- neighbors_3 %>% select(Perimeter, Concavity, Symmetry) %>% slice(1:5)
+data <- neighbors_3 |> select(Perimeter, Concavity, Symmetry) |> slice(1:5)
 
 # add to the df
-scaled_cancer_3 <- bind_rows(cancer, new_obs_3) %>% 
+scaled_cancer_3 <- bind_rows(cancer, new_obs_3) |> 
   mutate(Class = fct_recode(Class, "Benign" = "B", "Malignant"= "M"))
 
 plot_3d <- scaled_cancer_3 |>
@@ -592,13 +616,13 @@ plot_3d <- scaled_cancer_3 |>
     xaxis = list(title = "Perimeter"),
     yaxis = list(title = "Concavity"),
     zaxis = list(title = "Symmetry")
-  )) %>% 
+  )) |> 
   add_trace(x = ~Perimeter,
             y = ~Concavity,
             z = ~Symmetry,
             color = ~Class,
             opacity = 0.4,
-            size = 150,
+            size = 2,
             colors = c("orange2", "steelblue2", "red"), 
             symbol = ~Class, symbols = c('circle','circle','diamond'))
 
@@ -622,21 +646,26 @@ x5 <- c(pull(new_obs_3[1]), data$Perimeter[5])
 y5 <- c(pull(new_obs_3[2]), data$Concavity[5])
 z5 <- c(pull(new_obs_3[3]), data$Symmetry[5])
 
-plot_3d <- plot_3d  %>%
+plot_3d <- plot_3d  |>
   add_trace(x = x1, y = y1, z = z1, type = "scatter3d", mode = "lines", 
-            name = "lines", showlegend = FALSE, color = I("steelblue2")) %>%
+            name = "lines", showlegend = FALSE, color = I("steelblue2")) |>
   add_trace(x = x2, y = y2, z = z2, type = "scatter3d", mode = "lines", 
-            name = "lines", showlegend = FALSE, color =  I("steelblue2")) %>%
+            name = "lines", showlegend = FALSE, color =  I("steelblue2")) |>
   add_trace(x = x3, y = y3, z = z3, type = "scatter3d", mode = "lines", 
-            name = "lines", showlegend = FALSE, color =  I("steelblue2")) %>%
+            name = "lines", showlegend = FALSE, color =  I("steelblue2")) |>
   add_trace(x = x4, y = y4, z = z4, type = "scatter3d", mode = "lines", 
-            name = "lines", showlegend = FALSE, color =  I("orange2")) %>%
+            name = "lines", showlegend = FALSE, color =  I("orange2")) |>
   add_trace(x = x5, y = y5, z = z5, type = "scatter3d", mode = "lines", 
             name = "lines", showlegend = FALSE, color =  I("steelblue2"))
 
 if(!is_latex_output()){  
   plot_3d
 } else {
+  # scene = list(camera = list(eye = list(x=2, y=2, z = 1.5)))
+  # plot_3d <- plot_3d  |> layout(scene = scene)
+  # save_image(plot_3d, "img/plot3d_knn_classification.png", scale = 10)
+  # cannot adjust size of points in this plot for pdf 
+  # so using a screenshot for now instead
   knitr::include_graphics("img/plot3d_knn_classification.png")
 }
 ```
@@ -720,10 +749,14 @@ data frame, `Class ~ Perimeter + Concavity` and `Class ~ .` are equivalent.
 In general, you can choose individual predictors using the `+` symbol, or you can specify to
 use *all* predictors using the `.` symbol.
 
-```{r 05-tidymodels-4b, tidy = TRUE, tidy.opts=list(width.cutoff = 60)}
+```{r 05-tidymodels-4b, results = 'hide', echo = TRUE}
 knn_fit <- knn_spec |>
   fit(Class ~ ., data = cancer_train)
 knn_fit
+```
+
+```{r echo = FALSE}
+print_tidymodels(knn_fit)
 ```
 
 Here you can see the final trained model summary. It confirms that the computational engine used
@@ -893,7 +926,7 @@ Standardizing your data should be a part of the preprocessing you do
 before predictive modeling and you should always think carefully about your problem domain and
 whether you need to standardize your data. 
 
-```{r 05-scaling-plt, echo = FALSE, fig.height = 4, fig.width = 10, fig.cap = "Comparison of K = 3 nearest neighbors with standardized and unstandardized data."}
+```{r 05-scaling-plt, echo = FALSE, fig.height = 4, fig.cap = "Comparison of K = 3 nearest neighbors with standardized and unstandardized data."}
 
 attrs <- c("Area", "Smoothness")
 
@@ -984,10 +1017,11 @@ scaled <- ggplot(scaled_cancer, aes(x = Area,
     yend = unlist(neighbors_scaled[3, attrs[2]])
   ), color = "black", size = 0.5)
 
-gridExtra::grid.arrange(unscaled, scaled, ncol = 2)
+ggarrange(unscaled, scaled, ncol = 2, common.legend = TRUE, legend = "bottom")
+
 ```
 
-```{r 05-scaling-plt-zoomed, fig.height = 4, fig.width = 10, echo = FALSE, fig.cap = "Close up of three nearest neighbors for unstandardized data."}
+```{r 05-scaling-plt-zoomed, fig.height = 4.5, fig.width = 9, echo = FALSE, fig.cap = "Close up of three nearest neighbors for unstandardized data."}
 library(ggforce)
 ggplot(unscaled_cancer, aes(x = Area, 
                             y = Smoothness, 
@@ -1019,11 +1053,11 @@ ggplot(unscaled_cancer, aes(x = Area,
     x = unlist(new_obs[1]), y = unlist(new_obs[2]),
     xend = unlist(neighbors[3, attrs[1]]),
     yend = unlist(neighbors[3, attrs[2]])
-  ), color = "black") +   theme_light() +  
-# facet_zoom( xlim = c(399.7, 401.6), ylim = c(0.08, 0.14), zoom.size = 2) + 
+  ), color = "black") +  
    facet_zoom(x = ( Area > 380 & Area < 420) , 
               y = (Smoothness > 0.08 & Smoothness < 0.14), zoom.size = 2) + 
-  theme_bw()
+    theme_bw() + 
+    theme(text = element_text(size = 14), legend.position="bottom")
 ```
 
 ### Balancing
@@ -1048,14 +1082,14 @@ function, which takes two arguments: a data frame-like object,
 and the number of rows to select from the top (`n`).
 The new imbalanced data is shown in Figure \@ref(fig:05-unbalanced).
 
-```{r 05-unbalanced-seed, echo = FALSE, fig.height = 4, fig.width = 5, warning = FALSE, message = FALSE}
+```{r 05-unbalanced-seed, echo = FALSE, fig.height = 3.5, fig.width = 4.5, warning = FALSE, message = FALSE}
 # hidden seed here for reproducibility 
 # randomness shouldn't affect much in this use of step_upsample,
 # but just in case...
 set.seed(3)
 ```
 
-```{r 05-unbalanced, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data."}
+```{r 05-unbalanced, fig.height = 3.5, fig.width = 4.5, fig.cap = "Imbalanced data."}
 rare_cancer <- bind_rows(
       filter(cancer, Class == "B"),
       cancer |> filter(Class == "M") |> slice_head(n = 3)
@@ -1083,7 +1117,7 @@ benign, and the benign vote will always win. For example, Figure \@ref(fig:05-up
 shows what happens for a new tumor observation that is quite close to three observations
 in the training data that were tagged as malignant.
 
-```{r 05-upsample, echo=FALSE, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data with 7 nearest neighbors to a new observation highlighted."}
+```{r 05-upsample, echo=FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap = "Imbalanced data with 7 nearest neighbors to a new observation highlighted."}
 new_point <- c(2, 2)
 attrs <- c("Perimeter", "Concavity")
 my_distances <- table_with_distances(rare_cancer[, attrs], new_point)
@@ -1135,7 +1169,7 @@ each area of the plot to the predictions the $K$-nearest neighbor
 classifier would make. We can see that the decision is 
 always "benign," corresponding to the blue color.
 
-```{r 05-upsample-2, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Imbalanced data with background color indicating the decision of the classifier and the points represent the labeled data."}
+```{r 05-upsample-2, echo = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap = "Imbalanced data with background color indicating the decision of the classifier and the points represent the labeled data."}
 
 knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) |>
   set_engine("kknn") |>
@@ -1184,11 +1218,13 @@ fairly nuanced, and a careful treatment would require a lot more detail and math
 For the present purposes, it will suffice to rebalance the data by *oversampling* the rare class. \index{oversampling}
 In other words, we will replicate rare observations multiple times in our data set to give them more
 voting power in the $K$-nearest neighbor algorithm. In order to do this, we will add an oversampling
-step to the earlier `uc_recipe` recipe with the `step_upsample` function. \index{recipe!step\_upsample}
+step to the earlier `uc_recipe` recipe with the `step_upsample` function from the `themis` R package. \index{recipe!step\_upsample}
 We show below how to do this, and also
 use the `group_by` and `summarize` functions to see that our classes are now balanced:
 
-```{r 05-upsample-cancer, warning=FALSE}
+```{r 05-upsample-cancer, warning = FALSE, message = FALSE}
+library(themis)
+
 ups_recipe <- recipe(Class ~ ., data = rare_cancer) |>
   step_upsample(Class, over_ratio = 1, skip = FALSE) |>
   prep()
@@ -1211,7 +1247,7 @@ classifier would make. We can see that the decision is more reasonable; when the
 to those labeled malignant, the classifier predicts a malignant tumor, and vice versa when they are 
 closer to the benign tumor observations.
 
-```{r 05-upsample-plot, echo = FALSE, fig.height = 4, fig.width = 5, fig.cap = "Upsampled data with background color indicating the decision of the classifier."}
+```{r 05-upsample-plot, echo = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap = "Upsampled data with background color indicating the decision of the classifier."}
 knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) |>
   set_engine("kknn") |>
   set_mode("classification")
@@ -1282,13 +1318,17 @@ and finally we will use the `fit` function to run the whole workflow on the `uns
 Note another difference from earlier here: we do not include a formula in the `fit` function. This \index{tidymodels!fit}
 is again because we included the formula in the recipe, so there is no need to respecify it:
 
-```{r 05-workflow-add, tidy = TRUE, tidy.opts=list(width.cutoff = 60)}
+```{r 05-workflow-add, results = 'hide', echo = TRUE}
 knn_fit <- workflow() |>
   add_recipe(uc_recipe) |>
   add_model(knn_spec) |>
   fit(data = unscaled_cancer)
 
 knn_fit
+```
+
+```{r echo = FALSE}
+print_tidymodels(knn_fit)
 ```
 
 As before, the fit object lists the function that trains the model as well as the "best" settings
@@ -1321,7 +1361,7 @@ predict the label of each, and visualize the predictions with a colored scatter 
 > textbook. It is included for those readers who would like to use similar
 > visualizations in their own data analyses. 
 
-```{r 05-workflow-plot-show, fig.height = 4, fig.width = 5, fig.cap = "Scatter plot of smoothness versus area where background color indicates the decision of the classifier."}
+```{r 05-workflow-plot-show, fig.height = 3.5, fig.width = 4.6, fig.cap = "Scatter plot of smoothness versus area where background color indicates the decision of the classifier."}
 # create the grid of area/smoothness vals, and arrange in a data frame
 are_grid <- seq(min(unscaled_cancer$Area), 
                 max(unscaled_cancer$Area), 
@@ -1355,9 +1395,21 @@ wkflw_plot <-
                            color = Class), 
              alpha = 0.02, 
              size = 5) +
-  labs(color = "Diagnosis") +
+  labs(color = "Diagnosis", 
+       x = "Area (standardized)", 
+       y = "Smoothness (standardized)") +
   scale_color_manual(labels = c("Malignant", "Benign"), 
                      values = c("orange2", "steelblue2"))
 
 wkflw_plot
 ```
+
+## Exercises
+
+Practice exercises for the material covered in this chapter 
+can be found in the accompanying [worksheet](https://github.com/UBC-DSCI/data-science-a-first-intro-worksheets/blob/main/worksheet_06/worksheet_06.ipynb).
+The worksheet tries to provide automated feedback 
+and help guide you through the problems. 
+To make sure this functionality works as intended, 
+please follow the instructions for computer setup needed to run the worksheets 
+found in Chapter \@ref(move-to-your-own-machine).
