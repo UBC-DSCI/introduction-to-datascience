@@ -3,9 +3,27 @@
 ```{r regression1-setup, echo = FALSE, message = FALSE, warning = FALSE}
 library(knitr)
 library(plotly)
+library(stringr)
 
 knitr::opts_chunk$set(fig.align = "center")
 reticulate::use_miniconda('r-reticulate')
+
+print_tidymodels <- function(tidymodels_object) {
+  if(!is_latex_output()) {
+    tidymodels_object
+  } else {
+    output <- capture.output(tidymodels_object)
+    
+    for (i in seq_along(output)) {
+      if (nchar(output[i]) <= 80) {
+        cat(output[i], sep = "\n")
+      } else {
+        cat(str_sub(output[i], start = 1, end = 80), sep = "\n")
+        cat(str_sub(output[i], start = 81, end = nchar(output[i])), sep = "\n")
+      }
+    }
+  }
+}
 ```
 
 ## Overview 
@@ -391,7 +409,7 @@ Then we create a 5-fold cross validation object, and put the recipe and model sp
 in a workflow.
 \index{tidymodels}\index{recipe}\index{workflow}
 
-```{r 07-choose-k-knn}
+```{r 07-choose-k-knn, results = 'hide', echo = TRUE}
 sacr_recipe <- recipe(price ~ sqft, data = sacramento_train) |>
   step_scale(all_predictors()) |>
   step_center(all_predictors())
@@ -408,6 +426,10 @@ sacr_wkflw <- workflow() |>
   add_model(sacr_spec)
 
 sacr_wkflw
+```
+
+```{r echo = FALSE}
+print_tidymodels(sacr_wkflw)
 ```
 
 Next we run cross validation for a grid of numbers of neighbors ranging from 1 to 200. 
