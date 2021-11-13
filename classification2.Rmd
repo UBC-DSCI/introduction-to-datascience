@@ -4,6 +4,7 @@
 library(gridExtra)
 library(cowplot)
 library(stringr)
+library(knitr)
 
 knitr::opts_chunk$set(fig.align = "center")
 
@@ -750,7 +751,7 @@ Then instead of using `fit` or `fit_resamples`, we will use the `tune_grid` func
 to fit the model for each value in a range of parameter values. 
 In particular, we first create a data frame with a `neighbors`
 variable that contains the sequence of values of $K$ to try; below we create the `k_vals`
-data frame with the `neighbors` variable containing each value from $K=1$ to $K=15$ using 
+data frame with the `neighbors` variable containing values from 1 to 100 (stepping by 5) using 
 the `seq` function.
 Then we pass that data frame to the `grid` argument of `tune_grid`.
 
@@ -760,7 +761,7 @@ set.seed(1)
 ```
 
 ```{r 06-range-cross-val-2}
-k_vals <- tibble(neighbors = seq(from = 1, to = 15, by = 1))
+k_vals <- tibble(neighbors = seq(from = 1, to = 100, by = 5))
 
 knn_results <- workflow() |>
   add_recipe(cancer_recipe) |>
@@ -774,9 +775,8 @@ accuracies <- knn_results |>
 accuracies
 ```
 
-We can select the best value of the number of neighbors (i.e., the one that results
-in the highest classifier accuracy estimate) by plotting the accuracy versus $K$ 
-in Figure \@ref(fig:06-find-k).
+We can decide which number of neighbors is best by plotting the accuracy versus $K$,
+as shown in Figure \@ref(fig:06-find-k).
 
 ```{r 06-find-k,  fig.height = 3.5, fig.width = 4, fig.cap= "Plot of estimated accuracy versus the number of neighbors."}
 accuracy_vs_k <- ggplot(accuracies, aes(x = neighbors, y = mean)) +
@@ -790,7 +790,7 @@ accuracy_vs_k
 Setting the number of 
 neighbors to $K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors`
 provides the highest accuracy (`r (accuracies |> arrange(desc(mean)) |> slice(1) |> pull(mean) |> round(4))*100`%). But there is no exact or perfect answer here;
-any selection from $K = 3$ and $15$ would be reasonably justified, as all
+any selection from $K = 30$ and $60$ would be reasonably justified, as all
 of these differ in classifier accuracy by a small amount. Remember: the
 values you see on this plot are *estimates* of the true accuracy of our
 classifier. Although the 
@@ -801,7 +801,7 @@ value! Generally, when selecting $K$ (and other parameters for other predictive
 models), we are looking for a value where:
 
 - we get roughly optimal accuracy, so that our model will likely be accurate
-- changing the value to a nearby one (e.g., adding or subtracting 1) doesn't decrease accuracy too much, so that our choice is reliable in the presence of uncertainty
+- changing the value to a nearby one (e.g., adding or subtracting a small number) doesn't decrease accuracy too much, so that our choice is reliable in the presence of uncertainty
 - the cost of training the model is not prohibitive (e.g., in our situation, if $K$ is too large, predicting becomes expensive!)
 
 We know that $K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors` 
