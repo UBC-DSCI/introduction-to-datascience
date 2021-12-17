@@ -24,6 +24,8 @@ print_tidymodels <- function(tidymodels_object) {
     }
   }
 }
+
+theme_update(axis.title = element_text(size = 12)) # modify axis label size in plots 
 ```
 
 ## Overview 
@@ -295,7 +297,8 @@ lm_plot_final <- ggplot(sacramento_train, aes(x = sqft, y = price)) +
   xlab("House size (square feet)") +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
-  geom_smooth(method = "lm", se = FALSE)
+  geom_smooth(method = "lm", se = FALSE) + 
+  theme(text = element_text(size = 12))
 
 lm_plot_final
 ```
@@ -322,7 +325,7 @@ simple linear regression model predictions for the Sacramento real estate data
 (predicting price from house size) and the "best" KNN regression model
 obtained from the same problem, shown in Figure \@ref(fig:08-compareRegression).
 
-```{r 08-compareRegression, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 4, fig.width = 10, fig.cap = "Comparison of simple linear regression and KNN regression."}
+```{r 08-compareRegression, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 4.75, fig.width = 10, fig.cap = "Comparison of simple linear regression and KNN regression."}
 set.seed(1234)
 sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 30) |>
   set_engine("kknn") |>
@@ -366,8 +369,10 @@ knn_plot_final <- ggplot(sacr_preds, aes(x = sqft, y = price)) +
   geom_line(data = sacr_preds, aes(x = sqft, y = .pred), color = "blue") +
   ggtitle("KNN regression") +
   annotate("text", x = 3500, y = 100000, label = paste("RMSPE =", sacr_rmspe)) +
-  theme(text = element_text(size = 14))
+  theme(text = element_text(size = 18), axis.title=element_text(size=18)) 
 
+
+  
 lm_rmspe <- lm_test_results |>
   filter(.metric == "rmse") |>
   pull(.estimate) |>
@@ -376,7 +381,7 @@ lm_rmspe <- lm_test_results |>
 lm_plot_final <- lm_plot_final +
   annotate("text", x = 3500, y = 100000, label = paste("RMSPE =", lm_rmspe)) +
   ggtitle("linear regression") +
-  theme(text = element_text(size = 14))
+  theme(text = element_text(size = 18), axis.title=element_text(size=18)) 
 
 grid.arrange(lm_plot_final, knn_plot_final, ncol = 2)
 ```
@@ -850,7 +855,7 @@ have been replaced by `z` values.
 ```{r 08-predictor-design-2, message = FALSE, warning = FALSE, echo = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap = "Relationship between the transformed predictor and the response."}
 curve_plt2 <- ggplot(df, aes(x = z, y = y)) +
   geom_point() +
-  xlab(paste0("z = ", expression(x^3))) +
+  xlab(expression(paste("z = x"^"3"))) +
   ylab("y") +
   geom_smooth(method = "lm", se = FALSE)
 
