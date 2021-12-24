@@ -7,6 +7,7 @@ library(knitr)
 library(kableExtra)
 library(ggpubr)
 library(stringr)
+library(ggplot2)
 
 knitr::opts_chunk$set(echo = TRUE, 
                       fig.align = "center")
@@ -31,6 +32,8 @@ print_tidymodels <- function(tidymodels_object) {
     }
   }
 }
+
+theme_update(axis.title = element_text(size = 12)) # modify axis label size in plots 
 ```
 
 ## Overview 
@@ -48,16 +51,16 @@ predictions from our classifier are, as well as how to improve our classifier
 
 ## Chapter learning objectives 
 
-By the end of the chapter, readers will be able to:
+By the end of the chapter, readers will be able to do the following:
 
-- Recognize situations where a classifier would be appropriate for making predictions
-- Describe what a training data set is and how it is used in classification
-- Interpret the output of a classifier
-- Compute, by hand, the straight-line (Euclidean) distance between points on a graph when there are two predictor variables
-- Explain the $K$-nearest neighbor classification algorithm
-- Perform $K$-nearest neighbor classification in R using `tidymodels`  
-- Use a `recipe` to preprocess data to be centered, scaled, and balanced
-- Combine preprocessing and model training using a `workflow`
+- Recognize situations where a classifier would be appropriate for making predictions.
+- Describe what a training data set is and how it is used in classification.
+- Interpret the output of a classifier.
+- Compute, by hand, the straight-line (Euclidean) distance between points on a graph when there are two predictor variables.
+- Explain the $K$-nearest neighbor classification algorithm.
+- Perform $K$-nearest neighbor classification in R using `tidymodels`.
+- Use a `recipe` to preprocess data to be centered, scaled, and balanced.
+- Combine preprocessing and model training using a `workflow`.
 
 
 ## The classification problem
@@ -82,7 +85,7 @@ the classifier to make predictions on new data for which we do not know the clas
 
 There are many possible methods that we could use to predict
 a categorical class/label for an observation. In this book, we will
-focus on the widely used **$K$-nearest neighbors** \index{K-nearest neighbors} algorithm.
+focus on the widely used **$K$-nearest neighbors** \index{K-nearest neighbors} algorithm [@knnfix; @knncover].
 In your future studies, you might encounter decision trees, support vector machines (SVMs),
 logistic regression, neural networks, and more; see the additional resources
 section at the end of the next chapter for where to begin learning more about
@@ -96,9 +99,9 @@ categories (e.g., a diagnosis of healthy, bronchitis, pneumonia, or a common col
 ## Exploring a data set
 
 In this chapter and the next, we will study a data set of 
-[digitized breast cancer image features](http://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29),
-created by Dr. William H. Wolberg, W. Nick Street, and Olvi L. Mangasarian at
-the University of Wisconsin, Madison. \index{breast cancer} Each row in the data set represents an
+[digitized breast cancer image features](https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29),
+created by Dr. William H. Wolberg, W. Nick Street, and Olvi L. Mangasarian [@streetbreastcancer]. \index{breast cancer} 
+Each row in the data set represents an
 image of a tumor sample, including the diagnosis (benign or malignant) and
 several other measurements (nucleus texture, perimeter, area, and more).
 Diagnosis for each image was conducted by physicians. 
@@ -114,7 +117,7 @@ the diagnosing physician is. Furthermore, benign tumors are not normally
 dangerous; the cells stay in the same place, and the tumor stops growing before
 it gets very large. By contrast, in malignant tumors, the cells invade the
 surrounding tissue and spread into nearby organs, where they can cause serious
-damage (@stanfordhealthcare).
+damage [@stanfordhealthcare].
 Thus, it is important to quickly and accurately diagnose the tumor type to
 guide patient treatment.
 
@@ -147,7 +150,7 @@ Traditionally these procedures were quite invasive; modern methods such as fine
 needle aspiration, used to collect the present data set, extract only a small
 amount of tissue and are less invasive. Based on a digital image of each breast
 tissue sample collected for this data set, ten different variables were measured
-for each cell nucleus in the image (items 3-12 of the list of variables below), and then the mean 
+for each cell nucleus in the image (items 3&ndash;12 of the list of variables below), and then the mean 
  for each variable across the nuclei was recorded. As part of the
 data preparation, these values have been *standardized (centered and scaled)*; we will discuss what this
 means and why we do it later in this chapter. Each image additionally was given
@@ -188,7 +191,7 @@ cancer <- cancer |>
 glimpse(cancer)
 ```
 
-Recall factors have what are called "levels", which you can think of as categories. We
+Recall that factors have what are called "levels", which you can think of as categories. We
 can verify the levels of the `Class` column by using the `levels` \index{levels}\index{factor!levels} function.
 This function should return the name of each category in that column. Given
 that we only have two different values in our `Class` column (B for benign and M 
@@ -208,7 +211,7 @@ cancer |>
 Before we start doing any modeling, let's explore our data set. Below we use
 the `group_by`, `summarize` and `n` \index{group\_by}\index{summarize} functions to find the number and percentage 
 of benign and malignant tumor observations in our data set. The `n` function within
-`summarize` when paired with `group_by` counts the number of observations in each `Class` group. 
+`summarize`, when paired with `group_by`, counts the number of observations in each `Class` group. 
 Then we calculate the percentage in each group by dividing by the total number of observations. We have 357 (63\%) benign and 212 (37\%) malignant tumor observations.
 ```{r 05-tally}
 num_obs <- nrow(cancer)
@@ -236,7 +239,8 @@ perim_concav <- cancer |>
        y = "Concavity (standardized)",
        color = "Diagnosis") +
   scale_color_manual(labels = c("Malignant", "Benign"), 
-                     values = c("orange2", "steelblue2"))
+                     values = c("orange2", "steelblue2")) +
+  theme(text = element_text(size = 12))
 perim_concav
 ```
 
@@ -358,7 +362,7 @@ concavity of `r new_point[2]`. Looking at the scatter plot in Figure \@ref(fig:0
 classify this red, diamond observation? The nearest neighbor to this new point is a
 **benign** observation at (`r round(neighbors[1, c(attrs[1], attrs[2])], 1)`).
 Does this seem like the right prediction to make for this observation? Probably 
-not, if you consider the other nearby points...
+not, if you consider the other nearby points.
 
 
 ```{r 05-knn-4, echo = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap="Scatter plot of concavity versus perimeter. The new observation is represented as a red diamond with a line to the one nearest neighbor, which has a benign label."}
@@ -561,8 +565,8 @@ $$\mathrm{Distance} = \sqrt{(a_{1} -b_{1})^2 + (a_{2} - b_{2})^2 + \dots + (a_{m
 
 This formula still corresponds to a straight-line distance, just in a space
 with more dimensions. Suppose we want to calculate the distance between a new
-observation with a perimeter of 0, concavity of 3.5 and symmetry of 1 and
-another observation with a perimeter, concavity and symmetry of 0.417, 2.31 and
+observation with a perimeter of 0, concavity of 3.5, and symmetry of 1, and
+another observation with a perimeter, concavity, and symmetry of 0.417, 2.31, and
 0.837 respectively. We have two observations with three predictor variables:
 perimeter, concavity, and symmetry. Previously, when we had two variables, we
 added up the squared difference between each of our (two) variables, and then
@@ -613,9 +617,9 @@ scaled_cancer_3 <- bind_rows(cancer, new_obs_3) |>
 plot_3d <- scaled_cancer_3 |>
   plot_ly() |>
   layout(scene = list(
-    xaxis = list(title = "Perimeter"),
-    yaxis = list(title = "Concavity"),
-    zaxis = list(title = "Symmetry")
+    xaxis = list(title = "Perimeter", titlefont = list(size = 14)),
+    yaxis = list(title = "Concavity", titlefont = list(size = 14)),
+    zaxis = list(title = "Symmetry", titlefont = list(size = 14))
   )) |> 
   add_trace(x = ~Perimeter,
             y = ~Concavity,
@@ -672,7 +676,7 @@ if(!is_latex_output()){
 
 ### Summary of $K$-nearest neighbors algorithm
 
-In order to classify a new observation using a $K$-nearest neighbor classifier, we have to:
+In order to classify a new observation using a $K$-nearest neighbor classifier, we have to do the following:
 
 1. Compute the distance between the new observation and each observation in the training set.
 2. Sort the data table in ascending order according to the distances.
@@ -685,9 +689,9 @@ In order to classify a new observation using a $K$-nearest neighbor classifier, 
 Coding the $K$-nearest neighbors algorithm in R ourselves can get complicated,
 especially if we want to handle multiple classes, more than two variables,
 or predict the class for multiple new observations. Thankfully, in R,
-the $K$-nearest neighbors algorithm is implemented in the `parsnip` package 
-included in the 
-[`tidymodels` package](https://www.tidymodels.org/), along with 
+the $K$-nearest neighbors algorithm is 
+implemented in [the `parsnip` R package](https://parsnip.tidymodels.org/) [@parsnip] 
+included in `tidymodels`, along with 
 many [other models](https://www.tidymodels.org/find/parsnip/) \index{tidymodels}\index{parsnip}
  that you will encounter in this and future chapters of the book. The `tidymodels` collection
 provides tools to help make and use models, such as classifiers.  Using the packages
@@ -719,7 +723,7 @@ distance (`weight_func = "rectangular"`). The `weight_func` argument controls
 how neighbors vote when classifying a new observation; by setting it to `"rectangular"`,
 each of the $K$ nearest neighbors gets exactly 1 vote as described above. Other choices, 
 which weigh each neighbor's vote differently, can be found on 
-[the `tidymodels` website](https://parsnip.tidymodels.org/reference/nearest_neighbor.html).
+[the `parsnip` website](https://parsnip.tidymodels.org/reference/nearest_neighbor.html).
 In the `set_engine` \index{tidymodels!engine} argument, we specify which package or system will be used for training
 the model. Here `kknn` is the R package we will use for performing $K$-nearest neighbors classification.
 Finally, we specify that this is a classification problem with the `set_mode` function.
@@ -763,13 +767,13 @@ Here you can see the final trained model summary. It confirms that the computati
 to train the model  was `kknn::train.kknn`. It also shows the fraction of errors made by
 the nearest neighbor model, but we will ignore this for now and discuss it in more detail
 in the next chapter.
-Finally it shows (somewhat confusingly) that the "best" weight function 
+Finally, it shows (somewhat confusingly) that the "best" weight function 
 was "rectangular" and "best" setting of $K$ was 5; but since we specified these earlier,
 R is just repeating those settings to us here. In the next chapter, we will actually
 let R find the value of $K$ for us. 
 
 Finally, we make the prediction on the new observation by calling the `predict` \index{tidymodels!predict} function,
-passing both the fit object we just created and the new observation itself. As above 
+passing both the fit object we just created and the new observation itself. As above, 
 when we ran the $K$-nearest neighbors
 classification algorithm manually, the `knn_fit` object classifies the new observation as 
 malignant ("M"). Note that the `predict` function outputs a data frame with a single 
@@ -806,7 +810,7 @@ difference of \$1000 in yearly salary!
 In many other predictive models, the *center* of each variable (e.g., its mean)
 matters as well. For example, if we had a data set with a temperature variable
 measured in degrees Kelvin, and the same data set with temperature measured in
-degrees Celcius, the two variables would differ by a constant shift of 273
+degrees Celsius, the two variables would differ by a constant shift of 273
 (even though they contain exactly the same information). Likewise, in our
 hypothetical job classification example, we would likely see that the center of
 the salary variable is in the tens of thousands, while the center of the years
@@ -842,8 +846,9 @@ loaded, and the standardized version of that same data. But first, we need to
 standardize the `unscaled_cancer` data set with `tidymodels`.
 
 In the `tidymodels` framework, all data preprocessing happens 
-using a [`recipe`](https://tidymodels.github.io/recipes/reference/index.html).
-Here we will initialize a recipe \index{recipe} \index{tidymodels!recipe|see{recipe}} for the `unscaled_cancer` data above, specifying
+using a `recipe` from [the `recipes` R package](https://recipes.tidymodels.org/) [@recipes]
+Here we will initialize a recipe \index{recipe} \index{tidymodels!recipe|see{recipe}} for 
+the `unscaled_cancer` data above, specifying
 that the `Class` variable is the target, and all other variables are predictors:
 
 ```{r 05-scaling-2}
@@ -852,7 +857,9 @@ print(uc_recipe)
 ```
 
 So far, there is not much in the recipe; just a statement about the number of targets
-and predictors. Let's add scaling (`step_scale`) \index{recipe!step\_scale} and centering (`step_center`) \index{recipe!step\_center} steps for 
+and predictors. Let's add 
+scaling (`step_scale`) \index{recipe!step\_scale} and 
+centering (`step_center`) \index{recipe!step\_center} steps for 
 all of the predictors so that they each have a mean of 0 and standard deviation of 1.
 Note that `tidyverse` actually provides `step_normalize`, which does both centering and scaling in
 a single recipe step; in this book we will keep `step_scale` and `step_center` separate
@@ -881,11 +888,11 @@ For example:
 - `Area, Smoothness`: specify both the `Area` and `Smoothness` variable
 - `-Class`: specify everything except the `Class` variable
 
-You can find [a full set of all the steps and variable selection functions](https://tidymodels.github.io/recipes/reference/index.html)
-on the `recipes` home page.
+You can find a full set of all the steps and variable selection functions
+on the [`recipes` reference page](https://recipes.tidymodels.org/reference/index.html).
 
 At this point, we have calculated the required statistics based on the data input into the 
-recipe, but the data are not yet scaled and centred. To actually scale and center 
+recipe, but the data are not yet scaled and centered. To actually scale and center 
 the data, we need to apply the `bake` \index{tidymodels!bake} \index{bake|see{tidymodels}} function to the unscaled data.
 
 ```{r 05-scaling-4}
@@ -1021,7 +1028,7 @@ ggarrange(unscaled, scaled, ncol = 2, common.legend = TRUE, legend = "bottom")
 
 ```
 
-```{r 05-scaling-plt-zoomed, fig.height = 4.5, fig.width = 9, echo = FALSE, fig.cap = "Close up of three nearest neighbors for unstandardized data."}
+```{r 05-scaling-plt-zoomed, fig.height = 4.5, fig.width = 9, echo = FALSE, fig.cap = "Close-up of three nearest neighbors for unstandardized data."}
 library(ggforce)
 ggplot(unscaled_cancer, aes(x = Area, 
                             y = Smoothness, 
@@ -1057,7 +1064,7 @@ ggplot(unscaled_cancer, aes(x = Area,
    facet_zoom(x = ( Area > 380 & Area < 420) , 
               y = (Smoothness > 0.08 & Smoothness < 0.14), zoom.size = 2) + 
     theme_bw() + 
-    theme(text = element_text(size = 14), legend.position="bottom")
+    theme(text = element_text(size = 18), axis.title=element_text(size=18), legend.position="bottom")
 ```
 
 ### Balancing
@@ -1103,7 +1110,8 @@ rare_plot <- rare_cancer |>
        y = "Concavity (standardized)",
        color = "Diagnosis") +
   scale_color_manual(labels = c("Malignant", "Benign"), 
-                     values = c("orange2", "steelblue2"))
+                     values = c("orange2", "steelblue2")) +
+  theme(text = element_text(size = 12))
 
 rare_plot
 ```
@@ -1284,8 +1292,7 @@ upsampled_plot
 
 ## Putting it together in a `workflow` {#puttingittogetherworkflow}
 
-The `tidymodels` package collection also provides the `workflow`, a way to chain \index{tidymodels!workflow} \index{workflow|see{tidymodels}}
-together multiple data analysis steps without a lot of otherwise necessary code for intermediate steps.
+The `tidymodels` package collection also provides the `workflow`, a way to chain\index{tidymodels!workflow}\index{workflow|see{tidymodels}} together multiple data analysis steps without a lot of otherwise necessary code for intermediate steps.
 To illustrate the whole pipeline, let's start from scratch with the `unscaled_wdbc.csv` data.
 First we will load the data, create a model, and specify a recipe for how the data should be preprocessed:
 
@@ -1399,7 +1406,8 @@ wkflw_plot <-
        x = "Area (standardized)", 
        y = "Smoothness (standardized)") +
   scale_color_manual(labels = c("Malignant", "Benign"), 
-                     values = c("orange2", "steelblue2"))
+                     values = c("orange2", "steelblue2")) +
+  theme(text = element_text(size = 12))
 
 wkflw_plot
 ```
@@ -1407,7 +1415,7 @@ wkflw_plot
 ## Exercises
 
 Practice exercises for the material covered in this chapter 
-can be found in the accompanying [worksheet](https://github.com/UBC-DSCI/data-science-a-first-intro-worksheets/blob/main/worksheet_06/worksheet_06.ipynb).
+can be found in the accompanying [worksheet](https://github.com/UBC-DSCI/data-science-a-first-intro-worksheets/blob/main/worksheet_classification1/worksheet_classification1.ipynb).
 The worksheet tries to provide automated feedback 
 and help guide you through the problems. 
 To make sure this functionality works as intended, 

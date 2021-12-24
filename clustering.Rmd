@@ -16,6 +16,8 @@ knitr::opts_chunk$set(warning = FALSE, fig.align = "default")
 # some graphs with the code shown to students are hard coded 
 cbbPalette <- c(brewer.pal(9, "Paired"))
 cbpalette <- c("darkorange3", "dodgerblue3", "goldenrod1")
+
+theme_update(axis.title = element_text(size = 12)) # modify axis label size in plots 
 ```
 
 ## Overview 
@@ -28,7 +30,7 @@ using the K-means algorithm,
 including techniques to choose the number of clusters.
 
 ## Chapter learning objectives 
-By the end of the chapter, readers will be able to:
+By the end of the chapter, readers will be able to do the following:
 
 * Describe a case where clustering is appropriate, 
 and what insight it might extract from the data.
@@ -83,7 +85,7 @@ courses.
 As in the case of classification, 
 there are many possible methods that we could use to cluster our observations 
 to look for subgroups. 
-In this book, we will focus on the widely used K-means \index{K-means} algorithm.
+In this book, we will focus on the widely used K-means \index{K-means} algorithm [@kmeans]. 
 In your future studies, you might encounter hierarchical clustering,
 principal component analysis, multidimensional scaling, and more; 
 see the additional resources section at the end of this chapter 
@@ -101,13 +103,13 @@ for where to begin learning more about these other methods.
 
 **An illustrative example** 
 
-Here we will present an illustrative example using a data set \index{Palmer penguins} from the
-[{palmerpenguins} R data package](https://allisonhorst.github.io/palmerpenguins/). This data set was
-collected by [Dr. Kristen Gorman](https://www.uaf.edu/cfos/people/faculty/detail/kristen-gorman.php) and
-the [Palmer Station, Antarctica Long Term Ecological Research Site](https://pal.lternet.edu/) and includes
-measurements for adult penguins found near there [@palmerpenguins]. We have
+Here we will present an illustrative example using a data set \index{Palmer penguins} from
+[the `palmerpenguins` R package](https://allisonhorst.github.io/palmerpenguins/) [@palmerpenguins]. This 
+data set was collected by Dr. Kristen Gorman and
+the Palmer Station, Antarctica Long Term Ecological Research Site, and includes
+measurements for adult penguins found near there [@penguinpaper]. We have
 modified the data set for use in this chapter. Here we will focus on using two
-variables---penguin bill and flipper length, both in millimeters---to determine whether 
+variables&mdash;penguin bill and flipper length, both in millimeters&mdash;to determine whether 
 there are distinct types of penguins in our data.
 Understanding this might help us with species discovery and classification in a data-driven
 way.
@@ -171,7 +173,8 @@ ggplot(data, aes(x = flipper_length_standardized,
                  y = bill_length_standardized)) +
   geom_point() +
   xlab("Flipper Length (standardized)") +
-  ylab("Bill Length (standardized)")
+  ylab("Bill Length (standardized)") + 
+  theme(text = element_text(size = 12))
 ```
 
 Based \index{ggplot}\index{ggplot!geom\_point} on the visualization 
@@ -184,7 +187,7 @@ including:
 2. a small flipper length, but large bill length group, and
 3. a large  flipper and bill length group.
 
-Data visualization is a great tool to give us a rough sense for such patterns
+Data visualization is a great tool to give us a rough sense of such patterns
 when we have a small number of variables. 
 But if we are to group data&mdash;and select the number of groups&mdash;as part of 
 a reproducible analysis, we need something a bit more automated.
@@ -193,7 +196,7 @@ as we increase the number of variables we consider when clustering.
 The way to rigorously separate the data into groups 
 is to use a clustering algorithm.
 In this chapter, we will focus on the *K-means* algorithm, 
-\index{K-means} a widely-used and often very effective clustering method, 
+\index{K-means} a widely used and often very effective clustering method, 
 combined with the *elbow method* \index{elbow method} 
 for selecting the number of clusters. 
 This procedure will separate the data into groups;
@@ -332,7 +335,7 @@ base <- base +
 base
 ```
 
-The larger the value of $S^2$, the more spread-out the cluster is, since large $S^2$ means that points are far from the cluster center.
+The larger the value of $S^2$, the more spread out the cluster is, since large $S^2$ means that points are far from the cluster center.
 Note, however, that "large" is relative to *both* the scale of the variables for clustering *and* the number of points in the cluster. A cluster where points are very close to the center might still have a large $S^2$ if there are many data points in the cluster.
 
 After we have calculated the WSSD for all the clusters, 
@@ -464,13 +467,13 @@ for (i in 1:4) {
                aes(y = bill_length_standardized, 
                                    x = flipper_length_standardized, 
                                    fill = label), 
-               size = 3, 
+               size = 4, 
                shape = 21, 
                stroke = 1, 
                color = "black", 
                fill = cbpalette) +
     annotate("text", x = -0.5, y = 1.5, label = paste0("Iteration ", i), size = 5)+ 
-    theme(text = element_text(size = 14))
+    theme(text = element_text(size = 14), axis.title=element_text(size=14)) 
   
   if (i == 1 | i == 2) {
     plt_ctr <- plt_ctr +
@@ -498,13 +501,13 @@ for (i in 1:4) {
     geom_point(data = centers, 
                aes(y = bill_length_standardized, 
                    x = flipper_length_standardized, fill = label), 
-               size = 3, 
+               size = 4, 
                shape = 21, 
                stroke = 1, 
                color = "black", 
                fill = cbpalette) +
-    annotate("text", x = -0.5, y = 1.5, label = paste0("Iteration ", i), size = 5)+ 
-    theme(text = element_text(size = 14))
+    annotate("text", x = -0.5, y = 1.5, label = paste0("Iteration ", i), size = 5) + 
+    theme(text = element_text(size = 14), axis.title=element_text(size=14)) 
 
   if (i == 1 | i ==2) {
     plt_lbl <- plt_lbl +
@@ -591,7 +594,7 @@ These, however, are beyond the scope of this book.
 
 ### Random restarts
 
-Unlike the classification and regression models we studied in previous chapters, K-means \index{K-means!restart,nstart} can get "stuck" in a bad solution.
+Unlike the classification and regression models we studied in previous chapters, K-means \index{K-means!restart, nstart} can get "stuck" in a bad solution.
 For example, Figure \@ref(fig:10-toy-kmeans-bad-init) illustrates an unlucky random initialization by K-means.
 
 ```{r 10-toy-kmeans-bad-init, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 3.5, fig.width = 3.75, fig.align = "center", fig.cap = "Random initialization of labels."}
@@ -637,13 +640,13 @@ for (i in 1:5) {
     geom_point(data = centers, aes(y = bill_length_standardized, 
                                    x = flipper_length_standardized, 
                                    fill = label), 
-               size = 3, 
+               size = 4, 
                shape = 21, 
                stroke = 1, 
                color = "black", 
                fill = cbpalette) +
     annotate("text", x = -0.5, y = 1.5, label = paste0("Iteration ", i), size = 5) + 
-    theme(text = element_text(size = 14))
+    theme(text = element_text(size = 14), axis.title=element_text(size=14)) 
 
   if (i == 1 | i == 2) {
     plt_ctr <- plt_ctr +
@@ -670,13 +673,13 @@ for (i in 1:5) {
     geom_point(data = centers, aes(y = bill_length_standardized, 
                                    x = flipper_length_standardized, 
                                    fill = label), 
-               size = 3, 
+               size = 4, 
                shape = 21, 
                stroke = 1, 
                color = "black", 
                fill = cbpalette) +
     annotate("text", x = -0.5, y = 1.5, label = paste0("Iteration ", i), size = 5) + 
-    theme(text = element_text(size = 14))
+    theme(text = element_text(size = 14), axis.title=element_text(size=14)) 
 
   if (i == 1 | i == 2) {
     plt_lbl <- plt_lbl +
@@ -726,7 +729,7 @@ ggarrange(iter_plot_list[[1]] +
                theme(axis.text.x = element_blank(),
                      axis.ticks.x = element_blank(),
                      axis.title.x = element_blank(),
-                     plot.margin = margin(r = 2, t = 2, b = 1)),
+                     plot.margin = margin(r = 2, t = 2, b = 2)),
           iter_plot_list[[6]] + 
                theme(axis.text.y = element_blank(),
                      axis.ticks.y = element_blank(),
@@ -734,7 +737,7 @@ ggarrange(iter_plot_list[[1]] +
                      axis.text.x = element_blank(),
                      axis.ticks.x = element_blank(),
                      axis.title.x = element_blank(),
-                     plot.margin = margin(r = 2, l = 2, t = 2, b = 1) ), 
+                     plot.margin = margin(r = 2, l = 2, t = 2, b = 2) ), 
           iter_plot_list[[7]] + 
                theme(axis.text.y = element_blank(),
                      axis.ticks.y = element_blank(),
@@ -811,7 +814,7 @@ levels(clusters$k) <- clusters_levels
 
 p1 <- ggplot(assignments, aes(flipper_length_standardized, 
                               bill_length_standardized)) +
-  geom_point(aes(color = .cluster, size = 1)) +
+  geom_point(aes(color = .cluster, size = I(2))) +
   facet_wrap(~k) +   scale_color_manual(values = cbbPalette) +
   labs(x = "Flipper Length (standardized)", 
        y = "Bill Length (standardized)", 
@@ -820,10 +823,12 @@ p1 <- ggplot(assignments, aes(flipper_length_standardized,
   geom_point(data = clusters, 
              aes(fill = cluster), 
              color = "black", 
-             size = 5, 
+             size = 4, 
              shape = 21, 
              stroke = 1) + 
-  scale_fill_manual(values = cbbPalette)
+  scale_fill_manual(values = cbbPalette) +     
+  theme(text = element_text(size = 12), axis.title=element_text(size=12)) 
+
 
 p1
 ```
@@ -859,7 +864,7 @@ each other. Therefore, the *scale* of each of the variables in the data
 will influence which cluster data points end up being assigned.
 Variables with a large scale will have a much larger 
 effect on deciding cluster assignment than variables with a small scale. 
-To address this problem, we typically standardize \index{standardization!K-means}\index{K-means!stanardization} our data before clustering,
+To address this problem, we typically standardize \index{standardization!K-means}\index{K-means!standardization} our data before clustering,
 which ensures that each variable has a mean of 0 and standard deviation of 1.
 The `scale` function in R can be used to do this. 
 We show an example of how to use this function 
@@ -911,7 +916,7 @@ As you can see above, the clustering object returned by `kmeans` has a lot of in
 that can be used to visualize the clusters, pick K, and evaluate the total WSSD.
 To obtain this information in a tidy format, we will call in help 
 from the `broom` package. \index{broom} Let's start by visualizing the clustering
-as a colored scatter plot. To do that
+as a colored scatter plot. To do that,
 we use the `augment` function, \index{K-means!augment} \index{augment} which takes in the model and the original data
 frame, and returns a data frame with the data and the cluster assignments for
 each point:
@@ -938,7 +943,8 @@ cluster_plot <- ggplot(clustered_data,
        color = "Cluster") + 
   scale_color_manual(values = c("dodgerblue3",
                                 "darkorange3",  
-                                "goldenrod1"))
+                                "goldenrod1")) + 
+  theme(text = element_text(size = 12))
 
 cluster_plot
 ```
@@ -965,7 +971,7 @@ Then we use `rowwise` \index{rowwise} + `mutate` to apply the `kmeans` function
 within each row to each K. 
 However, given that the `kmeans` function 
 returns a model object to us (not a vector),
-we will need to store the results as a list columm.
+we will need to store the results as a list column.
 This works because both vectors and lists are legitimate 
 data structures for data frame columns. 
 To make this work, 
@@ -1040,7 +1046,8 @@ elbow_plot <- ggplot(clustering_statistics, aes(x = k, y = tot.withinss)) +
   geom_line() +
   xlab("K") +
   ylab("Total within-cluster sum of squares") +
-  scale_x_continuous(breaks = 1:9)
+  scale_x_continuous(breaks = 1:9) + 
+  theme(text = element_text(size = 12))
 
 elbow_plot
 ```
@@ -1050,7 +1057,7 @@ But why is there a "bump" in the total WSSD plot here?
 Shouldn't total WSSD always decrease as we add more clusters? 
 Technically yes, but remember:  K-means can get "stuck" in a bad solution. 
 Unfortunately, for K = 8 we had an unlucky initialization
-and found a bad clustering! \index{K-means!restart,nstart} 
+and found a bad clustering! \index{K-means!restart, nstart} 
 We can help prevent finding a bad clustering 
 by trying a few different random initializations 
 via the `nstart` argument (Figure \@ref(fig:10-choose-k-nstart) 
@@ -1082,7 +1089,8 @@ elbow_plot <- ggplot(clustering_statistics, aes(x = k, y = tot.withinss)) +
   geom_line() +
   xlab("K") +
   ylab("Total within-cluster sum of squares") +
-  scale_x_continuous(breaks = 1:9)
+  scale_x_continuous(breaks = 1:9) + 
+  theme(text = element_text(size = 12))
 
 elbow_plot
 ```
@@ -1090,7 +1098,7 @@ elbow_plot
 ## Exercises
 
 Practice exercises for the material covered in this chapter 
-can be found in the accompanying [worksheet](https://github.com/UBC-DSCI/data-science-a-first-intro-worksheets/blob/main/worksheet_10/worksheet_10.ipynb).
+can be found in the accompanying [worksheet](https://github.com/UBC-DSCI/data-science-a-first-intro-worksheets/blob/main/worksheet_clustering/worksheet_clustering.ipynb).
 The worksheet tries to provide automated feedback 
 and help guide you through the problems. 
 To make sure this functionality works as intended, 
@@ -1098,4 +1106,12 @@ please follow the instructions for computer setup needed to run the worksheets
 found in Chapter \@ref(move-to-your-own-machine).
 
 ## Additional resources
-- Chapter 10 of [An Introduction to Statistical Learning](https://www.statlearning.com/) [-@james2013introduction] provides a great next stop in the process of learning about clustering and unsupervised learning in general. In the realm of clustering specifically, it provides a great companion introduction to K-means, but also covers *hierarchical* clustering for when you expect there to be subgroups, and then subgroups within subgroups, etc. in your data. In the realm of more general unsupervised learning, it covers *principal components analysis (PCA)*, which is a very popular technique in scientific applications for reducing the number of predictors in a dataset. 
+- Chapter 10 of *An Introduction to Statistical
+  Learning* [@james2013introduction] provides a
+  great next stop in the process of learning about clustering and unsupervised
+  learning in general. In the realm of clustering specifically, it provides a
+  great companion introduction to K-means, but also covers *hierarchical*
+  clustering for when you expect there to be subgroups, and then subgroups within
+  subgroups, etc., in your data. In the realm of more general unsupervised
+  learning, it covers *principal components analysis (PCA)*, which is a very
+  popular technique for reducing the number of predictors in a dataset. 
