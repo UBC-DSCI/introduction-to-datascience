@@ -6,6 +6,22 @@ library(magrittr)
 library(knitr)
 knitr::opts_chunk$set(message = FALSE,
                       fig.align = "center")
+
+print_html_nodes <- function(html_nodes_object) {
+  if(!is_latex_output()) {
+    html_nodes_object
+  } else {
+    output <- capture.output(html_nodes_object)
+    
+    for (i in seq_along(output)) {
+      if (nchar(output[i]) <= 79) {
+        cat(output[i], sep = "\n")
+      } else {
+        cat(str_sub(output[i], start = 1, end = 79), sep = "\n")
+      }
+    }
+  }
+}
 ```
 
 ## Overview 
@@ -1056,7 +1072,7 @@ having one very long line of code with the string
 `"td:nth-child(5),td:nth-child(7),.infobox:nth-child(122) td:nth-child(1),.infobox td:nth-child(3)"`
 as the second argument of `html_nodes`:
 
-```{r 01-select-nodes}
+```{r 01-select-nodes, results = 'hide', echo = TRUE}
 selectors <- paste("td:nth-child(5)",
              "td:nth-child(7)",
              ".infobox:nth-child(122) td:nth-child(1)",
@@ -1064,6 +1080,10 @@ selectors <- paste("td:nth-child(5)",
 
 population_nodes <- html_nodes(page, selectors)
 head(population_nodes)
+```
+
+```{r echo = FALSE}
+print_html_nodes(head(population_nodes))
 ```
 
 Next we extract the meaningful data&mdash;in other words, we get rid of the HTML code syntax and tags&mdash;from 
