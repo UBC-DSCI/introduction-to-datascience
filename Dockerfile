@@ -102,7 +102,6 @@ RUN sed -i 's/256MiB/4GiB/' /etc/ImageMagick-6/policy.xml
 RUN sed -i 's/512MiB/4GiB/' /etc/ImageMagick-6/policy.xml
 RUN sed -i 's/1GiB/4GiB/' /etc/ImageMagick-6/policy.xml
 
-
 # install version of tinytex with fixed index double-compile (no release for this yet, so install from commit hash)
 RUN Rscript -e "remove.packages('xfun')"
 RUN Rscript -e "devtools::install_github('yihui/xfun@v0.29')"
