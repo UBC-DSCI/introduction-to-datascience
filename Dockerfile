@@ -39,6 +39,7 @@ RUN Rscript -e "reticulate::install_miniconda()"
 RUN Rscript -e "reticulate::conda_install('r-reticulate', 'python-kaleido')"
 RUN Rscript -e "reticulate::conda_install('r-reticulate', 'plotly', channel = 'plotly')"
 
+RUN Rscript -e "devtools::install_github('mountainMath/cancensus@5a5d61759d477986d40dd87fa9a6532ff6037efe')"
 RUN Rscript -e "devtools::install_github('ttimbers/canlang@0.0.1')"
 
 # install LaTeX packages
@@ -100,3 +101,9 @@ RUN tlmgr install amsmath \
 RUN sed -i 's/256MiB/4GiB/' /etc/ImageMagick-6/policy.xml
 RUN sed -i 's/512MiB/4GiB/' /etc/ImageMagick-6/policy.xml
 RUN sed -i 's/1GiB/4GiB/' /etc/ImageMagick-6/policy.xml
+
+# install version of tinytex with fixed index double-compile (no release for this yet, so install from commit hash)
+RUN Rscript -e "remove.packages('xfun')"
+RUN Rscript -e "devtools::install_github('yihui/xfun@v0.29')"
+RUN Rscript -e "remove.packages('tinytex')"
+RUN Rscript -e "devtools::install_github('yihui/tinytex@5d211d43944d322fca49e5f0d97f34b9c46ff9ab')"
