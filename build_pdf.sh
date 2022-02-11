@@ -3,6 +3,7 @@
 # Copy files
 cp references.bib pdf/
 cp authors.Rmd pdf/
+cp foreword-text.Rmd pdf/
 cp preface-text.Rmd pdf/
 cp acknowledgements.Rmd pdf/
 cp intro.Rmd pdf/
@@ -24,11 +25,12 @@ cp -r data/ pdf/data
 cp -r img/ pdf/img
 
 # Build the book with bookdown
-docker run --rm -m 5g -v $(pwd):/home/rstudio/introduction-to-datascience ubcdsci/intro-to-ds:v0.21.0 /bin/bash -c "cd /home/rstudio/introduction-to-datascience/pdf; Rscript _build_pdf.r"
+docker run --rm -m 5g -v $(pwd):/home/rstudio/introduction-to-datascience ubcdsci/intro-to-ds:v0.23.0 /bin/bash -c "cd /home/rstudio/introduction-to-datascience/pdf; Rscript _build_pdf.r"
 
 # clean files in pdf dir
 rm -rf pdf/references.bib
 rm -rf pdf/authors.Rmd
+rm -rf pdf/foreword-text.Rmd
 rm -rf pdf/preface-text.Rmd
 rm -rf pdf/acknowledgements.Rmd
 rm -rf pdf/intro.Rmd 

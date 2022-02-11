@@ -6,6 +6,22 @@ library(magrittr)
 library(knitr)
 knitr::opts_chunk$set(message = FALSE,
                       fig.align = "center")
+
+print_html_nodes <- function(html_nodes_object) {
+  if(!is_latex_output()) {
+    html_nodes_object
+  } else {
+    output <- capture.output(html_nodes_object)
+    
+    for (i in seq_along(output)) {
+      if (nchar(output[i]) <= 79) {
+        cat(output[i], sep = "\n")
+      } else {
+        cat(str_sub(output[i], start = 1, end = 79), sep = "\n")
+      }
+    }
+  }
+}
 ```
 
 ## Overview 
@@ -184,6 +200,8 @@ relative path to the file.
 canlang_data <- read_csv("data/can_lang.csv")
 ```
 
+\newpage
+
 > **Note:** It is also normal and expected that \index{warning} a message is
 > printed out after using
 > the `read_csv` and related functions. This message lets you know the data types
@@ -327,9 +345,10 @@ specify that there are no column names to assign, and give it the value of
 `FALSE`). `read_csv`, `read_tsv` and `read_delim` have a `col_names` argument
 \index{read function!col\_names argument} and the default is `TRUE`. 
 
-> **Note:** `\t` is an example of an *escape character*, \index{escape character}
-> typically used to represent non-printing characters (like the tab) or
-> characters with special meanings (such as quotation marks). 
+> **Note:** `\t` is an example of an *escaped character*, 
+> which always starts with a backslash (`\`). \index{escape character}
+> Escaped characters are used to represent non-printing characters 
+> (like the tab) or characters with special meanings (such as quotation marks). 
 
 ```{r}
 canlang_data <- read_delim("data/can_lang.tsv", 
@@ -606,6 +625,8 @@ tail(aboriginal_lang_db)
 ```
 ## Error: tail() is not supported by sql sources
 ```
+\newpage
+
 Additionally, some operations will not work to extract columns or single values
 from the reference given by the `tbl` function. Thus, once you have finished
 your data wrangling of the `tbl` database reference object, it is advisable to
@@ -950,8 +971,8 @@ knitr::include_graphics("img/sg1.png")
 ```
 
 If we then click the size of an apartment listing, SelectorGadget shows us
-the `span` selector, and highlights much of the page; this indicates that the
-`span` selector is not specific enough to just capture apartment sizes (Figure \@ref(fig:sg3)). 
+the `span` selector, and highlights many of the lines on the page; this indicates that the
+`span` selector is not specific enough to capture only apartment sizes (Figure \@ref(fig:sg3)). 
 
 ```{r sg3, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Using the SelectorGadget on a Craigslist webpage to obtain a CCS selector useful for obtaining apartment sizes.", fig.retina = 2, out.width="100%"}
 knitr::include_graphics("img/sg3.png")
@@ -973,7 +994,6 @@ The selector gadget returns them to us as a comma-separated list (here
 R if we are using more than one CSS selector.
 
 **Stop! Are you allowed to scrape that website?**
-
 *Before* scraping \index{web scraping!permission} data from the web, you should always check whether or not
 you are *allowed* to scrape it! There are two documents that are important
 for this: the `robots.txt` file and the Terms of Service
@@ -1056,7 +1076,7 @@ having one very long line of code with the string
 `"td:nth-child(5),td:nth-child(7),.infobox:nth-child(122) td:nth-child(1),.infobox td:nth-child(3)"`
 as the second argument of `html_nodes`:
 
-```{r 01-select-nodes}
+```{r 01-select-nodes, results = 'hide', echo = TRUE}
 selectors <- paste("td:nth-child(5)",
              "td:nth-child(7)",
              ".infobox:nth-child(122) td:nth-child(1)",
@@ -1064,6 +1084,10 @@ selectors <- paste("td:nth-child(5)",
 
 population_nodes <- html_nodes(page, selectors)
 head(population_nodes)
+```
+
+```{r echo = FALSE}
+print_html_nodes(head(population_nodes))
 ```
 
 Next we extract the meaningful data&mdash;in other words, we get rid of the HTML code syntax and tags&mdash;from 
@@ -1217,12 +1241,15 @@ data you are requesting and how frequently you are making requests.
 ## Exercises
 
 Practice exercises for the material covered in this chapter 
-can be found in the accompanying [worksheet](https://github.com/UBC-DSCI/data-science-a-first-intro-worksheets/blob/main/worksheet_reading/worksheet_reading.ipynb).
-The worksheet tries to provide automated feedback 
-and help guide you through the problems. 
-To make sure this functionality works as intended, 
-please follow the instructions for computer setup needed to run the worksheets 
-found in Chapter \@ref(move-to-your-own-machine).
+can be found in the accompanying 
+[worksheets repository](https://github.com/UBC-DSCI/data-science-a-first-intro-worksheets#readme)
+in the "Reading in data locally and from the web" row.
+You can launch an interactive version of the worksheet in your browser by clicking the "launch binder" button.
+You can also preview a non-interactive version of the worksheet by clicking "view worksheet."
+If you instead decide to download the worksheet and run it on your own machine,
+make sure to follow the instructions for computer setup
+found in Chapter \@ref(move-to-your-own-machine). This will ensure that the automated feedback
+and guidance that the worksheets provide will function as intended.
 
 ## Additional resources
 - The [`readr` documentation](https://readr.tidyverse.org/) 
@@ -1251,7 +1278,7 @@ found in Chapter \@ref(move-to-your-own-machine).
 - If you read the subsection on obtaining data from the web via scraping and
   APIs, we provide two companion tutorial video links for how to use the
   SelectorGadget tool to obtain desired CSS selectors for:
-    - [extracting the data for apartment listings on Craigslist](https://dmi3kno.github.io/polite/), and
+    - [extracting the data for apartment listings on Craigslist](https://www.youtube.com/embed/YdIWI6K64zo), and
     - [extracting Canadian city names and 2016 populations from Wikipedia](https://www.youtube.com/embed/O9HKbdhqYzk).
 - The [`polite` R package](https://dmi3kno.github.io/polite/) [@polite] provides
   a set of tools for responsibly scraping data from websites. 
