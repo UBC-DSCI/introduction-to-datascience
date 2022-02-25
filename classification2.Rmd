@@ -731,6 +731,27 @@ vfold_metrics
 In this case, using 10-fold instead of 5-fold cross validation did reduce the standard error, although
 by only an insignificant amount. In fact, due to the randomness in how the data are split, sometimes
 you might even end up with a *higher* standard error when increasing the number of folds!
+We can make the reduction in standard error more dramatic by increasing the number of folds 
+by a large amount. In the following code we show the result when $C = 50$; 
+picking such a large number of folds often takes a long time to run in practice, 
+so we usually stick to 5 or 10.
+
+```{r 06-50-fold-seed, echo = FALSE, warning = FALSE, message = FALSE}
+# hidden seed
+set.seed(1)
+```
+
+```{r 06-50-fold}
+cancer_vfold_50 <- vfold_cv(cancer_train, v = 50, strata = Class)
+
+vfold_metrics_50 <- workflow() |>
+                  add_recipe(cancer_recipe) |>
+                  add_model(knn_spec) |>
+                  fit_resamples(resamples = cancer_vfold_50) |>
+                  collect_metrics()
+
+vfold_metrics_50
+```
 
 ### Parameter value selection
 
