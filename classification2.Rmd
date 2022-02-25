@@ -714,8 +714,7 @@ more folds we choose, the  more computation it takes, and hence the more time
 it takes to run the analysis. So when you do cross-validation, you need to
 consider the size of the data, and the speed of the algorithm (e.g., $K$-nearest
 neighbor) and the speed of your computer. In practice, this is a 
-trial-and-error process, but typically $C$ is chosen to be either 5 or 10. Here we show
-how the standard error decreases when we use 10-fold cross-validation rather
+trial-and-error process, but typically $C$ is chosen to be either 5 or 10. Here we use 10-fold cross-validation rather
 than 5-fold:
 
 ```{r 06-10-fold}
@@ -730,6 +729,31 @@ vfold_metrics <- workflow() |>
 vfold_metrics
 ```
 
+Increasing the number of folds will usually result in a lower standard error, though this is 
+not always the case. Due to random noise, sometimes we might get a higher value. In this example, 
+the standard error went down slightly, but not by a lot. 
+
+```{r 06-50-fold-seed, echo = FALSE, warning = FALSE, message = FALSE}
+# hidden seed
+set.seed(1)
+```
+
+We can see 
+how the standard error decreases by a more meaningful amount when we use 50-fold cross-validation rather
+than 5-fold or 10-fold:
+```{r 06-50-fold}
+cancer_vfold_50 <- vfold_cv(cancer_train, v = 50, strata = Class)
+
+vfold_metrics_50 <- workflow() |>
+                  add_recipe(cancer_recipe) |>
+                  add_model(knn_spec) |>
+                  fit_resamples(resamples = cancer_vfold_50) |>
+                  collect_metrics()
+
+vfold_metrics_50
+```
+
+In practice, we usually have a lot of data and setting $C$ to such a large number often takes too long to run, so we usually stick to 5 or 10 folds.
 
 ### Parameter value selection
 
