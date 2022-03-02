@@ -24,7 +24,7 @@
 <meta name="author" content="Tiffany Timbers, Trevor Campbell, and Melissa Lee   Foreword by Roger Peng" />
 
 
-<meta name="date" content="2022-02-13" />
+<meta name="date" content="2022-03-02" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -1139,9 +1139,9 @@ of the classifier’s validation accuracy across the folds. You will find result
 related to the accuracy in the row with <code>accuracy</code> listed under the <code>.metric</code> column.
 You should consider the mean (<code>mean</code>) to be the estimated accuracy, while the standard
 error (<code>std_err</code>) is a measure of how uncertain we are in the mean value. A detailed treatment of this
-is beyond the scope of this chapter; but roughly, if your estimated mean is 0.88 and standard
+is beyond the scope of this chapter; but roughly, if your estimated mean is 0.87 and standard
 error is 0.02, you can expect the <em>true</em> average accuracy of the
-classifier to be somewhere roughly between 86% and 90% (although it may
+classifier to be somewhere roughly between 85% and 89% (although it may
 fall outside this range). You may ignore the other columns in the metrics data frame,
 as they do not provide any additional insight.
 You can also ignore the entire second row with <code>roc_auc</code> in the <code>.metric</code> column,
@@ -1151,18 +1151,17 @@ as it is beyond the scope of this book.</p>
 <pre><code>## # A tibble: 2 × 6
 ##   .metric  .estimator  mean     n std_err .config             
 ##   &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
-## 1 accuracy binary     0.883     5  0.0174 Preprocessor1_Model1
-## 2 roc_auc  binary     0.924     5  0.0198 Preprocessor1_Model1</code></pre>
+## 1 accuracy binary     0.871     5  0.0212 Preprocessor1_Model1
+## 2 roc_auc  binary     0.905     5  0.0188 Preprocessor1_Model1</code></pre>
 <p>We can choose any number of folds, and typically the more we use the better our
 accuracy estimate will be (lower standard error). However, we are limited
 by computational power: the
 more folds we choose, the more computation it takes, and hence the more time
 it takes to run the analysis. So when you do cross-validation, you need to
-consider the size of the data, and the speed of the algorithm (e.g., <span class="math inline">\(K\)</span>-nearest
-neighbor) and the speed of your computer. In practice, this is a
-trial-and-error process, but typically <span class="math inline">\(C\)</span> is chosen to be either 5 or 10. Here we show
-how the standard error decreases when we use 10-fold cross-validation rather
-than 5-fold:</p>
+consider the size of the data, the speed of the algorithm (e.g., <span class="math inline">\(K\)</span>-nearest
+neighbors), and the speed of your computer. In practice, this is a
+trial-and-error process, but typically <span class="math inline">\(C\)</span> is chosen to be either 5 or 10. Here
+we will try 10-fold cross-validation to see if we get a lower standard error:</p>
 <div class="sourceCode" id="cb339"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb339-1"><a href="classification2.html#cb339-1" aria-hidden="true" tabindex="-1"></a>cancer_vfold <span class="ot">&lt;-</span> <span class="fu">vfold_cv</span>(cancer_train, <span class="at">v =</span> <span class="dv">10</span>, <span class="at">strata =</span> Class)</span>
 <span id="cb339-2"><a href="classification2.html#cb339-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb339-3"><a href="classification2.html#cb339-3" aria-hidden="true" tabindex="-1"></a>vfold_metrics <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
@@ -1177,6 +1176,26 @@ than 5-fold:</p>
 ##   &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
 ## 1 accuracy binary     0.887    10  0.0207 Preprocessor1_Model1
 ## 2 roc_auc  binary     0.917    10  0.0134 Preprocessor1_Model1</code></pre>
+<p>In this case, using 10-fold instead of 5-fold cross validation did reduce the standard error, although
+by only an insignificant amount. In fact, due to the randomness in how the data are split, sometimes
+you might even end up with a <em>higher</em> standard error when increasing the number of folds!
+We can make the reduction in standard error more dramatic by increasing the number of folds
+by a large amount. In the following code we show the result when <span class="math inline">\(C = 50\)</span>;
+picking such a large number of folds often takes a long time to run in practice,
+so we usually stick to 5 or 10.</p>
+<div class="sourceCode" id="cb341"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb341-1"><a href="classification2.html#cb341-1" aria-hidden="true" tabindex="-1"></a>cancer_vfold_50 <span class="ot">&lt;-</span> <span class="fu">vfold_cv</span>(cancer_train, <span class="at">v =</span> <span class="dv">50</span>, <span class="at">strata =</span> Class)</span>
+<span id="cb341-2"><a href="classification2.html#cb341-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb341-3"><a href="classification2.html#cb341-3" aria-hidden="true" tabindex="-1"></a>vfold_metrics_50 <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb341-4"><a href="classification2.html#cb341-4" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">add_recipe</span>(cancer_recipe) <span class="sc">|&gt;</span></span>
+<span id="cb341-5"><a href="classification2.html#cb341-5" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">add_model</span>(knn_spec) <span class="sc">|&gt;</span></span>
+<span id="cb341-6"><a href="classification2.html#cb341-6" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">fit_resamples</span>(<span class="at">resamples =</span> cancer_vfold_50) <span class="sc">|&gt;</span></span>
+<span id="cb341-7"><a href="classification2.html#cb341-7" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">collect_metrics</span>()</span>
+<span id="cb341-8"><a href="classification2.html#cb341-8" aria-hidden="true" tabindex="-1"></a>vfold_metrics_50</span></code></pre></div>
+<pre><code>## # A tibble: 2 × 6
+##   .metric  .estimator  mean     n std_err .config             
+##   &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;               
+## 1 accuracy binary     0.881    50  0.0158 Preprocessor1_Model1
+## 2 roc_auc  binary     0.911    50  0.0154 Preprocessor1_Model1</code></pre>
 </div>
 <div id="parameter-value-selection" class="section level3" number="6.6.2">
 <h3><span class="header-section-number">6.6.2</span> Parameter value selection</h3>
@@ -1195,10 +1214,10 @@ of <span class="math inline">\(K\)</span> in a reasonable range, and then pick t
 best accuracy. The <code>tidymodels</code> package collection provides a very simple
 syntax for tuning models: each parameter in the model to be tuned should be specified
 as <code>tune()</code> in the model specification rather than given a particular value.</p>
-<div class="sourceCode" id="cb341"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb341-1"><a href="classification2.html#cb341-1" aria-hidden="true" tabindex="-1"></a>knn_spec <span class="ot">&lt;-</span> <span class="fu">nearest_neighbor</span>(<span class="at">weight_func =</span> <span class="st">&quot;rectangular&quot;</span>, </span>
-<span id="cb341-2"><a href="classification2.html#cb341-2" aria-hidden="true" tabindex="-1"></a>                             <span class="at">neighbors =</span> <span class="fu">tune</span>()) <span class="sc">|&gt;</span></span>
-<span id="cb341-3"><a href="classification2.html#cb341-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">&quot;kknn&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb341-4"><a href="classification2.html#cb341-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">&quot;classification&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb343"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb343-1"><a href="classification2.html#cb343-1" aria-hidden="true" tabindex="-1"></a>knn_spec <span class="ot">&lt;-</span> <span class="fu">nearest_neighbor</span>(<span class="at">weight_func =</span> <span class="st">&quot;rectangular&quot;</span>, </span>
+<span id="cb343-2"><a href="classification2.html#cb343-2" aria-hidden="true" tabindex="-1"></a>                             <span class="at">neighbors =</span> <span class="fu">tune</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb343-3"><a href="classification2.html#cb343-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">&quot;kknn&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb343-4"><a href="classification2.html#cb343-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">&quot;classification&quot;</span>)</span></code></pre></div>
 <p>Then instead of using <code>fit</code> or <code>fit_resamples</code>, we will use the <code>tune_grid</code> function 
 to fit the model for each value in a range of parameter values.
 In particular, we first create a data frame with a <code>neighbors</code>
@@ -1206,18 +1225,18 @@ variable that contains the sequence of values of <span class="math inline">\(K\)
 data frame with the <code>neighbors</code> variable containing values from 1 to 100 (stepping by 5) using
 the <code>seq</code> function.
 Then we pass that data frame to the <code>grid</code> argument of <code>tune_grid</code>.</p>
-<div class="sourceCode" id="cb342"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb342-1"><a href="classification2.html#cb342-1" aria-hidden="true" tabindex="-1"></a>k_vals <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">neighbors =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="dv">1</span>, <span class="at">to =</span> <span class="dv">100</span>, <span class="at">by =</span> <span class="dv">5</span>))</span>
-<span id="cb342-2"><a href="classification2.html#cb342-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb342-3"><a href="classification2.html#cb342-3" aria-hidden="true" tabindex="-1"></a>knn_results <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
-<span id="cb342-4"><a href="classification2.html#cb342-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_recipe</span>(cancer_recipe) <span class="sc">|&gt;</span></span>
-<span id="cb342-5"><a href="classification2.html#cb342-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_model</span>(knn_spec) <span class="sc">|&gt;</span></span>
-<span id="cb342-6"><a href="classification2.html#cb342-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tune_grid</span>(<span class="at">resamples =</span> cancer_vfold, <span class="at">grid =</span> k_vals) <span class="sc">|&gt;</span></span>
-<span id="cb342-7"><a href="classification2.html#cb342-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect_metrics</span>() </span>
-<span id="cb342-8"><a href="classification2.html#cb342-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb342-9"><a href="classification2.html#cb342-9" aria-hidden="true" tabindex="-1"></a>accuracies <span class="ot">&lt;-</span> knn_results <span class="sc">|&gt;</span></span>
-<span id="cb342-10"><a href="classification2.html#cb342-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(.metric <span class="sc">==</span> <span class="st">&quot;accuracy&quot;</span>)</span>
-<span id="cb342-11"><a href="classification2.html#cb342-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb342-12"><a href="classification2.html#cb342-12" aria-hidden="true" tabindex="-1"></a>accuracies</span></code></pre></div>
+<div class="sourceCode" id="cb344"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb344-1"><a href="classification2.html#cb344-1" aria-hidden="true" tabindex="-1"></a>k_vals <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">neighbors =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="dv">1</span>, <span class="at">to =</span> <span class="dv">100</span>, <span class="at">by =</span> <span class="dv">5</span>))</span>
+<span id="cb344-2"><a href="classification2.html#cb344-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb344-3"><a href="classification2.html#cb344-3" aria-hidden="true" tabindex="-1"></a>knn_results <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb344-4"><a href="classification2.html#cb344-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_recipe</span>(cancer_recipe) <span class="sc">|&gt;</span></span>
+<span id="cb344-5"><a href="classification2.html#cb344-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_model</span>(knn_spec) <span class="sc">|&gt;</span></span>
+<span id="cb344-6"><a href="classification2.html#cb344-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tune_grid</span>(<span class="at">resamples =</span> cancer_vfold, <span class="at">grid =</span> k_vals) <span class="sc">|&gt;</span></span>
+<span id="cb344-7"><a href="classification2.html#cb344-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect_metrics</span>() </span>
+<span id="cb344-8"><a href="classification2.html#cb344-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb344-9"><a href="classification2.html#cb344-9" aria-hidden="true" tabindex="-1"></a>accuracies <span class="ot">&lt;-</span> knn_results <span class="sc">|&gt;</span></span>
+<span id="cb344-10"><a href="classification2.html#cb344-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(.metric <span class="sc">==</span> <span class="st">&quot;accuracy&quot;</span>)</span>
+<span id="cb344-11"><a href="classification2.html#cb344-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb344-12"><a href="classification2.html#cb344-12" aria-hidden="true" tabindex="-1"></a>accuracies</span></code></pre></div>
 <pre><code>## # A tibble: 20 × 7
 ##    neighbors .metric  .estimator  mean     n std_err .config              
 ##        &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;                
@@ -1243,13 +1262,13 @@ Then we pass that data frame to the <code>grid</code> argument of <code>tune_gri
 ## 20        96 accuracy binary     0.871    10  0.0165 Preprocessor1_Model20</code></pre>
 <p>We can decide which number of neighbors is best by plotting the accuracy versus <span class="math inline">\(K\)</span>,
 as shown in Figure <a href="classification2.html#fig:06-find-k">6.5</a>.</p>
-<div class="sourceCode" id="cb344"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb344-1"><a href="classification2.html#cb344-1" aria-hidden="true" tabindex="-1"></a>accuracy_vs_k <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(accuracies, <span class="fu">aes</span>(<span class="at">x =</span> neighbors, <span class="at">y =</span> mean)) <span class="sc">+</span></span>
-<span id="cb344-2"><a href="classification2.html#cb344-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb344-3"><a href="classification2.html#cb344-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
-<span id="cb344-4"><a href="classification2.html#cb344-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Neighbors&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Accuracy Estimate&quot;</span>) <span class="sc">+</span> </span>
-<span id="cb344-5"><a href="classification2.html#cb344-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
-<span id="cb344-6"><a href="classification2.html#cb344-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb344-7"><a href="classification2.html#cb344-7" aria-hidden="true" tabindex="-1"></a>accuracy_vs_k</span></code></pre></div>
+<div class="sourceCode" id="cb346"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb346-1"><a href="classification2.html#cb346-1" aria-hidden="true" tabindex="-1"></a>accuracy_vs_k <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(accuracies, <span class="fu">aes</span>(<span class="at">x =</span> neighbors, <span class="at">y =</span> mean)) <span class="sc">+</span></span>
+<span id="cb346-2"><a href="classification2.html#cb346-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb346-3"><a href="classification2.html#cb346-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb346-4"><a href="classification2.html#cb346-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Neighbors&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Accuracy Estimate&quot;</span>) <span class="sc">+</span> </span>
+<span id="cb346-5"><a href="classification2.html#cb346-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
+<span id="cb346-6"><a href="classification2.html#cb346-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb346-7"><a href="classification2.html#cb346-7" aria-hidden="true" tabindex="-1"></a>accuracy_vs_k</span></code></pre></div>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:06-find-k"></span>
 <img src="_main_files/figure-html/06-find-k-1.png" alt="Plot of estimated accuracy versus the number of neighbors." width="384" />
 <p class="caption">
@@ -1287,24 +1306,24 @@ neighbors <span class="math inline">\(K\)</span>? In fact, the accuracy actually
 Let’s specify a much larger range of values of <span class="math inline">\(K\)</span> to try in the <code>grid</code>
 argument of <code>tune_grid</code>. Figure <a href="classification2.html#fig:06-lots-of-ks">6.6</a> shows a plot of estimated accuracy as
 we vary <span class="math inline">\(K\)</span> from 1 to almost the number of observations in the data set.</p>
-<div class="sourceCode" id="cb345"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb345-1"><a href="classification2.html#cb345-1" aria-hidden="true" tabindex="-1"></a>k_lots <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">neighbors =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="dv">1</span>, <span class="at">to =</span> <span class="dv">385</span>, <span class="at">by =</span> <span class="dv">10</span>))</span>
-<span id="cb345-2"><a href="classification2.html#cb345-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb345-3"><a href="classification2.html#cb345-3" aria-hidden="true" tabindex="-1"></a>knn_results <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
-<span id="cb345-4"><a href="classification2.html#cb345-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_recipe</span>(cancer_recipe) <span class="sc">|&gt;</span></span>
-<span id="cb345-5"><a href="classification2.html#cb345-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_model</span>(knn_spec) <span class="sc">|&gt;</span></span>
-<span id="cb345-6"><a href="classification2.html#cb345-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tune_grid</span>(<span class="at">resamples =</span> cancer_vfold, <span class="at">grid =</span> k_lots) <span class="sc">|&gt;</span></span>
-<span id="cb345-7"><a href="classification2.html#cb345-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect_metrics</span>()</span>
-<span id="cb345-8"><a href="classification2.html#cb345-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb345-9"><a href="classification2.html#cb345-9" aria-hidden="true" tabindex="-1"></a>accuracies <span class="ot">&lt;-</span> knn_results <span class="sc">|&gt;</span></span>
-<span id="cb345-10"><a href="classification2.html#cb345-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(.metric <span class="sc">==</span> <span class="st">&quot;accuracy&quot;</span>)</span>
-<span id="cb345-11"><a href="classification2.html#cb345-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb345-12"><a href="classification2.html#cb345-12" aria-hidden="true" tabindex="-1"></a>accuracy_vs_k_lots <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(accuracies, <span class="fu">aes</span>(<span class="at">x =</span> neighbors, <span class="at">y =</span> mean)) <span class="sc">+</span></span>
-<span id="cb345-13"><a href="classification2.html#cb345-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb345-14"><a href="classification2.html#cb345-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
-<span id="cb345-15"><a href="classification2.html#cb345-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Neighbors&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Accuracy Estimate&quot;</span>) <span class="sc">+</span> </span>
-<span id="cb345-16"><a href="classification2.html#cb345-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
-<span id="cb345-17"><a href="classification2.html#cb345-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb345-18"><a href="classification2.html#cb345-18" aria-hidden="true" tabindex="-1"></a>accuracy_vs_k_lots</span></code></pre></div>
+<div class="sourceCode" id="cb347"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb347-1"><a href="classification2.html#cb347-1" aria-hidden="true" tabindex="-1"></a>k_lots <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">neighbors =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="dv">1</span>, <span class="at">to =</span> <span class="dv">385</span>, <span class="at">by =</span> <span class="dv">10</span>))</span>
+<span id="cb347-2"><a href="classification2.html#cb347-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb347-3"><a href="classification2.html#cb347-3" aria-hidden="true" tabindex="-1"></a>knn_results <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb347-4"><a href="classification2.html#cb347-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_recipe</span>(cancer_recipe) <span class="sc">|&gt;</span></span>
+<span id="cb347-5"><a href="classification2.html#cb347-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_model</span>(knn_spec) <span class="sc">|&gt;</span></span>
+<span id="cb347-6"><a href="classification2.html#cb347-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tune_grid</span>(<span class="at">resamples =</span> cancer_vfold, <span class="at">grid =</span> k_lots) <span class="sc">|&gt;</span></span>
+<span id="cb347-7"><a href="classification2.html#cb347-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect_metrics</span>()</span>
+<span id="cb347-8"><a href="classification2.html#cb347-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb347-9"><a href="classification2.html#cb347-9" aria-hidden="true" tabindex="-1"></a>accuracies <span class="ot">&lt;-</span> knn_results <span class="sc">|&gt;</span></span>
+<span id="cb347-10"><a href="classification2.html#cb347-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(.metric <span class="sc">==</span> <span class="st">&quot;accuracy&quot;</span>)</span>
+<span id="cb347-11"><a href="classification2.html#cb347-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb347-12"><a href="classification2.html#cb347-12" aria-hidden="true" tabindex="-1"></a>accuracy_vs_k_lots <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(accuracies, <span class="fu">aes</span>(<span class="at">x =</span> neighbors, <span class="at">y =</span> mean)) <span class="sc">+</span></span>
+<span id="cb347-13"><a href="classification2.html#cb347-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb347-14"><a href="classification2.html#cb347-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb347-15"><a href="classification2.html#cb347-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&quot;Neighbors&quot;</span>, <span class="at">y =</span> <span class="st">&quot;Accuracy Estimate&quot;</span>) <span class="sc">+</span> </span>
+<span id="cb347-16"><a href="classification2.html#cb347-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
+<span id="cb347-17"><a href="classification2.html#cb347-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb347-18"><a href="classification2.html#cb347-18" aria-hidden="true" tabindex="-1"></a>accuracy_vs_k_lots</span></code></pre></div>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:06-lots-of-ks"></span>
 <img src="_main_files/figure-html/06-lots-of-ks-1.png" alt="Plot of accuracy estimate versus number of neighbors for many K values." width="384" />
 <p class="caption">
@@ -1322,12 +1341,6 @@ training data set size, then the classifier will always predict the same label
 regardless of what the new observation looks like. In general, if the model
 <em>isn’t influenced enough</em> by the training data, it is said to <strong>underfit</strong> the
 data.</p>
-<div class="figure" style="text-align: center"><span style="display:block;" id="fig:06-decision-grid-K"></span>
-<img src="_main_files/figure-html/06-decision-grid-K-1.png" alt="Effect of K in overfitting and underfitting." width="960"  />
-<p class="caption">
-Figure 6.7: Effect of K in overfitting and underfitting.
-</p>
-</div>
 <p><strong>Overfitting:</strong>  In contrast, when we decrease the number of neighbors, each
 individual data point has a stronger and stronger vote regarding nearby points.
 Since the data themselves are noisy, this causes a more “jagged” boundary
@@ -1338,6 +1351,12 @@ problematic as the large <span class="math inline">\(K\)</span> case, because th
 new data: if we had a different training set, the predictions would be
 completely different. In general, if the model <em>is influenced too much</em> by the
 training data, it is said to <strong>overfit</strong> the data.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:06-decision-grid-K"></span>
+<img src="_main_files/figure-html/06-decision-grid-K-1.png" alt="Effect of K in overfitting and underfitting." width="960"  />
+<p class="caption">
+Figure 6.7: Effect of K in overfitting and underfitting.
+</p>
+</div>
 <p>Both overfitting and underfitting are problematic and will lead to a model
 that does not generalize well to new data. When fitting a model, we need to strike
 a balance between the two. You can see these two effects in Figure
@@ -1416,8 +1435,8 @@ variables that we created ourselves using a random number generator.
 The irrelevant variables each take a value of 0 or 1 with equal probability for each observation, regardless
 of what the value <code>Class</code> variable takes. In other words, the irrelevant variables have
 no meaningful relationship with the <code>Class</code> variable.</p>
-<div class="sourceCode" id="cb346"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb346-1"><a href="classification2.html#cb346-1" aria-hidden="true" tabindex="-1"></a>cancer_irrelevant <span class="sc">|&gt;</span> </span>
-<span id="cb346-2"><a href="classification2.html#cb346-2" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(Class, Smoothness, Concavity, Perimeter, Irrelevant1, Irrelevant2)</span></code></pre></div>
+<div class="sourceCode" id="cb348"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb348-1"><a href="classification2.html#cb348-1" aria-hidden="true" tabindex="-1"></a>cancer_irrelevant <span class="sc">|&gt;</span> </span>
+<span id="cb348-2"><a href="classification2.html#cb348-2" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(Class, Smoothness, Concavity, Perimeter, Irrelevant1, Irrelevant2)</span></code></pre></div>
 <pre><code>## # A tibble: 569 × 6
 ##    Class Smoothness Concavity Perimeter Irrelevant1 Irrelevant2
 ##    &lt;fct&gt;      &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;       &lt;dbl&gt;       &lt;dbl&gt;
@@ -1559,18 +1578,18 @@ Here we will load the modified version of the cancer data with irrelevant
 predictors, and select <code>Smoothness</code>, <code>Concavity</code>, <code>Perimeter</code>, <code>Irrelevant1</code>, <code>Irrelevant2</code>, and <code>Irrelevant3</code>
 as potential predictors, and the <code>Class</code> variable as the label.
 We will also extract the column names for the full set of predictor variables.</p>
-<div class="sourceCode" id="cb348"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb348-1"><a href="classification2.html#cb348-1" aria-hidden="true" tabindex="-1"></a>cancer_subset <span class="ot">&lt;-</span> cancer_irrelevant <span class="sc">|&gt;</span> </span>
-<span id="cb348-2"><a href="classification2.html#cb348-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Class, </span>
-<span id="cb348-3"><a href="classification2.html#cb348-3" aria-hidden="true" tabindex="-1"></a>         Smoothness, </span>
-<span id="cb348-4"><a href="classification2.html#cb348-4" aria-hidden="true" tabindex="-1"></a>         Concavity, </span>
-<span id="cb348-5"><a href="classification2.html#cb348-5" aria-hidden="true" tabindex="-1"></a>         Perimeter, </span>
-<span id="cb348-6"><a href="classification2.html#cb348-6" aria-hidden="true" tabindex="-1"></a>         Irrelevant1, </span>
-<span id="cb348-7"><a href="classification2.html#cb348-7" aria-hidden="true" tabindex="-1"></a>         Irrelevant2, </span>
-<span id="cb348-8"><a href="classification2.html#cb348-8" aria-hidden="true" tabindex="-1"></a>         Irrelevant3)</span>
-<span id="cb348-9"><a href="classification2.html#cb348-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb348-10"><a href="classification2.html#cb348-10" aria-hidden="true" tabindex="-1"></a>names <span class="ot">&lt;-</span> <span class="fu">colnames</span>(cancer_subset <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span>Class))</span>
-<span id="cb348-11"><a href="classification2.html#cb348-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb348-12"><a href="classification2.html#cb348-12" aria-hidden="true" tabindex="-1"></a>cancer_subset</span></code></pre></div>
+<div class="sourceCode" id="cb350"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb350-1"><a href="classification2.html#cb350-1" aria-hidden="true" tabindex="-1"></a>cancer_subset <span class="ot">&lt;-</span> cancer_irrelevant <span class="sc">|&gt;</span> </span>
+<span id="cb350-2"><a href="classification2.html#cb350-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Class, </span>
+<span id="cb350-3"><a href="classification2.html#cb350-3" aria-hidden="true" tabindex="-1"></a>         Smoothness, </span>
+<span id="cb350-4"><a href="classification2.html#cb350-4" aria-hidden="true" tabindex="-1"></a>         Concavity, </span>
+<span id="cb350-5"><a href="classification2.html#cb350-5" aria-hidden="true" tabindex="-1"></a>         Perimeter, </span>
+<span id="cb350-6"><a href="classification2.html#cb350-6" aria-hidden="true" tabindex="-1"></a>         Irrelevant1, </span>
+<span id="cb350-7"><a href="classification2.html#cb350-7" aria-hidden="true" tabindex="-1"></a>         Irrelevant2, </span>
+<span id="cb350-8"><a href="classification2.html#cb350-8" aria-hidden="true" tabindex="-1"></a>         Irrelevant3)</span>
+<span id="cb350-9"><a href="classification2.html#cb350-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb350-10"><a href="classification2.html#cb350-10" aria-hidden="true" tabindex="-1"></a>names <span class="ot">&lt;-</span> <span class="fu">colnames</span>(cancer_subset <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span>Class))</span>
+<span id="cb350-11"><a href="classification2.html#cb350-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb350-12"><a href="classification2.html#cb350-12" aria-hidden="true" tabindex="-1"></a>cancer_subset</span></code></pre></div>
 <pre><code>## # A tibble: 569 × 7
 ##    Class Smoothness Concavity Perimeter Irrelevant1 Irrelevant2 Irrelevant3
 ##    &lt;fct&gt;      &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;       &lt;dbl&gt;       &lt;dbl&gt;       &lt;dbl&gt;
@@ -1592,8 +1611,8 @@ to make a formula, we need to put a <code>+</code> symbol between each variable.
 As an example, let’s make a model formula for all the predictors,
 which should output something like
 <code>Class ~ Smoothness + Concavity + Perimeter + Irrelevant1 + Irrelevant2 + Irrelevant3</code>:</p>
-<div class="sourceCode" id="cb350"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb350-1"><a href="classification2.html#cb350-1" aria-hidden="true" tabindex="-1"></a>example_formula <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">&quot;Class&quot;</span>, <span class="st">&quot;~&quot;</span>, <span class="fu">paste</span>(names, <span class="at">collapse=</span><span class="st">&quot;+&quot;</span>))</span>
-<span id="cb350-2"><a href="classification2.html#cb350-2" aria-hidden="true" tabindex="-1"></a>example_formula</span></code></pre></div>
+<div class="sourceCode" id="cb352"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb352-1"><a href="classification2.html#cb352-1" aria-hidden="true" tabindex="-1"></a>example_formula <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">&quot;Class&quot;</span>, <span class="st">&quot;~&quot;</span>, <span class="fu">paste</span>(names, <span class="at">collapse=</span><span class="st">&quot;+&quot;</span>))</span>
+<span id="cb352-2"><a href="classification2.html#cb352-2" aria-hidden="true" tabindex="-1"></a>example_formula</span></code></pre></div>
 <pre><code>## [1] &quot;Class ~ Smoothness+Concavity+Perimeter+Irrelevant1+Irrelevant2+Irrelevant3&quot;</code></pre>
 <p>Finally, we need to write some code that performs the task of sequentially
 finding the best predictor to add to the model.
@@ -1609,67 +1628,66 @@ For each set of predictors to try, we construct a model formula,
 pass it into a <code>recipe</code>, build a <code>workflow</code> that tunes
 a <span class="math inline">\(K\)</span>-NN classifier using 5-fold cross-validation,
 and finally records the estimated accuracy.</p>
-<div class="sourceCode" id="cb352"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb352-1"><a href="classification2.html#cb352-1" aria-hidden="true" tabindex="-1"></a><span class="co"># create an empty tibble to store the results</span></span>
-<span id="cb352-2"><a href="classification2.html#cb352-2" aria-hidden="true" tabindex="-1"></a>accuracies <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">size =</span> <span class="fu">integer</span>(), </span>
-<span id="cb352-3"><a href="classification2.html#cb352-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">model_string =</span> <span class="fu">character</span>(), </span>
-<span id="cb352-4"><a href="classification2.html#cb352-4" aria-hidden="true" tabindex="-1"></a>                     <span class="at">accuracy =</span> <span class="fu">numeric</span>())</span>
-<span id="cb352-5"><a href="classification2.html#cb352-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb352-6"><a href="classification2.html#cb352-6" aria-hidden="true" tabindex="-1"></a><span class="co"># create a model specification</span></span>
-<span id="cb352-7"><a href="classification2.html#cb352-7" aria-hidden="true" tabindex="-1"></a>knn_spec <span class="ot">&lt;-</span> <span class="fu">nearest_neighbor</span>(<span class="at">weight_func =</span> <span class="st">&quot;rectangular&quot;</span>, </span>
-<span id="cb352-8"><a href="classification2.html#cb352-8" aria-hidden="true" tabindex="-1"></a>                             <span class="at">neighbors =</span> <span class="fu">tune</span>()) <span class="sc">|&gt;</span></span>
-<span id="cb352-9"><a href="classification2.html#cb352-9" aria-hidden="true" tabindex="-1"></a>     <span class="fu">set_engine</span>(<span class="st">&quot;kknn&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb352-10"><a href="classification2.html#cb352-10" aria-hidden="true" tabindex="-1"></a>     <span class="fu">set_mode</span>(<span class="st">&quot;classification&quot;</span>)</span>
-<span id="cb352-11"><a href="classification2.html#cb352-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb352-12"><a href="classification2.html#cb352-12" aria-hidden="true" tabindex="-1"></a><span class="co"># create a 5-fold cross-validation object</span></span>
-<span id="cb352-13"><a href="classification2.html#cb352-13" aria-hidden="true" tabindex="-1"></a>cancer_vfold <span class="ot">&lt;-</span> <span class="fu">vfold_cv</span>(cancer_subset, <span class="at">v =</span> <span class="dv">5</span>, <span class="at">strata =</span> Class)</span>
-<span id="cb352-14"><a href="classification2.html#cb352-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb352-15"><a href="classification2.html#cb352-15" aria-hidden="true" tabindex="-1"></a><span class="co"># store the total number of predictors</span></span>
-<span id="cb352-16"><a href="classification2.html#cb352-16" aria-hidden="true" tabindex="-1"></a>n_total <span class="ot">&lt;-</span> <span class="fu">length</span>(names)</span>
-<span id="cb352-17"><a href="classification2.html#cb352-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb352-18"><a href="classification2.html#cb352-18" aria-hidden="true" tabindex="-1"></a><span class="co"># stores selected predictors</span></span>
-<span id="cb352-19"><a href="classification2.html#cb352-19" aria-hidden="true" tabindex="-1"></a>selected <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
-<span id="cb352-20"><a href="classification2.html#cb352-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb352-21"><a href="classification2.html#cb352-21" aria-hidden="true" tabindex="-1"></a><span class="co"># for every size from 1 to the total number of predictors</span></span>
-<span id="cb352-22"><a href="classification2.html#cb352-22" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_total) {</span>
-<span id="cb352-23"><a href="classification2.html#cb352-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># for every predictor still not added yet</span></span>
-<span id="cb352-24"><a href="classification2.html#cb352-24" aria-hidden="true" tabindex="-1"></a>    accs <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb352-25"><a href="classification2.html#cb352-25" aria-hidden="true" tabindex="-1"></a>    models <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb352-26"><a href="classification2.html#cb352-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(names)) {</span>
-<span id="cb352-27"><a href="classification2.html#cb352-27" aria-hidden="true" tabindex="-1"></a>        <span class="co"># create a model string for this combination of predictors</span></span>
-<span id="cb352-28"><a href="classification2.html#cb352-28" aria-hidden="true" tabindex="-1"></a>        preds_new <span class="ot">&lt;-</span> <span class="fu">c</span>(selected, names[[j]])</span>
-<span id="cb352-29"><a href="classification2.html#cb352-29" aria-hidden="true" tabindex="-1"></a>        model_string <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">&quot;Class&quot;</span>, <span class="st">&quot;~&quot;</span>, <span class="fu">paste</span>(preds_new, <span class="at">collapse=</span><span class="st">&quot;+&quot;</span>))</span>
-<span id="cb352-30"><a href="classification2.html#cb352-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb352-31"><a href="classification2.html#cb352-31" aria-hidden="true" tabindex="-1"></a>        <span class="co"># create a recipe from the model string</span></span>
-<span id="cb352-32"><a href="classification2.html#cb352-32" aria-hidden="true" tabindex="-1"></a>        cancer_recipe <span class="ot">&lt;-</span> <span class="fu">recipe</span>(<span class="fu">as.formula</span>(model_string), </span>
-<span id="cb352-33"><a href="classification2.html#cb352-33" aria-hidden="true" tabindex="-1"></a>                                <span class="at">data =</span> cancer_subset) <span class="sc">|&gt;</span></span>
-<span id="cb352-34"><a href="classification2.html#cb352-34" aria-hidden="true" tabindex="-1"></a>                          <span class="fu">step_scale</span>(<span class="fu">all_predictors</span>()) <span class="sc">|&gt;</span></span>
-<span id="cb352-35"><a href="classification2.html#cb352-35" aria-hidden="true" tabindex="-1"></a>                          <span class="fu">step_center</span>(<span class="fu">all_predictors</span>())</span>
-<span id="cb352-36"><a href="classification2.html#cb352-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb352-37"><a href="classification2.html#cb352-37" aria-hidden="true" tabindex="-1"></a>        <span class="co"># tune the KNN classifier with these predictors, </span></span>
-<span id="cb352-38"><a href="classification2.html#cb352-38" aria-hidden="true" tabindex="-1"></a>        <span class="co"># and collect the accuracy for the best K</span></span>
-<span id="cb352-39"><a href="classification2.html#cb352-39" aria-hidden="true" tabindex="-1"></a>        acc <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
-<span id="cb352-40"><a href="classification2.html#cb352-40" aria-hidden="true" tabindex="-1"></a>          <span class="fu">add_recipe</span>(cancer_recipe) <span class="sc">|&gt;</span></span>
-<span id="cb352-41"><a href="classification2.html#cb352-41" aria-hidden="true" tabindex="-1"></a>          <span class="fu">add_model</span>(knn_spec) <span class="sc">|&gt;</span></span>
-<span id="cb352-42"><a href="classification2.html#cb352-42" aria-hidden="true" tabindex="-1"></a>          <span class="fu">tune_grid</span>(<span class="at">resamples =</span> cancer_vfold, <span class="at">grid =</span> <span class="dv">10</span>) <span class="sc">|&gt;</span></span>
-<span id="cb352-43"><a href="classification2.html#cb352-43" aria-hidden="true" tabindex="-1"></a>          <span class="fu">collect_metrics</span>() <span class="sc">|&gt;</span></span>
-<span id="cb352-44"><a href="classification2.html#cb352-44" aria-hidden="true" tabindex="-1"></a>          <span class="fu">filter</span>(.metric <span class="sc">==</span> <span class="st">&quot;accuracy&quot;</span>) <span class="sc">|&gt;</span></span>
-<span id="cb352-45"><a href="classification2.html#cb352-45" aria-hidden="true" tabindex="-1"></a>          <span class="fu">summarize</span>(<span class="at">mx =</span> <span class="fu">max</span>(mean))</span>
-<span id="cb352-46"><a href="classification2.html#cb352-46" aria-hidden="true" tabindex="-1"></a>        acc <span class="ot">&lt;-</span> acc<span class="sc">$</span>mx <span class="sc">|&gt;</span> <span class="fu">unlist</span>()</span>
-<span id="cb352-47"><a href="classification2.html#cb352-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb352-48"><a href="classification2.html#cb352-48" aria-hidden="true" tabindex="-1"></a>        <span class="co"># add this result to the dataframe</span></span>
-<span id="cb352-49"><a href="classification2.html#cb352-49" aria-hidden="true" tabindex="-1"></a>        accs[[j]] <span class="ot">&lt;-</span> acc</span>
-<span id="cb352-50"><a href="classification2.html#cb352-50" aria-hidden="true" tabindex="-1"></a>        models[[j]] <span class="ot">&lt;-</span> model_string</span>
-<span id="cb352-51"><a href="classification2.html#cb352-51" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb352-52"><a href="classification2.html#cb352-52" aria-hidden="true" tabindex="-1"></a>    jstar <span class="ot">&lt;-</span> <span class="fu">which.max</span>(<span class="fu">unlist</span>(accs))</span>
-<span id="cb352-53"><a href="classification2.html#cb352-53" aria-hidden="true" tabindex="-1"></a>    accuracies <span class="ot">&lt;-</span> accuracies <span class="sc">|&gt;</span> </span>
-<span id="cb352-54"><a href="classification2.html#cb352-54" aria-hidden="true" tabindex="-1"></a>      <span class="fu">add_row</span>(<span class="at">size =</span> i, </span>
-<span id="cb352-55"><a href="classification2.html#cb352-55" aria-hidden="true" tabindex="-1"></a>              <span class="at">model_string =</span> models[[jstar]], </span>
-<span id="cb352-56"><a href="classification2.html#cb352-56" aria-hidden="true" tabindex="-1"></a>              <span class="at">accuracy =</span> accs[[jstar]])</span>
-<span id="cb352-57"><a href="classification2.html#cb352-57" aria-hidden="true" tabindex="-1"></a>    selected <span class="ot">&lt;-</span> <span class="fu">c</span>(selected, names[[jstar]])</span>
-<span id="cb352-58"><a href="classification2.html#cb352-58" aria-hidden="true" tabindex="-1"></a>    names <span class="ot">&lt;-</span> names[<span class="sc">-</span>jstar]</span>
-<span id="cb352-59"><a href="classification2.html#cb352-59" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb352-60"><a href="classification2.html#cb352-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb352-61"><a href="classification2.html#cb352-61" aria-hidden="true" tabindex="-1"></a>accuracies</span></code></pre></div>
+<div class="sourceCode" id="cb354"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb354-1"><a href="classification2.html#cb354-1" aria-hidden="true" tabindex="-1"></a><span class="co"># create an empty tibble to store the results</span></span>
+<span id="cb354-2"><a href="classification2.html#cb354-2" aria-hidden="true" tabindex="-1"></a>accuracies <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">size =</span> <span class="fu">integer</span>(), </span>
+<span id="cb354-3"><a href="classification2.html#cb354-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">model_string =</span> <span class="fu">character</span>(), </span>
+<span id="cb354-4"><a href="classification2.html#cb354-4" aria-hidden="true" tabindex="-1"></a>                     <span class="at">accuracy =</span> <span class="fu">numeric</span>())</span>
+<span id="cb354-5"><a href="classification2.html#cb354-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb354-6"><a href="classification2.html#cb354-6" aria-hidden="true" tabindex="-1"></a><span class="co"># create a model specification</span></span>
+<span id="cb354-7"><a href="classification2.html#cb354-7" aria-hidden="true" tabindex="-1"></a>knn_spec <span class="ot">&lt;-</span> <span class="fu">nearest_neighbor</span>(<span class="at">weight_func =</span> <span class="st">&quot;rectangular&quot;</span>, </span>
+<span id="cb354-8"><a href="classification2.html#cb354-8" aria-hidden="true" tabindex="-1"></a>                             <span class="at">neighbors =</span> <span class="fu">tune</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb354-9"><a href="classification2.html#cb354-9" aria-hidden="true" tabindex="-1"></a>     <span class="fu">set_engine</span>(<span class="st">&quot;kknn&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb354-10"><a href="classification2.html#cb354-10" aria-hidden="true" tabindex="-1"></a>     <span class="fu">set_mode</span>(<span class="st">&quot;classification&quot;</span>)</span>
+<span id="cb354-11"><a href="classification2.html#cb354-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb354-12"><a href="classification2.html#cb354-12" aria-hidden="true" tabindex="-1"></a><span class="co"># create a 5-fold cross-validation object</span></span>
+<span id="cb354-13"><a href="classification2.html#cb354-13" aria-hidden="true" tabindex="-1"></a>cancer_vfold <span class="ot">&lt;-</span> <span class="fu">vfold_cv</span>(cancer_subset, <span class="at">v =</span> <span class="dv">5</span>, <span class="at">strata =</span> Class)</span>
+<span id="cb354-14"><a href="classification2.html#cb354-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb354-15"><a href="classification2.html#cb354-15" aria-hidden="true" tabindex="-1"></a><span class="co"># store the total number of predictors</span></span>
+<span id="cb354-16"><a href="classification2.html#cb354-16" aria-hidden="true" tabindex="-1"></a>n_total <span class="ot">&lt;-</span> <span class="fu">length</span>(names)</span>
+<span id="cb354-17"><a href="classification2.html#cb354-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb354-18"><a href="classification2.html#cb354-18" aria-hidden="true" tabindex="-1"></a><span class="co"># stores selected predictors</span></span>
+<span id="cb354-19"><a href="classification2.html#cb354-19" aria-hidden="true" tabindex="-1"></a>selected <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb354-20"><a href="classification2.html#cb354-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb354-21"><a href="classification2.html#cb354-21" aria-hidden="true" tabindex="-1"></a><span class="co"># for every size from 1 to the total number of predictors</span></span>
+<span id="cb354-22"><a href="classification2.html#cb354-22" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_total) {</span>
+<span id="cb354-23"><a href="classification2.html#cb354-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># for every predictor still not added yet</span></span>
+<span id="cb354-24"><a href="classification2.html#cb354-24" aria-hidden="true" tabindex="-1"></a>    accs <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb354-25"><a href="classification2.html#cb354-25" aria-hidden="true" tabindex="-1"></a>    models <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb354-26"><a href="classification2.html#cb354-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(names)) {</span>
+<span id="cb354-27"><a href="classification2.html#cb354-27" aria-hidden="true" tabindex="-1"></a>        <span class="co"># create a model string for this combination of predictors</span></span>
+<span id="cb354-28"><a href="classification2.html#cb354-28" aria-hidden="true" tabindex="-1"></a>        preds_new <span class="ot">&lt;-</span> <span class="fu">c</span>(selected, names[[j]])</span>
+<span id="cb354-29"><a href="classification2.html#cb354-29" aria-hidden="true" tabindex="-1"></a>        model_string <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">&quot;Class&quot;</span>, <span class="st">&quot;~&quot;</span>, <span class="fu">paste</span>(preds_new, <span class="at">collapse=</span><span class="st">&quot;+&quot;</span>))</span>
+<span id="cb354-30"><a href="classification2.html#cb354-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb354-31"><a href="classification2.html#cb354-31" aria-hidden="true" tabindex="-1"></a>        <span class="co"># create a recipe from the model string</span></span>
+<span id="cb354-32"><a href="classification2.html#cb354-32" aria-hidden="true" tabindex="-1"></a>        cancer_recipe <span class="ot">&lt;-</span> <span class="fu">recipe</span>(<span class="fu">as.formula</span>(model_string), </span>
+<span id="cb354-33"><a href="classification2.html#cb354-33" aria-hidden="true" tabindex="-1"></a>                                <span class="at">data =</span> cancer_subset) <span class="sc">|&gt;</span></span>
+<span id="cb354-34"><a href="classification2.html#cb354-34" aria-hidden="true" tabindex="-1"></a>                          <span class="fu">step_scale</span>(<span class="fu">all_predictors</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb354-35"><a href="classification2.html#cb354-35" aria-hidden="true" tabindex="-1"></a>                          <span class="fu">step_center</span>(<span class="fu">all_predictors</span>())</span>
+<span id="cb354-36"><a href="classification2.html#cb354-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb354-37"><a href="classification2.html#cb354-37" aria-hidden="true" tabindex="-1"></a>        <span class="co"># tune the KNN classifier with these predictors, </span></span>
+<span id="cb354-38"><a href="classification2.html#cb354-38" aria-hidden="true" tabindex="-1"></a>        <span class="co"># and collect the accuracy for the best K</span></span>
+<span id="cb354-39"><a href="classification2.html#cb354-39" aria-hidden="true" tabindex="-1"></a>        acc <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb354-40"><a href="classification2.html#cb354-40" aria-hidden="true" tabindex="-1"></a>          <span class="fu">add_recipe</span>(cancer_recipe) <span class="sc">|&gt;</span></span>
+<span id="cb354-41"><a href="classification2.html#cb354-41" aria-hidden="true" tabindex="-1"></a>          <span class="fu">add_model</span>(knn_spec) <span class="sc">|&gt;</span></span>
+<span id="cb354-42"><a href="classification2.html#cb354-42" aria-hidden="true" tabindex="-1"></a>          <span class="fu">tune_grid</span>(<span class="at">resamples =</span> cancer_vfold, <span class="at">grid =</span> <span class="dv">10</span>) <span class="sc">|&gt;</span></span>
+<span id="cb354-43"><a href="classification2.html#cb354-43" aria-hidden="true" tabindex="-1"></a>          <span class="fu">collect_metrics</span>() <span class="sc">|&gt;</span></span>
+<span id="cb354-44"><a href="classification2.html#cb354-44" aria-hidden="true" tabindex="-1"></a>          <span class="fu">filter</span>(.metric <span class="sc">==</span> <span class="st">&quot;accuracy&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb354-45"><a href="classification2.html#cb354-45" aria-hidden="true" tabindex="-1"></a>          <span class="fu">summarize</span>(<span class="at">mx =</span> <span class="fu">max</span>(mean))</span>
+<span id="cb354-46"><a href="classification2.html#cb354-46" aria-hidden="true" tabindex="-1"></a>        acc <span class="ot">&lt;-</span> acc<span class="sc">$</span>mx <span class="sc">|&gt;</span> <span class="fu">unlist</span>()</span>
+<span id="cb354-47"><a href="classification2.html#cb354-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb354-48"><a href="classification2.html#cb354-48" aria-hidden="true" tabindex="-1"></a>        <span class="co"># add this result to the dataframe</span></span>
+<span id="cb354-49"><a href="classification2.html#cb354-49" aria-hidden="true" tabindex="-1"></a>        accs[[j]] <span class="ot">&lt;-</span> acc</span>
+<span id="cb354-50"><a href="classification2.html#cb354-50" aria-hidden="true" tabindex="-1"></a>        models[[j]] <span class="ot">&lt;-</span> model_string</span>
+<span id="cb354-51"><a href="classification2.html#cb354-51" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb354-52"><a href="classification2.html#cb354-52" aria-hidden="true" tabindex="-1"></a>    jstar <span class="ot">&lt;-</span> <span class="fu">which.max</span>(<span class="fu">unlist</span>(accs))</span>
+<span id="cb354-53"><a href="classification2.html#cb354-53" aria-hidden="true" tabindex="-1"></a>    accuracies <span class="ot">&lt;-</span> accuracies <span class="sc">|&gt;</span> </span>
+<span id="cb354-54"><a href="classification2.html#cb354-54" aria-hidden="true" tabindex="-1"></a>      <span class="fu">add_row</span>(<span class="at">size =</span> i, </span>
+<span id="cb354-55"><a href="classification2.html#cb354-55" aria-hidden="true" tabindex="-1"></a>              <span class="at">model_string =</span> models[[jstar]], </span>
+<span id="cb354-56"><a href="classification2.html#cb354-56" aria-hidden="true" tabindex="-1"></a>              <span class="at">accuracy =</span> accs[[jstar]])</span>
+<span id="cb354-57"><a href="classification2.html#cb354-57" aria-hidden="true" tabindex="-1"></a>    selected <span class="ot">&lt;-</span> <span class="fu">c</span>(selected, names[[jstar]])</span>
+<span id="cb354-58"><a href="classification2.html#cb354-58" aria-hidden="true" tabindex="-1"></a>    names <span class="ot">&lt;-</span> names[<span class="sc">-</span>jstar]</span>
+<span id="cb354-59"><a href="classification2.html#cb354-59" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb354-60"><a href="classification2.html#cb354-60" aria-hidden="true" tabindex="-1"></a>accuracies</span></code></pre></div>
 <pre><code>## # A tibble: 6 × 3
 ##    size model_string                                                    accuracy
 ##   &lt;int&gt; &lt;chr&gt;                                                              &lt;dbl&gt;
@@ -1694,17 +1712,17 @@ occurs with 3 variables: <code>Class ~ Perimeter + Concavity + Smoothness</code>
 predictors from the model! It is always worth remembering, however, that what cross-validation gives you
 is an <em>estimate</em> of the true accuracy; you have to use your judgement when looking at this plot to decide
 where the elbow occurs, and whether adding a variable provides a meaningful increase in accuracy.</p>
-<blockquote>
-<p><strong>Note:</strong> Since the choice of which variables to include as predictors is
-part of tuning your classifier, you <em>cannot use your test data</em> for this
-process!</p>
-</blockquote>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:06-fwdsel-3"></span>
 <img src="_main_files/figure-html/06-fwdsel-3-1.png" alt="Estimated accuracy versus the number of predictors for the sequence of models built using forward selection." width="65%" />
 <p class="caption">
 Figure 6.12: Estimated accuracy versus the number of predictors for the sequence of models built using forward selection.
 </p>
 </div>
+<blockquote>
+<p><strong>Note:</strong> Since the choice of which variables to include as predictors is
+part of tuning your classifier, you <em>cannot use your test data</em> for this
+process!</p>
+</blockquote>
 </div>
 </div>
 <div id="exercises-5" class="section level2" number="6.9">
