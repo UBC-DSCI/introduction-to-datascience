@@ -167,7 +167,7 @@ Lists \index{list} are also objects in R that have multiple, ordered elements.
 Vectors and lists differ by the requirement of element type
 consistency. All elements within a single vector must be of the same type (e.g.,
 all elements are characters), whereas elements within a single list can be of
-different types (e.g., characters, integers, logicals, and even other lists). 
+different types (e.g., characters, integers, logicals, and even other lists; Figure \@ref(fig:02-vec-vs-list)). 
 
 ``` {r 02-vec-vs-list, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "A vector versus a list.", fig.retina = 2, out.width = "100%"}
 image_read("img/data_frame_slides_cdn/data_frame_slides_cdn.008.jpeg") %>%
@@ -211,10 +211,10 @@ tibbles as data frames in this book.
 > built-in R data frames to tibbles using the `tidyverse` `as_tibble` function.
 > For example we can check the class of the Canadian languages data set,
 > `can_lang`, we worked with in the previous chapters and we see it is a tibble.
-
-``` {r 02-load-can-land, warning=F, message=F}
-class(can_lang)
-```
+>
+>``` {r 02-load-can-land, warning=F, message=F}
+>class(can_lang)
+>```
 
 Vectors, data frames and lists are basic types of *data structure* in R, which
 are core to most data analyses. We summarize them in Table
@@ -326,6 +326,7 @@ we will load the `tidyverse` package and use `read_csv` to load the (untidy) dat
 
 ``` {r 02-tidyverse, warning=FALSE, message=FALSE}
 library(tidyverse)
+
 lang_wide <- read_csv("data/region_lang_top5_cities_wide.csv")
 lang_wide
 ```
@@ -348,7 +349,7 @@ though it would be much easier to answer if we tidy our
 data first. If mother tongue were instead stored as one column, 
 as shown in the tidy data on the right in 
 Figure \@ref(fig:img-pivot-longer-with-table),
-we could simply use one line of code (`max(mother_tongue)`) 
+we could simply use the `max` function in one line of code
 to get the maximum value. 
 
 (ref:img-pivot-longer-with-table) Going from wide to long with the `pivot_longer` function.
@@ -398,8 +399,7 @@ been met:
 
 1.  All the variables (`category`, `language`, `region` and `mother_tongue`) are
     now their own columns in the data frame.
-2.  Each observation, i.e., each `category`, `language`, `region`, and count of
-    Canadians where that language is the mother tongue, are in a single row.
+2.  Each observation, (i.e., each language in a region) is in a single row.
 3.  Each value is a single cell, i.e., its row, column position in the data
     frame is not shared with another value.
 
@@ -408,8 +408,9 @@ been met:
 Suppose we have observations spread across multiple rows rather than in a single \index{pivot\_wider}
 row. For example, in Figure \@ref(fig:long-to-wide), the table on the left is in an
 untidy, long format because the `count` column contains three variables
-(population, commuter, and incorporated count) and information about each observation 
-(here, population, commuter, and incorporated counts for a region) is split across three rows. 
+(population, commuter count, and year the city was incorporated) 
+and information about each observation 
+(here, population, commuter, and incorporated values for a region) is split across three rows. 
 Remember: one of the criteria for tidy data 
 is that each observation must be in a single row.
 
@@ -1118,25 +1119,21 @@ object to store the output from `filter`. Instead, we can directly send the
 output of `filter` to the input of `select`:
 
 ``` {r}
-van_data_selected <- tidy_lang |>
-        filter(region == "Vancouver") |> 
+van_data_selected <- filter(tidy_lang, region == "Vancouver") |> 
         select(language, most_at_home)
 
 van_data_selected
 ```
 
-But wait...Why do the `select` and `filter` function calls 
+But wait...Why do the `select` function calls 
 look different in these two examples? 
 Remember: when you use the pipe, 
 the output of the first function is automatically provided 
 as the first argument for the function that comes after it. 
 Therefore you do not specify the first argument in that function call. 
 In the code above,
-the first line is just the `tidy_lang` data frame with a pipe.
-The pipe passes the left-hand side (`tidy_lang`) to the first argument of the function on the right (`filter`),
-so in the `filter` function you only see the second argument (and beyond).
-Then again after `filter` there is a pipe, which passes the result of the `filter` step
-to the first argument of the `select` function.
+The pipe passes the left-hand side (the output of `filter`) to the first argument of the function on the right (`select`),
+so in the `select` function you only see the second argument (and beyond).
 As you can see, both of these approaches&mdash;with and without pipes&mdash;give us the same output, but the second
 approach is clearer and more readable.
 
@@ -1296,7 +1293,7 @@ summarize(region_lang_na,
 A common pairing with `summarize` is `group_by`. Pairing these functions \index{group\_by}
 together can let you summarize values for subgroups within a data set,
 as illustrated in Figure \@ref(fig:summarize-groupby). 
-For example, we can use `group_by` to group the regions of the `tidy_lang` data frame and then calculate the minimum and maximum number of Canadians 
+For example, we can use `group_by` to group the regions of the `region_lang` data frame and then calculate the minimum and maximum number of Canadians 
 reporting the language as the primary language at home 
 for each of the regions in the data set.
 
@@ -1503,17 +1500,14 @@ As we did above,
 we again use `across` to specify the columns using `select` syntax
 as well as the function we want to apply on the specified columns.
 However, a key difference here is that we are using `mutate`, 
-which means that we get back a data frame with the same number of rows.
+which means that we get back a data frame with the same number of columns and rows.
+The only thing that changes is the transformation we applied 
+to the specified columns (here `mother_tongue` to `lang_known`).
 
 ```{r}
 region_lang |> 
   mutate(across(mother_tongue:lang_known, as.integer))
 ```
-
-We see that we get back a data frame
-with the same number of columns and rows.
-The only thing that changes is the transformation we applied 
-to the specified columns (here `mother_tongue` to `lang_known`).
 
 ## Apply functions across columns within one row with `rowwise` and `mutate`
 
