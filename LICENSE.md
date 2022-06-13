@@ -1,6 +1,8 @@
 # License
 
-This textbook is made available under the **Attribution-NonCommercial-ShareAlike 4.0 International** ([CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)). 
+Copyright (c) 2020 Tiffany A. Timbers, Trevor Campbell, Melissa Lee
+
+This textbook (source contained in the [`introduction-to-datascience` repository](https://github.com/UBC-DSCI/introduction-to-datascience)) is made available under the **Attribution-NonCommercial-ShareAlike 4.0 International** ([CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)). 
 
 This is a human-readable summary of (and not a substitute for) the [license](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode).
 
@@ -13,7 +15,7 @@ The licensor cannot revoke these freedoms as long as you follow the license term
 
 ## Under the following terms:
 
-- **Attribution** — You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
+- **Attribution** — You must give appropriate credit (mentioning that your work is derived from work that is Copyright © Tiffany A. Timbers, Trevor Campbell, Melissa Lee and, where practical, linking to https://datasciencebook.ca/), provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
 - **NonCommercial** — You may not use the material for commercial purposes.
 - **ShareAlike** — If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original.
 
