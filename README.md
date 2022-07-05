@@ -1,6 +1,8 @@
 ## Data Science: A First Introduction 
 This is the source for the *Data Science: A First Introduction* textbook.
 
+© 2020 Tiffany A. Timbers, Trevor Campbell, Melissa Lee
+
 ## License Information
 
 This textbook is offered under 
