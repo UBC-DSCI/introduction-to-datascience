@@ -497,18 +497,17 @@ Figure \@ref(fig:07-choose-k-knn-plot). What is happening here?
 
 Figure \@ref(fig:07-howK) visualizes the effect of different settings of $K$ on the
 regression model. Each plot shows the predicted values for house sale price from
-our KNN regression model for 6 different values for $K$: 1, 3, `r kmin`, 41, 250, and 932 (i.e., the entire dataset).
+our KNN regression model on the training data for 6 different values for $K$: 1, 3, `r kmin`, 41, 250, and 680 (almost the entire training set).
 For each model, we predict prices for the range of possible home sizes we
 observed in the data set (here 500 to 5,000 square feet) and we plot the
 predicted prices as a blue line.
 
 ```{r 07-howK, echo = FALSE, warning = FALSE, fig.height = 13, fig.width = 10,fig.cap = "Predicted values for house price (represented as a blue line) from KNN regression models for six different values for $K$."}
-gridvals <- c(1, 3, kmin, 41, 250, 932)
+gridvals <- c(1, 3, kmin, 41, 250, 680)
 
 plots <- list()
 
 for (i in 1:6) {
-  if (i < 6){
       sacr_spec <- nearest_neighbor(weight_func = "rectangular", 
                                     neighbors = gridvals[[i]]) |>
         set_engine("kknn") |>
@@ -531,19 +530,6 @@ for (i in 1:6) {
         geom_line(data = sacr_preds, aes(x = sqft, y = .pred), color = "blue") +
         ggtitle(paste0("K = ", gridvals[[i]])) +
         theme(text = element_text(size = 20), axis.title=element_text(size=20))
-      } else {
-      plots[[i]] <- ggplot(sacr_preds, aes(x = sqft, y = price)) +
-        geom_point(alpha = 0.4) +
-        xlab("House size (square feet)") +
-        ylab("Price (USD)") +
-        scale_y_continuous(labels = dollar_format()) +
-        geom_hline(data = sacr_preds, 
-                   mapping = aes(x = sqft), 
-                   yintercept = mean(sacr_preds$price), 
-                   color = "blue") +
-        ggtitle(paste0("K = ", gridvals[[i]])) +
-  theme(text = element_text(size = 20), axis.title=element_text(size=20)) 
-  }
 }
 
 grid.arrange(grobs = plots, ncol = 2)
@@ -567,14 +553,13 @@ by the noisy data&mdash;is called *overfitting*; we use this same term
 in the context of regression. \index{overfitting!regression}
 
 What about the plots in Figure \@ref(fig:07-howK) where $K$ is quite large, 
-say, $K$ = 250 or 932? 
+say, $K$ = 250 or 680? 
 In this case the blue line becomes extremely smooth, and actually becomes flat
-once $K$ is equal to the number of datapoints in the entire data set. 
+once $K$ is equal to the number of datapoints in the training set. 
 This happens because our predicted values for a given x value (here, home
 size), depend on many neighboring observations; in the case where $K$ is equal 
-to the size of the dataset, the prediction is just the mean of the house prices
-in the dataset (completely ignoring the house size). 
-In contrast to the $K=1$ example, 
+to the size of the training set, the prediction is just the mean of the house prices
+(completely ignoring the house size).  In contrast to the $K=1$ example, 
 the smooth, inflexible blue line does not follow the training observations very closely.
 In other words, the model is *not influenced enough* by the training data.
 Recall from the classification
