@@ -1,7 +1,7 @@
 ## Data Science: A First Introduction 
 This is the source for the *Data Science: A First Introduction* textbook.
 
-It is available online at: https://datasciencebook.ca/
+The book is available online at: https://datasciencebook.ca/
 
 © 2020 Tiffany A. Timbers, Trevor Campbell, Melissa Lee
 
