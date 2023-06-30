@@ -1,0 +1,33 @@
+name: Rebuild and deploy book to gh-pages branch
+on:
+  push:
+    branches:
+      - production
+    paths:
+      - '*.Rmd'
+      
+jobs:
+  deploy-book:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          ref: 'production'
+          
+      - name: Build the book
+        run: |
+          ./build_html.sh
+
+       # Push the book's HTML to github-pages
+      - name: GitHub Pages action
+        uses: peaceiris/actions-gh-pages@v3.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/
+          force_orphan: true
+
