@@ -11,7 +11,19 @@ This textbook is offered under
 the [Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0) License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
 See [the license file](LICENSE.md) for more information. 
 
-## Setup and Build
+## Contributing
+
+Primary development in this repository happens on the `master` branch. If you want to contribute to the book, please branch off of `master` and make a pull request into `master`.
+
+The `production` branch contains the source material for the live, publicly viewable HTML book. The website is served from the `gh-pages` branch, which is automatically built from the `production` branch.
+
+### Update build environment
+You can update the build environment for the book by making changes to `Dockerfile` in the root of the repository in the `master` branch. If you push any changes to the `Dockerfile` on the `master` branch, GitHub will trigger a rebuild of the docker image, push it to DockerHub, and update the `build_html.sh` and `build_pdf.sh` scripts with the new image tag.
+
+### Update public html
+You can update the live, publicly viewable HTML book by making changes to any `*.Rmd` file, or any file in the `img/` or `data/` folders in the `production` branch. If you push any changes to these files/folders on the `production` branch, GitHub will trigger a rebuild of the public HTML site and push it to the `gh-pages` branch.
+
+## Building the book locally
 
 In order to build the book, you need to first install Docker 
 (instructions here: [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/)).
