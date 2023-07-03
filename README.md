@@ -13,32 +13,32 @@ See [the license file](LICENSE.md) for more information.
 
 ## Contributing
 
-Primary development in this repository happens on the `main` branch. If you want to contribute to the book, please branch off of `main` and make a pull request into `main`.
+Primary development in this repository happens on the `main` branch. If you
+want to contribute to the book, please branch off of `main` and make a pull
+request into `main`.
 
-The `production` branch contains the source material for the live, publicly viewable HTML book. The website is served from the `gh-pages` branch, which is automatically built from the `production` branch.
+The `production` branch contains the source material for the live, publicly
+viewable HTML book. The website is served from the `gh-pages` branch, which is
+automatically built from the `production` branch.
 
 ### Update build environment
-You can update the build environment for the book by making changes to `Dockerfile` in the root of the repository in the `main` branch. If you push any changes to the `Dockerfile` on the `main` branch, GitHub will trigger a rebuild of the docker image, push it to DockerHub, and update the `build_html.sh` and `build_pdf.sh` scripts with the new image tag.
+You can update the build environment for the book by making changes to
+`Dockerfile` in the root of the repository in the `main` branch. If you push
+any changes to the `Dockerfile` on the `main` branch, GitHub will trigger a
+rebuild of the docker image, push it to DockerHub, and update the
+`build_html.sh` and `build_pdf.sh` scripts with the new image tag.
 
 ### Update public html
-You can update the live, publicly viewable HTML book by making changes to any `*.Rmd` file, or any file in the `img/` or `data/` folders in the `production` branch. If you push any changes to these files/folders on the `production` branch, GitHub will trigger a rebuild of the public HTML site and push it to the `gh-pages` branch.
+You can update the live, publicly viewable HTML book by making changes to any
+`*.Rmd` file, or any file in the `img/` or `data/` folders in the `production`
+branch. If you push any changes to these files/folders on the `production`
+branch, GitHub will trigger a rebuild of the public HTML site and push it to
+the `gh-pages` branch.
 
 ## Building the book locally
 
 In order to build the book, you need to first install Docker 
 (instructions here: [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/)).
-Then obtain the build image via
-```
-docker pull ubcdsci/intro-to-ds
-```
-From this point you have two options:
-
-- use whatever text editor you want, and build the book on the command line
-- use RStudio to both edit and build the book
-
-We provide instructions for both methods here.
-
-### Without RStudio
 
 To build the **html version** of the book, navigate to the repository root folder and run
 ```
@@ -46,7 +46,8 @@ To build the **html version** of the book, navigate to the repository root folde
 ``` 
 from the command line. This command automatically spawns a docker container
 with the `ubcdsci/intro-to-ds` image, runs the script `_build_html.r` from within the container,
-and then stops the container. 
+and then stops the container. If you did not already have the `ubcdsci/intro-to-ds` image pulled,
+the script will pull the image from DockerHub.
 
 To build the **PDF version** of the book, instead run
 ```
@@ -54,32 +55,19 @@ To build the **PDF version** of the book, instead run
 ```
 This command again spawns a docker container and runs `pdf/_build_pdf.r` inside the container.
 
-### With RStudio (HTML only)
+### Working with RStudio (HTML only)
 
-1. Run RStudio inside the `ubcdsci/intro-to-ds` docker container:
-    - in terminal, navigate to the root of this project repo
-    - type the following in terminal:
-
-    ```
-    docker-compose up -d
-    ```
-    If you use this, then when you are done working, type `docker-compose down` to remove the dangling container.
-    
-
-    > Alternatively, you can type:
-    > ```
-    > docker run --rm -it -p 8787:8787 -m 4g -v $PWD:/home/rstudio/introduction-to-datascience -e PASSWORD=password ubcdsci/intro-to-ds:v0.1.0
-    > ```
-    
-    Next:
-    - open a web browser and type [http://localhost:8787/](http://localhost:8787/)
-    - for the username enter `rstudio` 
-    - for the password enter `password` (or whatever you may have changed it to in the `docker run` command above)
-    
-3. Finally, you can render the book by running the following R code in the R console:
-    ```
-    bookdown::render_book('index.Rmd', 'bookdown::gitbook')
-    ```
+If you want to edit the source material and build the book using RStudio, navigate to the repository root and run
+```
+docker-compose up -d
+```
+to start up the docker container. Then open a web browser and type [http://localhost:8787/](http://localhost:8787/).
+For the username enter `rstudio`, and for the password enter `password`.
+At any point you can render the book by running the following R code in the R console:
+```
+bookdown::render_book('index.Rmd', 'bookdown::gitbook')
+```
+When you are done working, make sure to type `docker-compose down` to shut down the container.
 
 ## Style Guide
 
