@@ -37,8 +37,7 @@ the `gh-pages` branch.
 
 ## Building the book locally
 
-In order to build the book, you need to first install Docker 
-(instructions here: [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/)).
+In order to build the book, you need to install [Docker](https://docs.docker.com/get-docker/).
 
 To build the **html version** of the book, navigate to the repository root folder and run
 ```
