@@ -44,15 +44,16 @@ To build the **html version** of the book, navigate to the repository root folde
 ./build_html.sh
 ``` 
 from the command line. This command automatically spawns a docker container
-with the `ubcdsci/intro-to-ds` image, runs the script `_build_html.r` from within the container,
-and then stops the container. If you did not already have the `ubcdsci/intro-to-ds` image pulled,
-the script will pull the image from DockerHub.
+with the `ubcdsci/intro-to-ds` image, renders the book within the container,
+and then stops the container. The book HTML files will be located in the `docs/` folder
+after the build completes. If you did not already have the `ubcdsci/intro-to-ds` image pulled,
+the script will automatically pull the image from DockerHub.
 
 To build the **PDF version** of the book, instead run
 ```
 ./build_pdf.sh
 ```
-This command again spawns a docker container and runs `pdf/_build_pdf.r` inside the container.
+This command again spawns a docker container and render the PDF version of the book inside the container.
 
 ### Working with RStudio (HTML only)
 
