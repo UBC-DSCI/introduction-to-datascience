@@ -59,6 +59,7 @@ By the end of the chapter, readers will be able to do the following:
     - `col_names`
     - `skip`
 - Choose the appropriate `tidyverse` `read_*` function and function arguments to load a given plain text tabular data set into R.
+- Use the `rename` function to rename columns in a data frame.
 - Use `readxl` package's `read_excel` function and arguments to load a sheet from an excel file into R.
 - Connect to a database using the `DBI` package's `dbConnect` function.
 - List the tables in a database using the `DBI` package's `dbListTables` function.
@@ -145,7 +146,7 @@ help us retrieve that resource.
 
 ## Reading tabular data from a plain text file into R
 
-### `read_csv` to read in comma-separated files {#readcsv}
+### `read_csv` to read in comma-separated values files {#readcsv}
 
 Now that we have learned about *where* data could be, we will learn about *how*
 to import data into R using various functions. Specifically, we will learn how 
@@ -280,10 +281,10 @@ Reproduced and distributed on an as-is basis with their permission.
 
 The column names began at line 4, so we skipped the first three lines. 
 
-### `read_tsv` to read in tab-separated files
+### `read_tsv` to read in tab-separated values files
 
 Another common way data is stored is with tabs as the delimiter. Notice the
-data file, `can_lang_tab.tsv`, has tabs in between the columns instead of
+data file, `can_lang.tsv`, has tabs in between the columns instead of
 commas. 
 
 ```code
@@ -299,30 +300,31 @@ Non-Official & Non-Aboriginal languages American Sign Language  2685    3020
 Non-Official & Non-Aboriginal languages Amharic 22465   12785   200 33670
 ```
 
-To read in this type of data, we can use the `read_tsv` 
+We can use the `read_tsv` function
 \index{tab-separated values|see{tsv}}\index{tsv}\index{read function!read\_tsv}
 to read in `.tsv` (**t**ab **s**eparated **v**alues) files. 
 
 ```{r 01-read-tab}
-canlang_data <- read_tsv("data/can_lang_tab.tsv")
+canlang_data <- read_tsv("data/can_lang.tsv")
 canlang_data
 ```
 
-Let's compare the data frame here to the resulting data frame in Section
-\@ref(readcsv) after using `read_csv`. Notice anything? They look the same! The
-same number of columns/rows and column names! So we needed to use different
-tools for the job depending on the file format and our resulting table
-(`canlang_data`) in both cases was the same! 
+If you compare the data frame here to the data frame we obtained in Section
+\@ref(readcsv) using `read_csv`, you'll notice that they look identical:
+they have the same number of columns and rows, the same column names, and the same entries! So 
+even though we needed to use a different
+function depending on the file format, our resulting data frame
+(`canlang_data`) in both cases was the same. 
 
 ### `read_delim` as a more flexible method to get tabular data into R
 
-`read_csv` and `read_tsv` are actually just special cases of the more general
+The `read_csv` and `read_tsv` functions are actually just special cases of the more general
 `read_delim` \index{read function!read\_delim} function. We can use
-`read_delim` to import both comma and tab-separated files (and more), we just
-have to specify the delimiter. The `can_lang.tsv` is a different version of
+`read_delim` to import both comma and tab-separated values files, and more; we just
+have to specify the delimiter. 
+For example, the `can_lang_no_names.tsv` file contains a different version of
 this same data set with no column names and uses tabs as the delimiter
 \index{reading!delimiter} instead of commas. 
-
 Here is how the file would look in a plain text editor:
 
 ```code
@@ -338,13 +340,13 @@ Non-Official & Non-Aboriginal languages Amharic 22465   12785   200 33670
 Non-Official & Non-Aboriginal languages Arabic  419890  223535  5585    629055
 ```
 
-To get this into R using the `read_delim` function, we specify the first
-argument as the path to the file (as done with `read_csv`), and then provide
-values to the `delim` \index{read function!delim argument} argument (here a
-tab, which we represent by `"\t"`) and the `col_names` argument (here we
-specify that there are no column names to assign, and give it the value of
-`FALSE`). `read_csv`, `read_tsv` and `read_delim` have a `col_names` argument
-\index{read function!col\_names argument} and the default is `TRUE`. 
+To read this into R using the `read_delim` function, we specify the path 
+to the file as the first argument, provide
+the tab character `"\t"` as the `delim` argument \index{read function!delim argument},
+and set the `col_names` argument to `FALSE` to denote that there are no column names
+provided in the data. Note that the `read_csv`, `read_tsv`, and `read_delim` functions
+all have a `col_names` argument \index{read function!col\_names argument} with 
+the default value `TRUE`. 
 
 > **Note:** `\t` is an example of an *escaped character*, 
 > which always starts with a backslash (`\`). \index{escape character}
@@ -352,20 +354,19 @@ specify that there are no column names to assign, and give it the value of
 > (like the tab) or those with special meanings (such as quotation marks). 
 
 ```{r}
-canlang_data <- read_delim("data/can_lang.tsv", 
+canlang_data <- read_delim("data/can_lang_no_names.tsv", 
                            delim = "\t", 
                            col_names = FALSE)
 canlang_data
 ```
 
 
-Data frames in R need to have column names.  Thus if you read in data that
-don't have column names, R will assign names automatically. In the example
-above, R assigns each column a name of `X1, X2, X3, X4, X5, X6`.
-
-It is best to rename your columns to help differentiate between them 
-(e.g., `X1, X2`, etc., are not very descriptive names and will make it more confusing as
-you code). To rename your columns, you can use the `rename` function
+Data frames in R need to have column names.  Thus if you read in data 
+without column names, R will assign names automatically. In this example,
+R assigns the column names `X1, X2, X3, X4, X5, X6`.
+It is best to rename your columns manually in this scenario. The current
+column names (`X1, X2`, etc.) are not very descriptive and will make your analysis confusing.
+To rename your columns, you can use the `rename` function
 \index{rename} from [the `dplyr` R package](https://dplyr.tidyverse.org/) [@dplyr]
  \index{dplyr} (one of the packages
 loaded with `tidyverse`, so we don't need to load it separately). The first
@@ -388,8 +389,8 @@ canlang_data
 ### Reading tabular data directly from a URL
 We can also use `read_csv`, `read_tsv` or `read_delim` (and related functions)
 to read in data directly from a **U**niform **R**esource **L**ocator (URL) that
-contains tabular data. \index{URL!reading from} Here, we provide the URL to
-`read_*` as the path to the file instead of a path to a local file on our
+contains tabular data. \index{URL!reading from} Here, we provide the URL of a remote file to
+`read_*`, instead of a path to a local file on our
 computer. We need to surround the URL with quotes similar to when we specify a
 path on our local computer. All other arguments that we use are the same as
 when using these functions with a local file on our computer.
@@ -403,12 +404,11 @@ canlang_data
 
 ### Previewing a data file before reading it into R
 
-In all the examples above, we gave you previews of the data file before we read
+In many of the examples above, we gave you previews of the data file before we read
 it into R. Previewing data is essential to see whether or not there are column
-names, what the delimiters are, and if there are lines you need to skip. You
-should do this yourself when trying to read in data files. You can preview
-files in a plain text editor by right-clicking on the file, selecting "Open
-With," and choosing a plain text editor (e.g., Notepad). 
+names, what the delimiters are, and if there are lines you need to skip. 
+You should do this yourself when trying to read in data files: open the file in
+whichever text editor you prefer to inspect its contents prior to reading it into R.
 
 ## Reading tabular data from a Microsoft Excel file
 
@@ -504,9 +504,10 @@ using R with SQLite and PostgreSQL databases.
 ### Reading data from a SQLite database
 
 SQLite \index{database!SQLite} is probably the simplest relational database system
-that one can use in combination with R. SQLite databases are self-contained and
-usually stored and accessed locally on one computer. Data is usually stored in
-a file with a `.db` extension. Similar to Excel files, these are not plain text
+that one can use in combination with R. SQLite databases are self-contained, and are
+usually stored and accessed locally on one computer from
+a file with a `.db` extension (or sometimes an `.sqlite` extension). 
+Similar to Excel files, these are not plain text
 files and cannot be read in a plain text editor. 
 
 The first thing you need to do to read data into R from a database is to
@@ -764,13 +765,14 @@ been a really bad movie...
 
 ### Why should we bother with databases at all?
 
-Opening a database \index{database!reasons to use} stored in a `.db` file
+Opening a database \index{database!reasons to use} 
 involved a lot more effort than just opening a `.csv`, `.tsv`, or any of the
-other plain text or Excel formats. It was a bit of a pain to use a database in
-that setting since we had to use `dbplyr` to translate `tidyverse`-like
+other plain text or Excel formats. We had to open a connection to the database, 
+then use `dbplyr` to translate `tidyverse`-like
 commands (`filter`, `select` etc.) into SQL commands that the database
-understands. Not all `tidyverse` commands can currently be translated with
-SQLite databases. For example, we can compute a mean with an SQLite database
+understands, and then finally `collect` the results. And not 
+all `tidyverse` commands can currently be translated to work with
+databases. For example, we can compute a mean with a database
 but can't easily compute a median. So you might be wondering: why should we use
 databases at all? 
 
@@ -1262,7 +1264,7 @@ data you are requesting and how frequently you are making requests.
 
 Practice exercises for the material covered in this chapter 
 can be found in the accompanying 
-[worksheets repository](https://github.com/UBC-DSCI/data-science-a-first-intro-worksheets#readme)
+[worksheets repository](https://worksheets.datasciencebook.ca)
 in the "Reading in data locally and from the web" row.
 You can launch an interactive version of the worksheet in your browser by clicking the "launch binder" button.
 You can also preview a non-interactive version of the worksheet by clicking "view worksheet."
