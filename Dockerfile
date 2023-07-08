@@ -6,6 +6,13 @@ RUN Rscript -e "update.packages(ask = FALSE)"
 RUN install2.r --error magick cowplot kableExtra plotly tidymodels kknn ggpubr ggforce themis egg fontawesome
 RUN Rscript -e "devtools::install_github('ttimbers/canlang@0.0.1')"
 
+# increase the ImageMagick resource limits
+# this relies on the fact that there is only one place where each of these sizes are used in policy.xml
+# (256MiB is for memory, 512MiB is for map, 1GiB is for disk)
+RUN sed -i 's/256MiB/6GiB/' /etc/ImageMagick-6/policy.xml
+RUN sed -i 's/512MiB/6GiB/' /etc/ImageMagick-6/policy.xml
+RUN sed -i 's/1GiB/6GiB/' /etc/ImageMagick-6/policy.xml
+
 ## install system dependencies
 #RUN apt-get update --fix-missing \
 #	&& apt-get install -y \
