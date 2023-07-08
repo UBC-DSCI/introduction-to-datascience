@@ -3,7 +3,7 @@ FROM rocker/verse:4.3.1
 
 RUN apt-get update --fix-missing
 RUN Rscript -e "update.packages(ask = FALSE)"
-RUN install2.r --error magick cowplot kableExtra plotly tidymodels kknn ggpubr ggforce themis egg fontawesome
+RUN install2.r --error magick cowplot kableExtra plotly tidymodels kknn ggpubr ggforce themis egg fontawesome xfun tinytex
 RUN Rscript -e "devtools::install_github('ttimbers/canlang@0.0.1')"
 
 # increase the ImageMagick resource limits
