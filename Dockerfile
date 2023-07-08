@@ -69,4 +69,5 @@ RUN tlmgr install \
     makecell \
     natbib \
     pdftexcmds \
-    infwarerr
+    infwarerr \
+    fontawesome5
