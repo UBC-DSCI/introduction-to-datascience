@@ -8,6 +8,7 @@ RUN install2.r --error magick \
                        kableExtra \
                        plotly \
                        tidymodels \
+                       tidyclust \
                        kknn \
                        ggpubr \
                        ggforce \
