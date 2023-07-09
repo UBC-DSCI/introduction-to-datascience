@@ -6,23 +6,34 @@ library(plotly)
 library(stringr)
 
 knitr::opts_chunk$set(fig.align = "center")
-reticulate::use_miniconda('r-reticulate')
 
-print_tidymodels <- function(tidymodels_object) {
-  if(!is_latex_output()) {
-    tidymodels_object
-  } else {
-    output <- capture.output(tidymodels_object)
-    
-    for (i in seq_along(output)) {
-      if (nchar(output[i]) <= 80) {
-        cat(output[i], sep = "\n")
-      } else {
-        cat(str_sub(output[i], start = 1, end = 80), sep = "\n")
-        cat(str_sub(output[i], start = 81, end = nchar(output[i])), sep = "\n")
-      }
-    }
-  }
+cleanup_and_print <- function(output){
+   for (i in seq_along(output)) {
+     if (nchar(output[i]) == 0){
+       cat("\n")
+     } else {
+       # for any run length of characters > 10, reduce it to length 10
+       runs = rle(strsplit(output[i], "")[[1]])
+       runs$lengths = ifelse(runs$lengths>10, 10, runs$lengths)
+       shrunk_line = paste(inverse.rle(runs), sep="", collapse="")
+       # print lines, wrapping at 80 chars
+       st = 1
+       while (st <= nchar(shrunk_line)){
+           en = min(st+79, nchar(shrunk_line))
+           cat(str_sub(shrunk_line, start = st, end = en), sep="\n")
+           st = en+1
+       }
+     }
+   }
+}
+
+# for workflows, model fits, and specs, can just override default print
+hidden_print <- function(x){
+   cleanup_and_print(capture.output(x))
+}
+# for recipes, need to capture cli output via cli_fmt
+hidden_print_cli <- function(x){
+   cleanup_and_print(cli::cli_fmt(capture.output(x)))
 }
 theme_update(axis.title = element_text(size = 12)) # modify axis label size in plots 
 ```
@@ -417,7 +428,7 @@ Then we create a 5-fold cross-validation object, and put the recipe and model sp
 in a workflow.
 \index{tidymodels}\index{recipe}\index{workflow}
 
-```{r 07-choose-k-knn, results = 'hide', echo = TRUE}
+```{r 07-choose-k-knn, results = FALSE, message=FALSE, echo = TRUE}
 sacr_recipe <- recipe(price ~ sqft, data = sacramento_train) |>
   step_scale(all_predictors()) |>
   step_center(all_predictors())
@@ -437,7 +448,7 @@ sacr_wkflw
 ```
 
 ```{r echo = FALSE}
-print_tidymodels(sacr_wkflw)
+hidden_print(sacr_wkflw)
 ```
 
 Next we run cross-validation for a grid of numbers of neighbors ranging from 1 to 200. 
@@ -818,8 +829,8 @@ if(!is_latex_output()){
 } else {
   scene = list(camera = list(eye = list(x = -2.1, y = -2.2, z = 0.75)))
   plot_3d <- plot_3d  |> layout(scene = scene)
-  save_image(plot_3d, "img/plot3d_knn_regression.png", scale = 10)
-  knitr::include_graphics("img/plot3d_knn_regression.png")
+  # save_image(plot_3d, "img/regression1/plot3d_knn_regression.png", scale = 10)
+  knitr::include_graphics("img/regression1/plot3d_knn_regression.png")
 }
 ```
 

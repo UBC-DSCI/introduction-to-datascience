@@ -1,12 +1,11 @@
 # Classification I: training & predicting {#classification1}
 
 ```{r classification1-setup, echo = FALSE, message = FALSE, warning = FALSE}
-library(formatR)
 library(plotly)
 library(knitr)
 library(kableExtra)
-library(ggpubr)
 library(stringr)
+library(ggpubr)
 library(ggplot2)
 
 knitr::opts_chunk$set(echo = TRUE, 
@@ -14,25 +13,36 @@ knitr::opts_chunk$set(echo = TRUE,
 options(knitr.table.format = function() {
   if (knitr::is_latex_output()) 'latex' else 'pandoc'
 })
-reticulate::use_miniconda('r-reticulate')
 
-print_tidymodels <- function(tidymodels_object) {
-  if(!is_latex_output()) {
-    tidymodels_object
-  } else {
-    output <- capture.output(tidymodels_object)
-    
-    for (i in seq_along(output)) {
-      if (nchar(output[i]) <= 80) {
-        cat(output[i], sep = "\n")
-      } else {
-        cat(str_sub(output[i], start = 1, end = 80), sep = "\n")
-        cat(str_sub(output[i], start = 81, end = nchar(output[i])), sep = "\n")
-      }
-    }
-  }
+cleanup_and_print <- function(output){
+   for (i in seq_along(output)) {
+     if (nchar(output[i]) == 0){
+       cat("\n")
+     } else {
+       # for any run length of characters > 10, reduce it to length 10
+       runs = rle(strsplit(output[i], "")[[1]])
+       runs$lengths = ifelse(runs$lengths>10, 10, runs$lengths)
+       shrunk_line = paste(inverse.rle(runs), sep="", collapse="")
+       # print lines, wrapping at 80 chars
+       st = 1
+       while (st <= nchar(shrunk_line)){
+           en = min(st+79, nchar(shrunk_line))
+           cat(str_sub(shrunk_line, start = st, end = en), sep="\n")
+           st = en+1
+       }
+     }
+   }
 }
 
+# for workflows, model fits, and specs, can just override default print
+hidden_print <- function(x){
+   cleanup_and_print(capture.output(x))
+}
+# for recipes, need to capture cli output via cli_fmt
+hidden_print_cli <- function(x){
+   cleanup_and_print(cli::cli_fmt(capture.output(x)))
+}
+  
 theme_update(axis.title = element_text(size = 12)) # modify axis label size in plots 
 ```
 
@@ -669,10 +679,10 @@ if(!is_latex_output()){
 } else {
   # scene = list(camera = list(eye = list(x=2, y=2, z = 1.5)))
   # plot_3d <- plot_3d  |> layout(scene = scene)
-  # save_image(plot_3d, "img/plot3d_knn_classification.png", scale = 10)
+  # save_image(plot_3d, "img/classification1/plot3d_knn_classification.png", scale = 10)
   # cannot adjust size of points in this plot for pdf 
   # so using a screenshot for now instead
-  knitr::include_graphics("img/plot3d_knn_classification.png")
+  knitr::include_graphics("img/classification1/plot3d_knn_classification.png")
 }
 ```
 
@@ -762,7 +772,7 @@ knn_fit
 ```
 
 ```{r echo = FALSE}
-print_tidymodels(knn_fit)
+hidden_print(knn_fit)
 ```
 
 Here you can see the final trained model summary. It confirms that the computational engine used
@@ -853,9 +863,13 @@ Here we will initialize a recipe\index{recipe} \index{tidymodels!recipe|see{reci
 the `unscaled_cancer` data above, specifying
 that the `Class` variable is the target, and all other variables are predictors:
 
-```{r 05-scaling-2}
+```{r 05-scaling-2, results=FALSE, message=FALSE, echo = TRUE}
 uc_recipe <- recipe(Class ~ ., data = unscaled_cancer)
-print(uc_recipe)
+uc_recipe
+```
+
+```{r 05-scaling-2-print, echo=FALSE}
+hidden_print_cli(uc_recipe)
 ```
 
 So far, there is not much in the recipe; just a statement about the number of targets
@@ -870,12 +884,16 @@ The `prep` function finalizes the recipe by using the data (here, `unscaled_canc
 to compute anything necessary to run the recipe (in this case, the column means and standard
 deviations):
 
-```{r 05-scaling-3}
+```{r 05-scaling-3, results=FALSE, message=FALSE, echo=TRUE}
 uc_recipe <- uc_recipe |>
   step_scale(all_predictors()) |>
   step_center(all_predictors()) |>
   prep()
 uc_recipe
+```
+
+```{r 05-scaling-3-print, echo=FALSE}
+hidden_print_cli(uc_recipe)
 ```
 
 You can now see that the recipe includes a scaling and centering step for all predictor variables.
@@ -1235,7 +1253,7 @@ step to the earlier `uc_recipe` recipe with the `step_upsample` function from th
 We show below how to do this, and also
 use the `group_by` and `summarize` functions to see that our classes are now balanced:
 
-```{r 05-upsample-cancer, warning = FALSE, message = FALSE}
+```{r 05-upsample-cancer, warning = FALSE, message = FALSE, echo=TRUE, results=FALSE}
 library(themis)
 
 ups_recipe <- recipe(Class ~ ., data = rare_cancer) |>
@@ -1243,6 +1261,9 @@ ups_recipe <- recipe(Class ~ ., data = rare_cancer) |>
   prep()
 
 ups_recipe
+```
+```{r 05-upsample-cancer-print, echo=FALSE}
+hidden_print_cli(ups_recipe)
 ```
 
 ```{r 05-upsample-cancer-2}
@@ -1330,7 +1351,7 @@ and finally we will use the `fit` function to run the whole workflow on the `uns
 Note another difference from earlier here: we do not include a formula in the `fit` function. This \index{tidymodels!fit}
 is again because we included the formula in the recipe, so there is no need to respecify it:
 
-```{r 05-workflow-add, results = 'hide', echo = TRUE}
+```{r 05-workflow-add, results = FALSE, message=FALSE, echo = TRUE}
 knn_fit <- workflow() |>
   add_recipe(uc_recipe) |>
   add_model(knn_spec) |>
@@ -1340,7 +1361,7 @@ knn_fit
 ```
 
 ```{r echo = FALSE}
-print_tidymodels(knn_fit)
+hidden_print(knn_fit)
 ```
 
 As before, the fit object lists the function that trains the model as well as the "best" settings

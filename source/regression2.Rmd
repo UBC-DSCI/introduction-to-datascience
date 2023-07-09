@@ -6,25 +6,35 @@ library(plotly)
 library(stringr)
 
 knitr::opts_chunk$set(fig.align = "center")
-reticulate::use_miniconda('r-reticulate')
 
-print_tidymodels <- function(tidymodels_object) {
-  if(!is_latex_output()) {
-    tidymodels_object
-  } else {
-    output <- capture.output(tidymodels_object)
-    
-    for (i in seq_along(output)) {
-      if (nchar(output[i]) <= 80) {
-        cat(output[i], sep = "\n")
-      } else {
-        cat(str_sub(output[i], start = 1, end = 80), sep = "\n")
-        cat(str_sub(output[i], start = 81, end = nchar(output[i])), sep = "\n")
-      }
-    }
-  }
+cleanup_and_print <- function(output){
+   for (i in seq_along(output)) {
+     if (nchar(output[i]) == 0){
+       cat("\n")
+     } else {
+       # for any run length of characters > 10, reduce it to length 10
+       runs = rle(strsplit(output[i], "")[[1]])
+       runs$lengths = ifelse(runs$lengths>10, 10, runs$lengths)
+       shrunk_line = paste(inverse.rle(runs), sep="", collapse="")
+       # print lines, wrapping at 80 chars
+       st = 1
+       while (st <= nchar(shrunk_line)){
+           en = min(st+79, nchar(shrunk_line))
+           cat(str_sub(shrunk_line, start = st, end = en), sep="\n")
+           st = en+1
+       }
+     }
+   }
 }
 
+# for workflows, model fits, and specs, can just override default print
+hidden_print <- function(x){
+   cleanup_and_print(capture.output(x))
+}
+# for recipes, need to capture cli output via cli_fmt
+hidden_print_cli <- function(x){
+   cleanup_and_print(cli::cli_fmt(capture.output(x)))
+}
 theme_update(axis.title = element_text(size = 12)) # modify axis label size in plots 
 ```
 
@@ -95,7 +105,6 @@ library(tidyverse)
 library(tidymodels)
 library(scales)
 library(gridExtra)
-library(caret)
 
 set.seed(2)
 
@@ -225,7 +234,7 @@ sacramento_test <- testing(sacramento_split)
 Now that we have our training data, we will create the model specification
 and recipe, and fit our simple linear regression model:
 
-```{r 08-fitLM, results = 'hide', echo = TRUE}
+```{r 08-fitLM, results = FALSE, message=FALSE, echo = TRUE}
 lm_spec <- linear_reg() |>
   set_engine("lm") |>
   set_mode("regression")
@@ -241,7 +250,7 @@ lm_fit
 ```
 
 ```{r echo = FALSE}
-print_tidymodels(lm_fit)
+hidden_print(lm_fit)
 ```
 
 > **Note:** An additional difference that you will notice here is that we do
@@ -457,7 +466,7 @@ mlm_recipe <- recipe(price ~ sqft + beds, data = sacramento_train)
 ```
 
 Now we can build our workflow and fit the model:
-```{r 08-fitlm, results = 'hide', echo = TRUE}
+```{r 08-fitlm, results = FALSE, message=FALSE, echo = TRUE}
 mlm_fit <- workflow() |>
   add_recipe(mlm_recipe) |>
   add_model(lm_spec) |>
@@ -467,7 +476,7 @@ mlm_fit
 ```
 
 ```{r echo = FALSE}
-print_tidymodels(mlm_fit)
+hidden_print(mlm_fit)
 ```
 
 And finally, we make predictions on the test data set to assess the quality of our model:
@@ -526,8 +535,8 @@ if(!is_latex_output()){
 } else {
   scene = list(camera = list(eye = list(x = -2.1, y = -2.2, z = 0.75)))
   plot_3d <- plot_3d  |> layout(scene = scene)
-  save_image(plot_3d, "img/plot3d_linear_regression.png", scale = 10)
-  knitr::include_graphics("img/plot3d_linear_regression.png")
+  # save_image(plot_3d, "img/regression2/plot3d_linear_regression.png", scale = 10)
+  knitr::include_graphics("img/regression2/plot3d_linear_regression.png")
 }
 ```
 
