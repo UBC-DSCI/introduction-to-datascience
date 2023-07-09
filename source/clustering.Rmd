@@ -5,7 +5,7 @@ library(knitr)
 library(RColorBrewer)
 library(gridExtra)
 library(cowplot)
-library(broom)
+library(tidymodels)
 library(egg)
 
 
@@ -169,7 +169,7 @@ because the K-means clustering algorithm uses random numbers.
 ```{r 10-toy-example-data, echo = FALSE, message = FALSE, warning = FALSE}
 library(tidyverse)
 
-data <- read_csv("data/toy_penguins.csv") |>
+data <- read_csv("data/penguins_toy.csv") |>
   mutate(cluster = as_factor(cluster)) |>
   mutate(flipper_length_standardized = as.double(scale(flipper_length_mm)), 
          bill_length_standardized = as.double(scale(bill_length_mm)))
@@ -892,24 +892,24 @@ p2
 
 ```{r 10-kmeans-seed, echo = FALSE, warning = FALSE, message = FALSE}
 # hidden seed
-set.seed(1234)
+set.seed(1)
 ```
 
 We can perform K-means clustering in R using a `tidymodels` workflow similar 
 to those in the earlier classification and regression chapters. 
-We will begin by loading the `tidyclust` library, which contains the necessary
+We will begin by loading the `tidyclust`\index{tidyclust} library, which contains the necessary
 functionality, and then read in the 
 original (i.e., unstandardized) subset of 18 observations
 from the penguins dataset.
 
 ```{r 10-get-unscaled-data, echo = FALSE, message = FALSE, warning = FALSE}
-unstandardized_data <- read_csv("data/toy_penguins.csv") |>
+unstandardized_data <- read_csv("data/penguins_toy.csv") |>
   select(bill_length_mm, flipper_length_mm)
 
 write_csv(unstandardized_data, "data/penguins.csv")
 ```
 
-```{r}
+```{r, echo = TRUE, warning = FALSE, message = FALSE}
 library(tidyclust)
 
 penguins <- read_csv("data/penguins.csv")
@@ -951,7 +951,7 @@ hidden_print_cli(kmeans_recipe)
 ```
 
 To indicate that we are performing K-means clustering, we will use the `k_means`
-model specification. We will use the `num_clusters` argument to specify the number
+model specification.\index{K-means!k\_means model specification} We will use the `num_clusters` argument to specify the number
 of clusters (here we choose K = 3), and specify that we are using the `"stats"` engine.
 
 ```{r 10-kmeans-spec, message=FALSE, echo=TRUE, results=FALSE}
@@ -980,38 +980,30 @@ kmeans_fit
 hidden_print(kmeans_fit)
 ```
 
-
-
-To perform K-means clustering in R, we use the `kmeans` 
-function.\index{K-means!kmeans function} It takes at
-least two arguments: the data frame containing the data you wish to cluster,
-and K, the number of clusters (here we choose K = 3). Note that the K-means
-algorithm uses a random initialization of assignments; but since we set the random seed
-earlier, the clustering will be reproducible.
-
-```{r 10-kmeans}
-penguin_clust <- kmeans(standardized_data, centers = 3)
-penguin_clust
-```
-
-As you can see above, the clustering object returned by `kmeans` has a lot of information
+As you can see above, the fit object has a lot of information
 that can be used to visualize the clusters, pick K, and evaluate the total WSSD.
-To obtain this information in a tidy format, we will call in help 
-from the `broom` package. \index{broom} Let's start by visualizing the clustering
-as a colored scatter plot. To do that,
-we use the `augment` function, \index{K-means!augment} \index{augment} which takes in the model and the original data
-frame, and returns a data frame with the data and the cluster assignments for
-each point:
+Let's visualize the clusters first as a colored scatter plot! In 
+order to do that, we need to augment our 
+original data frame with the cluster assignments, which we 
+can extract from the fit using the `extract_cluster_assignment` function.
 
-```{r 10-plot-clusters-1}
-library(broom)
+```{r 10-kmeans-extract-clusterasgn}
+extract_cluster_assignment(kmeans_fit)
+```
+The output of the `extract_cluster_assignment` function is a data frame,
+so we can augment the `penguins` data frame with cluster assignments
+by attaching the two data frames together using the `bind_cols` function.
 
-clustered_data <- augment(penguin_clust, standardized_data)
+```{r 10-kmeans-extract-augment}
+clustered_data <- bind_cols(penguins, extract_cluster_assignment(kmeans_fit))
 clustered_data
 ```
 
 Now that we have this information in a tidy data frame, we can make a visualization
 of the cluster assignments for each point, as shown in Figure \@ref(fig:10-plot-clusters-2).
+Note that we are plotting the *un-standardized* data here; if we for some reason wanted to 
+visualize the *standardized* data from the recipe, we would need to use the `bake` function
+to obtain that first.
 
 ```{r 10-plot-clusters-2, fig.height = 3.25, fig.width = 4.25, fig.align = "center", fig.pos = "H", out.extra="", fig.cap = "The data colored by the cluster assignments returned by K-means."}
 cluster_plot <- ggplot(clustered_data,
@@ -1020,8 +1012,8 @@ cluster_plot <- ggplot(clustered_data,
       color = .cluster), 
   size = 2) +
   geom_point() +
-  labs(x = "Flipper Length (standardized)", 
-       y = "Bill Length (standardized)", 
+  labs(x = "Flipper Length", 
+       y = "Bill Length", 
        color = "Cluster") + 
   scale_color_manual(values = c("dodgerblue3",
                                 "darkorange3",  
@@ -1037,145 +1029,13 @@ We can obtain the total WSSD (`tot.withinss`) \index{WSSD!total} from our
 clustering using `broom`'s `glance` function. For example:
 
 ```{r 10-glance}
-glance(penguin_clust)
+glance(kmeans_fit)
 ```
 
-To calculate the total WSSD for a variety of Ks, we will
-create a data frame with a column named `k` with rows containing
-each value of K we want to run K-means with (here, 1 to 9). 
 
-```{r 10-choose-k-part1}
-penguin_clust_ks <- tibble(k = 1:9)
-penguin_clust_ks
-```
 
-Then we use `rowwise` \index{rowwise} + `mutate` to apply the `kmeans` function 
-within each row to each K. 
-However, given that the `kmeans` function 
-returns a model object to us (not a vector),
-we will need to store the results as a list column.
-This works because both vectors and lists are legitimate 
-data structures for data frame columns. 
-To make this work, 
-we have to put each model object in a list using the `list` function.
-We demonstrate how to do this below:
 
-```{r}
-penguin_clust_ks <- tibble(k = 1:9) |>
-  rowwise() |>
-  mutate(penguin_clusts = list(kmeans(standardized_data, k)))
-```
 
-If we take a look at our data frame `penguin_clust_ks` now, 
-we see that it has two columns: one with the value for K, 
-and the other holding the clustering model object in a list column.
-
-```{r}
-penguin_clust_ks
-```
-
-If we wanted to get one of the clusterings out 
-of the list column in the data frame,
-we could use a familiar friend: `pull`.
-`pull` will return to us a data frame column as a simpler data structure;
-here, that would be a list.
-And then to extract the first item of the list, 
-we can use the `pluck` function. We pass
-it the index for the element we would like to extract 
-(here, `1`).
-
-```{r}
-penguin_clust_ks |>
-  pull(penguin_clusts) |>
-  pluck(1)
-```
-
-Next, we use `mutate` again to apply `glance` \index{glance} 
-to each of the K-means clustering objects to get the clustering statistics 
-(including WSSD). 
-The output of `glance` is a data frame, 
-and so we need to create another list column (using `list`) for this to work. 
-This results in a complex data frame with 3 columns, one for K, one for the 
-K-means clustering objects, and one for the clustering statistics:
-
-```{r 10-choose-k-part3}
-penguin_clust_ks <- tibble(k = 1:9) |>
-  rowwise() |>
-  mutate(penguin_clusts = list(kmeans(standardized_data, k)),
-         glanced = list(glance(penguin_clusts)))
-
-penguin_clust_ks
-```
-
-Finally we extract the total WSSD from the column named `glanced`. 
-Given that each item in this list column is a data frame, 
-we will need to use the `unnest` function 
-to unpack the data frames into simpler column data types. 
-
-```{r 10-get-total-within-sumsqs}
-clustering_statistics <- penguin_clust_ks |>
-  unnest(glanced)
-
-clustering_statistics
-```
-
-Now that we have `tot.withinss` and `k` as columns in a data frame, we can make a line plot 
-(Figure \@ref(fig:10-plot-choose-k)) and search for the "elbow" to find which value of K to use. 
-
-```{r 10-plot-choose-k, fig.height = 3.25, fig.width = 4.25, fig.align = "center", fig.pos = "H", out.extra="", fig.cap = "A plot showing the total WSSD versus the number of clusters."}
-elbow_plot <- ggplot(clustering_statistics, aes(x = k, y = tot.withinss)) +
-  geom_point() +
-  geom_line() +
-  xlab("K") +
-  ylab("Total within-cluster sum of squares") +
-  scale_x_continuous(breaks = 1:9) + 
-  theme(text = element_text(size = 12))
-
-elbow_plot
-```
-
-It looks like 3 clusters is the right choice for this data.
-But why is there a "bump" in the total WSSD plot here? 
-Shouldn't total WSSD always decrease as we add more clusters? 
-Technically yes, but remember:  K-means can get "stuck" in a bad solution. 
-Unfortunately, for K = 8 we had an unlucky initialization
-and found a bad clustering! \index{K-means!restart, nstart} 
-We can help prevent finding a bad clustering 
-by trying a few different random initializations 
-via the `nstart` argument (Figure \@ref(fig:10-choose-k-nstart) 
-shows a setup where we use 10 restarts). 
-When we do this, K-means clustering will be performed 
-the number of times specified by the `nstart` argument,
-and R will return to us the best clustering from this.
-The more times we perform K-means clustering,
-the more likely we are to find a good clustering (if one exists).
-What value should you choose for `nstart`? The answer is that it depends
-on many factors: the size and characteristics of your data set,
-as well as how powerful your computer is.
-The larger the `nstart` value the better from an analysis perspective, 
-but there is a trade-off that doing many clusterings 
-could take a long time.
-So this is something that needs to be balanced.
-
-```{r 10-choose-k-nstart, fig.height = 3.25, fig.width = 4.25, fig.pos = "H", out.extra="", message= FALSE, warning = FALSE, fig.align = "center", fig.cap = "A plot showing the total WSSD versus the number of clusters when K-means is run with 10 restarts."}
-penguin_clust_ks <- tibble(k = 1:9) |>
-  rowwise() |>
-  mutate(penguin_clusts = list(kmeans(standardized_data, nstart = 10, k)),
-         glanced = list(glance(penguin_clusts)))
-
-clustering_statistics <- penguin_clust_ks |>
-  unnest(glanced)
-
-elbow_plot <- ggplot(clustering_statistics, aes(x = k, y = tot.withinss)) +
-  geom_point() +
-  geom_line() +
-  xlab("K") +
-  ylab("Total within-cluster sum of squares") +
-  scale_x_continuous(breaks = 1:9) + 
-  theme(text = element_text(size = 12))
-
-elbow_plot
-```
 
 ## Exercises
 
@@ -1200,3 +1060,4 @@ and guidance that the worksheets provide will function as intended.
   subgroups, etc., in your data. In the realm of more general unsupervised
   learning, it covers *principal components analysis (PCA)*, which is a very
   popular technique for reducing the number of predictors in a dataset. 
+
