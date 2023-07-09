@@ -9,21 +9,33 @@ library(ggplot2)
 
 knitr::opts_chunk$set(fig.align = "center")
 
-print_tidymodels <- function(tidymodels_object) {
-  if(!is_latex_output()) {
-    tidymodels_object
-  } else {
-    output <- capture.output(tidymodels_object)
-    
-    for (i in seq_along(output)) {
-      if (nchar(output[i]) <= 80) {
-        cat(output[i], sep = "\n")
-      } else {
-        cat(str_sub(output[i], start = 1, end = 80), sep = "\n")
-        cat(str_sub(output[i], start = 81, end = nchar(output[i])), sep = "\n")
-      }
-    }
-  }
+cleanup_and_print <- function(output){
+   for (i in seq_along(output)) {
+     if (nchar(output[i]) == 0){
+       cat("\n")
+     } else {
+       # for any run length of characters > 10, reduce it to length 10
+       runs = rle(strsplit(output[i], "")[[1]])
+       runs$lengths = ifelse(runs$lengths>10, 10, runs$lengths)
+       shrunk_line = paste(inverse.rle(runs), sep="", collapse="")
+       # print lines, wrapping at 80 chars
+       st = 1
+       while (st <= nchar(shrunk_line)){
+           en = min(st+79, nchar(shrunk_line))
+           cat(str_sub(shrunk_line, start = st, end = en), sep="\n")
+           st = en+1
+       }
+     }
+   }
+}
+
+# for workflows, model fits, and specs, can just override default print
+hidden_print <- function(x){
+   cleanup_and_print(capture.output(x))
+}
+# for recipes, need to capture cli output via cli_fmt
+hidden_print_cli <- function(x){
+   cleanup_and_print(cli::cli_fmt(capture.output(x)))
 }
 
 theme_update(axis.title = element_text(size = 12)) # modify axis label size in plots 
@@ -348,7 +360,7 @@ use `fit` with the training data `cancer_train` to build the classifier.
 set.seed(1)
 ```
 
-```{r 06-create-K-nearest neighbor-classifier, results = 'hide', echo = TRUE}
+```{r 06-create-K-nearest neighbor-classifier, results = FALSE, message=FALSE, echo = TRUE}
 knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 3) |>
   set_engine("kknn") |>
   set_mode("classification")
@@ -362,7 +374,7 @@ knn_fit
 ```
 
 ```{r echo = FALSE}
-print_tidymodels(knn_fit)
+hidden_print(knn_fit)
 ```
 
 ### Predict the labels in the test set
@@ -671,7 +683,7 @@ train/validation split.
 set.seed(1)
 ```
 
-```{r 06-vfold-workflow}
+```{r 06-vfold-workflow, echo=TRUE, results=FALSE, warning=FALSE, message=FALSE}
 # recreate the standardization recipe from before 
 # (since it must be based on the training data)
 cancer_recipe <- recipe(Class ~ Smoothness + Concavity, 
@@ -686,6 +698,9 @@ knn_fit <- workflow() |>
   fit_resamples(resamples = cancer_vfold)
 
 knn_fit
+```
+```{r 06-vfold-workflow-print, echo=FALSE}
+hidden_print(knn_fit)
 ```
 
 The `collect_metrics`\index{tidymodels!collect\_metrics}\index{cross-validation!collect\_metrics} function is used to aggregate the *mean* and *standard error*
