@@ -12,6 +12,35 @@ library(egg)
 #center breaks latex here
 knitr::opts_chunk$set(warning = FALSE, fig.align = "default") 
 
+cleanup_and_print <- function(output){
+   for (i in seq_along(output)) {
+     if (nchar(output[i]) == 0){
+       cat("\n")
+     } else {
+       # for any run length of characters > 10, reduce it to length 10
+       runs = rle(strsplit(output[i], "")[[1]])
+       runs$lengths = ifelse(runs$lengths>10, 10, runs$lengths)
+       shrunk_line = paste(inverse.rle(runs), sep="", collapse="")
+       # print lines, wrapping at 80 chars
+       st = 1
+       while (st <= nchar(shrunk_line)){
+           en = min(st+79, nchar(shrunk_line))
+           cat(str_sub(shrunk_line, start = st, end = en), sep="\n")
+           st = en+1
+       }
+     }
+   }
+}
+
+# for workflows, model fits, and specs, can just override default print
+hidden_print <- function(x){
+   cleanup_and_print(capture.output(x))
+}
+# for recipes, need to capture cli output via cli_fmt
+hidden_print_cli <- function(x){
+   cleanup_and_print(cli::cli_fmt(capture.output(x)))
+}
+
 # set the colors in the graphs, 
 # some graphs with the code shown to students are hard coded 
 cbbPalette <- c(brewer.pal(9, "Paired"))
@@ -39,7 +68,7 @@ and what insight it might extract from the data.
 * Differentiate between clustering and classification.
 * Identify when it is necessary to scale variables before clustering, 
 and do this using R.
-* Perform K-means clustering in R using `kmeans`.
+* Perform K-means clustering in R using `tidymodels` workflows.
 * Use the elbow method to choose the number of clusters for K-means.
 * Visualize the output of K-means clustering in R using colored scatter plots.
 * Describe the advantages, 
@@ -859,56 +888,106 @@ p2 <- ggplot(clusterings, aes(x = k, y = tot.withinss)) +
 p2
 ```
 
-## Data pre-processing for K-means
-
-Similar to K-nearest neighbors classification and regression, K-means 
-clustering uses straight-line distance to decide which points are similar to 
-each other. Therefore, the *scale* of each of the variables in the data
-will influence which cluster data points end up being assigned.
-Variables with a large scale will have a much larger 
-effect on deciding cluster assignment than variables with a small scale. 
-To address this problem, we typically standardize \index{standardization!K-means}\index{K-means!standardization} our data before clustering,
-which ensures that each variable has a mean of 0 and standard deviation of 1.
-The `scale` function in R can be used to do this. 
-We show an example of how to use this function 
-below using an unscaled and unstandardized version of the data set in this chapter.
-
-```{r 10-get-unscaled-data, echo = FALSE, message = FALSE, warning = FALSE}
-unstandardized_data <- read_csv("data/toy_penguins.csv") |>
-  select(bill_length_mm, flipper_length_mm)
-
-write_csv(unstandardized_data, "data/penguins_not_standardized.csv")
-```
-
-First, here is what the raw (i.e., not standardized) data looks like:
-
-```{r}
-not_standardized_data <- read_csv("data/penguins_not_standardized.csv")
-not_standardized_data
-```
-
-And then we apply the `scale` function to every column in the data frame 
-using `mutate` and `across`.
-
-```{r 10-mapdf-scale-data}
-standardized_data <- not_standardized_data |>
-  mutate(across(everything(), scale))
-
-standardized_data
-```
-
 ## K-means in R
-
-To perform K-means clustering in R, we use the `kmeans` function. \index{K-means!kmeans function} It takes at
-least two arguments: the data frame containing the data you wish to cluster,
-and K, the number of clusters (here we choose K = 3). Note that the K-means
-algorithm uses a random initialization of assignments; but since we set the random seed
-earlier, the clustering will be reproducible.
 
 ```{r 10-kmeans-seed, echo = FALSE, warning = FALSE, message = FALSE}
 # hidden seed
 set.seed(1234)
 ```
+
+We can perform K-means clustering in R using a `tidymodels` workflow similar 
+to those in the earlier classification and regression chapters. 
+We will begin by loading the `tidyclust` library, which contains the necessary
+functionality, and then read in the 
+original (i.e., unstandardized) subset of 18 observations
+from the penguins dataset.
+
+```{r 10-get-unscaled-data, echo = FALSE, message = FALSE, warning = FALSE}
+unstandardized_data <- read_csv("data/toy_penguins.csv") |>
+  select(bill_length_mm, flipper_length_mm)
+
+write_csv(unstandardized_data, "data/penguins.csv")
+```
+
+```{r}
+library(tidyclust)
+
+penguins <- read_csv("data/penguins.csv")
+penguins
+```
+
+Recall that K-means clustering uses straight-line 
+distance to decide which points are similar to 
+each other. Therefore, the *scale* of each of the variables in the data
+will influence which cluster data points end up being assigned.
+Variables with a large scale will have a much larger 
+effect on deciding cluster assignment than variables with a small scale. 
+To address this problem, we need to create a recipe that 
+standardizes\index{standardization!K-means}\index{K-means!standardization} our data 
+before clustering using the `step_scale` and `step_center` preprocessing steps.
+Standardization will ensure that each variable has a mean 
+of 0 and standard deviation of 1 prior to clustering.
+We will designate that all variables are to be used in clustering via
+the model formula `~ .`.
+
+> **Note:** Recipes were originally designed specifically for *predictive* data 
+> analysis problems&mdash;like classification and regression&mdash;not clustering
+> problems. So the functions in R that we use to construct recipes are a little bit
+> awkward in the setting of clustering In particular, we will have to treat
+> "predictors" here as if it meant "variables to be used in clustering". So the 
+> model formula `~ .` specifies that all variables are "predictors", i.e., all variables
+> should be used for clustering. Similarly, when we use the `all_predictors()` function
+> in the preprocessing steps, we really mean "apply this step to all variables used for
+> clustering."
+
+```{r 10-kmeans-recipe, message=FALSE, echo=TRUE, results=FALSE}
+kmeans_recipe <- recipe(~ ., data=penguins) |>
+    step_scale(all_predictors()) |>
+    step_center(all_predictors())
+kmeans_recipe
+```
+```{r 10-kmeans-recipe-print, echo=FALSE}
+hidden_print_cli(kmeans_recipe)
+```
+
+To indicate that we are performing K-means clustering, we will use the `k_means`
+model specification. We will use the `num_clusters` argument to specify the number
+of clusters (here we choose K = 3), and specify that we are using the `"stats"` engine.
+
+```{r 10-kmeans-spec, message=FALSE, echo=TRUE, results=FALSE}
+kmeans_spec <- k_means(num_clusters = 3) |>
+    set_engine("stats")
+kmeans_spec
+```
+```{r 10-kmeans-spec-print, echo=FALSE}
+hidden_print(kmeans_spec)
+```
+
+To actually run the K-means clustering, we combine the recipe and model
+specification in a workflow, and use the `fit` function. Note that the
+K-means algorithm uses a random initialization of assignments; but since
+we set the random seed earlier, the clustering will be reproducible.
+
+```{r 10-kmeans-worfklow, echo=TRUE, message=FALSE, results=FALSE}
+kmeans_fit <- workflow() |>
+    add_recipe(kmeans_recipe) |>
+    add_model(kmeans_spec) |>
+    fit(data = penguins)
+
+kmeans_fit
+```
+```{r 10-kmeans-workflow-print, echo=FALSE}
+hidden_print(kmeans_fit)
+```
+
+
+
+To perform K-means clustering in R, we use the `kmeans` 
+function.\index{K-means!kmeans function} It takes at
+least two arguments: the data frame containing the data you wish to cluster,
+and K, the number of clusters (here we choose K = 3). Note that the K-means
+algorithm uses a random initialization of assignments; but since we set the random seed
+earlier, the clustering will be reproducible.
 
 ```{r 10-kmeans}
 penguin_clust <- kmeans(standardized_data, centers = 3)
