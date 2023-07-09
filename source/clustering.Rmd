@@ -982,25 +982,26 @@ hidden_print(kmeans_fit)
 
 As you can see above, the fit object has a lot of information
 that can be used to visualize the clusters, pick K, and evaluate the total WSSD.
-Let's visualize the clusters first as a colored scatter plot! In 
-order to do that, we need to augment our 
-original data frame with the cluster assignments, which we 
-can extract from the fit using the `extract_cluster_assignment` function.
+Let's start by visualizing the clusters as a colored scatter plot! In 
+order to do that, we first need to augment our 
+original data frame with the cluster assignments. We can 
+achieve this using the `augment` function from `tidyclust`.
+```{r 10-kmeans-extract-augment}
+clustered_data <- kmeans_fit |>
+                    augment(penguins)
+clustered_data
+```
+
+If for some reason we need access to just the cluster assignments,
+we can extract those from the fit as a data frame using 
+the `extract_cluster_assignment` function.
 
 ```{r 10-kmeans-extract-clusterasgn}
 extract_cluster_assignment(kmeans_fit)
 ```
-The output of the `extract_cluster_assignment` function is a data frame,
-so we can augment the `penguins` data frame with cluster assignments
-by attaching the two data frames together using the `bind_cols` function.
 
-```{r 10-kmeans-extract-augment}
-clustered_data <- bind_cols(penguins, extract_cluster_assignment(kmeans_fit))
-clustered_data
-```
-
-Now that we have this information in a tidy data frame, we can make a visualization
-of the cluster assignments for each point, as shown in Figure \@ref(fig:10-plot-clusters-2).
+Now that we have the cluster assignments included in the `clustered_data` tidy data frame, we can 
+visualize them as shown in Figure \@ref(fig:10-plot-clusters-2).
 Note that we are plotting the *un-standardized* data here; if we for some reason wanted to 
 visualize the *standardized* data from the recipe, we would need to use the `bake` function
 to obtain that first.
@@ -1026,11 +1027,41 @@ cluster_plot
 As mentioned above, we also need to select K by finding
 where the "elbow" occurs in the plot of total WSSD versus the number of clusters. 
 We can obtain the total WSSD (`tot.withinss`) \index{WSSD!total} from our
-clustering using `broom`'s `glance` function. For example:
+clustering with 3 clusters using the `glance` function. 
 
 ```{r 10-glance}
 glance(kmeans_fit)
 ```
+
+To calculate the total WSSD for a variety of Ks, we will
+create a data frame with a column named `num_clusters` with rows containing
+each value of K we want to run K-means with (here, 1 to 9). 
+
+```{r 10-choose-k-part1}
+penguin_clust_ks <- tibble(num_clusters = 1:9)
+penguin_clust_ks
+```
+
+Then 
+```{r 10-kmeans-spec-tune, message=FALSE, echo=TRUE, results=FALSE}
+kmeans_spec <- k_means(num_clusters = tune()) |>
+    set_engine("stats")
+kmeans_spec
+```
+```{r 10-kmeans-spec-tune-print, echo=FALSE}
+hidden_print(kmeans_spec)
+```
+
+```
+kmeans_results <- workflow() |>
+    add_recipe(kmeans_recipe) |>
+    add_model(kmeans_spec) |>
+    tune_cluster(resamples = 1, grid = penguin_clust_ks) |>
+    collect_metrics()
+kmeans_results
+```
+
+
 
 
 
