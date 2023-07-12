@@ -1066,6 +1066,10 @@ argument to `apparent(penguins)` to tell K-means to run on the whole
 data set for each value of `num_clusters`. Finally, we collect the results
 using the `collect_metrics` function.
 
+```{r 10-hidden-seed-kmeans-results, echo=FALSE, message=FALSE, warning=FALSE, results=FALSE}
+set.seed(6)
+```
+
 ```{r 10-kmeans-tune-results}
 kmeans_results <- workflow() |>
     add_recipe(kmeans_recipe) |>
@@ -1100,11 +1104,11 @@ elbow_plot <- ggplot(kmeans_results, aes(x = num_clusters, y = total_WSSD)) +
 elbow_plot
 ```
 
-It looks like 3 clusters might be the right choice for this data.
-But why is the total WSSD plot a bit "bumpy" here? 
-Shouldn't total WSSD decrease more smoothly we add more clusters? 
-Usually yes, but remember:  K-means can get "stuck" in a bad solution. 
-Unfortunately, for a few values of K, we may have had an unlucky initialization
+It looks like 3 clusters is the right choice for this data.
+But why is there a "bump" in the total WSSD plot here? 
+Shouldn't total WSSD always decrease as we add more clusters? 
+Technically yes, but remember:  K-means can get "stuck" in a bad solution. 
+Unfortunately, for K = 8 we had an unlucky initialization
 and found a bad clustering! \index{K-means!restart, nstart} 
 We can help prevent finding a bad clustering 
 by trying a few different random initializations 
@@ -1124,7 +1128,17 @@ Now if we rerun the same workflow with the new model specification,
 K-means clustering will be performed `nstart = 10` times for each value of K.
 The `collect_metrics` function will then pick the best clustering of the 10 runs for each value of K,
 and report the results for that best clustering.
-Figure \@ref(fig:10-choose-k-nstart) shows the resulting smoother total WSSD plot from using 10 restarts. 
+Figure \@ref(fig:10-choose-k-nstart) shows the resulting
+total WSSD plot from using 10 restarts; the bump is gone and the total WSSD decreases as expected.
+The more times we perform K-means clustering,
+the more likely we are to find a good clustering (if one exists).
+What value should you choose for `nstart`? The answer is that it depends
+on many factors: the size and characteristics of your data set,
+as well as how powerful your computer is.
+The larger the `nstart` value the better from an analysis perspective, 
+but there is a trade-off that doing many clusterings 
+could take a long time.
+So this is something that needs to be balanced.
 
 
 ```{r 10-choose-k-nstart, fig.height = 3.25, fig.width = 4.25, fig.pos = "H", out.extra="", message= FALSE, warning = FALSE, fig.align = "center", fig.cap = "A plot showing the total WSSD versus the number of clusters when K-means is run with 10 restarts."}
@@ -1148,16 +1162,6 @@ elbow_plot <- ggplot(kmeans_results, aes(x = num_clusters, y = total_WSSD)) +
 
 elbow_plot
 ```
-
-The more times we perform K-means clustering,
-the more likely we are to find a good clustering (if one exists).
-What value should you choose for `nstart`? The answer is that it depends
-on many factors: the size and characteristics of your data set,
-as well as how powerful your computer is.
-The larger the `nstart` value the better from an analysis perspective, 
-but there is a trade-off that doing many clusterings 
-could take a long time.
-So this is something that needs to be balanced.
 
 
 ## Exercises
