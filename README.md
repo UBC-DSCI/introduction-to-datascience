@@ -38,6 +38,7 @@ the `gh-pages` branch.
 ## Building the book locally
 
 In order to build the book, you need to install [Docker](https://docs.docker.com/get-docker/).
+You must have at least **8GB of RAM** (and ideally at least 16GB RAM) to build the book.
 
 To build the **html version** of the book, navigate to the repository root folder and run
 ```
