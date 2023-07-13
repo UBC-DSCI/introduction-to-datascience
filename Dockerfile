@@ -31,9 +31,9 @@ RUN apt install -y libgsl27
 # increase the ImageMagick resource limits
 # this relies on the fact that there is only one place where each of these sizes are used in policy.xml
 # (256MiB is for memory, 512MiB is for map, 1GiB is for disk)
-RUN sed -i 's/256MiB/6GiB/' /etc/ImageMagick-6/policy.xml
-RUN sed -i 's/512MiB/6GiB/' /etc/ImageMagick-6/policy.xml
-RUN sed -i 's/1GiB/6GiB/' /etc/ImageMagick-6/policy.xml
+RUN sed -i 's/256MiB/8GiB/' /etc/ImageMagick-6/policy.xml
+RUN sed -i 's/512MiB/8GiB/' /etc/ImageMagick-6/policy.xml
+RUN sed -i 's/1GiB/8GiB/' /etc/ImageMagick-6/policy.xml
 
 ## install LaTeX packages
 RUN tlmgr install \

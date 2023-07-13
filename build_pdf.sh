@@ -12,7 +12,7 @@ sed -n -i "/# Welcome/q;p" index.Rmd
 sed -i "/graphic\.jpg/d" index.Rmd
 
 ## Build the book with bookdown
-docker run --rm -m 5g -v $(pwd):/home/rstudio/introduction-to-datascience ubcdsci/intro-to-ds:20230713003917cedcac /bin/bash -c "cd /home/rstudio/introduction-to-datascience; Rscript -e 'bookdown::render_book(\"index.Rmd\", \"bookdown::pdf_book\"); warnings(); problems()'"
+docker run --rm -m 8g -v $(pwd):/home/rstudio/introduction-to-datascience ubcdsci/intro-to-ds:20230713003917cedcac /bin/bash -c "cd /home/rstudio/introduction-to-datascience; Rscript -e 'bookdown::render_book(\"index.Rmd\", \"bookdown::pdf_book\"); warnings(); problems()'"
 
 # restore the backed up full index.Rmd
 mv index_backup.Rmd index.Rmd
