@@ -1294,11 +1294,91 @@ upsampled_plot <-
 upsampled_plot
 ```
 
+### Missing data
+
+One of the most common issues in real data sets in the wild is *missing data*, i.e., observations
+where the values of some of the variables were not recorded. 
+Unfortunately, as common as it is, handling missing data properly is very challenging and generally
+relies on expert knowledge about the data, setting, and how the data were collected. One typical challenge with missing data
+is that missing entries can be *informative*: the very fact that an entries were missing is related to the values of other variables. 
+For example, survey participants from a marginalized group of people may be less likely to respond to certain kinds of questions if they
+fear that answering honestly will come with negative consequences. In that case, if we were to simply throw away data with missing entries,
+we would bias the conclusions of the survey by inadvertently removing many members of that group of respondents.
+So ignoring this issue in real problems can easily lead to misleading analyses, with detrimental impacts.
+In this book, we will only give you techniques for dealing with missing entries in situations
+where missing entries are just "randomly missing", i.e.,
+where *the fact that entries are missing isn't related to anything else about the observation*.
+
+As an example, let's load and examine a modified version of the tumor image data
+that has missing entries:
+```{r 05-missing-entries, message = FALSE, warning = FALSE}
+missing_cancer <- read_csv("data/missing_wdbc.csv") |>
+  mutate(Class = as_factor(Class)) |>
+  mutate(Class = fct_recode(Class, "Malignant" = "M", "Benign" = "B"))
+missing_cancer
+```
+Recall that K-nearest neighbor classification makes predictions by
+computing the straight-line distance to nearby training observations, and hence requires access to the values
+of *all* variables for *all* observations in the training data. 
+So how can we perform K-nearest neighbor classification in the presence of missing data?
+
+Well, since there are not too many observations with missing entries, one option is to simply remove
+those observations prior to building the K-nearest neighbor classifier. We can accomplish this by
+adding a `step_naomit` to the recipe.
+```{r 05-naomit, results=FALSE, message=FALSE, echo=TRUE}
+remove_missing_recipe <- recipe(Class ~ ., data = missing_cancer)
+remove_missing_recipe <- remove_missing_recipe |>
+  step_naomit(all_predictors())
+  prep()
+remove_missing_recipe
+```
+
+```{r 05-naomit-print, echo=FALSE}
+hidden_print_cli(remove_missing_recipe)
+```
+Applying the recipe to the `missing_cancer` data frame removes the rows with missing entries.
+
+```{r 05-naomit-bake}
+no_missing_cancer <- bake(remove_missing_recipe, data = missing_cancer)
+no_missing_cancer
+```
+However, this strategy will not work when many of the rows have missing entries, as we may end up throwing away
+too much data. In this case, another
+possible approach is to *impute* the missing entries, i.e., fill in synthetic values based on the other
+observations in the data set. One reasonable choice is to perform *mean imputation*, where missing entries
+are filled in using the mean of the present entries in each variable. To perform mean imputation,
+we can use the `step_impute_mean` recipe step.
+```{r 05-impute, results=FALSE, message=FALSE, echo=TRUE}
+impute_missing_recipe <- recipe(Class ~ ., data = missing_cancer)
+impute_missing_recipe <- impute_missing_recipe |>
+  step_impute_mean(all_predictors())
+  prep()
+impute_missing_recipe
+```
+
+```{r 05-impute-print, echo=FALSE}
+hidden_print_cli(impute_missing_recipe)
+```
+
+Applying the recipe to the `missing_cancer` data frame fills in the missing entries with the mean values of their corresponding variables.
+
+```{r 05-impute-bake}
+imputed_cancer <- bake(impute_missing_recipe, data = missing_cancer)
+imputed_cancer
+```
+
+However you decide to handle missing data in your data analysis, it is always crucial to think critically about
+the setting, how the data were collected, and the question you are answering.
+
+
 ## Putting it together in a `workflow` {#puttingittogetherworkflow}
 
-The `tidymodels` package collection also provides the `workflow`, a way to chain\index{tidymodels!workflow}\index{workflow|see{tidymodels}} together multiple data analysis steps without a lot of otherwise necessary code for intermediate steps.
-To illustrate the whole pipeline, let's start from scratch with the `unscaled_wdbc.csv` data.
-First we will load the data, create a model, and specify a recipe for how the data should be preprocessed:
+The `tidymodels` package collection also provides the `workflow`, a way to
+chain\index{tidymodels!workflow}\index{workflow|see{tidymodels}} together
+multiple data analysis steps without a lot of otherwise necessary code for
+intermediate steps. To illustrate the whole pipeline, let's start from scratch
+with the `unscaled_wdbc.csv` data.  First we will load the data, create a
+model, and specify a recipe for how the data should be preprocessed:
 
 ```{r 05-workflow, message = FALSE, warning = FALSE}
 # load the unscaled cancer data 
