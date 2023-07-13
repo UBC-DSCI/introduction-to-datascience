@@ -1305,14 +1305,14 @@ For example, survey participants from a marginalized group of people may be less
 fear that answering honestly will come with negative consequences. In that case, if we were to simply throw away data with missing entries,
 we would bias the conclusions of the survey by inadvertently removing many members of that group of respondents.
 So ignoring this issue in real problems can easily lead to misleading analyses, with detrimental impacts.
-In this book, we will only give you techniques for dealing with missing entries in situations
-where missing entries are just "randomly missing", i.e.,
-where *the fact that entries are missing isn't related to anything else about the observation*.
+In this book, we will cover only those techniques for dealing with missing entries in situations
+where missing entries are just "randomly missing", i.e., where the fact that certain entries are missing *isn't related to anything else* about the observation.
 
-As an example, let's load and examine a modified version of the tumor image data
-that has missing entries:
+Let's load and examine a modified subset of the tumor image data
+that has a few missing entries:
 ```{r 05-missing-entries, message = FALSE, warning = FALSE}
-missing_cancer <- read_csv("data/missing_wdbc.csv") |>
+missing_cancer <- read_csv("data/wdbc_missing.csv") |>
+  select(Class, Radius, Texture, Perimeter) |>
   mutate(Class = as_factor(Class)) |>
   mutate(Class = fct_recode(Class, "Malignant" = "M", "Benign" = "B"))
 missing_cancer
@@ -1321,37 +1321,24 @@ Recall that K-nearest neighbor classification makes predictions by
 computing the straight-line distance to nearby training observations, and hence requires access to the values
 of *all* variables for *all* observations in the training data. 
 So how can we perform K-nearest neighbor classification in the presence of missing data?
-
 Well, since there are not too many observations with missing entries, one option is to simply remove
 those observations prior to building the K-nearest neighbor classifier. We can accomplish this by
-adding a `step_naomit` to the recipe.
-```{r 05-naomit, results=FALSE, message=FALSE, echo=TRUE}
-remove_missing_recipe <- recipe(Class ~ ., data = missing_cancer)
-remove_missing_recipe <- remove_missing_recipe |>
-  step_naomit(all_predictors())
-  prep()
-remove_missing_recipe
-```
+using the `drop_na` function from `tidyverse` prior to working with the data.
 
-```{r 05-naomit-print, echo=FALSE}
-hidden_print_cli(remove_missing_recipe)
-```
-Applying the recipe to the `missing_cancer` data frame removes the rows with missing entries.
-
-```{r 05-naomit-bake}
-no_missing_cancer <- bake(remove_missing_recipe, data = missing_cancer)
+```{r 05-naomit}
+no_missing_cancer <- missing_cancer |> drop_na()
 no_missing_cancer
 ```
+
 However, this strategy will not work when many of the rows have missing entries, as we may end up throwing away
 too much data. In this case, another
 possible approach is to *impute* the missing entries, i.e., fill in synthetic values based on the other
 observations in the data set. One reasonable choice is to perform *mean imputation*, where missing entries
 are filled in using the mean of the present entries in each variable. To perform mean imputation,
-we can use the `step_impute_mean` recipe step.
+we add the `step_impute_mean` step to the `tidymodels` preprocessing recipe.
 ```{r 05-impute, results=FALSE, message=FALSE, echo=TRUE}
-impute_missing_recipe <- recipe(Class ~ ., data = missing_cancer)
-impute_missing_recipe <- impute_missing_recipe |>
-  step_impute_mean(all_predictors())
+impute_missing_recipe <- recipe(Class ~ ., data = missing_cancer) |>
+  step_impute_mean(all_predictors()) |>
   prep()
 impute_missing_recipe
 ```
@@ -1363,12 +1350,13 @@ hidden_print_cli(impute_missing_recipe)
 Applying the recipe to the `missing_cancer` data frame fills in the missing entries with the mean values of their corresponding variables.
 
 ```{r 05-impute-bake}
-imputed_cancer <- bake(impute_missing_recipe, data = missing_cancer)
+imputed_cancer <- bake(impute_missing_recipe, missing_cancer)
 imputed_cancer
 ```
 
-However you decide to handle missing data in your data analysis, it is always crucial to think critically about
-the setting, how the data were collected, and the question you are answering.
+Many other options for missing data imputation can be found in [the `recipes` documentation](https://recipes.tidymodels.org/reference/index.html).
+However you decide to handle missing data in your data analysis, it is always crucial 
+to think critically about the setting, how the data were collected, and the question you are answering.
 
 
 ## Putting it together in a `workflow` {#puttingittogetherworkflow}
