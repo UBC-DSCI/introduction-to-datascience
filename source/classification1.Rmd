@@ -190,29 +190,33 @@ glimpse(cancer)
 ```
 
 From the summary of the data above, we can see that `Class` is of type character
-(denoted by `<chr>`). Since we will be working with `Class` as a
-categorical statistical variable, we will convert it to a factor using the
-function `as_factor`. \index{factor!as\_factor}
-
+(denoted by `<chr>`). We can use the `distinct`\index{distinct} function to see all the unique
+values present in that column. We see that there are two diagnoses: benign, represented by "B",
+and malignant, represented by "M".
+```{r 05-distinct}
+cancer |>
+  distinct(Class)
+```
+Since we will be working with `Class` as a categorical
+variable, it is a good idea to convert it to a factor type using the `as_factor` function. \index{factor!as\_factor}
+We will also improve the readability of our analysis by renaming "M" to
+"Malignant" and "B" to "Benign" using the `fct_recode` method. The `fct_recode` method \index{factor!fct\_recode}
+is used to replace the names of factor values with other names. The arguments of `fct_recode` are the column that you
+want to modify, followed any number of arguments of the form `"new name" = "old name"` to specify the renaming scheme.
+ 
 ```{r 05-class}
 cancer <- cancer |>
-  mutate(Class = as_factor(Class))
+  mutate(Class = as_factor(Class)) |>
+  mutate(Class = fct_recode(Class, "Malignant" = "M", "Benign" = "B"))
 glimpse(cancer)
 ```
 
-Recall that factors have what are called "levels", which you can think of as categories. We
-can verify the levels of the `Class` column by using the `levels`\index{levels}\index{factor!levels} function.
-This function should return the name of each category in that column. Given
-that we only have two different values in our `Class` column (B for benign and M 
-for malignant), we only expect to get two names back.  Note that the `levels` function requires a *vector* argument; 
-so we use the `pull` function to extract a single column (`Class`) and 
-pass that into the `levels` function to see the categories 
-in the `Class` column. 
+Let's verify that we have successfully converted the `Class` column to a factor variable
+and renamed its values to "Benign" and "Malignant" using the `distinct` function once more.
 
-```{r 05-levels}
+```{r 05-distinct2}
 cancer |>
-  pull(Class) |>
-  levels()
+  distinct(Class)
 ```
 
 ### Exploring the cancer data
@@ -238,8 +242,6 @@ perimeter and concavity variables. Rather than use `ggplot's` default palette,
 we select our own colorblind-friendly colors&mdash;`"orange2"` 
 for light orange and `"steelblue2"` for light blue&mdash;and
  pass them as the `values` argument to the `scale_color_manual` function. 
-We also make the category labels ("B" and "M") more readable by 
-changing them to "Benign" and "Malignant" using the `labels` argument.
 
 ```{r 05-scatter, fig.height = 3.5, fig.width = 4.5, fig.cap= "Scatter plot of concavity versus perimeter colored by diagnosis label."}
 perim_concav <- cancer |>
@@ -248,8 +250,7 @@ perim_concav <- cancer |>
   labs(x = "Perimeter (standardized)", 
        y = "Concavity (standardized)",
        color = "Diagnosis") +
-  scale_color_manual(labels = c("Malignant", "Benign"), 
-                     values = c("orange2", "steelblue2")) +
+  scale_color_manual(values = c("orange2", "steelblue2")) +
   theme(text = element_text(size = 12))
 perim_concav
 ```
@@ -333,13 +334,10 @@ perim_concav_with_new_point <-  bind_rows(cancer,
   labs(color = "Diagnosis", x = "Perimeter (standardized)", 
        y = "Concavity (standardized)") +
   scale_color_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"), 
                      values = c("steelblue2", "orange2", "red")) +
   scale_shape_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"),
                      values= c(16, 16, 18))+ 
   scale_size_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"),
                      values= c(2, 2, 2.5))
 perim_concav_with_new_point
 ```
@@ -391,13 +389,10 @@ perim_concav_with_new_point2 <- bind_rows(cancer,
        x = "Perimeter (standardized)", 
        y = "Concavity (standardized)") +
  scale_color_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"), 
                      values = c("steelblue2", "orange2", "red")) +
   scale_shape_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"),
                      values= c(16, 16, 18))+ 
   scale_size_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"),
                      values= c(2, 2, 2.5))
 perim_concav_with_new_point2 +  
   geom_segment(aes(
@@ -488,13 +483,10 @@ perim_concav <- bind_rows(cancer,
                      breaks = seq(-2, 4, 1)) +
   labs(color = "Diagnosis") + 
   scale_color_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"), 
                      values = c("steelblue2", "orange2", "red")) +
   scale_shape_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"),
                      values= c(16, 16, 18))+ 
   scale_size_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"),
                      values= c(2, 2, 2.5))
 
 perim_concav
@@ -545,7 +537,7 @@ kable(math_table, booktabs = TRUE,
 ```
 
 The result of this computation shows that 3 of the 5 nearest neighbors to our new observation are
-malignant (`M`); since this is the majority, we classify our new observation as malignant. 
+malignant; since this is the majority, we classify our new observation as malignant. 
 These 5 neighbors are circled in Figure \@ref(fig:05-multiknn-3).
 
 ```{r 05-multiknn-3, echo = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap="Scatter plot of concavity versus perimeter with 5 nearest neighbors circled."}
@@ -602,7 +594,8 @@ cancer |>
   slice(1:5) # take the first 5 rows
 ```
 
-Based on $K=5$ nearest neighbors with these three predictors we would classify the new observation as malignant since 4 out of 5 of the nearest neighbors are malignant class. 
+Based on $K=5$ nearest neighbors with these three predictors, we would classify 
+the new observation as malignant since 4 out of 5 of the nearest neighbors are from the malignant class. 
 Figure \@ref(fig:05-more) shows what the data look like when we visualize them 
 as a 3-dimensional scatter with lines from the new observation to its five nearest neighbors.
 
@@ -621,8 +614,7 @@ neighbors_3 <- cancer[order(my_distances_3$Distance), ]
 data <- neighbors_3 |> select(Perimeter, Concavity, Symmetry) |> slice(1:5)
 
 # add to the df
-scaled_cancer_3 <- bind_rows(cancer, new_obs_3) |> 
-  mutate(Class = fct_recode(Class, "Benign" = "B", "Malignant"= "M"))
+scaled_cancer_3 <- bind_rows(cancer, new_obs_3)
 
 plot_3d <- scaled_cancer_3 |>
   plot_ly() |>
@@ -637,7 +629,7 @@ plot_3d <- scaled_cancer_3 |>
             color = ~Class,
             opacity = 0.4,
             size = 2,
-            colors = c("orange2", "steelblue2", "red"), 
+            colors = c("steelblue2", "orange2", "red"), 
             symbol = ~Class, symbols = c('circle','circle','diamond'))
 
 x1 <- c(pull(new_obs_3[1]), data$Perimeter[1])
@@ -662,15 +654,15 @@ z5 <- c(pull(new_obs_3[3]), data$Symmetry[5])
 
 plot_3d <- plot_3d  |>
   add_trace(x = x1, y = y1, z = z1, type = "scatter3d", mode = "lines", 
-            name = "lines", showlegend = FALSE, color = I("steelblue2")) |>
+            name = "lines", showlegend = FALSE, color = I("orange2")) |>
   add_trace(x = x2, y = y2, z = z2, type = "scatter3d", mode = "lines", 
-            name = "lines", showlegend = FALSE, color =  I("steelblue2")) |>
-  add_trace(x = x3, y = y3, z = z3, type = "scatter3d", mode = "lines", 
-            name = "lines", showlegend = FALSE, color =  I("steelblue2")) |>
-  add_trace(x = x4, y = y4, z = z4, type = "scatter3d", mode = "lines", 
             name = "lines", showlegend = FALSE, color =  I("orange2")) |>
+  add_trace(x = x3, y = y3, z = z3, type = "scatter3d", mode = "lines", 
+            name = "lines", showlegend = FALSE, color =  I("orange2")) |>
+  add_trace(x = x4, y = y4, z = z4, type = "scatter3d", mode = "lines", 
+            name = "lines", showlegend = FALSE, color =  I("steelblue2")) |>
   add_trace(x = x5, y = y5, z = z5, type = "scatter3d", mode = "lines", 
-            name = "lines", showlegend = FALSE, color =  I("steelblue2"))
+            name = "lines", showlegend = FALSE, color =  I("orange2"))
 
 if(!is_latex_output()){  
   plot_3d
@@ -786,7 +778,7 @@ Finally, we make the prediction on the new observation by calling the `predict` 
 passing both the fit object we just created and the new observation itself. As above, 
 when we ran the $K$-nearest neighbors
 classification algorithm manually, the `knn_fit` object classifies the new observation as 
-malignant ("M"). Note that the `predict` function outputs a data frame with a single 
+malignant. Note that the `predict` function outputs a data frame with a single 
 variable named `.pred_class`.
 
 ```{r 05-predict}
@@ -837,12 +829,15 @@ is said to be *standardized*, \index{standardization!K-nearest neighbors} and al
 and a standard deviation of 1. To illustrate the effect that standardization can have on the $K$-nearest
 neighbor algorithm, we will read in the original, unstandardized Wisconsin breast
 cancer data set; we have been using a standardized version of the data set up
-until now. To keep things simple, we will just use the `Area`, `Smoothness`, and `Class`
+until now. As before, we will convert the `Class` variable to the factor type
+and rename the values to "Malignant" and "Benign." 
+To keep things simple, we will just use the `Area`, `Smoothness`, and `Class`
 variables:
 
 ```{r 05-scaling-1, message = FALSE}
 unscaled_cancer <- read_csv("data/unscaled_wdbc.csv") |>
   mutate(Class = as_factor(Class)) |>
+  mutate(Class = fct_recode(Class, "Benign" = "B", "Malignant" = "M")) |>
   select(Class, Area, Smoothness)
 unscaled_cancer
 ```
@@ -972,13 +967,10 @@ unscaled <- ggplot(unscaled_cancer, aes(x = Area,
                                         shape = Class, size = Class)) +
   geom_point(alpha = 0.6) + 
   scale_color_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"), 
                      values = c("steelblue2", "orange2", "red")) +
   scale_shape_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"),
                      values= c(16, 16, 18)) +
     scale_size_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"),
                      values=c(2,2,2.5)) + 
   ggtitle("Unstandardized Data") +
   geom_segment(aes(
@@ -1015,13 +1007,10 @@ scaled <- ggplot(scaled_cancer, aes(x = Area,
                                     size = Class)) +
   geom_point(alpha = 0.6) + 
   scale_color_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"), 
                      values = c("steelblue2", "orange2", "red")) +
   scale_shape_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"),
                      values= c(16, 16, 18)) +
   scale_size_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"),
                     values=c(2,2,2.5)) + 
   ggtitle("Standardized Data") +
   labs(x = "Area (standardized)", y = "Smoothness (standardized)") + 
@@ -1055,13 +1044,10 @@ ggplot(unscaled_cancer, aes(x = Area,
                             shape = Class)) +
   geom_point(size = 2.5, alpha = 0.6) + 
   scale_color_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"), 
                      values = c("steelblue2", "orange2", "red")) +
   scale_shape_manual(name = "Diagnosis", 
-                   labels = c("Benign", "Malignant", "Unknown"),
                      values= c(16, 16, 18)) +
     scale_size_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"),
                      values = c(1, 1, 2.5)) + 
   ggtitle("Unstandardized Data") +
   geom_segment(aes(
@@ -1119,8 +1105,8 @@ set.seed(3)
 
 ```{r 05-unbalanced, fig.height = 3.5, fig.width = 4.5, fig.pos = "H", out.extra="", fig.cap = "Imbalanced data."}
 rare_cancer <- bind_rows(
-      filter(cancer, Class == "B"),
-      cancer |> filter(Class == "M") |> slice_head(n = 3)
+      filter(cancer, Class == "Benign"),
+      cancer |> filter(Class == "Malignant") |> slice_head(n = 3)
     ) |>
     select(Class, Perimeter, Concavity)
 
@@ -1130,8 +1116,7 @@ rare_plot <- rare_cancer |>
   labs(x = "Perimeter (standardized)", 
        y = "Concavity (standardized)",
        color = "Diagnosis") +
-  scale_color_manual(labels = c("Malignant", "Benign"), 
-                     values = c("orange2", "steelblue2")) +
+  scale_color_manual(values = c("orange2", "steelblue2")) +
   theme(text = element_text(size = 12))
 
 rare_plot
@@ -1164,18 +1149,15 @@ rare_plot <- bind_rows(rare_cancer,
        x = "Perimeter (standardized)", 
        y = "Concavity (standardized)") + 
   scale_color_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"), 
                      values = c("steelblue2", "orange2", "red")) +
   scale_shape_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"),
                      values= c(16, 16, 18))+ 
   scale_size_manual(name = "Diagnosis", 
-                     labels = c("Benign", "Malignant", "Unknown"),
                      values= c(2, 2, 2.5))
 
 for (i in 1:7) {
   clr <- "steelblue2"
-  if (neighbors$Class[i] == "M") {
+  if (neighbors$Class[i] == "Malignant") {
     clr <- "orange2"
   }
   rare_plot <- rare_plot +
@@ -1236,8 +1218,7 @@ rare_plot <-
   labs(color = "Diagnosis", 
        x = "Perimeter (standardized)", 
        y = "Concavity (standardized)") +
-  scale_color_manual(labels = c("Malignant", "Benign"), 
-                     values = c("orange2", "steelblue2"))
+  scale_color_manual(values = c("orange2", "steelblue2"))
 
 rare_plot
 ```
@@ -1308,8 +1289,7 @@ upsampled_plot <-
   labs(color = "Diagnosis", 
        x = "Perimeter (standardized)", 
        y = "Concavity (standardized)") +
-  scale_color_manual(labels = c("Malignant", "Benign"), 
-                     values = c("orange2", "steelblue2"))
+  scale_color_manual(values = c("orange2", "steelblue2"))
 
 upsampled_plot
 ```
@@ -1324,7 +1304,8 @@ First we will load the data, create a model, and specify a recipe for how the da
 # load the unscaled cancer data 
 # and make sure the response variable, Class, is a factor
 unscaled_cancer <- read_csv("data/unscaled_wdbc.csv") |>
-  mutate(Class = as_factor(Class))
+  mutate(Class = as_factor(Class)) |>
+  mutate(Class = fct_recode(Class, "Malignant" = "M", "Benign" = "B"))
 
 # create the KNN model
 knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) |>
@@ -1431,8 +1412,7 @@ wkflw_plot <-
   labs(color = "Diagnosis", 
        x = "Area", 
        y = "Smoothness") +
-  scale_color_manual(labels = c("Malignant", "Benign"), 
-                     values = c("orange2", "steelblue2")) +
+  scale_color_manual(values = c("orange2", "steelblue2")) +
   theme(text = element_text(size = 12))
 
 wkflw_plot
