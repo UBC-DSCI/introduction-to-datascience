@@ -8,6 +8,7 @@ RUN install2.r --error magick \
                        kableExtra \
                        plotly \
                        tidymodels \
+                       tidyclust \
                        kknn \
                        ggpubr \
                        ggforce \
@@ -23,6 +24,9 @@ RUN Rscript -e "devtools::install_github('ttimbers/canlang@0.0.1')"
 RUN Rscript -e "reticulate::install_miniconda()"
 RUN Rscript -e "reticulate::conda_install('r-reticulate', 'python-kaleido')"
 RUN Rscript -e "reticulate::conda_install('r-reticulate', 'plotly', channel = 'plotly')"
+# necessary for tuning number of clusters in Kmeans
+# see https://github.com/tidymodels/tidyclust/issues/127
+RUN apt install -y libgsl27
 
 # increase the ImageMagick resource limits
 # this relies on the fact that there is only one place where each of these sizes are used in policy.xml
