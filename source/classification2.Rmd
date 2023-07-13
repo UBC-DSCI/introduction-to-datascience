@@ -56,7 +56,9 @@ By the end of the chapter, readers will be able to do the following:
 - Split data into training, validation, and test data sets.
 - Describe what a random seed is and its importance in reproducible data analysis.
 - Set the random seed in R using the `set.seed` function.
-- Evaluate classification accuracy, precision, and recall in R using a validation data set and appropriate metrics.
+- Describe and interpret accuracy, precision, recall, and confusion matrices.
+- Evaluate classification accuracy in R using a validation data set.
+- Produce a confusion matrix in R.
 - Execute cross-validation in R to choose the number of neighbors in a $K$-nearest neighbors classifier.
 - Describe the advantages and disadvantages of the $K$-nearest neighbors classification algorithm.
 
@@ -98,39 +100,94 @@ the observations in the test set? One way we can do this is to calculate the
 prediction **accuracy**. \index{prediction accuracy|see{accuracy}}\index{accuracy} This is the fraction of examples for which the
 classifier made the correct prediction. To calculate this, we divide the number
 of correct predictions by the number of predictions made. 
+The process for assessing if our predictions match the true labels in the 
+test set is illustrated in Figure \@ref(fig:06-ML-paradigm-test).
 
 $$\mathrm{accuracy} = \frac{\mathrm{number \; of  \; correct  \; predictions}}{\mathrm{total \;  number \;  of  \; predictions}}$$
-
-A more holistic view of the performance of the classifier can be obtained
-by looking at the *confusion matrix*. The confusion matrix shows how many
-test set labels of each type are predicted correctly and incorrectly, which
-gives us more detail about the kinds of mistakes the classifier tends to make. 
-
-|                   | True Benign | True Malignant |
-| ----------------- | ----------- | -------------- |
-| Predict Benign    |     5       |       2        |
-| Predict Malignant |     5       |       10       |
-
-- **True Positive:** A malignant observation that was classified as malignant.
-- **False Positive:** A benign observation that was classified as malignant.
-- **True Negative:** A benign observation that was classified as benign.
-- **False Negative:** A malignant observation that was classified as benign.
-
-"Of the positive predictions you made, how many were actually positive?"
-$$\mathrm{precision} = \frac{\mathrm{number \; of  \; correct \; positive \; predictions}}{\mathrm{total \;  number \;  of \; positive  \; predictions}}$$
-
-"Of the positive examples in the data, how many did you identify as positive?"
-$$\mathrm{recall} = \frac{\mathrm{number \; of  \; correct  \; positive \; predictions}}{\mathrm{total \;  number \;  of  \; positive \; examples}}$$
-
-The process for assessing if our predictions match the true labels in the 
-test set is illustrated in Figure \@ref(fig:06-ML-paradigm-test). Note that there 
-are other measures for how well classifiers perform, such as *precision* and *recall*; 
-these will not be discussed here, but you will likely encounter them in other more advanced
-books on this topic. 
 
 ```{r 06-ML-paradigm-test, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Process for splitting the data and finding the prediction accuracy.", fig.retina = 2, out.width = "100%"}
 knitr::include_graphics("img/classification2/ML-paradigm-test.png")
 ```
+
+Accuracy is a convenient, general-purpose way to summarize the performance of a classifier with
+a single number.  But prediction accuracy by itself does not tell the whole
+story.  In particular, accuracy alone only tells us how often the classifier
+makes mistakes in general, but does not tell us anything about the *kinds* of
+mistakes the classifier makes.  A more comprehensive view of performance can be
+obtained by additionally examining the **confusion matrix**. The confusion
+matrix shows how many test set labels of each type are predicted correctly and
+incorrectly, which gives us more detail about the kinds of mistakes the
+classifier tends to make.  Table \@ref(tab:confusion-matrix) shows an example
+of what a confusion matrix might look like for the tumor image data with
+a test set of 65 observations.
+
+Table: (\#tab:confusion-matrix) An example confusion matrix for the tumor image data. 
+
+|   Prediction           | Truly Malignant | Truly Benign |
+| ---------------------- | --------------- | -------------- |
+| Predicted Malignant    |     1      |       4        |
+| Predicted Benign       |     3       |       57        |
+
+In the example in Table \@ref(tab:confusion-matrix), we see that there was
+1 malignant observation that was correctly classified as malignant (top left corner),
+and 57 benign observations that were correctly classified as benign (bottom right corner).
+However, we can also see that the classifier made some mistakes:
+it identified 3 malignant observations as benign, and 4 benign observations as
+malignant. The accuracy of this classifier is roughly
+89%, given by the formula
+
+$$\mathrm{accuracy} = \frac{\mathrm{number \; of  \; correct  \; predictions}}{\mathrm{total \;  number \;  of  \; predictions}} = \frac{1+57}{1+57+4+3} = 0.892$$
+
+But we can also see that the classifier only identified 3 out of 4 total malignant
+tumors; in other words, it missed 75% of the malignant cases present in the
+data set! Since we are particularly interested in identifying malignant cases
+in this data analysis context, this classifier would likely be unacceptable
+even with an accuracy of 89%.
+
+Focusing more on one label than the other is
+common in classification problems. In such cases, we typically refer to the label we are more
+interested in identifying as the *positive* label, and the other as the
+*negative* label. In the tumor example, we would refer to malignant
+observations as *positive*, and benign observations as *negative*.  We can then
+use the following terms to talk about the four kinds of prediction that the
+classifier can make, corresponding to the four entries in the confusion matrix:
+
+- **True Positive:** A malignant observation that was classified as malignant (top left in Table \@ref(tab:confusion-matrix)).
+- **False Positive:** A benign observation that was classified as malignant (top right in Table \@ref(tab:confusion-matrix)).
+- **True Negative:** A benign observation that was classified as benign (bottom right in Table \@ref(tab:confusion-matrix)).
+- **False Negative:** A malignant observation that was classified as benign (bottom left in Table \@ref(tab:confusion-matrix)).
+
+And then rather than just looking at accuracy, we can also evaluate the **precision** and **recall** of the classifier.
+*Precision* quantifies how many of the positive predictions the classifier made were actually positive. Intuitively,
+we would like a classifier to have a *high* precision: for a classifier with high precision, if the 
+classifier reports that a new observation is positive, we can trust that that
+new observation is indeed positive. We can compute
+the precision of a classifier using the entries in the confusion matrix, with the formula
+
+$$\mathrm{precision} = \frac{\mathrm{number \; of  \; correct \; positive \; predictions}}{\mathrm{total \;  number \;  of \; positive  \; predictions}}.$$
+
+*Recall* quantifies how many of the positive observations in the test set were identified as positive. Intuitively, we would like
+a classifier to have a *high* recall: for a classifier with high recall, if there is a positive observation in the test data, we can trust 
+that the classifier will find it.
+We can also compute the recall of the classifier using the entries in the confusion matrix, with the formula
+
+$$\mathrm{recall} = \frac{\mathrm{number \; of  \; correct  \; positive \; predictions}}{\mathrm{total \;  number \;  of  \; positive \; test \; set \; observations}}.$$
+
+In the example presented in Table \@ref(tab:confusion-matrix), we have that the precision and recall are
+
+$$\mathrm{precision} = \frac{1}{1+4} = 0.20, \quad \mathrm{recall} = \frac{1}{1+3} = 0.25.$$
+
+So even with an accuracy of 89%, the precision and recall of the classifier were both relatively low. For this data analysis
+context, recall is particularly important: if someone has a malignant tumor, we certainly want to identify it.
+A recall of just 25% would likely be unacceptable!
+
+> **Note:** It is difficult to achieve both high precision and high recall at the same time; models with high precision tend to have low recall and vice versa.
+> As an example, we can easily make a classifier that has *perfect recall*: just *always* guess positive! This classifier will of course find every
+> positive observation in the test set, but it will make lots of false positive predictions along the way  and have low precision. Similarly, we can easily
+> make a classifier that has *perfect precision*: *never* guess positive! This classifier will never incorrectly identify an obsevation as positive,
+> but it will make a lot of false negative predictions along the way. In fact, this classifier will have 0% recall! Of course, most real classifiers fall somewhere
+> in between these two extremes. But these examples serve to show that in settings where one of the classes is of interest (i.e., there is a *positive* label),
+> there is a trade-off between precision and recall that one has to make when designing a classifier.
 
 ## Randomness and seeds {#randomseeds}
 Beginning in this chapter, our data analyses will often involve the use
@@ -230,7 +287,7 @@ Different argument values in `set.seed` lead to different patterns of randomness
 you pick the same argument value your result will be the same. 
 In the remainder of the textbook, we will set the seed once at the beginning of each chapter.
 
-## Evaluating accuracy with `tidymodels`
+## Evaluating performance with `tidymodels`
 Back to evaluating classifiers now!
 In R, we can use the `tidymodels` package \index{tidymodels} not only to perform $K$-nearest neighbors
 classification, but also to assess how well our classification worked. 
@@ -413,11 +470,12 @@ cancer_test_predictions <- predict(knn_fit, cancer_test) |>
 cancer_test_predictions
 ```
 
-### Compute the accuracy
+### Evaluate performance
 
-Finally, we can assess our classifier's accuracy. To do this we use the `metrics` function \index{tidymodels!metrics}
-from `tidymodels` to get the statistics about the quality of our model, specifying
-the `truth` and `estimate` arguments:
+Finally, we can assess our classifier's performance. First, we will examine
+accuracy. To do this we use the
+`metrics` function \index{tidymodels!metrics} from `tidymodels`, 
+specifying the `truth` and `estimate` arguments:
 
 ```{r 06-accuracy}
 cancer_test_predictions |>
@@ -432,7 +490,7 @@ cancer_acc_1 <- cancer_test_predictions |>
 ```
 
 In the metrics data frame, we filtered the `.metric` column since we are 
-interested in the `accuracy` row. Other entries involve more advanced metrics that
+interested in the `accuracy` row. Other entries involve other metrics that
 are beyond the scope of this book. Looking at the value of the `.estimate` variable
  shows that the estimated accuracy of the classifier on the test data 
 was `r round(100*cancer_acc_1$.estimate, 0)`%.
@@ -455,31 +513,41 @@ confu22 <- (confusionmt |> filter(name == "cell_2_2"))$value
 ```
 
 The confusion matrix shows `r confu11` observations were correctly predicted 
-as malignant, and `r confu22` were correctly predicted as benign. Therefore the classifier labeled 
-`r confu11` + `r confu22` = `r confu11+confu22` observations 
-correctly. It also shows that the classifier made some mistakes; in particular,
+as malignant, and `r confu22` were correctly predicted as benign. 
+It also shows that the classifier made some mistakes; in particular,
 it classified  `r confu21` observations as benign when they were truly malignant,
 and `r confu12` observations as malignant when they were truly benign. 
+Using our formulas from earlier, we see that the accuracy agrees with what R reported,
+and can also compute the precision and recall of the classifier:
+
+$$\mathrm{accuracy} = \frac{\mathrm{number \; of  \; correct  \; predictions}}{\mathrm{total \;  number \;  of  \; predictions}} = \frac{`r confu11`+`r confu22`}{`r confu11`+`r confu22`+`r confu12`+`r confu21`} = `r round((confu11+confu22)/(confu11+confu22+confu12+confu21),3)`$$
+
+$$\mathrm{precision} = \frac{\mathrm{number \; of  \; correct \; positive \; predictions}}{\mathrm{total \;  number \;  of \; positive  \; predictions}} = \frac{`r confu11`}{`r confu11` + `r confu12`} = `r round(confu11/(confu11+confu12), 3)`$$
+
+$$\mathrm{recall} = \frac{\mathrm{number \; of  \; correct  \; positive \; predictions}}{\mathrm{total \;  number \;  of  \; positive \; test \; set \; observations}} = \frac{`r confu11`}{`r confu11`+`r confu21`} = `r round(confu11/(confu11+confu21),3)`$$
+
 
 ### Critically analyze performance
 
 We now know that the classifier was `r round(100*cancer_acc_1$.estimate,0)`% accurate
-on the test data set. That sounds pretty good! Wait, *is* it good? 
-Or do we need something higher?
+on the test data set, and had a precision of `r 100*round(confu11/(confu11+confu12),2)`% and a recall of `r 100*round(confu11/(confu11+confu21),2)`%. 
+That sounds pretty good! Wait, *is* it good?  Or do we need something higher?
 
-In general, what a *good* value for accuracy \index{accuracy!assessment} is depends on the application.
- For instance, suppose you are predicting whether a tumor is benign or malignant
- for a type of tumor that is benign 99% of the time. It is very easy to obtain 
- a 99% accuracy just by guessing benign for every observation. In this case, 
- 99% accuracy is probably not good enough.  And beyond just accuracy,
-sometimes the *kind* of mistake the classifier makes is important as well. In
-the previous example, it might be very bad for the classifier to predict
-"benign" when the true class is "malignant", as this might result in a patient
-not receiving appropriate medical attention. On the other hand, it might be
-less bad for the classifier to guess "malignant" when the true class is
-"benign", as the patient will then likely see a doctor who can provide an
-expert diagnosis. This is why it is important not only to look at accuracy, but
-also the confusion matrix.
+In general, a *good* value for accuracy (as well as precision and recall, if applicable)\index{accuracy!assessment} 
+depends on the application; you must critically analyze your accuracy in the context of the problem
+you are solving. For example, if we were building a classifier for a kind of tumor that is benign 99%
+of the time, a classifier with 99% accuracy is not terribly impressive (just always guess benign!).
+And beyond just accuracy, we need to consider the precision and recall: as mentioned
+earlier, the *kind* of mistake the classifier makes is
+important in many applications as well. In the previous example with 99% benign observations, it might be very bad for the
+classifier to predict "benign" when the true class is "malignant" (a false negative), as this
+might result in a patient not receiving appropriate medical attention. In other
+words, in this context, we need the classifier to have a *high recall*. On the
+other hand, it might be less bad for the classifier to guess "malignant" when
+the true class is "benign" (a false positive), as the patient will then likely see a doctor who
+can provide an expert diagnosis. In other words, we are fine with sacrificing
+some precision in the interest of achieving high recall. This is why it is 
+important not only to look at accuracy, but also the confusion matrix.
 
 However, there is always an easy baseline that you can compare to for any
 classification problem: the *majority classifier*. The majority classifier \index{classification!majority}
@@ -537,8 +605,9 @@ By picking different values of $K$, we create different classifiers
 that make different predictions.
 
 So then, how do we pick the *best* value of $K$, i.e., *tune* the model? 
-And is it possible to make this selection in a principled way?  Ideally, 
-we want somehow to maximize the performance of our classifier on data *it
+And is it possible to make this selection in a principled way?  In this book,
+we will focus on maximizing the accuracy of the classifier. Ideally, 
+we want somehow to maximize the accuracy of our classifier on data *it
 hasn't seen yet*. But we cannot use our test data set in the process of building
 our model. So we will play the same trick we did before when evaluating
 our classifier: we'll split our *training data itself* into two subsets,
