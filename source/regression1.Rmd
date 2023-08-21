@@ -640,17 +640,31 @@ $`r format(round(sacr_summary |> pull(.estimate)), big.mark=",", nsmall=0, scien
 might represent a substantial fraction of a home buyer's budget, and
 could make or break whether or not they could afford put an offer on a house. 
 
-Finally, Figure \@ref(fig:07-predict-all) shows the predictions that our final model makes across
-the range of house sizes we might encounter in the Sacramento area&mdash;from 500 to 5000 square feet. 
-You have already seen a few plots like this in this chapter, but here we also provide the code that generated it
-as a learning challenge.
+Finally, Figure \@ref(fig:07-predict-all) shows the predictions that our final
+model makes across the range of house sizes we might encounter in the
+Sacramento area.
+Note that instead of predicting the house price only for those house sizes that happen to appear in our data,
+we predict it for evenly spaced values between the minimum and maximum in the data set
+(roughly 500 to 5000 square feet).
+We superimpose this prediction line on a scatter
+plot of the original housing price data,
+so that we can qualitatively assess if the model seems to fit the data well.
+You have already seen a
+few plots like this in this chapter, but here we also provide the code that
+generated it as a learning opportunity.
 
 ```{r 07-predict-all, warning = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap = "Predicted values of house price (blue line) for the final KNN regression model."}
-sacr_preds <- tibble(sqft = seq(from = 500, to = 5000, by = 10))
+sqft_prediction_grid <- tibble(
+    sqft = seq(
+        from = sacramento |> select(sqft) |> min(),
+        to = sacramento |> select(sqft) |> max(),
+        by = 10
+    )
+)
 
 sacr_preds <- sacr_fit |>
-  predict(sacr_preds) |>
-  bind_cols(sacr_preds)
+  predict(sqft_prediction_grid) |>
+  bind_cols(sqft_prediction_grid)
 
 plot_final <- ggplot(sacramento_train, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
