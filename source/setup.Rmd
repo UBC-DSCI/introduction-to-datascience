@@ -63,6 +63,104 @@ a pre-built *container* that comes with precisely the right versions of
 all software packages needed run the worksheets that come with this book.
 \index{Docker}
 
+> **Note:** A *container* is a virtualized user space within your computer.
+> Within the container, you can run software in isolation without interfering with the
+> other software that already exists on your machine. In this book, we use
+> a container to run a specific version of the R programming
+> language, as well as other necessary packages. The container ensures that
+> the worksheets function correctly, even if you have a different version of R
+> installed on your computer&mdash;or even if you haven't installed R at all!
+
+### Windows
+
+**Installation** To install Docker on Windows, 
+visit [the online Docker documentation](https://docs.docker.com/desktop/install/windows-install/),
+and download the `Docker Desktop Installer.exe` file. Double-click the file to open the installer
+and follow the instructions on the installation wizard, choosing **WSL-2** instead of **Hyper-V** when prompted.
+
+> **Note:** Occasionally, when you first run Docker on Windows, you will encounter an error message. Some common errors you may see:
+> 
+> - If you need to update WSL, you can enter `cmd.exe` in the Start menu to run the command line. Type `wsl --update` to update WSL.
+> - If the admin account on your computer is different to your user account, you must add the user to the "docker-users" group. 
+>   Run Computer Management as an administrator and navigate to `Local Users` and `Groups -> Groups -> docker-users`. Right-click to 
+>   add the user to the group. Log out and log back in for the changes to take effect.
+> - If you need to enable virtualization, you will need to edit your BIOS. Restart your computer, and enter the BIOS using the hotkey
+>   (usually Delete, Esc, and/or one of the F# keys). Look for an "Advanced" menu, and under your CPU settings, set the "Virtualization" option
+>   to "enabled". Then save the changes and reboot your machine. If you are not familiar with BIOS editing, you may want to find an expert 
+>   to help you with this, as editing the BIOS can be dangerous. Detailed instructions for doing this are beyond the scope of this book. 
+
+**Running JupyterLab** Run Docker Desktop. Once it is running, you need to download and run the
+Docker *image* that we have made available for the worksheets (an *image* is like a "snapshot" of a 
+computer with all the right packages pre-installed). In the search bar, enter `ubcdsci/r-dsci-100`, as this is 
+the name of the image. You will be presented
+with a few options (Figure \@ref(fig:docker-desktop-search)). In the "Tag" drop down menu, click 
+the tag `20230724142640d8f06f` to select the correct version of the image. Then click 
+the "Pull" button to download the image.
+
+```{r docker-desktop-search, echo = FALSE, fig.cap = "The Docker Desktop search window. Make sure to click the Tag drop down menu and find the right version of the image before clicking the Pull button to download it.", fig.retina = 2, out.width="100%"}
+image_read("img/setup/docker-1.png") |> 
+  image_crop("3632x2000")
+```
+
+Once the image is done downloading, click the "Images" button on the left side
+of the Docker Desktop window (Figure \@ref(fig:docker-desktop-images)). You
+will see the recently downloaded image listed there under the "Local" tab.
+
+```{r docker-desktop-images, echo = FALSE, fig.cap = "The Docker Desktop images tab.", fig.retina = 2, out.width="100%"}
+image_read("img/setup/docker-2.png") |> 
+  image_crop("3632x2000")
+```
+
+To start up a *container* using that image, click the play button beside the
+image. This will open the run configuration menu (Figure \@ref(fig:docker-desktop-runconfig)). 
+Expand the "Optional settings" drop down menu. In the "Host port" textbox, enter
+`8888`. In the "Volumes" section, click the "Host path" box and navigate to the
+folder where your Jupyter worksheets are stored. In the "Container path" text
+box, enter `/home/jovyan/work`. Then click the "Run" button to start the
+container.
+
+```{r docker-desktop-runconfig, echo = FALSE, fig.cap = "The Docker Desktop container run configuration menu.", fig.retina = 2, out.width="100%"}
+image_read("img/setup/docker-3.png") |> 
+  image_crop("3632x2000")
+```
+
+After clicking the "Run" button, you will see a terminal. The terminal will then print 
+some text as the Docker container starts. Once the text stops scrolling, find the 
+URL in the terminal that starts 
+with `http://127.0.0.1:8888` (highlighted by the red box in Figure \@ref(fig:ubuntu-docker-terminal)), and paste it 
+into your browser to start JupyterLab.
+
+
+```{r docker-desktop-url, echo = FALSE, fig.cap = "The terminal text after running the Docker container. The red box indicates the URL that you should paste into your browser to open JupyterLab.", fig.retina = 2, out.width="100%"}
+image_read("img/setup/docker-4.png") |> 
+  image_crop("3632x2000")
+```
+When you are done working, make sure to shut down and remove the container by 
+clicking the red trash can symbol (in the top right corner of Figure \@ref(fig:ubuntu-docker-terminal)).
+You will not be able to start the container again until you do so.
+More information on installing and running
+Docker on Windows, as well as troubleshooting tips, can 
+be found in [the online Docker documentation](https://docs.docker.com/desktop/install/windows-install/).
+
+### MacOS
+
+**Installation** To install Docker on MacOS,
+visit [the online Docker documentation](https://docs.docker.com/desktop/install/mac-install/), and
+download the `Docker.dmg` installation file that is appropriate for your
+computer. To know which installer is right for your machine, you need to know 
+whether your computer has an Intel processor (older machines) or an
+Apple processor (newer machines); the [Apple support page](https://support.apple.com/en-ca/HT211814) has
+information to help you determine which processor you have. Once downloaded, double-click 
+the file to open the installer, then drag the Docker icon to the Applications folder.
+Double-click the icon in the Applications folder to start Docker. In the installation 
+window, use the recommended settings.
+
+**Running JupyterLab** Run Docker Desktop. Once it is running, follow the
+instructions above in the Windows section on *Running JupyterLab* (the user
+interface is the same). More information on installing and running Docker on
+MacOS, as well as troubleshooting tips, can be 
+found in [the online Docker documentation](https://docs.docker.com/desktop/install/mac-install/).
+
 ### Ubuntu
 
 **Installation** To install Docker on Ubuntu, open the terminal and enter the following five commands.
@@ -80,95 +178,19 @@ the following command.
 docker run --rm -v $(pwd):/home/jovyan/work -p 8888:8888 ubcdsci/r-dsci-100:20230724142640d8f06f jupyter lab
 ```
 The terminal will then print some text as the Docker container starts. Once the text stops scrolling, find the 
-URL in your terminal that starts with `http://127.0.0.1:8888` (highlighted by the red box Figure \@ref(fig:ubuntu-docker-terminal)), and paste it into your browser to start JupyterLab.
+URL in your terminal that starts with `http://127.0.0.1:8888` (highlighted by the 
+red box Figure \@ref(fig:ubuntu-docker-terminal)), and paste it into your browser to start JupyterLab.
+More information on installing and running Docker on Ubuntu, as well as troubleshooting tips, can be found in
+[the online Docker documentation](https://docs.docker.com/engine/install/ubuntu/).
+
 
 ```{r ubuntu-docker-terminal, echo = FALSE, fig.cap = "The terminal text after running the Docker container in Ubuntu. The red box indicates the URL that you should paste into your browser to open JupyterLab.", fig.retina = 2, out.width="100%"}
 image_read("img/setup/ubuntu-docker.png") |> 
   image_crop("3632x2000")
 ```
 
-More information on installing and running Docker on Ubuntu, as well as troubleshooting tips, can be found
-[in the online Docker documentation](https://docs.docker.com/engine/install/ubuntu/).
 
-### MacOS
 
-**Installation** To install Docker on MacOS,
-visit [the online Docker documentation](https://docs.docker.com/desktop/install/mac-install/), and
-download the `Docker.dmg` installation file that is appropriate for your
-computer. To know which installer is right for your machine, you need to know 
-whether your computer has an Intel processor (older machines) or an
-Apple processor (newer machines); the [Apple support page](https://support.apple.com/en-ca/HT211814) has
-information to help you determine which processor you have. Once downloaded, double-click 
-the file to open the installer, then drag the Docker icon to the Applications folder.
-Double-click the icon in the Applications folder to start Docker. In the installation 
-window, use the recommended settings.
-
-**Running JupyterLab** Once Docker is installed and running, follow the
-instructions below in the Windows section on *Running JupyterLab* (the user
-interface is the same). More information on installing and running Docker on
-MacOS, as well as troubleshooting tips, can be 
-found [in the online Docker documentation](https://docs.docker.com/desktop/install/mac-install/).
-
-### Windows
-
-**Installation** To install Docker on Windows, visit [the online Docker documentation](https://docs.docker.com/desktop/install/windows-install/),
-and download the `Docker Desktop Installer.exe` file. Double-click the file to open the installer
-and follow the instructions on the installation wizard, choosing **WSL-2** instead of **Hyper-V** when prompted.
-
-Occasionally, when you first run Docker on Windows, you will encounter an error message. Some common errors you may see:
-
-- If you need to update WSL, you can enter `cmd.exe` in the Start menu to run the command line. Type `wsl --update` to update WSL.
-- If the admin account on your computer is different to your user account, you must add the user to the "docker-users" group. 
-  Run Computer Management as an administrator and navigate to `Local Users` and `Groups -> Groups -> docker-users`. Right-click to 
-  add the user to the group. Log out and log back in for the changes to take effect.
-- If you need to enable virtualization, you will need to edit your BIOS. Restart your computer, and enter the BIOS using the hotkey
-  (usually Delete, Esc, and/or one of the F# keys). Look for an "Advanced" menu, and under your CPU settings, set the "Virtualization" option
-  to "enabled". Then save the changes and reboot your machine. If you are not familiar with BIOS editing, you may want to find an expert 
-  to help you with this, as editing the BIOS can be dangerous. Detailed instructions for doing this are beyond the scope of this book. 
-More information on installing and running
-Docker on Windows, as well as troubleshooting tips, can be found [in the online
-Docker documentation](https://docs.docker.com/desktop/install/windows-install/).
-
-**Running JupyterLab** Once Docker is running (in either Windows or MacOS), you need to download and run the  
-Docker *image* that we have made available for the worksheets (an *image* is like a "snapshot" of a 
-computer with all the right packages pre-installed). In the search bar, enter `ubcdsci/r-dsci-100`, as this is 
-the name of the image. You will be presented
-with a few options (Figure \@ref(fig:docker-desktop-search)). In the "Tag" drop down menu, click 
-the tag `20230724142640d8f06f` to select the correct version of the image. Then click 
-the "Pull" button to download the image.
-
-```{r docker-desktop-search, echo = FALSE, fig.cap = "The Docker Desktop search window. Make sure to click the Tag drop down menu and find the right version of the image before clicking the Pull button to download it.", fig.retina = 2, out.width="100%"}
-image_read("img/setup/docker-1.png") |> 
-  image_crop("3632x2000")
-```
-
-Once the image is done downloading, click the "Images" button on the left side of the Docker Desktop window (Figure \@ref(fig:docker-desktop-images)). You
-will see the recently downloaded image listed there under the "Local" tab.
-
-```{r docker-desktop-images, echo = FALSE, fig.cap = "The Docker Desktop images tab.", fig.retina = 2, out.width="100%"}
-image_read("img/setup/docker-2.png") |> 
-  image_crop("3632x2000")
-```
-
-To start up a *container* using that image, click the play button beside the image. This will open the run configuration menu (Figure \@ref(fig:docker-desktop-runconfig)).
-In the "Host port" textbox, enter `8888`. In the "Volumes" section, click the "Host path" box and navigate to the folder where your Jupyter worksheets
-are stored. In the "Container path" text box, enter `/home/jovyan/work`. Then click the "Run" button to start the container.
-
-```{r docker-desktop-runconfig, echo = FALSE, fig.cap = "The Docker Desktop container run configuration menu.", fig.retina = 2, out.width="100%"}
-image_read("img/setup/docker-3.png") |> 
-  image_crop("3632x2000")
-```
-
-After clicking the "Run" button, you will see a terminal. The terminal will then print 
-some text as the Docker container starts. Once the text stops scrolling, find the 
-URL in the terminal that starts 
-with `http://127.0.0.1:8888` (highlighted by the red box in Figure \@ref(fig:ubuntu-docker-terminal)), and paste it 
-into your browser to start JupyterLab.
-
-```{r docker-desktop-url, echo = FALSE, fig.cap = "The terminal text after running the Docker container in Ubuntu. The red box indicates the URL that you should paste into your browser to open JupyterLab.", fig.retina = 2, out.width="100%"}
-image_read("img/setup/docker-4.png") |> 
-  image_crop("3632x2000")
-```
 
 ## Working with JupyterLab Desktop
 
@@ -180,28 +202,24 @@ that require expert troubleshooting. The downside of JupyterLab Desktop is that 
 you may not end up with the right versions of all the R packages needed for the worksheets. Docker, on the other hand,
 *guarantees* that the worksheets will work exactly as intended. 
 
-In this section, we will cover how to install Git (for version control, as discussed in Chapter \@ref(Getting-started-with-version-control)),
-JupyterLab Desktop, the JupyterLab Git extension, and all of the R packages needed to run the code in this book.
+In this section, we will cover how to install JupyterLab Desktop,
+Git and the JupyterLab Git extension (for version control, as discussed in Chapter \@ref(Getting-started-with-version-control)), and 
+all of the R packages needed to run
+the code in this book.
 \index{git!installation}\index{JupyterLab Desktop}
 
-### Ubuntu
+### Windows
 
 **Installation** First, we will install Git for version control. 
-Open the terminal and type the following commands:
-```
-sudo apt update
-sudo apt install git
-```
+Go to [the Git download page](https://git-scm.com/download/win) and 
+download the Windows version of Git. Once the download has finished, run the installer and accept 
+the default configuration for all pages.
 Next, visit the ["Installation" section of the JupyterLab Desktop homepage](https://github.com/jupyterlab/jupyterlab-desktop#installation).
-Download the `JupyterLab-Setup-Debian.deb` installer file for Ubuntu/Debian.
-Open a terminal, navigate to where the installer file was downloaded, and run the command
-```
-sudo dpkg -i JupyterLab-Setup-Debian.deb
-```
-Run JupyterLab Desktop using the command
-```
-jlab
-```
+Download the `JupyterLab-Setup-Windows.exe` installer file for Windows.
+Double-click the installer to run it, use the default settings.
+Run JupyterLab Desktop by clicking the icon on your desktop.
+
+
 **Configuring JupyterLab Desktop**
 Next, in the JupyterLab Desktop graphical interface that appears (Figure \@ref(fig:setup-jlab-gui)), 
 you will see text at the bottom saying "Python environment not found". Click "Install using the bundled installer"
@@ -234,22 +252,6 @@ JupyterLab Desktop entirely before you proceed to doing your data analysis.
 This will ensure all the software and settings you put in place are 
 correctly set up and ready for use.
 
-### Windows
-
-**Installation** First, we will install Git for version control. 
-Go to [the Git download page](https://git-scm.com/download/win) and 
-download the Windows version of Git. Once the download has finished, run the installer and accept 
-the default configuration for all pages.
-Next, visit the ["Installation" section of the JupyterLab Desktop homepage](https://github.com/jupyterlab/jupyterlab-desktop#installation).
-Download the `JupyterLab-Setup-Windows.exe` installer file for Windows.
-Double-click the installer to run it, use the default settings.
-Run JupyterLab Desktop by clicking the icon on your desktop.
-
-**Configuring JupyterLab Desktop** From this point onward, with JupyterLab Desktop running,
-follow the instructions in the Ubuntu section on *Configuring JupyterLab Desktop* to set up the
-environment, install the JupyterLab Git extension, and install
-the various R software packages needed for the worksheets.
-
 
 ### MacOS
 
@@ -271,7 +273,32 @@ the JupyterLab Desktop icon to the Applications folder.  Double-click
 the icon in the Applications folder to start JupyterLab Desktop.
 
 **Configuring JupyterLab Desktop** From this point onward, with JupyterLab Desktop running,
-follow the instructions in the Ubuntu section on *Configuring JupyterLab Desktop* to set up the
+follow the instructions in the Windows section on *Configuring JupyterLab Desktop* to set up the
 environment, install the JupyterLab Git extension, and install
 the various R software packages needed for the worksheets.
+
+### Ubuntu
+
+**Installation** First, we will install Git for version control. 
+Open the terminal and type the following commands:
+```
+sudo apt update
+sudo apt install git
+```
+Next, visit the ["Installation" section of the JupyterLab Desktop homepage](https://github.com/jupyterlab/jupyterlab-desktop#installation).
+Download the `JupyterLab-Setup-Debian.deb` installer file for Ubuntu/Debian.
+Open a terminal, navigate to where the installer file was downloaded, and run the command
+```
+sudo dpkg -i JupyterLab-Setup-Debian.deb
+```
+Run JupyterLab Desktop using the command
+```
+jlab
+```
+
+**Configuring JupyterLab Desktop** From this point onward, with JupyterLab Desktop running,
+follow the instructions in the Windows section on *Configuring JupyterLab Desktop* to set up the
+environment, install the JupyterLab Git extension, and install
+the various R software packages needed for the worksheets.
+
 
