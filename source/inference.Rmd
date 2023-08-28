@@ -308,7 +308,7 @@ calculate the mean of the sample proportions.  \index{sampling distribution!shap
 
 ```{r 11-example-proportions8, echo = TRUE, message = FALSE, warning = FALSE}
 sample_estimates |>
-  summarize(mean = mean(sample_proportion))
+  summarize(mean_proportion = mean(sample_proportion))
 ```
 
 We notice that the sample proportions are centered around the population
@@ -356,13 +356,13 @@ the average price per night for all the Airbnb listings.
 
 ```{r 11-example-means-popmean, echo = TRUE, message = FALSE, warning = FALSE}
 population_parameters <- airbnb |>
-  summarize(pop_mean = mean(price))
+  summarize(mean_price = mean(price))
 
 population_parameters
 ```
 
 The price per night of all Airbnb rentals in Vancouver, BC 
-is \$`r round(population_parameters$pop_mean,2)`, on average. This value is our
+is \$`r round(population_parameters$mean_price,2)`, on average. This value is our
 population parameter since we are calculating it using the population data. \index{population!parameter}
 
 Now suppose we did not have access to the population data (which is usually the
@@ -401,9 +401,9 @@ The average value of the sample of size 40
 is \$`r round(estimates$mean_price, 2)`.  This 
 number is a point estimate for the mean of the full population.
 Recall that the population mean was 
-\$`r round(population_parameters$pop_mean,2)`. So our estimate was fairly close to
+\$`r round(population_parameters$mean_price,2)`. So our estimate was fairly close to
 the population parameter: the mean was about 
-`r round(100*abs(estimates$mean_price - population_parameters$pop_mean)/population_parameters$pop_mean, 1)`% 
+`r round(100*abs(estimates$mean_price - population_parameters$mean_price)/population_parameters$mean_price, 1)`% 
 off.  Note that we usually cannot compute the estimate's accuracy in practice
 since we do not have access to the population parameter; if we did, we wouldn't
 need to estimate it!
@@ -447,7 +447,7 @@ about  \$`r round(quantile(sample_estimates$mean_price)[2], -1)` and
 a good fraction of cases outside this range (i.e., where the point estimate was
 not close to the population parameter). So it does indeed look like we were
 quite lucky when we estimated the population mean with only 
-`r round(100*abs(estimates$mean_price - population_parameters$pop_mean)/population_parameters$pop_mean, 1)`% error.
+`r round(100*abs(estimates$mean_price - population_parameters$mean_price)/population_parameters$mean_price, 1)`% error.
 
 Let's visualize the population distribution, distribution of the sample, and
 the sampling distribution on one plot to compare them in Figure
@@ -815,7 +815,7 @@ boot1_dist <- ggplot(boot1, aes(price)) +
 
 boot1_dist
 
-summarize(boot1, mean = mean(price))
+summarize(boot1, mean_price = mean(price))
 ```
 
 Notice in Figure \@ref(fig:11-bootstrapping3) that the histogram of our bootstrap sample
@@ -861,7 +861,7 @@ these six replicates.
 ```{r 11-bootstrapping-six-bootstrap-samples-means, echo = TRUE, message = FALSE, warning = FALSE}
 six_bootstrap_samples |>
   group_by(replicate) |>
-  summarize(mean = mean(price))
+  summarize(mean_price = mean(price))
 ```
 
 We can see that the bootstrap sample distributions and the sample means are
@@ -874,12 +874,12 @@ our point estimate to behave if we took another sample.
 ```{r 11-bootstrapping5, echo = TRUE, message = FALSE, warning = FALSE, fig.pos = "H", out.extra="", fig.cap = "Distribution of the bootstrap sample means.", fig.height = 3.5, fig.width = 4.5}
 boot20000_means <- boot20000 |>
   group_by(replicate) |>
-  summarize(mean = mean(price))
+  summarize(mean_price = mean(price))
 
 boot20000_means
 tail(boot20000_means)
 
-boot_est_dist <- ggplot(boot20000_means, aes(x = mean)) +
+boot_est_dist <- ggplot(boot20000_means, aes(x = mean_price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   labs(x = "Sample mean price per night (dollars)", y = "Count") +
   theme(text = element_text(size = 12))
@@ -915,12 +915,12 @@ boot_est_dist_limits <- boot_est_dist +
     xlim(min_x(sampling_dist), max_x(sampling_dist)) 
 
 annotated_boot_est_dist <- boot_est_dist_limits + 
-  geom_vline(xintercept = mean(boot20000_means$mean), col = "red") +
+  geom_vline(xintercept = mean(boot20000_means$mean_price), col = "red") +
   annotate("text",
     x = max_x(sampling_dist), y = max_count(boot_est_dist_limits), 
     vjust = 1, 
     hjust = 1, 
-    label = paste("mean = ", round(mean(boot20000_means$mean), 1))) 
+    label = paste("mean = ", round(mean(boot20000_means$mean_price), 1))) 
 grid.arrange(annotated_sampling_dist + ggtitle("Sampling distribution"),
              annotated_boot_est_dist +  ggtitle("Bootstrap distribution"),
              ncol = 2
@@ -936,7 +936,7 @@ second important point is that the means of these two distributions are
 different. The sampling distribution is centered at 
 \$`r round(mean(airbnb$price),2)`, the population mean value. However, the bootstrap
 distribution is centered at the original sample's mean price per night, 
-\$`r round(mean(boot20000_means$mean), 2)`. Because we are resampling from the
+\$`r round(mean(boot20000_means$mean_price), 2)`. Because we are resampling from the
 original sample repeatedly, we see that the bootstrap distribution is centered
 at the original sample's mean value (unlike the sampling distribution of the
 sample mean, which is centered at the population parameter value). 
@@ -1121,7 +1121,7 @@ To do this in R, we can use the `quantile()` function:
 
 ```{r 11-bootstrapping8, echo = T, message = FALSE, warning = FALSE}
 bounds <- boot20000_means |>
-  select(mean) |>
+  select(mean_price) |>
   pull() |>
   quantile(c(0.025, 0.975))
 
