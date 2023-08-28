@@ -308,7 +308,7 @@ calculate the mean of the sample proportions.  \index{sampling distribution!shap
 
 ```{r 11-example-proportions8, echo = TRUE, message = FALSE, warning = FALSE}
 sample_estimates |>
-  summarize(mean = mean(sample_proportion))
+  summarize(mean_proportion = mean(sample_proportion))
 ```
 
 We notice that the sample proportions are centered around the population
@@ -356,13 +356,13 @@ the average price per night for all the Airbnb listings.
 
 ```{r 11-example-means-popmean, echo = TRUE, message = FALSE, warning = FALSE}
 population_parameters <- airbnb |>
-  summarize(pop_mean = mean(price))
+  summarize(mean_price = mean(price))
 
 population_parameters
 ```
 
 The price per night of all Airbnb rentals in Vancouver, BC 
-is \$`r round(population_parameters$pop_mean,2)`, on average. This value is our
+is \$`r round(population_parameters$mean_price,2)`, on average. This value is our
 population parameter since we are calculating it using the population data. \index{population!parameter}
 
 Now suppose we did not have access to the population data (which is usually the
@@ -392,18 +392,18 @@ sample_distribution <- ggplot(one_sample, aes(price)) +
 sample_distribution
 
 estimates <- one_sample |>
-  summarize(sample_mean = mean(price))
+  summarize(mean_price = mean(price))
 
 estimates
 ```
 
 The average value of the sample of size 40 
-is \$`r round(estimates$sample_mean, 2)`.  This 
+is \$`r round(estimates$mean_price, 2)`.  This 
 number is a point estimate for the mean of the full population.
 Recall that the population mean was 
-\$`r round(population_parameters$pop_mean,2)`. So our estimate was fairly close to
+\$`r round(population_parameters$mean_price,2)`. So our estimate was fairly close to
 the population parameter: the mean was about 
-`r round(100*abs(estimates$sample_mean - population_parameters$pop_mean)/population_parameters$pop_mean, 1)`% 
+`r round(100*abs(estimates$mean_price - population_parameters$mean_price)/population_parameters$mean_price, 1)`% 
 off.  Note that we usually cannot compute the estimate's accuracy in practice
 since we do not have access to the population parameter; if we did, we wouldn't
 need to estimate it!
@@ -428,11 +428,11 @@ distribution of sample means for samples of size 40.
 ```{r 11-example-means4, echo = TRUE, message = FALSE, fig.pos = "H", out.extra="", warning = FALSE, fig.cap= "Sampling distribution of the sample means for sample size of 40.", fig.height = 3.5, fig.width = 4.5}
 sample_estimates <- samples |>
   group_by(replicate) |>
-  summarize(sample_mean = mean(price))
+  summarize(mean_price = mean(price))
 
 sample_estimates
 
-sampling_distribution_40 <- ggplot(sample_estimates, aes(x = sample_mean)) +
+sampling_distribution_40 <- ggplot(sample_estimates, aes(x = mean_price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   labs(x = "Sample mean price per night (dollars)", y = "Count") +
   theme(text = element_text(size = 12))
@@ -442,12 +442,12 @@ sampling_distribution_40
 
 In Figure \@ref(fig:11-example-means4), the sampling distribution of the mean
 has one peak and is \index{sampling distribution!shape} bell-shaped. Most of the estimates are between 
-about  \$`r round(quantile(sample_estimates$sample_mean)[2], -1)` and 
-\$`r round(quantile(sample_estimates$sample_mean)[4], -1)`; but there are
+about  \$`r round(quantile(sample_estimates$mean_price)[2], -1)` and 
+\$`r round(quantile(sample_estimates$mean_price)[4], -1)`; but there are
 a good fraction of cases outside this range (i.e., where the point estimate was
 not close to the population parameter). So it does indeed look like we were
 quite lucky when we estimated the population mean with only 
-`r round(100*abs(estimates$sample_mean - population_parameters$pop_mean)/population_parameters$pop_mean, 1)`% error.
+`r round(100*abs(estimates$mean_price - population_parameters$mean_price)/population_parameters$mean_price, 1)`% error.
 
 Let's visualize the population distribution, distribution of the sample, and
 the sampling distribution on one plot to compare them in Figure
@@ -465,9 +465,9 @@ sample, which will keep the average from being too extreme.
 <!---
 ```{r 11-example-means4.5}
 sample_estimates |>
-  summarize(mean_of_sample_means = mean(sample_mean))
+  summarize(mean_of_sample_means = mean(mean_price))
 ```
-Notice that the mean of the sample means is \$`r round(mean(sample_estimates$sample_mean),2)`. Recall that the population mean
+Notice that the mean of the sample means is \$`r round(mean(sample_estimates$mean_price),2)`. Recall that the population mean
 was \$`r round(mean(airbnb$price),2)`. 
 -->
 
@@ -497,28 +497,28 @@ distribution with a red vertical line.
 ## Sampling n = 20, 50, 100, 500
 sample_estimates_20 <- rep_sample_n(airbnb, size = 20, reps = 20000) |>
   group_by(replicate) |>
-  summarize(sample_mean = mean(price))
+  summarize(mean_price = mean(price))
 
 sample_estimates_50 <- rep_sample_n(airbnb, size = 50, reps = 20000) |>
   group_by(replicate) |>
-  summarize(sample_mean = mean(price))
+  summarize(mean_price = mean(price))
 
 sample_estimates_100 <- rep_sample_n(airbnb, size = 100, reps = 20000) |>
   group_by(replicate) |>
-  summarize(sample_mean = mean(price))
+  summarize(mean_price = mean(price))
 
 sample_estimates_500 <- rep_sample_n(airbnb, size = 500, reps = 20000) |>
   group_by(replicate) |>
-  summarize(sample_mean = mean(price))
+  summarize(mean_price = mean(price))
 
 ## Sampling distribution n = 20
-sampling_distribution_20 <- ggplot(sample_estimates_20, aes(x = sample_mean)) +
+sampling_distribution_20 <- ggplot(sample_estimates_20, aes(x = mean_price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   labs(x = "Sample mean price per night (dollars)", y = "Count") +
   ggtitle("n = 20") 
 
 ## Sampling distribution n = 50
-sampling_distribution_50 <- ggplot(sample_estimates_50, aes(x = sample_mean)) +
+sampling_distribution_50 <- ggplot(sample_estimates_50, aes(x = mean_price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   ylab("Count") +
   xlab("Sample mean price per night (dollars)") +
@@ -526,7 +526,7 @@ sampling_distribution_50 <- ggplot(sample_estimates_50, aes(x = sample_mean)) +
   xlim(min_x(sampling_distribution_20), max_x(sampling_distribution_20))
 
 ## Sampling distribution n = 100
-sampling_distribution_100 <- ggplot(sample_estimates_100, aes(x = sample_mean)) +
+sampling_distribution_100 <- ggplot(sample_estimates_100, aes(x = mean_price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   ylab("Count") +
   xlab("Sample mean price per night (dollars)") +
@@ -534,7 +534,7 @@ sampling_distribution_100 <- ggplot(sample_estimates_100, aes(x = sample_mean)) 
   xlim(min_x(sampling_distribution_20), max_x(sampling_distribution_20))
 
 ## Sampling distribution n = 500
-sampling_distribution_500 <- ggplot(sample_estimates_500, aes(x = sample_mean)) +
+sampling_distribution_500 <- ggplot(sample_estimates_500, aes(x = mean_price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   ylab("Count") +
   xlab("Sample mean price per night (dollars)") +
@@ -544,7 +544,7 @@ sampling_distribution_500 <- ggplot(sample_estimates_500, aes(x = sample_mean)) 
 
 ```{r 11-example-means7,  echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Comparison of sampling distributions, with mean highlighted as a vertical red line."}
 annotated_sampling_dist_20 <- sampling_distribution_20 +
-  geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red") +
+  geom_vline(xintercept = mean(sample_estimates$mean_price), col = "red") +
   xlim(min_x(sampling_distribution_20), max_x(sampling_distribution_20)) +
   ggtitle("n = 20") +
   annotate("text",
@@ -552,49 +552,49 @@ annotated_sampling_dist_20 <- sampling_distribution_20 +
     y = max_count(sampling_distribution_20), 
     hjust = 1, 
     vjust = 1,
-    label = paste("mean = ", round(mean(sample_estimates$sample_mean), 1))
+    label = paste("mean = ", round(mean(sample_estimates$mean_price), 1))
   )+  theme(text = element_text(size = 12), axis.title=element_text(size=12)) 
 #+
 #    annotate("text", x =  max_x(sampling_distribution_20), y = max_count(sampling_distribution_20), hjust = 1, vjust = 3,
-#               label = paste("sd = ", round(sd(sample_estimates$sample_mean), 1)))
+#               label = paste("sd = ", round(sd(sample_estimates$mean_price), 1)))
 
 annotated_sampling_dist_50 <- sampling_distribution_50 +
-  geom_vline(xintercept = mean(sample_estimates_50$sample_mean), col = "red") +
+  geom_vline(xintercept = mean(sample_estimates_50$mean_price), col = "red") +
   ## x limits set the same as n = 20 graph, y is this graph
   annotate("text",
     x = max_x(sampling_distribution_20), 
     y = max_count(sampling_distribution_50), 
     hjust = 1, 
     vjust = 1,
-    label = paste("mean = ", round(mean(sample_estimates_50$sample_mean), 1))
+    label = paste("mean = ", round(mean(sample_estimates_50$mean_price), 1))
   )+  theme(text = element_text(size = 12), axis.title=element_text(size=12))  #+
 # annotate("text", x =  max_x(sampling_distribution_20), y = max_count(sampling_distribution_50), hjust = 1, vjust = 3,
-#                 label = paste("sd = ", round(sd(sample_estimates_50$sample_mean), 1)))
+#                 label = paste("sd = ", round(sd(sample_estimates_50$mean_price), 1)))
 
 annotated_sampling_dist_100 <- sampling_distribution_100 +
-  geom_vline(xintercept = mean(sample_estimates_100$sample_mean), col = "red") +
+  geom_vline(xintercept = mean(sample_estimates_100$mean_price), col = "red") +
   annotate("text",
     x = max_x(sampling_distribution_20), 
     y = max_count(sampling_distribution_100), 
     hjust = 1, 
     vjust = 1,
-    label = paste("mean = ", round(mean(sample_estimates_100$sample_mean), 1))
+    label = paste("mean = ", round(mean(sample_estimates_100$mean_price), 1))
   ) +  theme(text = element_text(size = 12), axis.title=element_text(size=12)) #+
 #    annotate("text", x =  max_x(sampling_distribution_20), y = max_count(sampling_distribution_100), hjust = 1, vjust = 3,
-#               label = paste("sd = ", round(sd(sample_estimates_100$sample_mean), 1)))
+#               label = paste("sd = ", round(sd(sample_estimates_100$mean_price), 1)))
 
 annotated_sampling_dist_500 <- sampling_distribution_500 +
-  geom_vline(xintercept = mean(sample_estimates_500$sample_mean), col = "red") +
+  geom_vline(xintercept = mean(sample_estimates_500$mean_price), col = "red") +
   annotate("text",
     x = max_x(sampling_distribution_20), 
     y = max_count(sampling_distribution_500), 
     hjust = 1, 
     vjust = 1,
-    label = paste("mean = ", round(mean(sample_estimates_500$sample_mean), 1))
+    label = paste("mean = ", round(mean(sample_estimates_500$mean_price), 1))
   ) +  theme(text = element_text(size = 12), axis.title=element_text(size=12)) 
 #+
 #    annotate("text", x =  max_x(sampling_distribution_20), y = max_count(sampling_distribution_500), hjust = 1, vjust = 3,
-#               label = paste("sd = ", round(sd(sample_estimates_500$sample_mean), 1)))
+#               label = paste("sd = ", round(sd(sample_estimates_500$mean_price), 1)))
 
 grid.arrange(annotated_sampling_dist_20,
   annotated_sampling_dist_50,
@@ -771,7 +771,7 @@ and use a bootstrap distribution using just a single sample from the population.
 Once again, suppose we are
 interested in estimating the population mean price per night of all Airbnb
 listings in Vancouver, Canada, using a single sample size of 40.
-Recall our point estimate was \$`r round(estimates$sample_mean, 2)`. The
+Recall our point estimate was \$`r round(estimates$mean_price, 2)`. The
 histogram of prices in the sample is displayed in Figure \@ref(fig:11-bootstrapping1).
 
 ```{r, echo = F, message = F, warning = F}
@@ -791,7 +791,7 @@ one_sample_dist
 ```
 
 The histogram for the sample is skewed, with a few observations out to the right. The
-mean of the sample is \$`r round(estimates$sample_mean, 2)`.
+mean of the sample is \$`r round(estimates$mean_price, 2)`.
 Remember, in practice, we usually only have this one sample from the population. So
 this sample and estimate are the only data we can work with.
 
@@ -815,7 +815,7 @@ boot1_dist <- ggplot(boot1, aes(price)) +
 
 boot1_dist
 
-summarize(boot1, mean = mean(price))
+summarize(boot1, mean_price = mean(price))
 ```
 
 Notice in Figure \@ref(fig:11-bootstrapping3) that the histogram of our bootstrap sample
@@ -861,7 +861,7 @@ these six replicates.
 ```{r 11-bootstrapping-six-bootstrap-samples-means, echo = TRUE, message = FALSE, warning = FALSE}
 six_bootstrap_samples |>
   group_by(replicate) |>
-  summarize(mean = mean(price))
+  summarize(mean_price = mean(price))
 ```
 
 We can see that the bootstrap sample distributions and the sample means are
@@ -874,12 +874,12 @@ our point estimate to behave if we took another sample.
 ```{r 11-bootstrapping5, echo = TRUE, message = FALSE, warning = FALSE, fig.pos = "H", out.extra="", fig.cap = "Distribution of the bootstrap sample means.", fig.height = 3.5, fig.width = 4.5}
 boot20000_means <- boot20000 |>
   group_by(replicate) |>
-  summarize(mean = mean(price))
+  summarize(mean_price = mean(price))
 
 boot20000_means
 tail(boot20000_means)
 
-boot_est_dist <- ggplot(boot20000_means, aes(x = mean)) +
+boot_est_dist <- ggplot(boot20000_means, aes(x = mean_price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   labs(x = "Sample mean price per night (dollars)", y = "Count") +
   theme(text = element_text(size = 12))
@@ -895,32 +895,32 @@ samples <- rep_sample_n(airbnb, size = 40, reps = 20000)
 
 sample_estimates <- samples |>
   group_by(replicate) |>
-  summarize(sample_mean = mean(price))
+  summarize(mean_price = mean(price))
 
-sampling_dist <- ggplot(sample_estimates, aes(x = sample_mean)) +
+sampling_dist <- ggplot(sample_estimates, aes(x = mean_price)) +
   geom_histogram(fill = "dodgerblue3", color = "lightgrey") +
   ylab("Count") +
   xlab("Sample mean price per night (dollars)")  
 
 annotated_sampling_dist <- sampling_dist +  
   xlim(min_x(sampling_dist), max_x(sampling_dist)) + 
-  geom_vline(xintercept = mean(sample_estimates$sample_mean), col = "red") +
+  geom_vline(xintercept = mean(sample_estimates$mean_price), col = "red") +
   annotate("text",
     x = max_x(sampling_dist), y = max_count(sampling_dist), 
     hjust = 1, 
     vjust = 1,
-    label = paste("mean = ", round(mean(sample_estimates$sample_mean), 1)))
+    label = paste("mean = ", round(mean(sample_estimates$mean_price), 1)))
 
 boot_est_dist_limits <- boot_est_dist +   
     xlim(min_x(sampling_dist), max_x(sampling_dist)) 
 
 annotated_boot_est_dist <- boot_est_dist_limits + 
-  geom_vline(xintercept = mean(boot20000_means$mean), col = "red") +
+  geom_vline(xintercept = mean(boot20000_means$mean_price), col = "red") +
   annotate("text",
     x = max_x(sampling_dist), y = max_count(boot_est_dist_limits), 
     vjust = 1, 
     hjust = 1, 
-    label = paste("mean = ", round(mean(boot20000_means$mean), 1))) 
+    label = paste("mean = ", round(mean(boot20000_means$mean_price), 1))) 
 grid.arrange(annotated_sampling_dist + ggtitle("Sampling distribution"),
              annotated_boot_est_dist +  ggtitle("Bootstrap distribution"),
              ncol = 2
@@ -936,7 +936,7 @@ second important point is that the means of these two distributions are
 different. The sampling distribution is centered at 
 \$`r round(mean(airbnb$price),2)`, the population mean value. However, the bootstrap
 distribution is centered at the original sample's mean price per night, 
-\$`r round(mean(boot20000_means$mean), 2)`. Because we are resampling from the
+\$`r round(mean(boot20000_means$mean_price), 2)`. Because we are resampling from the
 original sample repeatedly, we see that the bootstrap distribution is centered
 at the original sample's mean value (unlike the sampling distribution of the
 sample mean, which is centered at the population parameter value). 
@@ -1121,7 +1121,7 @@ To do this in R, we can use the `quantile()` function:
 
 ```{r 11-bootstrapping8, echo = T, message = FALSE, warning = FALSE}
 bounds <- boot20000_means |>
-  select(mean) |>
+  select(mean_price) |>
   pull() |>
   quantile(c(0.025, 0.975))
 
