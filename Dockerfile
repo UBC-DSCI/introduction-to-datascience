@@ -1,50 +1,46 @@
 # Copyright (c) UBC-DSCI Development Team.
-FROM rocker/verse:4.1.1
+FROM rocker/verse:4.3.1
 
-# install system dependencies
-RUN apt-get update --fix-missing \
-	&& apt-get install -y \
-		ca-certificates \
-    	libglib2.0-0 \
-	 	libxext6 \
-	   	libsm6  \
-	   	libxrender1 \
-		libxml2-dev
+RUN apt-get update --fix-missing
+RUN Rscript -e "update.packages(ask = FALSE)"
+RUN install2.r --error magick \
+                       cowplot \
+                       kableExtra \
+                       plotly \
+                       tidymodels \
+                       tidyclust \
+                       kknn \
+                       ggpubr \
+                       ggforce \
+                       themis \
+                       egg \
+                       fontawesome \
+                       xfun \
+                       tinytex \
+                       reticulate \
+                       rsvg
 
-# install libGLPK, gdal-config, libunits
-RUN apt-get install -y libglpk-dev gdal-bin libgdal-dev libudunits2-0 libudunits2-dev
-
-# install R packages
-RUN apt-get update -qq && install2.r --error \
-    --deps TRUE \
-    tidyverse \
-    e1071 \
-    caret \
-    plotly \
-    gridExtra \
-    GGally \
-    cowplot \
-    svglite \
-    tidymodels \
-    reticulate \ 
-    kknn \
-    fontawesome \
-    rsvg \
-    reticulate \
-    kableExtra \
-    egg \
-    ggpubr
-
+RUN Rscript -e "devtools::install_github('ttimbers/canlang@0.0.1')"
 RUN Rscript -e "reticulate::install_miniconda()"
 RUN Rscript -e "reticulate::conda_install('r-reticulate', 'python-kaleido')"
 RUN Rscript -e "reticulate::conda_install('r-reticulate', 'plotly', channel = 'plotly')"
+# necessary for tuning number of clusters in Kmeans
+# see https://github.com/tidymodels/tidyclust/issues/127
+RUN apt install -y libgsl27
 
-RUN Rscript -e "devtools::install_github('mountainMath/cancensus@5a5d61759d477986d40dd87fa9a6532ff6037efe')"
-RUN Rscript -e "devtools::install_github('ttimbers/canlang@0.0.1')"
+# increase the ImageMagick resource limits
+# this relies on the fact that there is only one place where each of these sizes are used in policy.xml
+# (256MiB is for memory, 512MiB is for map, 1GiB is for disk)
+RUN sed -i 's/256MiB/8GiB/' /etc/ImageMagick-6/policy.xml
+RUN sed -i 's/512MiB/8GiB/' /etc/ImageMagick-6/policy.xml
+RUN sed -i 's/1GiB/8GiB/' /etc/ImageMagick-6/policy.xml
 
-# install LaTeX packages
-RUN tlmgr install amsmath \
+## install LaTeX packages
+RUN tlmgr install \
+    amsmath \
     latex-amsmath-dev \
+    iftex \
+    euenc \
     fontspec \
     tipa \
     unicode-math \
@@ -54,38 +50,20 @@ RUN tlmgr install amsmath \
     kvsetkeys \
     etoolbox \
     xcolor \
-    auxhook \
-    bigintcalc \
-    bitset \
-    etexcmds \
-    gettitlestring \
-    hycolor \
-    hyperref \
-    intcalc \
-    kvdefinekeys \
-    letltxmacro \
-    pdfescape \
-    refcount \
-    rerunfilecheck \
-    stringenc \
-    uniquecounter \
-    zapfding \
-    pdftexcmds \
-    infwarerr \
     fancyvrb \
     framed \
     booktabs \
     mdwtools \
-    grffile \
+    float \
     caption \
     sourcecodepro \
+    hyperref \
     amscls \
-    natbib \
-    float \
     multirow \
     wrapfig \
     colortbl \
     pdflscape \
+    tabu \
     varwidth \
     threeparttable \
     threeparttablex \
@@ -93,17 +71,7 @@ RUN tlmgr install amsmath \
     trimspaces \
     ulem \
     makecell \
-    tabu
-
-# increase the ImageMagick resource limits
-# this relies on the fact that there is only one place where each of these sizes are used in policy.xml
-# (256MiB is for memory, 512MiB is for map, 1GiB is for disk)
-RUN sed -i 's/256MiB/4GiB/' /etc/ImageMagick-6/policy.xml
-RUN sed -i 's/512MiB/4GiB/' /etc/ImageMagick-6/policy.xml
-RUN sed -i 's/1GiB/4GiB/' /etc/ImageMagick-6/policy.xml
-
-# install version of tinytex with fixed index double-compile (no release for this yet, so install from commit hash)
-RUN Rscript -e "remove.packages('xfun')"
-RUN Rscript -e "devtools::install_github('yihui/xfun@v0.29')"
-RUN Rscript -e "remove.packages('tinytex')"
-RUN Rscript -e "devtools::install_github('yihui/tinytex@5d211d43944d322fca49e5f0d97f34b9c46ff9ab')"
+    natbib \
+    pdftexcmds \
+    infwarerr \
+    fontawesome5

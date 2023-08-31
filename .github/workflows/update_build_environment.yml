@@ -2,7 +2,7 @@ name: Rebuild and publish new ubcdsci/intro-to-ds image on DockerHub
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - Dockerfile
 jobs:
@@ -11,11 +11,11 @@ jobs:
     permissions:
       contents: write
     steps:
-    - name: Checkout master
+    - name: Checkout main
       uses: actions/checkout@v3
       with:
         fetch-depth: '0'
-        ref: 'master'
+        ref: 'main'
     - name: Rebuild and publish image
       id: rebuild
       uses: elgohr/Publish-Docker-Github-Action@v5
@@ -29,7 +29,7 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git pull origin master
+        git pull origin main
         sed 's/ubcdsci\/intro-to-ds:[[:alnum:]]\+/ubcdsci\/intro-to-ds:${{ steps.rebuild.outputs.snapshot-tag }}/g' build_html.sh > build_html.tmp && mv build_html.tmp build_html.sh
         chmod u+x build_html.sh
         git add build_html.sh
@@ -38,13 +38,21 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git pull origin master
+        git pull origin main
         sed 's/ubcdsci\/intro-to-ds:[[:alnum:]]\+/ubcdsci\/intro-to-ds:${{ steps.rebuild.outputs.snapshot-tag }}/g' build_pdf.sh > build_pdf.tmp && mv build_pdf.tmp build_pdf.sh
         chmod u+x build_pdf.sh
         git add build_pdf.sh
         git commit -m "update build_pdf.sh script with new docker image"
+    - name: Update docker-compose.yml script
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git pull origin main
+        sed 's/ubcdsci\/intro-to-ds:[[:alnum:]]\+/ubcdsci\/intro-to-ds:${{ steps.rebuild.outputs.snapshot-tag }}/g' docker-compose.yml > docker-compose.tmp && mv docker-compose.tmp docker-compose.yml
+        git add docker-compose.yml
+        git commit -m "update docker-compose.yml script with new docker image"
     - name: Push changes to build scripts
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: 'master'
+        branch: 'main'
