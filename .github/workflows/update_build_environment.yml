@@ -1,8 +1,7 @@
 name: Rebuild and publish new ubcdsci/intro-to-ds image on DockerHub
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    types: [opened, synchronize]
     paths:
       - Dockerfile
 jobs:
@@ -11,12 +10,30 @@ jobs:
     permissions:
       contents: write
     steps:
-    - name: Checkout main
+    - name: Checkout PR branch
       uses: actions/checkout@v3
       with:
         fetch-depth: '0'
-        ref: 'main'
+        ref: ${{ github.head_ref }}
+    - name: Check if Dockerfile needs to be rebuilt
+      id: check-stale
+      run: |
+        echo "GitHub PR action type: ${{ github.event.action }}"
+        echo "Checking if the PR modifies the Dockerfile"
+        if [[ ${{ github.event.action }} == 'opened' ]]; then
+            echo "PR just opened, and it edits the Dockerfile, so rebuilding the image."
+            echo "stale_dockerfile=true" >> "$GITHUB_OUTPUT"
+        else
+            if git diff --quiet ${{ github.event.before }} ${{ github.event.after }} Dockerfile; then
+                echo "PR synchronized, but Dockerfile was not edited. Not rebuilding the image."
+                echo "stale_dockerfile=false" >> "$GITHUB_OUTPUT"
+            else
+                echo "PR synchronized, and Dockerfile was edited, so rebuilding the image."
+                echo "stale_dockerfile=true" >> "$GITHUB_OUTPUT"
+            fi
+        fi
     - name: Rebuild and publish image
+      if: ${{steps.check-stale.outputs.stale_dockerfile == true }}
       id: rebuild
       uses: elgohr/Publish-Docker-Github-Action@v5
       with:
@@ -26,33 +43,37 @@ jobs:
         dockerfile: Dockerfile
         snapshot: true
     - name: Update build_html.sh script
+      if: ${{steps.check-stale.outputs.stale_dockerfile == true }}
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git pull origin main
+        git pull origin ${{ github.head_ref }}
         sed 's/ubcdsci\/intro-to-ds:[[:alnum:]]\+/ubcdsci\/intro-to-ds:${{ steps.rebuild.outputs.snapshot-tag }}/g' build_html.sh > build_html.tmp && mv build_html.tmp build_html.sh
         chmod u+x build_html.sh
         git add build_html.sh
         git commit -m "update build_html.sh script with new docker image"
     - name: Update build_pdf.sh script
+      if: ${{steps.check-stale.outputs.stale_dockerfile == true }}
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git pull origin main
+        git pull origin ${{ github.head_ref }}
         sed 's/ubcdsci\/intro-to-ds:[[:alnum:]]\+/ubcdsci\/intro-to-ds:${{ steps.rebuild.outputs.snapshot-tag }}/g' build_pdf.sh > build_pdf.tmp && mv build_pdf.tmp build_pdf.sh
         chmod u+x build_pdf.sh
         git add build_pdf.sh
         git commit -m "update build_pdf.sh script with new docker image"
     - name: Update docker-compose.yml script
+      if: ${{steps.check-stale.outputs.stale_dockerfile == true }}
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git pull origin main
+        git pull origin ${{ github.head_ref }}
         sed 's/ubcdsci\/intro-to-ds:[[:alnum:]]\+/ubcdsci\/intro-to-ds:${{ steps.rebuild.outputs.snapshot-tag }}/g' docker-compose.yml > docker-compose.tmp && mv docker-compose.tmp docker-compose.yml
         git add docker-compose.yml
         git commit -m "update docker-compose.yml script with new docker image"
     - name: Push changes to build scripts
+      if: ${{steps.check-stale.outputs.stale_dockerfile == true }}
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: 'main'
+        branch: ${{ github.head_ref }}
