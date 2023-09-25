@@ -68,7 +68,7 @@ By the end of the chapter, readers will be able to do the following:
 - Use `write_csv` to save a data frame to a `.csv` file.
 - (*Optional*) Obtain data using **a**pplication **p**rogramming **i**nterfaces (APIs) and web scraping.
     - Read HTML source code from a URL using the `rvest` package.
-    - Read data from the Twitter API using the `rtweet` package.
+    - Read data from the NASA "Astronomy Picture of the Day" API using the `httr2` package.
     - Compare downloading tabular data from a plain text file (e.g., `.csv`), accessing data from an API, and scraping the HTML source code from a website.
 
 ## Absolute and relative file paths
@@ -866,8 +866,8 @@ be presented (e.g., colors, layouts, fonts etc.).
 
 This subsection will show you the basics of both web scraping
 with the [`rvest` R package](https://rvest.tidyverse.org/) [@rvest]
-and accessing the Twitter API
-using the [`rtweet` R package](https://github.com/ropensci/rtweet) [@rtweet].
+and accessing the NASA "Astronomy Picture of the Day" API
+using the [`httr2` R package](https://httr2.r-lib.org/) [@httr2].
 
 ### Web scraping
 
@@ -1135,124 +1135,176 @@ is that data owners have much more control over the data they provide to users. 
 web scraping, there is no consistent way to access an API across websites. Every website typically
 has its own API designed especially for its own use case. Therefore we will just provide one example
 of accessing data through an API in this book, with the hope that it gives you enough of a basic
-idea that you can learn how to use another API if needed.
+idea that you can learn how to use another API if needed.  In particular, in this book we will show you the basics
+of how to use the `httr2` package in R\index{API!httr2}\index{httr2}\index{NASA} to access data from the NASA "Astronomy Picture
+of the Day" API (a great source of desktop backgrounds, by the way&mdash;take a look at the stunning
+picture of the Rho-Ophiuchi cloud complex in Figure \@ref(fig:NASA-API-Rho-Ophiuchi) from July 13, 2023!).
 
-In particular, in this book we will show you the basics of how to use
-the `rtweet` package in R\index{API!rtweet}\index{rtweet}\index{Twitter} to access
-data from the Twitter API. One nice feature of this particular 
-API is that you don't need  a special *token* \index{API!token} to access it; you simply need to 
-make an account with them. Your access to the data will then be authenticated and controlled through
-your account username and password. If you have a Twitter 
-account already (or are willing to make one), you can follow
-along with the examples that we show here. To get started, load the `rtweet` package:
+(ref:NASA-API-Rho-Ophiuchi) The James Webb Space Telescope's NIRCam image of the Rho Ophiuchi molecular cloud complex [@rhoophiuchi].
 
-```r
-library(rtweet)
+```{r NASA-API-Rho-Ophiuchi, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "(ref:NASA-API-Rho-Ophiuchi)", fig.retina = 2, out.width="60%"}
+knitr::include_graphics("img/reading/NASA-API-Rho-Ophiuchi.png")
 ```
 
-This package provides an extensive set of functions to search 
-Twitter for tweets, users, their followers, and more. 
-Let's construct a small data set of the last 400 tweets and 
-retweets from the [\@tidyverse](https://twitter.com/tidyverse) account. A few of the most recent tweets
-are shown in Figure \@ref(fig:01-tidyverse-twitter).
+First, you will need to visit the [NASA APIs page](https://api.nasa.gov/) and generate an API key.
+Note that a valid email address is required to
+associate with the key. The signup form looks something like Figure \@ref(fig:NASA-API-signup).
+After filling out the basic information, you will receive the token via email.
+Make sure to store the key in a safe place, and keep it private.
 
-```{r 01-tidyverse-twitter, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "The tidyverse account Twitter feed.", fig.retina = 2, out.width="100%"}
-knitr::include_graphics("img/reading/tidyverse_twitter.png")
+```{r NASA-API-signup, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Generating the API access token for the NASA API", fig.retina = 2, out.width="100%"}
+knitr::include_graphics("img/reading/NASA-API-signup.png")
 ```
 
 **Stop! Think about your API usage carefully!**
 
 When you access an API, you are initiating a transfer of data from a web server
 to your computer. Web servers are expensive to run and do not have infinite resources.
-If you try to ask for *too much data* at once, you can use up a huge amount of the server's bandwidth. 
-If you try to ask for data *too frequently*&mdash;e.g., if you 
+If you try to ask for *too much data* at once, you can use up a huge amount of the server's bandwidth.
+If you try to ask for data *too frequently*&mdash;e.g., if you
 make many requests to the server in quick succession&mdash;you can also bog the server down and make
 it unable to talk to anyone else. Most servers have mechanisms to revoke your access if you are not
 careful, but you should try to prevent issues from happening in the first place by being extra careful
 with how you write and run your code. You should also keep in mind that when a website owner
 grants you API access, they also usually specify a limit (or *quota*) of how much data you can ask for.
-Be careful not to overrun your quota! In this example, we should take a look at
- [the Twitter website](https://developer.twitter.com/en/docs/twitter-api/rate-limits) to see what limits
-we should abide by when using the API. 
+Be careful not to overrun your quota! So *before* we try to use the API, we will first visit
+[the NASA website](https://api.nasa.gov/) to see what limits we should abide by when using the API.
+These limits are outlined in Figure \@ref(fig:NASA-API-limits).
 
-#### Using `rtweet` {-}
+```{r NASA-API-limits, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "The NASA website specifies an hourly limit of 1,000 requests.", fig.retina = 2, out.width="100%"}
+knitr::include_graphics("img/reading/NASA-API-limits.png")
+```
 
-After checking the Twitter website, it seems like asking for 400 tweets one time is acceptable.
-So we can use the `get_timelines` function to ask for the last 400 tweets from the [\@tidyverse](https://twitter.com/tidyverse) account.
+After checking the NASA website, it seems like we can send at most 1,000 requests per hour.
+That should be more than enough for our purposes in this section.
+
+#### Accessing the NASA API {-}
+
+The NASA API is what is known as an *HTTP API*: this is a particularly common
+kind of API, where you can obtain data simply by accessing a
+particular URL as if it were a regular website.  To make a query to the NASA
+API, we need to specify three things.  First, we specify the URL *endpoint* of
+the API, which is simply a URL that helps the remote server understand which
+API you are trying to access. NASA offers a variety of APIs, each with its own
+endpoint; in the case of the NASA "Astronomy Picture of the Day" API, the URL
+endpoint is `https://api.nasa.gov/planetary/apod`, as shown at the top of
+Figure \@ref(fig:NASA-API-parameters). Second, we write `?`, which denotes that a
+list of *query parameters* will follow. And finally, we specify a list of
+query parameters of the form `parameter=value`, separated by `&` characters. The NASA
+"Astronomy Picture of the Day" API accepts the parameters shown in
+Figure \@ref(fig:NASA-API-parameters). 
+
+```{r NASA-API-parameters, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = 'The set of parameters that you can specify when querying the NASA "Astronomy Picture of the Day" API, along with syntax, default settings, and a description of each.', fig.retina = 2, out.width="100%"}
+knitr::include_graphics("img/reading/NASA-API-parameters.png")
+```
+
+So for example, to obtain the image of the day
+from July 13, 2023, the API query would have two parameters: `api_key=YOUR_API_KEY`
+and `date=2023-07-13`.
+```
+https://api.nasa.gov/planetary/apod?api_key=YOUR_API_KEY&date=2023-07-13
+```
+If you try putting this URL into your web browser, you'll actually find that the server
+responds to your request with some text:
+
+```json
+{"date":"2023-07-13","explanation":"A mere 390 light-years away, Sun-like stars
+and future planetary systems are forming in the Rho Ophiuchi molecular cloud
+complex, the closest star-forming region to our fair planet. The James Webb
+Space Telescope's NIRCam peered into the nearby natal chaos to capture this
+infrared image at an inspiring scale. The spectacular cosmic snapshot was
+released to celebrate the successful first year of Webb's exploration of the
+Universe. The frame spans less than a light-year across the Rho Ophiuchi region
+and contains about 50 young stars. Brighter stars clearly sport Webb's
+characteristic pattern of diffraction spikes. Huge jets of shocked molecular
+hydrogen blasting from newborn stars are red in the image, with the large,
+yellowish dusty cavity carved out by the energetic young star near its center.
+Near some stars in the stunning image are shadows cast by their protoplanetary
+disks.","hdurl":"https://apod.nasa.gov/apod/image/2307/STScI-01_RhoOph.png",
+"media_type":"image","service_version":"v1","title":"Webb's
+Rho Ophiuchi","url":"https://apod.nasa.gov/apod/image/2307/STScI-01_RhoOph1024.png"}
+```
+
+Neat! There is definitely some data there, but it's a bit hard to
+see what it all is. As it turns out, this is a common format for data called
+*JSON* (JavaScript Object Notation). We won't encounter this kind of data much in this book,
+but for now you can interpret this data as `key : value` pairs separated by
+commas. For example, if you look closely, you'll see that the first entry is
+`"date":"2023-07-13"`, which indicates that we indeed successfully received
+data corresponding to July 13, 2023.
+
+So now the job is to do all of this programmatically in R. We will load
+the `httr2` package, and construct the query using the `request` function, which takes a single URL argument;
+you will recognize the same query URL that we pasted into the browser earlier.
+We will then send the query using the `req_perform` function, and finally
+obtain a JSON representation of the response using the `resp_body_json` function.
+
+<!-- we have disabled the below code for reproducibility, with hidden setting 
+of the nasa_data object. But you can reproduce this using the DEMO_KEY key -->
+```r
+library(httr2)
+
+req <- request("https://api.nasa.gov/planetary/apod?api_key=YOUR_API_KEY&date=2023-07-13")
+response <- req_perform(req)
+nasa_data <- resp_body_json(response)
+nasa_data
+```
+
+```{r hidden_query, echo = FALSE, warning = FALSE, message = FALSE}
+library(jsonlite)
+
+nasa_data <- read_json("data/nasa.json")
+
+# the last entry in the stored data is July 13, 2023, so print that
+nasa_data[[74]] 
+```
+
+We can obtain more records at once by using the `start_date` and `end_date` parameters, as
+shown in the table of parameters in \@ref(fig:NASA-API-parameters).
+Let's obtain all the records between May 1, 2023, and July 13, 2023, and store the result
+in an object called `nasa_data`; now the response
+will take the form of an R *list* (you'll learn more about these in Chapter \@ref(wrangling)),
+with one item similar to the above for each of the 74 days between the start and end dates:
 
 ```r
-tidyverse_tweets <- get_timelines('tidyverse', n=400)
+req <- request("https://api.nasa.gov/planetary/apod?api_key=YOUR_API_KEY&start_date=2023-05-01&end_date=2023-07-13")
+response <- req_perform(req)
+nasa_data <- resp_body_json(response)
+length(nasa_data)
 ```
 
-When you call the `get_timelines` for the first time (or any other `rtweet` function that accesses the API), 
-you will see a browser pop-up that looks something like Figure \@ref(fig:01-tidyverse-authorize).
-
-(ref:01-tidyverse-authorize) The `rtweet` authorization prompt.
-
-```{r 01-tidyverse-authorize, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "(ref:01-tidyverse-authorize)", fig.retina = 2, out.width="100%"}
-knitr::include_graphics("img/reading/authorize_question.png")
+```{r hidden_query_2, echo = FALSE, warning = FALSE, message = FALSE}
+library(dplyr)
+length(nasa_data)
 ```
 
-This is the `rtweet` package asking you to provide your own Twitter account's login information.
-When `rtweet` talks to the Twitter API, it uses your account information to authenticate requests;
-Twitter then can keep track of how much data you're asking for, and how frequently you're asking.
-If you want to follow along with this example using your own Twitter account, you should read
-over the list of permissions you are granting `rtweet` *very carefully* and make sure you are comfortable
-with it. Note that `rtweet` can be used to manage most aspects of your account (make posts, follow others, etc.),
-which is why `rtweet` asks for such extensive permissions.
-If you decide to allow `rtweet` to talk to the Twitter API using your account information, then 
-input your username and password and hit "Sign In." Twitter will probably send you an email to say
-that there was an unusual login attempt on your account, and in that case you will have to take
-the one-time code they send you and provide that to the `rtweet` login page too. 
+For further data processing using the techniques in this book, you'll need to turn this list of items
+into a data frame. Here we will extract the `date`, `title`, `copyright`, and `url` variables
+from the JSON data, and construct a data frame using the extracted information.
 
-> **Note:** Every API has its own way to authenticate users when they try to access data. Many APIs require you to
-> sign up to receive a *token*, which is a secret password that you input into the R package (like `rtweet`) 
-> that you are using to access the API. 
+> **Note:** Understanding this code is not required for the remainder of the textbook. It is included for those
+> readers who would like to parse JSON data into a data frame in their own data analyses.
 
-With the authentication setup out of the way, let's run the `get_timelines` function again to actually access
-the API and take a look at what was returned:
-
-```r
-tidyverse_tweets <- get_timelines('tidyverse', n = 400)
-tidyverse_tweets
+```{r extract_data_json}
+nasa_df_all <- tibble(bind_rows(lapply(nasa_data, as.data.frame.list)))
+nasa_df <- select(nasa_df_all, date, title, copyright, url)
+nasa_df
 ```
 
-```{r 01-reading-hidden-load-tweets, echo = FALSE, message = FALSE, warning = FALSE}
-tidyverse_tweets <- read_csv("data/tweets.csv")
-tidyverse_tweets
-```
 
-The data has quite a few variables! (Notice that the output above shows that we
-have a data table with 293 rows and 71 columns). Let's reduce this down to a
-few variables of interest: `created_at`,  `retweet_screen_name`, `is_retweet`,
-and `text`.
-
-```{r 01-select-tweets, message = FALSE, warning = FALSE}
-tidyverse_tweets <- select(tidyverse_tweets, 
-                           created_at, 
-                           retweet_screen_name,
-                           is_retweet, 
-                           text)
-
-tidyverse_tweets
-```
-
-If you look back up at the image of the [\@tidyverse](https://twitter.com/tidyverse) Twitter page, you will
-recognize the text of the most recent few tweets in the above data frame.  In
-other words, we have successfully created a small data set using the Twitter
-API&mdash;neat! This data is also quite different from what we obtained from web scraping;
-it is already well-organized into a `tidyverse` data frame (although not *every* API
-will provide data in such a nice format).
- From this point onward, the `tidyverse_tweets` data frame is stored on your
+Success&mdash;we have created a small data set using the NASA
+API! This data is also quite different from what we obtained from web scraping;
+the extracted information is readily available in a JSON format, as opposed to raw
+HTML code (although not *every* API will provide data in such a nice format).
+From this point onward, the `nasa_df` data frame is stored on your
 machine, and you can play with it to your heart's content. For example, you can use
-`write_csv` to save it to a file and `read_csv` to read it into R again later; 
+`write_csv` to save it to a file and `read_csv` to read it into R again later;
 and after reading the next few chapters you will have the skills to
-compute the percentage of retweets versus tweets, find the most oft-retweeted
-account, make visualizations of the data, and much more! If you decide that you want 
-to ask the Twitter API for more data 
-(see [the `rtweet` page](https://github.com/ropensci/rtweet)
+do even more interesting things! If you decide that you want
+to ask any of the various NASA APIs for more data
+(see [the list of awesome NASA APIS here](https://api.nasa.gov/)
 for more examples of what is possible), just be mindful as usual about how much
-data you are requesting and how frequently you are making requests. 
+data you are requesting and how frequently you are making requests.
 
 ## Exercises
 
