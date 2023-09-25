@@ -1,0 +1,58 @@
+name: "Rebuild and deploy PR version of book to gh-pages branch in pull###/ folder"
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'index.Rmd'
+      - '_bookdown.yml'
+      - '_output.yml'
+      - 'source/*.Rmd'
+      - 'source/*.bib'
+      - 'source/*.css'
+      - 'data/**'
+      - 'img/**'
+
+jobs:
+  deploy-pr-preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+
+    steps:
+      - name: Wait for potential build environment update
+        uses: fountainhead/action-wait-for-check@v1.1.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          checkName: "Rebuild docker image"
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Checkout the repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+          ref: ${{ github.head_ref }}
+          
+      - name: Build the book
+        run: |
+          ./build_html.sh
+
+       # Push the book's HTML to github-pages
+      - name: GitHub Pages action
+        uses: peaceiris/actions-gh-pages@v3.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/
+          keep_files: true
+          destination_dir: pull${{ github.event.number }}
+          # force_orphan: true # once peaceiris updates to v4, change this to true and keep_files: true for the PR / main branch deploy previews
+
+      - name: Post URLS to PR thread
+        uses: mshick/add-pr-comment@v2.8.1
+        with:
+          message: |
+              Hello! I've built a preview of your PR so that you can compare it to the current `main` branch.
+              * PR deploy preview available [here](https://datasciencebook.ca/pull${{ github.event.number }}/index.html)
+              * Current `main` deploy preview available [here](https://datasciencebook.ca/dev/index.html)
+              * Public production build available [here](https://datasciencebook.ca)
