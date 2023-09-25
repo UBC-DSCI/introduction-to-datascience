@@ -1033,10 +1033,9 @@ in the additional resources section. SelectorGadget provides in its toolbar
 the following list of CSS selectors to use:
 
 ```
-td:nth-child(5), 
-td:nth-child(7), 
-.infobox:nth-child(122) td:nth-child(1), 
-.infobox td:nth-child(3)
+td:nth-child(8) ,
+td:nth-child(4) ,
+.largestCities-cell-background+ td a
 ```
 
 Now that we have the CSS selectors that describe the properties of the elements
@@ -1057,6 +1056,13 @@ Next, we tell R what page we want to scrape by providing the webpage's URL in qu
 page <- read_html("https://en.wikipedia.org/wiki/Canada")
 ```
 
+```{r echo=FALSE, warning = FALSE}
+# the above cell doesn't actually run; this one does run
+# and loads the html data from a local, static file 
+
+page <- read_html("data/canada_wiki.html")
+```
+
 The `read_html` function \index{read function!read\_html} directly downloads the source code for the page at 
 the URL you specify, just like your browser would if you navigated to that site. But 
 instead of  displaying the website to you, the `read_html` function just returns 
@@ -1064,45 +1070,20 @@ the HTML source code itself, which we have
 stored in the `page` variable. Next, we send the page object to the `html_nodes`
 function, along with the CSS selectors we obtained from
 the SelectorGadget tool. Make sure to surround the selectors with quotation marks; the function, `html_nodes`, expects that
-argument is a string. The `html_nodes` function then selects *nodes* from the HTML document that 
-match the CSS selectors you specified.  A *node* is an HTML tag pair (e.g.,
-`<td>` and `</td>` which defines the cell of a table) combined with the content
-stored between the tags. For our CSS selector `td:nth-child(5)`, an example
-node that would be selected would be:
-
-```html
-<td style="text-align:left;background:#f0f0f0;">
-<a href="/wiki/London,_Ontario" title="London, Ontario">London</a>
-</td>
-```
-
-We store the result of the `html_nodes` function in the `population_nodes` variable.
+argument is a string. We store the result of the `html_nodes` function in the `population_nodes` variable.
 Note that below we use the `paste` function with a comma separator (`sep=","`)
 to build the list of selectors. The `paste` function converts 
 elements to characters and combines the values into a list. We use this function to 
 build the list of selectors to maintain code readability; this avoids
-having one very long line of code with the string
-`"td:nth-child(5),td:nth-child(7),.infobox:nth-child(122) td:nth-child(1),.infobox td:nth-child(3)"`
-as the second argument of `html_nodes`:
+having a very long line of code.
 
-```r
-selectors <- paste("td:nth-child(5)",
-             "td:nth-child(7)",
-             ".infobox:nth-child(122) td:nth-child(1)",
-             ".infobox td:nth-child(3)", sep = ",")
+```{r}
+selectors <- paste("td:nth-child(8)",
+             "td:nth-child(4)",
+             ".largestCities-cell-background+ td a", sep = ",")
 
 population_nodes <- html_nodes(page, selectors)
 head(population_nodes)
-```
-
-```
-## {xml_nodeset (6)}
-## [1] <td style="text-align:left;background:#f0f0f0;"><a href="/wiki/London,_On ...
-## [2] <td style="text-align:right;">543,551\n</td>
-## [3] <td style="text-align:left;background:#f0f0f0;"><a href="/wiki/Halifax,_N ...
-## [4] <td style="text-align:right;">465,703\n</td>
-## [5] <td style="text-align:left;background:#f0f0f0;">\n<a href="/wiki/St._Cath ...
-## [6] <td style="text-align:right;">433,604\n</td>
 ```
 
 > **Note:** `head` is a function that is often useful for viewing only a short
@@ -1113,18 +1094,26 @@ head(population_nodes)
 > But not *all* R objects do this, and that's where the `head` function helps
 > summarize things for you.
 
-Next we extract the meaningful data&mdash;in other words, we get rid of the HTML code syntax and tags&mdash;from 
-the nodes using the `html_text`
-function. In the case of the example
-node above, `html_text` function returns `"London"`.
 
-```r
+Each of the items in the `population_nodes` list is a *node* from the HTML
+document that matches the CSS selectors you specified. A *node* is an HTML tag
+pair (e.g., `<td>` and `</td>` which defines the cell of a table) combined with
+the content stored between the tags. For our CSS selector `td:nth-child(4)`, an
+example node that would be selected would be:
+
+```html
+<td style="text-align:left;background:#f0f0f0;">
+<a href="/wiki/London,_Ontario" title="London, Ontario">London</a>
+</td>
+```
+
+Next we extract the meaningful data&mdash;in other words, we get rid of the
+HTML code syntax and tags&mdash;from the nodes using the `html_text` function.
+In the case of the example node above, `html_text` function returns `"London"`.
+
+```{r}
 population_text <- html_text(population_nodes)
 head(population_text)
-```
-```
-## [1] "London"                 "543,551\n"              "Halifax"               
-## [4] "465,703\n"              "St. Catharines–Niagara" "433,604\n"
 ```
 
 Fantastic! We seem to have extracted the data of interest from the 
@@ -1306,6 +1295,6 @@ and guidance that the worksheets provide will function as intended.
   APIs, we provide two companion tutorial video links for how to use the
   SelectorGadget tool to obtain desired CSS selectors for:
     - [extracting the data for apartment listings on Craigslist](https://www.youtube.com/embed/YdIWI6K64zo), and
-    - [extracting Canadian city names and 2016 populations from Wikipedia](https://www.youtube.com/embed/O9HKbdhqYzk).
+    - [extracting Canadian city names and populations from Wikipedia](https://www.youtube.com/embed/O9HKbdhqYzk).
 - The [`polite` R package](https://dmi3kno.github.io/polite/) [@polite] provides
   a set of tools for responsibly scraping data from websites. 
