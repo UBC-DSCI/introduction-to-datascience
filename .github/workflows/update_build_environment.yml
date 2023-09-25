@@ -2,8 +2,6 @@ name: Rebuild and publish new ubcdsci/intro-to-ds image on DockerHub
 on:
   pull_request:
     types: [opened, synchronize]
-    paths:
-      - Dockerfile
 jobs:
   rebuild-docker:
     name: Rebuild docker image
@@ -21,17 +19,12 @@ jobs:
       run: |
         echo "GitHub PR action type: ${{ github.event.action }}"
         echo "Checking if the PR modifies the Dockerfile"
-        if [[ ${{ github.event.action }} == 'opened' ]]; then
-            echo "PR just opened, and it edits the Dockerfile, so rebuilding the image."
-            echo "stale_dockerfile=true" >> "$GITHUB_OUTPUT"
+        if git diff --quiet ${{ github.event.before }} ${{ github.event.after }} Dockerfile; then
+            echo "PR synchronized/opened, but Dockerfile was not edited. Not rebuilding the image."
+            echo "stale_dockerfile=false" >> "$GITHUB_OUTPUT"
         else
-            if git diff --quiet ${{ github.event.before }} ${{ github.event.after }} Dockerfile; then
-                echo "PR synchronized, but Dockerfile was not edited. Not rebuilding the image."
-                echo "stale_dockerfile=false" >> "$GITHUB_OUTPUT"
-            else
-                echo "PR synchronized, and Dockerfile was edited, so rebuilding the image."
-                echo "stale_dockerfile=true" >> "$GITHUB_OUTPUT"
-            fi
+            echo "PR synchronized/opened, and Dockerfile was edited, so rebuilding the image."
+            echo "stale_dockerfile=true" >> "$GITHUB_OUTPUT"
         fi
     - name: Rebuild and publish image
       if: ${{ steps.check-stale.outputs.stale_dockerfile == 'true' }}
