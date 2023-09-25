@@ -1,8 +1,8 @@
-name: Rebuild and deploy book to gh-pages branch
+name: Rebuild and deploy dev version of book to gh-pages branch in dev/ folder
 on:
   push:
     branches:
-      - production
+      - main
     paths:
       - 'index.Rmd'
       - '_bookdown.yml'
@@ -12,9 +12,9 @@ on:
       - 'source/*.css'
       - 'data/**'
       - 'img/**'
-      
+
 jobs:
-  deploy-book:
+  deploy-main-preview:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -24,7 +24,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v2
         with:
-          ref: 'production'
+          ref: 'main'
           
       - name: Build the book
         run: |
@@ -36,6 +36,9 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs/
-          force_orphan: true # this will clean up all previous PR previews / main branch preview
-          cname: datasciencebook.ca
+          keep_files: true
+          destination_dir: dev
+          # force_orphan: true # once peaceiris updates to v4, change this to true and keep_files: true for the PR / main branch deploy previews
+
+
 
