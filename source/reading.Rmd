@@ -839,7 +839,7 @@ offer something known as an **a**pplication **p**rogramming **i**nterface
 provides a programmatic way to ask for subsets of a data set. This allows the
 website owner to control *who* has access to the data, *what portion* of the
 data they have access to, and *how much* data they can access.  Typically, the
-website owner will give you a *token* (a secret string of characters somewhat
+website owner will give you a *token* or *key* (a secret string of characters somewhat
 like a password) that you have to provide when accessing the API.
 
 Another interesting thought: websites themselves *are* data! When you type a
@@ -929,7 +929,7 @@ above you can see a line that looks like
 ```html
 <span class="result-price">$800</span>
 ```
-That is definitely storing the price of a particular apartment. With some more
+That snippet is definitely storing the price of a particular apartment. With some more
 investigation, you should be able to find things like the date and time of the
 listing, the address of the listing, and more. So this source code most likely
 contains all the information we are interested in!
@@ -1003,7 +1003,8 @@ The selector gadget returns them to us as a comma-separated list (here
 `.housing , .result-price`), which is exactly the format we need to provide to
 R if we are using more than one CSS selector.
 
-**Stop! Are you allowed to scrape that website?**
+**Caution: are you allowed to scrape that website?**
+
 *Before* scraping \index{web scraping!permission} data from the web, you should always check whether or not
 you are *allowed* to scrape it! There are two documents that are important
 for this: the `robots.txt` file and the Terms of Service
@@ -1130,7 +1131,7 @@ such as this into a more useful format for data analysis using R.
 ### Using an API
 
 Rather than posting a data file at a URL for you to download, many websites these days
-provide an API \index{API} that must be accessed through a programming language like R. The benefit of this
+provide an API \index{API} that must be accessed through a programming language like R. The benefit of using an API
 is that data owners have much more control over the data they provide to users. However, unlike
 web scraping, there is no consistent way to access an API across websites. Every website typically
 has its own API designed especially for its own use case. Therefore we will just provide one example
@@ -1146,7 +1147,7 @@ picture of the Rho-Ophiuchi cloud complex in Figure \@ref(fig:NASA-API-Rho-Ophiu
 knitr::include_graphics("img/reading/NASA-API-Rho-Ophiuchi.png")
 ```
 
-First, you will need to visit the [NASA APIs page](https://api.nasa.gov/) and generate an API key.
+First, you will need to visit the [NASA APIs page](https://api.nasa.gov/) and generate an API key (i.e., a password used to identify you when accessing the API).
 Note that a valid email address is required to
 associate with the key. The signup form looks something like Figure \@ref(fig:NASA-API-signup).
 After filling out the basic information, you will receive the token via email.
@@ -1156,7 +1157,7 @@ Make sure to store the key in a safe place, and keep it private.
 knitr::include_graphics("img/reading/NASA-API-signup.png")
 ```
 
-**Stop! Think about your API usage carefully!**
+**Caution: think about your API usage carefully!**
 
 When you access an API, you are initiating a transfer of data from a web server
 to your computer. Web servers are expensive to run and do not have infinite resources.
@@ -1187,8 +1188,7 @@ API, we need to specify three things.  First, we specify the URL *endpoint* of
 the API, which is simply a URL that helps the remote server understand which
 API you are trying to access. NASA offers a variety of APIs, each with its own
 endpoint; in the case of the NASA "Astronomy Picture of the Day" API, the URL
-endpoint is `https://api.nasa.gov/planetary/apod`, as shown at the top of
-Figure \@ref(fig:NASA-API-parameters). Second, we write `?`, which denotes that a
+endpoint is `https://api.nasa.gov/planetary/apod`. Second, we write `?`, which denotes that a
 list of *query parameters* will follow. And finally, we specify a list of
 query parameters of the form `parameter=value`, separated by `&` characters. The NASA
 "Astronomy Picture of the Day" API accepts the parameters shown in
@@ -1200,7 +1200,8 @@ knitr::include_graphics("img/reading/NASA-API-parameters.png")
 
 So for example, to obtain the image of the day
 from July 13, 2023, the API query would have two parameters: `api_key=YOUR_API_KEY`
-and `date=2023-07-13`.
+and `date=2023-07-13`. Remember to replace `YOUR_API_KEY` with the API key you 
+received from NASA in your email! Putting it all together, the query will look like the following:
 ```
 https://api.nasa.gov/planetary/apod?api_key=YOUR_API_KEY&date=2023-07-13
 ```
@@ -1233,7 +1234,7 @@ commas. For example, if you look closely, you'll see that the first entry is
 `"date":"2023-07-13"`, which indicates that we indeed successfully received
 data corresponding to July 13, 2023.
 
-So now the job is to do all of this programmatically in R. We will load
+So now our job is to do all of this programmatically in R. We will load
 the `httr2` package, and construct the query using the `request` function, which takes a single URL argument;
 you will recognize the same query URL that we pasted into the browser earlier.
 We will then send the query using the `req_perform` function, and finally
@@ -1245,9 +1246,9 @@ of the nasa_data object. But you can reproduce this using the DEMO_KEY key -->
 library(httr2)
 
 req <- request("https://api.nasa.gov/planetary/apod?api_key=YOUR_API_KEY&date=2023-07-13")
-response <- req_perform(req)
-nasa_data <- resp_body_json(response)
-nasa_data
+resp <- req_perform(req)
+nasa_data_single <- resp_body_json(resp)
+nasa_data_single
 ```
 
 ```{r hidden_query, echo = FALSE, warning = FALSE, message = FALSE}
@@ -1263,12 +1264,13 @@ We can obtain more records at once by using the `start_date` and `end_date` para
 shown in the table of parameters in \@ref(fig:NASA-API-parameters).
 Let's obtain all the records between May 1, 2023, and July 13, 2023, and store the result
 in an object called `nasa_data`; now the response
-will take the form of an R *list* (you'll learn more about these in Chapter \@ref(wrangling)),
-with one item similar to the above for each of the 74 days between the start and end dates:
+will take the form of an R *list* (you'll learn more about these in Chapter \@ref(wrangling)).
+Each item in the list will correspond to a single day's record (just like the `nasa_data_single` object), 
+and there will be 74 items total, one for each day between the start and end dates:
 
 ```r
 req <- request("https://api.nasa.gov/planetary/apod?api_key=YOUR_API_KEY&start_date=2023-05-01&end_date=2023-07-13")
-response <- req_perform(req)
+resp <- req_perform(req)
 nasa_data <- resp_body_json(response)
 length(nasa_data)
 ```
