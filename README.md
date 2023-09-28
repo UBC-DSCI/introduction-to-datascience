@@ -13,52 +13,29 @@ This textbook is offered under
 the [Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0) License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
 See [the license file](LICENSE.md) for more information. 
 
-## Contributing
+## Development 
 
-Primary development in this repository happens on the `main` branch. If you
-want to contribute to the book, please branch off of `main` and make a pull
-request into `main`.
+### Setup
 
-The `production` branch contains the source material for the live, publicly
-viewable HTML book. The website is served from the `gh-pages` branch, which is
-automatically built from the `production` branch.
+Building the book requires Docker (instructors here: https://docs.docker.com/get-docker/)
 
-### Update build environment
-You can update the build environment for the book by making changes to
-`Dockerfile` in the root of the repository in the `main` branch. If you push
-any changes to the `Dockerfile` on the `main` branch, GitHub will trigger a
-rebuild of the docker image, push it to DockerHub, and update the
-`build_html.sh` and `build_pdf.sh` scripts with the new image tag.
+### Build locally
 
-### Update public html
-You can update the live, publicly viewable HTML book by making changes to any
-`*.Rmd` file, or any file in the `img/` or `data/` folders in the `production`
-branch. If you push any changes to these files/folders on the `production`
-branch, GitHub will trigger a rebuild of the public HTML site and push it to
-the `gh-pages` branch.
+You must have at least 8GB of RAM (and ideally more like 16GB RAM) to build the book.
 
-## Building the book locally
-
-In order to build the book, you need to install [Docker](https://docs.docker.com/get-docker/).
-You must have at least **8GB of RAM** (and ideally at least 16GB RAM) to build the book.
-
-To build the **html version** of the book, navigate to the repository root folder and run
+You can build the HTML version of the book on your own machine by running
 ```
 ./build_html.sh
-``` 
-from the command line. This command automatically spawns a docker container
-with the `ubcdsci/intro-to-ds` image, renders the book within the container,
-and then stops the container. The book HTML files will be located in the `docs/` folder
-after the build completes. If you did not already have the `ubcdsci/intro-to-ds` image pulled,
-the script will automatically pull the image from DockerHub.
+```
+in the root directory of this repository. The book can be viewed in your browser by opening the `docs/index.html` file.
 
-To build the **PDF version** of the book, instead run
+You can build the PDF version of the book on your own machine by running
 ```
 ./build_pdf.sh
 ```
-This command again spawns a docker container and render the PDF version of the book inside the container.
+in the root directory of this repository. The book can be viewed in a PDF reader by opening `docs/latex/python.pdf`.
 
-### Working with RStudio (HTML only)
+#### Working with RStudio (HTML only)
 
 If you want to edit the source material and build the book using RStudio, navigate to the repository root and run
 ```
@@ -72,9 +49,40 @@ bookdown::render_book('index.Rmd', 'bookdown::gitbook')
 ```
 When you are done working, make sure to type `docker-compose down` to shut down the container.
 
+### Contributing
+
+Primary development in this repository happens on the `main` branch. If you want to contribute to the book,
+please branch off of `main` and make a pull request into `main`. You cannot commit directly to `main`.
+
+The `production` branch contains the source material corresponding to the current publicly-viewable version of the book website.
+
+The `gh-pages` branch serves the current book website at https://datasciencebook.ca.
+
+### Workflows
+
+#### Book deployment
+
+You can update the live, publicly viewable HTML book by making changes to the `source/` folder in the `production` branch (e.g. by merging `main` into `production`).
+GitHub will trigger a rebuild of the public HTML site, and store the built book in the root folder of the `gh-pages` branch.
+
+#### `main` deploy previews
+
+Any commit to `source/**` on the `main` branch (from a merged PR) will trigger a rebuild of the development preview site served at `https://datasciencebook.ca/dev`.
+The built preview book will be stored in the `dev/` folder on the `gh-pages` branch.
+
+#### PR deploy previews
+
+Any PR to `source/` will trigger a build of a PR preview site at `https://datasciencebook.ca/pull###`, where `###` is the number of the pull request.
+The built preview book will be stored in the `pull###/` folder on the `gh-pages` branch.
+
+#### Build environment updates
+
+Any PR to `Dockerfile` will trigger a rebuild of the docker image, push it to DockerHub, and update the image tags in the `build_html.sh` and `build_pdf.sh` scripts on the PR automatically.
+This new build environment will be used for the PR deploy preview mentioned above.
+
 ## Style Guide
 
-#### General
+### General
 - **80 character line limit!** This is necessary to make git diffs useful
 - numbers in text should be english words ("four common mistakes" not "4 common mistakes") unless there are units (40km, not forty km)
 - use Oxford commas ("a, b, and c" not "a, b and c")
@@ -90,7 +98,7 @@ When you are done working, make sure to type `docker-compose down` to shut down 
   There are likely exceptions to this rule though.
 - Book titles in the text should be typeset in italics (e.g. *R for Data Science*)
 
-#### Code blocks
+### Code blocks
 - Use the knitr label format `##-[name with only alphanumeric + hyphens]` where 
   the `##` is the 2-digit chapter number, e.g. `03-test-name` for a label `test-name` in chapter 3
 - Make sure to get syntax highlighting by specifying the language in each code block:
@@ -115,7 +123,7 @@ When you are done working, make sure to type `docker-compose down` to shut down 
 - use `slice`, `slice_min`, `slice_max` (not `top_n`)
 - just `pull(colname)`, don't `select` first
 
-#### Section headings
+### Section headings
 - All (sub)section headings should be sentence case ("Loading a tabular data set", not "Loading a Tabular Data Set")
 - Make sure that subsections occur in 1-step hierarchies (no subsubsection directly below subsection, for example)
 - Make sure that `{-}` is used wherever unnumbered headings are required
@@ -126,11 +134,11 @@ bookdown::gitbook:
     toc_depth: 2
 ```
 
-#### Learning objectives
+### Learning objectives
 - when saying that students will do things in code, always say "in R"
 - "you will be able to" (not "students will be able to", "the reader will be able to")
 
-#### Captions
+### Captions
 - captions should be sentence formatted and end with a period
 - If you have special characters (particularly underscores, quotation marks, plus signs, other LaTeX math symbols) make sure to separate
   the caption out of the code chunk like so
@@ -143,10 +151,10 @@ bookdown::gitbook:
   \`\`\`
   ```
 
-#### Equations
+### Equations
 - make sure all equations get capitalized labels ("Equation \\@ref(blah)", not "equation below" or "equation above")
 
-#### Figures
+### Figures
 - make sure all figures get (capitalized) labels ("Figure \\@ref(blah)", not "figure below" or "figure above")
 - make sure all figures get captions
 - specify image widths of pngs and jpegs in terms of linewidth percent 
@@ -160,21 +168,21 @@ for plots we create in R use `fig.width` and `fig.height`.
 - Fig size for bar charts should be: `fig.width=5, fig.height=3` (an exception are figs 1.7 & 1.8 so that we can read the axis labels)
 - cropping width for syntax diagrams is 1625 (done using `image_crop`)
 
-#### Tables
+### Tables
 - make sure all tables get capitalized labels ("Table \\@ref(blah)", not "table below" or "table above")
 - make sure all tables get captions
 - make sure the row + column spacing is reasonable
 - Do not put links in table captions, it breaks pdf rendering
 - Do not put underscores in table captions, it breaks pdf rendering
 
-#### Note boxes
+### Note boxes
 - note boxes should be typeset as quote boxes using `>` and start with **Note:**
 
-#### Bibliography
+### Bibliography
 - do not put "et al" or "and others"; always use the full list of authors, BibTeX will choose how to abbreviate
 - read https://trevorcampbell.me/html/bibtex.html and make sure our bib follows this convention
 
-#### Naming conventions
+### Naming conventions
 - K-means (not $K$-\*, K means, Kmeans)
 - K-nearest neighbors (not $K$-\*, K nearest neighbors, K nearest neighbor, use US spelling neighbor not neighbour). Note that "K-nearest neighbor" is not the singular form; "K-nearest neighbors" is
 - K-NN (not $K$-\*, KNN, K NN, $K$NN, K-nn)
@@ -191,15 +199,15 @@ for plots we create in R use `fig.width` and `fig.height`.
 - numerical variable (not quantitative variable)
 - categorical variable (not class variable)
 
-#### Punctuation
+### Punctuation
 - emdashes should have no surrounding spaces. `This kind of typesetting&mdash;which is awesome&mdash;is correct!` and `Typesetting with spaces around em-dashes &mdash; which is bad &mdash; is not correct`
 - make sure `\index` commands don't break punctuation spacing. E.g. `This is an item \index{item}; it is good` will typeset with an erroneous space after item, i.e. `This is an item ; it is good`
 
-#### Common typos to check for
+### Common typos to check for
 - RMPSE: should be RMSPE
 - boostrap: should be bootstrap
 
-#### Use American spelling
+### Use American spelling
 Generally the book uses American spelling. Some common British vs American and Canadian vs American gotchas:
 - o vs ou: neighbor and color (not neighbour and colour)
 - single vs double ell: labeling and labeled (not labelling and labelled)
@@ -207,11 +215,11 @@ Generally the book uses American spelling. Some common British vs American and C
 - c vs s: defense (not defence)
 - er vs re: center (not centre)
 
-#### Whitespace
+### Whitespace
 We need a line of whitespace before and after code fences (code surrounded by three backticks above and below). This is for readability, 
 and it is essential for figure captions.
 
-#### PDF Output
+### PDF Output
 These are absolute last steps when rendering the PDF output:
 - Look for and fix bad line breaks (e.g. with only one word on the next line, orphans, and widows)
 - Look for and fix bad line wraps in code and text
@@ -226,19 +234,6 @@ These are absolute last steps when rendering the PDF output:
   sense in the hardcopy book version (i.e. nothing like "click this"). Many links appear in the additional resources: make sure the 
   text-replacement of the URL contains enough information for someone to find the resource (without being able to click the link)
 
-#### HTML Output
+### HTML Output
 - Look for broken references (I *think* these end up as `??`)
 - Look for uncentered images
-
-## Updating the textbook data
-Data sets are collected and curated by `data/retrieve_data.ipynb`. To run that notebook in the Docker container type the following in the terminal:
-
-```
-docker run --rm -it -p 8888:8888 -v $PWD:/home/rstudio/introduction-to-datascience ubcdsci/intro-to-ds jupyter notebook --ip=0.0.0.0 --allow-root
-```
-
-## Repository Organization / Important Files
-- The files `index.Rmd` and `##-name.Rmd` are [R-markdown](https://rmarkdown.rstudio.com/) chapter contents to be parsed by [Bookdown](https://bookdown.org/)
-- `_bookdown.yml` sets the output directory (`docs/`) and default chapter name
-- `img/` contains custom images to be used in the text; note this is not all of the images as some are generated by R code when compiling
-- `data/` stores datasets processed during compile
