@@ -33,7 +33,7 @@ You can build the PDF version of the book on your own machine by running
 ```
 ./build_pdf.sh
 ```
-in the root directory of this repository. The book can be viewed in a PDF reader by opening `docs/latex/python.pdf`.
+in the root directory of this repository. The book can be viewed in a PDF reader by opening `docs/_main.pdf`.
 
 #### Working with RStudio (HTML only)
 
