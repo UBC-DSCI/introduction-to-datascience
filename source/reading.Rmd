@@ -27,7 +27,7 @@ print_html_nodes <- function(html_nodes_object) {
 ## Overview 
 
 In this chapter, you’ll learn to read tabular data of various formats into R
-from your local device (e.g., your laptop) and the web. “Reading” (or “loading”)
+from your local device (e.g., your laptop) and the web. "Reading" (or "loading")
 \index{loading|see{reading}}\index{reading!definition} is the process of
 converting data (stored as plain text, a database, HTML, etc.) into an object
 (e.g., a data frame) that R can easily access and manipulate. Thus reading data
@@ -81,37 +81,52 @@ could live on your  computer (*local*)
 \index{location|see{path}} \index{path!local, remote, relative, absolute} 
 or somewhere on the internet (*remote*). 
 
-The place where the file lives on your computer is called the "path". You can
+The place where the file lives on your computer is referred to as its "path". You can
 think of the path as directions to the file. There are two kinds of paths:
-*relative* paths and *absolute* paths. A relative path is where the file is
-with respect to where you currently are on the computer (e.g., where the file
-you're working in is). On the other hand, an absolute path is where the file is
-in respect to the computer's filesystem base (or root) folder.
+*relative* paths and *absolute* paths. A relative path indicates where the file is
+with respect to your *working directory* (i.e., "where you are currently") on the computer. 
+On the other hand, an absolute path indicates where the file is
+with respect to the computer's filesystem base (or *root*) folder, regardless of where you are working.
 
 Suppose our computer's filesystem looks like the picture in Figure
-\@ref(fig:file-system-for-export-to-intro-datascience), and we are working in a
-file titled `worksheet_02.ipynb`. If we want to 
-read the `.csv` file named `happiness_report.csv` into R, we could do this
-using either a relative or an absolute path.  We show both choices
-below.\index{Happiness Report}
+\@ref(fig:file-system-for-export-to-intro-datascience). We are working in a
+file titled `worksheet_02.ipynb`, and our current working directory is `worksheet_02`;
+typically, as is the case here, the working directory is the directory containing the file you are currently
+working on.\index{Happiness Report}
 
 ```{r file-system-for-export-to-intro-datascience, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Example file system.", fig.retina = 2, out.width="100%"}
 knitr::include_graphics("img/reading/filesystem.jpeg")
 ```
 
-**Reading `happiness_report.csv` using a relative path:**
-
-```{r eval = FALSE}
-happy_data <- read_csv("data/happiness_report.csv")
-```
-
-**Reading `happiness_report.csv` using an absolute path:**
-
+Let's say we wanted to open the `happiness_report.csv` file. We have two options to indicate
+where the file is: using a relative path, or using an absolute path.
+The absolute path of the file always starts with a slash `/`&mdash;representing the root folder on the computer&mdash;and
+proceeds by listing out the sequence of folders you would have to enter to reach the file, each separated by another slash `/`.
+So in this case, `happiness_report.csv` would be reached by starting at the root, and entering the `home` folder,
+then the `dsci-100` folder, then the `worksheet_02` folder, and then finally the `data` folder. So its absolute
+path would be `/home/dsci-100/worksheet_02/data/happiness_report.csv`. We can load the file using its absolute path
+as a string passed to the `read_csv` function.
 ```{r eval = FALSE}
 happy_data <- read_csv("/home/dsci-100/worksheet_02/data/happiness_report.csv")
 ```
+If we instead wanted to use a relative path, we would need to list out the sequence of steps needed to get from our current
+working directory to the file, with slashes `/` separating each step. Since we are currently in the `worksheet_02` folder,
+we just need to enter the `data` folder to reach our desired file. Hence the relative path is `data/happiness_report.csv`,
+and we can load the file using its relative path as a string passed to `read_csv`.
+```{r eval = FALSE}
+happy_data <- read_csv("data/happiness_report.csv")
+```
+Note that there is no forward slash at the beginning of a relative path; if we accidentally typed `"/data/happiness_report.csv"`,
+R would look for a folder named `data` in the root folder of the computer&mdash;but that doesn't exist!
 
-So which one should you use? Generally speaking, you should use relative paths. 
+Aside from specifying places to go in a path using folder names (like `data` and `worksheet_02`), we can also specify two additional
+special places: the *current directory* and the *previous directory*. We indicate the current working directory with a single dot `.`, and 
+the previous directory with two dots `..`. So for instance, if we wanted to reach the `bike_share.csv` file from the `worksheet_02` folder, we could
+use the relative path `../tutorial_01/bike_share.csv`. We can even combine these two; for example, we could reach the `bike_share.csv` file using
+the (very silly) path `../tutorial_01/../tutorial_01/./bike_share.csv` with quite a few redundant directions: it says to go back a folder, then open `tutorial_01`, 
+then go back a folder again, then open `tutorial_01` again, then stay in the current directory, then finally get to `bike_share.csv`. Whew, what a long trip!
+
+So which kind of path should you use: relative, or absolute? Generally speaking, you should use relative paths. 
 Using a relative path helps ensure that your code can be run 
 on a different computer (and as an added bonus, relative paths are often shorter&mdash;easier to type!).
 This is because a file's relative path is often the same across different computers, while a
@@ -139,10 +154,11 @@ difference between absolute and relative paths. You can also check out the
 in R.  
 
 Beyond files stored on your computer (i.e., locally), we also need a way to locate resources
-stored elsewhere on the internet (i.e., remotely). For this purpose we use a *Uniform Resource Locator (URL)*,
-i.e., a web address that looks something like https://datasciencebook.ca/. \index{URL}
-URLs indicate the location of a resource on the internet and
-help us retrieve that resource. 
+stored elsewhere on the internet (i.e., remotely). For this purpose we use a
+*Uniform Resource Locator (URL)*, i.e., a web address that looks something
+like https://datasciencebook.ca/. URLs indicate the location of a resource on the internet, and
+start with a web domain, followed by a forward slash `/`, and then a path
+to where the resource is located on the remote machine. \index{URL}
 
 ## Reading tabular data from a plain text file into R
 
