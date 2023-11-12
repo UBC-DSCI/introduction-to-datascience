@@ -17,11 +17,20 @@ jobs:
     - name: Check if Dockerfile needs to be rebuilt
       id: check-stale
       run: |
+        echo "Checking if Dockerfile was modified since last commit on this PR"
         echo "GitHub PR action type: ${{ github.event.action }}"
-        echo "Checking if the PR modifies the Dockerfile"
-        echo "GitHub event before: ${{ github.event.before }}"
-        echo "GitHub event after: ${{ github.event.after }}"
-        if git diff --quiet ${{ github.event.before }} ${{ github.event.after }} Dockerfile; then
+        if [ "${{ github.event.action }}" == "opened" ]; then
+            echo "GitHub base ref: ${{ github.event.pull_request.base.sha }}"
+            echo "GitHub head ref: ${{ github.event.pull_request.head.sha }}"
+            BEFORE=${{ github.event.pull_request.base.sha }}
+            AFTER=${{ github.event.pull_request.head.sha }}
+        else
+            echo "GitHub event before: ${{ github.event.before }}"
+            echo "GitHub event after: ${{ github.event.after }}"
+            BEFORE=${{ github.event.before }}
+            AFTER=${{ github.event.after }}
+        fi
+        if git diff --quiet $BEFORE $AFTER Dockerfile; then
             echo "PR synchronized, but Dockerfile was not edited. Not rebuilding the image."
             echo "stale_dockerfile=false" >> "$GITHUB_OUTPUT"
         else
