@@ -895,10 +895,13 @@ islands_df
 Here, we have a data frame of Earth's landmasses, 
 and are trying to compare their sizes. 
 The right type of visualization to answer this question is a bar plot. 
-In a bar plot, the height of the bar represents the value of a summary statistic 
-(usually a size, count, proportion or percentage).
-They are particularly useful for comparing summary statistics between different
-groups of a categorical variable.
+In a bar plot, the height of each bar represents the value of an *amount*
+(a size, count, proportion, percentage, etc).
+They are particularly useful for comparing counts or proportions across different
+groups of a categorical variable. Note, however, that bar plots should generally not be 
+used to display mean or median values, as they hide important information about
+the variation of the data. Instead it's better to show the distribution of 
+all the individual data points, e.g., using a histogram, which we will discuss further in Section \@ref(histogramsviz).
 
 We specify that we would like to use a bar plot
 via the `geom_bar` function in `ggplot2`. 
@@ -908,7 +911,7 @@ the landmass sizes. So we have to pass the `stat = "identity"` argument to `geom
 shown in Figure \@ref(fig:03-data-islands-bar).
 \index{ggplot!geom\_bar}
 
-```{r 03-data-islands-bar, warning=FALSE, message=FALSE,  fig.width=5, fig.height=2.75, fig.align = "center", fig.pos = "H", out.extra="", fig.cap = "Bar plot of all Earth's landmasses' size with squished labels."}
+```{r 03-data-islands-bar, warning=FALSE, message=FALSE,  fig.width=5, fig.height=2.75, fig.align = "center", fig.pos = "H", out.extra="", fig.cap = "Bar plot of Earth's landmass sizes with squished labels."}
 islands_bar <- ggplot(islands_df, aes(x = landmass, y = size)) +
   geom_bar(stat = "identity")
 
@@ -946,14 +949,12 @@ islands_bar
 The plot in Figure \@ref(fig:03-data-islands-bar-2) is definitely clearer now, 
 and allows us to answer our question 
 ("Are the top 7 largest landmasses continents?") in the affirmative. 
-However, we could still improve this visualization by organizing
-the bars by landmass size rather than by alphabetical order,
-and by coloring the bars based on whether they correspond to a continent.
-The data for this is stored in the `landmass_type` column. 
-To use this to color the bars, 
-we add the `fill` argument to the aesthetic mapping 
-and set it to `landmass_type`. 
-
+However, we could still improve this visualization by
+coloring the bars based on whether they correspond to a continent,
+and by organizing the bars by landmass size rather than by alphabetical order.
+The data for coloring the bars is stored in the `landmass_type` column,
+so we add the `fill` argument to the aesthetic mapping
+and set it to `landmass_type`.
 To organize the landmasses by their `size` variable, 
 we will use the `tidyverse` `fct_reorder` function
 in the aesthetic mapping to organize the landmasses by their `size` variable.
@@ -967,25 +968,31 @@ by setting  `.desc = TRUE`.
 We do this here so that the largest bar will be closest to the axis line,
 which is more visually appealing.
 
-To label the x and y axes, we will use the `labs` function
-instead of the `xlab` and `ylab` functions from earlier in this chapter. 
-The `labs` function is more general; we are using it in this case because 
- we would also like to change the legend label.
-The default label is the name of the column being mapped to `fill`. Here that
-would be `landmass_type`;
-however `landmass_type` is not proper English (and so is less readable).
-Thus we use the `fill` argument inside `labs` to change that to "Type."
+To finalize this plot we will customize the axis and legend labels,
+and add a title to the chart. Plot titles are not always required, especially when
+it would be redundant with an already-existing
+caption or surrounding context (e.g., in a slide presentation with annotations).
+But if you decide to include one, a good plot title should provide the take home message
+that you want readers to focus on, e.g., "Earth's seven largest landmasses are continents,"
+or a more general summary of the information displayed, e.g., "Earth's twelve largest landmasses."
+
+To make these final adjustments we will use the `labs` function rather than the `xlab` and `ylab` functions 
+we have seen earlier in this chapter, as `labs` lets us modify the legend label and title in addition to axis labels.
+We provide a label for each aesthetic mapping in the plot&mdash;in this case, `x`, `y`, and `fill`&mdash;as well as one for the `title` argument.
 Finally, we again \index{ggplot!reorder} use the `theme` function 
 to change the font size.
 
-```{r 03-data-islands-bar-4, warning = FALSE, message = FALSE, fig.width=5, fig.height=2.75, fig.align="center", fig.pos = "H", out.extra="", fig.cap = "Bar plot of size for Earth's largest 12 landmasses colored by whether its a continent with clearer axes and labels."}
+```{r 03-data-islands-bar-4, warning = FALSE, message = FALSE, fig.width=5, fig.height=2.75, fig.align="center", fig.pos = "H", out.extra="", fig.cap = "Bar plot of size for Earth's largest 12 landmasses, colored by landmass type, with clearer axes and labels."}
 islands_bar <- ggplot(islands_top12, 
                       aes(x = size,
                           y = fct_reorder(landmass, size, .desc = TRUE), 
                           fill = landmass_type)) +
   geom_bar(stat = "identity") +
-  labs(x = "Size (1000 square mi)", y = "Landmass",  fill = "Type") +
-  theme(text = element_text(size = 12))
+  labs(x = "Size (1000 square mi)", 
+  	   y = "Landmass",  
+  	   fill = "Type", 
+  	   title = "Earth's twelve largest landmasses") +
+  theme(text = element_text(size = 10))
 
 islands_bar
 ```
@@ -995,7 +1002,7 @@ visualization for answering our original questions. Landmasses are organized by
 their size, and continents are colored differently than other landmasses,
 making it quite clear that continents are the largest seven landmasses.
 
-### Histograms: the Michelson speed of light data set
+### Histograms: the Michelson speed of light data set {#histogramsviz}
 The `morley` data set \index{Michelson speed of light} 
 contains measurements of the speed of light 
 collected in experiments performed in 1879.
