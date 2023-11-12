@@ -131,32 +131,24 @@ for where to begin learning more about these other methods.
 > but one is willing to provide a few informative example labels as a "seed" 
 > to guess the labels for all the data.
 
-**An illustrative example** 
+## An illustrative example
 
-Here we will present an illustrative example using a data set \index{Palmer penguins} from
+In this chapter we will focus on a data set \index{Palmer penguins} from
 [the `palmerpenguins` R package](https://allisonhorst.github.io/palmerpenguins/) [@palmerpenguins]. This 
 data set was collected by Dr. Kristen Gorman and
 the Palmer Station, Antarctica Long Term Ecological Research Site, and includes
-measurements for adult penguins found near there [@penguinpaper]. We have
-modified the data set for use in this chapter. Here we will focus on using two
-variables&mdash;penguin bill and flipper length, both in millimeters&mdash;to determine whether 
+measurements for adult penguins (Figure \@ref(fig:09-penguins)) found near there [@penguinpaper].
+Our goal will be to use two
+variables&mdash;penguin bill and flipper length, both in millimeters&mdash;to determine whether
 there are distinct types of penguins in our data.
 Understanding this might help us with species discovery and classification in a data-driven
-way.
+way. Note that we have reduced the size of the data set to 18 observations and 2 variables;
+this will help us make clear visualizations that illustrate how clustering works for learning purposes.
 
-```{r 09-penguins, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Gentoo penguin.", out.width="60%", fig.align = "center", fig.retina = 2}
+```{r 09-penguins, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "A Gentoo penguin.", out.width="60%", fig.align = "center", fig.retina = 2}
 # image source: https://commons.wikimedia.org/wiki/File:Gentoo_Penguin._(8671680772).jpg
 knitr::include_graphics("img/clustering/gentoo.jpg")
 ```
-
-To learn about K-means clustering 
-we will work with `penguin_data` in this chapter.
-`penguin_data` is a subset of 18 observations of the original data, 
-which has already been standardized 
-(remember from Chapter \@ref(classification1) 
-that scaling is part of the standardization process). 
-We will discuss scaling for K-means in more detail later in this chapter. 
-\index{mutate}\index{read function!read\_csv} 
 
 Before we get started, we will load the `tidyverse` metapackage 
 as well as set a random seed.
@@ -167,21 +159,6 @@ setting the seed here is important
 because the K-means clustering algorithm uses randomness
 when choosing a starting position for each cluster.
 
-
-```{r 10-toy-example-data, echo = FALSE, message = FALSE, warning = FALSE}
-library(tidyverse)
-
-data <- read_csv("data/penguins_toy.csv") |>
-  mutate(cluster = as_factor(cluster)) |>
-  mutate(flipper_length_standardized = as.double(scale(flipper_length_mm)), 
-         bill_length_standardized = as.double(scale(bill_length_mm)))
-
-penguin_data <- data |> select(flipper_length_standardized, 
-bill_length_standardized)
-
-write_csv(penguin_data, "data/penguins_standardized.csv")
-```
-
 \index{seed!set.seed}
 
 ```{r 10-clustering, warning = FALSE, message = FALSE}
@@ -189,11 +166,26 @@ library(tidyverse)
 set.seed(1)
 ```
 
-Now we can load and preview the data.
+Now we can load and preview the `penguins` data.
 
-```{r, message = FALSE, warning = FALSE}
-penguin_data <- read_csv("data/penguins_standardized.csv")
-penguin_data
+```{r message = FALSE, warning = FALSE}
+penguins <- read_csv("data/penguins.csv")
+penguins
+```
+
+We will begin by using a version of the data that we have standardized, `penguins_standardized`,
+to illustrate how K-means clustering works (recall standardization from Chapter \@ref(classification1)).
+Later in this chapter, we will return to the original `penguins` data to see how to include standardization automatically
+in the clustering pipeline.
+```{r 10-toy-example-data, echo = FALSE, message = FALSE, warning = FALSE}
+penguins_standardized <- penguins |>
+  mutate(flipper_length_standardized = (flipper_length_mm - mean(flipper_length_mm))/sd(flipper_length_mm)) |>
+  mutate(bill_length_standardized = (bill_length_mm - mean(bill_length_mm))/sd(bill_length_mm)) |>
+  select(flipper_length_standardized, bill_length_standardized)
+```
+
+```{r message = FALSE, warning = FALSE}
+penguins_standardized
 ```
 
 Next, we can create a scatter plot using this data set 
@@ -202,8 +194,9 @@ to see if we can detect subtypes or groups in our data set.
 \newpage
 
 ```{r 10-toy-example-plot, warning = FALSE, fig.height = 3.25, fig.width = 3.5, fig.align = "center", fig.pos = "H", out.extra="", fig.cap = "Scatter plot of standardized bill length versus standardized flipper length."}
-ggplot(data, aes(x = flipper_length_standardized, 
-                 y = bill_length_standardized)) +
+ggplot(penguins_standardized, 
+	   aes(x = flipper_length_standardized, 
+           y = bill_length_standardized)) +
   geom_point() +
   xlab("Flipper Length (standardized)") +
   ylab("Bill Length (standardized)") + 
@@ -236,8 +229,33 @@ This procedure will separate the data into groups;
 Figure \@ref(fig:10-toy-example-clustering) shows these groups
 denoted by colored scatter points.
 
-```{r 10-toy-example-clustering, echo = FALSE, warning = FALSE, fig.height = 3.25, fig.width = 4.25, fig.align = "center", fig.cap = "Scatter plot of standardized bill length versus standardized flipper length with colored groups."}
-ggplot(data, aes(y = bill_length_standardized, 
+```{r 10-toy-example-clustering, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 3.25, fig.width = 4.25, fig.align = "center", fig.cap = "Scatter plot of standardized bill length versus standardized flipper length with colored groups."}
+library(tidyclust)
+library(tidymodels)
+
+set.seed(2)
+
+kmeans_recipe <- recipe(~ ., data=penguins_standardized)
+
+kmeans_spec <- k_means(num_clusters = 3) |>
+    set_engine("stats")
+
+kmeans_fit <- workflow() |>
+    add_recipe(kmeans_recipe) |>
+    add_model(kmeans_spec) |>
+    fit(data = penguins_standardized)
+
+# augment the clustered data with labels, swap 2 and 3 (for coloring consistency with previous version)
+penguins_clustered <- kmeans_fit |>
+                    augment(penguins_standardized) |>
+					rename(cluster = .pred_cluster) |>
+					mutate(cluster = as.integer(cluster)) |>
+					mutate(cluster = replace(cluster, cluster == 3, 4)) |>
+					mutate(cluster = replace(cluster, cluster == 2, 3)) |>
+					mutate(cluster = replace(cluster, cluster == 4, 2)) |>
+					mutate(cluster = as_factor(cluster))
+
+ggplot(penguins_clustered, aes(y = bill_length_standardized, 
                  x = flipper_length_standardized, color = cluster)) +
   geom_point() +
   xlab("Flipper Length (standardized)") +
@@ -269,7 +287,7 @@ have.
 ```{r 10-toy-example-clus1, echo = FALSE, message = FALSE, warning = FALSE}
 library(tidyverse)
 
-clus1 <- filter(data, cluster == 2) |>
+clus1 <- filter(penguins_clustered, cluster == 2) |>
   select(bill_length_standardized, flipper_length_standardized)
 ```
 
@@ -292,10 +310,10 @@ In the first cluster from the example, there are `r nrow(clus1)` data points. Th
 (standardized flipper length `r round(mean(clus1$flipper_length_standardized),2)`, standardized bill length `r round(mean(clus1$bill_length_standardized),2)`) highlighted 
 in Figure \@ref(fig:10-toy-example-clus1-center).
 
-(ref:10-toy-example-clus1-center) Cluster 1 from the `penguin_data` data set example. Observations are in blue, with the cluster center highlighted in red.
+(ref:10-toy-example-clus1-center) Cluster 1 from the `penguins_standardized` data set example. Observations are in blue, with the cluster center highlighted in red.
 
 ```{r 10-toy-example-clus1-center, echo = FALSE, warning = FALSE, fig.height = 3.25, fig.width = 3.5, fig.align = "center", fig.cap = "(ref:10-toy-example-clus1-center)"}
-base <- ggplot(data, aes(x = flipper_length_standardized, y = bill_length_standardized)) +
+base <- ggplot(penguins_clustered, aes(x = flipper_length_standardized, y = bill_length_standardized)) +
   geom_point() +
   xlab("Flipper Length (standardized)") +
   ylab("Bill Length (standardized)")
@@ -326,11 +344,10 @@ base
 ```
 
 The second step in computing the WSSD is to add up the squared distance 
-\index{distance!K-means} between each point in the cluster 
-and the cluster center.
-We use the straight-line / Euclidean distance formula 
+\index{distance!K-means} between each point in the cluster and the cluster center.
+We use the straight-line / Euclidean distance formula
 that we learned about in Chapter \@ref(classification1).
-In the `r nrow(clus1)`-observation cluster example above, 
+In the `r nrow(clus1)`-observation cluster example above,
 we would compute the WSSD $S^2$ via
 
 \begin{align*}
@@ -339,7 +356,7 @@ S^2 = \left((x_1 - \mu_x)^2 + (y_1 - \mu_y)^2\right) + \left((x_2 - \mu_x)^2 + (
 
 These distances are denoted by lines in Figure \@ref(fig:10-toy-example-clus1-dists) for the first cluster of the penguin data example. 
 
-(ref:10-toy-example-clus1-dists) Cluster 1 from the `penguin_data` data set example. Observations are in blue, with the cluster center highlighted in red. The distances from the observations to the cluster center are represented as black lines.
+(ref:10-toy-example-clus1-dists) Cluster 1 from the `penguins_standardized` data set example. Observations are in blue, with the cluster center highlighted in red. The distances from the observations to the cluster center are represented as black lines.
 
 ```{r 10-toy-example-clus1-dists, echo = FALSE, warning = FALSE, fig.height = 3.25, fig.width = 3.5, fig.align = "center", fig.cap = "(ref:10-toy-example-clus1-dists)"}
 base <- ggplot(clus1) +
@@ -368,22 +385,21 @@ base <- base +
 base
 ```
 
-The larger the value of $S^2$, the more spread out the cluster is, since large $S^2$ means that points are far from the cluster center.
-Note, however, that "large" is relative to *both* the scale of the variables for clustering *and* the number of points in the cluster. A cluster where points are very close to the center might still have a large $S^2$ if there are many data points in the cluster.
+The larger the value of $S^2$, the more spread out the cluster is, since large $S^2$ means
+that points are far from the cluster center. Note, however, that "large" is relative to *both* the
+scale of the variables for clustering *and* the number of points in the cluster. A cluster where points
+are very close to the center might still have a large $S^2$ if there are many data points in the cluster.
 
-After we have calculated the WSSD for all the clusters, 
-we sum them together to get the *total WSSD*.
-For our example, 
+After we have calculated the WSSD for all the clusters,
+we sum them together to get the *total WSSD*. For our example,
 this means adding up all the squared distances for the 18 observations.
 These distances are denoted by black lines in
 Figure \@ref(fig:10-toy-example-all-clus-dists).
 
-(ref:10-toy-example-all-clus-dists) All clusters from the `penguin_data` data set example. Observations are in orange, blue, and yellow with the cluster center highlighted in red. The distances from the observations to each of the respective cluster centers are represented as black lines.
+(ref:10-toy-example-all-clus-dists) All clusters from the `penguins_standardized` data set example. Observations are in orange, blue, and yellow with the cluster center highlighted in red. The distances from the observations to each of the respective cluster centers are represented as black lines.
 
 ```{r 10-toy-example-all-clus-dists, echo = FALSE, warning = FALSE, fig.height = 3.25, fig.width = 4.25, fig.align = "center", fig.cap = "(ref:10-toy-example-all-clus-dists)"}
-
-
-all_clusters_base <- data |>
+all_clusters_base <- penguins_clustered |>
   ggplot(aes(y = bill_length_standardized,
              x = flipper_length_standardized,
              color = cluster)) +
@@ -398,7 +414,7 @@ cluster_centers <- tibble(x = c(0, 0, 0),
 
 for (cluster_number in seq_along(1:3)) {
   
-  clus <- filter(data, cluster == cluster_number) |>
+  clus <- filter(penguins_clustered, cluster == cluster_number) |>
     select(bill_length_standardized, flipper_length_standardized)
   
   mn <- clus |> 
@@ -415,12 +431,6 @@ for (cluster_number in seq_along(1:3)) {
     )
   }
   
-  #all_clusters_base <- all_clusters_base + 
-  #  geom_point(aes(y = mean(clus$bill_length_standardized), 
-  #                 x = mean(clus$flipper_length_standardized)), 
-  #                 color = "#F8766D", size = 3)
-  #print(mean(clus$bill_length_standardized))
-  #print(mean(clus$flipper_length_standardized))
   cluster_centers[cluster_number, 1] <- mean(clus$flipper_length_standardized)
   cluster_centers[cluster_number, 2] <- mean(clus$bill_length_standardized)
 }
@@ -439,6 +449,14 @@ all_clusters_base <- all_clusters_base +
 all_clusters_base
 ```
 
+Since K-means uses the straight-line distance to measure the quality of a clustering,
+it is limited to clustering based on quantitative variables.
+However, note that there are variants of the K-means algorithm,
+as well as other clustering algorithms entirely,
+that use other distance metrics
+to allow for non-quantitative data to be clustered.
+These are beyond the scope of this book.
+
 \newpage
 
 ### The clustering algorithm
@@ -450,9 +468,9 @@ An example random initialization is shown in Figure \@ref(fig:10-toy-kmeans-init
 
 ```{r 10-toy-kmeans-init, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 3.5, fig.width = 3.75, fig.align = "center", fig.cap = "Random initialization of labels."}
 set.seed(14)
-penguin_data["label"] <- factor(sample(1:3, nrow(penguin_data), replace = TRUE))
+penguins_standardized["label"] <- factor(sample(1:3, nrow(penguins_standardized), replace = TRUE))
 
-plt_lbl <- ggplot(penguin_data, aes(y = bill_length_standardized, 
+plt_lbl <- ggplot(penguins_standardized, aes(y = bill_length_standardized, 
                                     x = flipper_length_standardized, 
                                     color = label)) +
   geom_point(size = 2) +
@@ -472,11 +490,12 @@ sum of WSSDs over all the clusters, i.e., the \index{WSSD!total} *total WSSD*:
 
 These two steps are repeated until the cluster assignments no longer change.
 We show what the first four iterations of K-means would look like in
-Figure \@ref(fig:10-toy-kmeans-iter). There each row corresponds to an iteration,
-where the left column depicts the center update, 
-and the right column depicts the reassignment of data to clusters.
+Figure \@ref(fig:10-toy-kmeans-iter). There each pair of plots
+in each row corresponds to an iteration,
+where the left figure in the pair depicts the center update,
+and the right figure in the pair depicts the label update (i.e., the reassignment of data to clusters).
 
-(ref:10-toy-kmeans-iter) First four iterations of K-means clustering on the `penguin_data` example data set. Each pair of plots corresponds to an iteration. Within the pair, the first plot depicts the center update, and the second plot depicts the reassignment of data to clusters. Cluster centers are indicated by larger points that are outlined in black.
+(ref:10-toy-kmeans-iter) First four iterations of K-means clustering on the `penguins_standardized` example data set. Each pair of plots corresponds to an iteration. Within the pair, the first plot depicts the center update, and the second plot depicts the reassignment of data to clusters. Cluster centers are indicated by larger points that are outlined in black.
 
 ```{r 10-toy-kmeans-iter, echo = FALSE, warning = FALSE, fig.height = 4.5, fig.width = 8, fig.align = "center", fig.cap = "(ref:10-toy-kmeans-iter)"}
 list_plot_cntrs <- vector(mode = "list", length = 4)
@@ -484,12 +503,12 @@ list_plot_lbls <- vector(mode = "list", length = 4)
 
 for (i in 1:4) {
   # compute centers
-  centers <- penguin_data |>
+  centers <- penguins_standardized |>
     group_by(label) |>
     summarize_all(funs(mean))
   nclus <- nrow(centers)
   # replot with centers
-  plt_ctr <- ggplot(penguin_data, aes(y = bill_length_standardized, 
+  plt_ctr <- ggplot(penguins_standardized, aes(y = bill_length_standardized, 
                                       x = flipper_length_standardized, 
                                       color = label)) +
     geom_point(size = 2) +
@@ -515,15 +534,15 @@ for (i in 1:4) {
   }
   
   # reassign labels
-  dists <- rbind(centers, penguin_data) |>
+  dists <- rbind(centers, penguins_standardized) |>
     select("flipper_length_standardized", "bill_length_standardized") |>
     dist() |>
     as.matrix()
   dists <- as_tibble(dists[-(1:nclus), 1:nclus])
-  penguin_data <- penguin_data |> 
+  penguins_standardized <- penguins_standardized |> 
     mutate(label = apply(dists, 1, function(x) names(x)[which.min(x)]))
 
-  plt_lbl <- ggplot(penguin_data, 
+  plt_lbl <- ggplot(penguins_standardized, 
                     aes(y = bill_length_standardized, 
                         x = flipper_length_standardized, 
                         color = label)) +
@@ -615,28 +634,17 @@ in the fourth iteration; both the centers and labels will remain the same from t
 > ways to assign the data to clusters. So at some point, the total WSSD must stop decreasing, which means none of the assignments
 > are changing, and the algorithm terminates.
 
-What kind of data is suitable for K-means clustering? 
-In the simplest version of K-means clustering that we have presented here,
-the straight-line distance is used to measure the 
-distance between observations and cluster centers. 
-This means that only quantitative data should be used with this algorithm.
-There are variants on the K-means algorithm, 
-as well as other clustering algorithms entirely, 
-that use other distance metrics 
-to allow for non-quantitative data to be clustered. 
-These, however, are beyond the scope of this book.
-
 ### Random restarts
 
 Unlike the classification and regression models we studied in previous chapters, K-means \index{K-means!restart, nstart} can get "stuck" in a bad solution.
 For example, Figure \@ref(fig:10-toy-kmeans-bad-init) illustrates an unlucky random initialization by K-means.
 
 ```{r 10-toy-kmeans-bad-init, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 3.25, fig.width = 3.75, fig.pos = "H", out.extra="", fig.align = "center", fig.cap = "Random initialization of labels."}
-penguin_data <- penguin_data |>
+penguins_standardized <- penguins_standardized |>
   mutate(label = as_factor(c(3L, 3L, 1L, 1L, 2L, 1L, 2L, 1L, 1L, 
                              1L, 3L, 1L, 2L, 2L, 2L, 3L, 3L, 3L)))
 
-plt_lbl <- ggplot(penguin_data, aes(y = bill_length_standardized, 
+plt_lbl <- ggplot(penguins_standardized, aes(y = bill_length_standardized, 
                                     x = flipper_length_standardized, 
                                     color = label)) +
   geom_point(size = 2) +
@@ -650,7 +658,7 @@ plt_lbl
 
 Figure \@ref(fig:10-toy-kmeans-bad-iter) shows what the iterations of K-means would look like with the unlucky random initialization shown in Figure \@ref(fig:10-toy-kmeans-bad-init).
 
-(ref:10-toy-kmeans-bad-iter) First five iterations of K-means clustering on the `penguin_data` example data set with a poor random initialization. Each pair of plots corresponds to an iteration. Within the pair, the first plot depicts the center update, and the second plot depicts the reassignment of data to clusters. Cluster centers are indicated by larger points that are outlined in black.
+(ref:10-toy-kmeans-bad-iter) First five iterations of K-means clustering on the `penguins_standardized` example data set with a poor random initialization. Each pair of plots corresponds to an iteration. Within the pair, the first plot depicts the center update, and the second plot depicts the reassignment of data to clusters. Cluster centers are indicated by larger points that are outlined in black.
 
 ```{r 10-toy-kmeans-bad-iter, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 6.75, fig.width = 8, fig.pos = "H", out.extra="", fig.align = "center", fig.cap = "(ref:10-toy-kmeans-bad-iter)"}
 list_plot_cntrs <- vector(mode = "list", length = 5)
@@ -658,12 +666,12 @@ list_plot_lbls <- vector(mode = "list", length = 5)
 
 for (i in 1:5) {
   # compute centers
-  centers <- penguin_data |>
+  centers <- penguins_standardized |>
     group_by(label) |>
     summarize_all(funs(mean))
   nclus <- nrow(centers)
   # replot with centers
-  plt_ctr <- ggplot(penguin_data, aes(y = bill_length_standardized, 
+  plt_ctr <- ggplot(penguins_standardized, aes(y = bill_length_standardized, 
                                       x = flipper_length_standardized, 
                                       color = label)) +
     geom_point(size = 2) +
@@ -688,15 +696,15 @@ for (i in 1:5) {
   }
   
   # reassign labels
-  dists <- rbind(centers, penguin_data) |>
+  dists <- rbind(centers, penguins_standardized) |>
     select("flipper_length_standardized", "bill_length_standardized") |>
     dist() |>
     as.matrix()
   dists <- as_tibble(dists[-(1:nclus), 1:nclus])
-  penguin_data <- penguin_data |> 
+  penguins_standardized <- penguins_standardized |> 
     mutate(label = apply(dists, 1, function(x) names(x)[which.min(x)]))
 
-  plt_lbl <- ggplot(penguin_data, aes(y = bill_length_standardized, 
+  plt_lbl <- ggplot(penguins_standardized, aes(y = bill_length_standardized, 
                                       x = flipper_length_standardized, 
                                       color = label)) +
     geom_point(size = 2) +
@@ -815,10 +823,10 @@ set.seed(3)
 
 kclusts <- tibble(k = 1:9) |>
   mutate(
-    kclust = map(k, ~ kmeans(penguin_data[-3], .x)),
+    kclust = map(k, ~ kmeans(penguins_standardized[-3], .x)),
     tidied = map(kclust, tidy),
     glanced = map(kclust, glance),
-    augmented = map(kclust, augment, penguin_data[-3])
+    augmented = map(kclust, augment, penguins_standardized[-3])
   )
 
 clusters <- kclusts |>
@@ -900,25 +908,13 @@ set.seed(1)
 We can perform K-means clustering in R using a `tidymodels` workflow similar 
 to those in the earlier classification and regression chapters. 
 We will begin by loading the `tidyclust`\index{tidyclust} library, which contains the necessary
-functionality, and then read in the 
-original (i.e., unstandardized) subset of 18 observations
-from the penguins data set.
-
-```{r 10-get-unscaled-data, echo = FALSE, message = FALSE, warning = FALSE}
-unstandardized_data <- read_csv("data/penguins_toy.csv") |>
-  select(bill_length_mm, flipper_length_mm)
-
-write_csv(unstandardized_data, "data/penguins.csv")
-```
-
+functionality.
 ```{r, echo = TRUE, warning = FALSE, message = FALSE}
 library(tidyclust)
-
-penguins <- read_csv("data/penguins.csv")
-penguins
 ```
 
-Recall that K-means clustering uses straight-line 
+Returning to the original (unstandardized) `penguins` data,
+recall that K-means clustering uses straight-line 
 distance to decide which points are similar to 
 each other. Therefore, the *scale* of each of the variables in the data
 will influence which cluster data points end up being assigned.
