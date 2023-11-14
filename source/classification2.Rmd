@@ -491,7 +491,7 @@ cancer_test_predictions <- predict(knn_fit, cancer_test) |>
 cancer_test_predictions
 ```
 
-### Evaluate performance
+### Evaluate performance {#eval-performance-cls2}
 
 Finally, we can assess our classifier's performance. First, we will examine
 accuracy. To do this we use the
@@ -941,14 +941,29 @@ accuracy_vs_k <- ggplot(accuracies, aes(x = neighbors, y = mean)) +
 accuracy_vs_k
 ```
 
+We can also obtain the number of neighbours with the highest accuracy
+programmatically by accessing the `neighbors` variable in the `accuracies` data
+frame where the `mean` variable is highest.
+Note that it is still useful to visualize the results as
+we did above since this provides additional information on how the model
+performance varies.
+
+```{r 06-extract-k}
+best_k <- accuracies |>
+		arrange(desc(mean)) |>
+		head(1) |>
+		pull(neighbors)
+best_k
+```
+
 Setting the number of 
-neighbors to $K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors`
+neighbors to $K =$ `r best_k`
 provides the highest accuracy (`r (accuracies |> arrange(desc(mean)) |> slice(1) |> pull(mean) |> round(4))*100`%). But there is no exact or perfect answer here;
 any selection from $K = 30$ and $60$ would be reasonably justified, as all
 of these differ in classifier accuracy by a small amount. Remember: the
 values you see on this plot are *estimates* of the true accuracy of our
 classifier. Although the 
-$K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors` value is 
+$K =$ `r best_k` value is
 higher than the others on this plot,
 that doesn't mean the classifier is actually more accurate with this parameter
 value! Generally, when selecting $K$ (and other parameters for other predictive
@@ -958,12 +973,12 @@ models), we are looking for a value where:
 - changing the value to a nearby one (e.g., adding or subtracting a small number) doesn't decrease accuracy too much, so that our choice is reliable in the presence of uncertainty;
 - the cost of training the model is not prohibitive (e.g., in our situation, if $K$ is too large, predicting becomes expensive!).
 
-We know that $K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors` 
+We know that $K =$ `r best_k`
 provides the highest estimated accuracy. Further, Figure \@ref(fig:06-find-k) shows that the estimated accuracy 
-changes by only a small amount if we increase or decrease $K$ near $K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors`.
-And finally, $K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors` does not create a prohibitively expensive
+changes by only a small amount if we increase or decrease $K$ near $K =$ `r best_k`.
+And finally, $K =$ `r best_k` does not create a prohibitively expensive
 computational cost of training. Considering these three points, we would indeed select
-$K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors` for the classifier.
+$K =$ `r best_k` for the classifier.
 
 ### Under/Overfitting
 
@@ -987,10 +1002,10 @@ knn_results <- workflow() |>
   tune_grid(resamples = cancer_vfold, grid = k_lots) |>
   collect_metrics()
 
-accuracies <- knn_results |>
+accuracies_lots <- knn_results |>
   filter(.metric == "accuracy")
 
-accuracy_vs_k_lots <- ggplot(accuracies, aes(x = neighbors, y = mean)) +
+accuracy_vs_k_lots <- ggplot(accuracies_lots, aes(x = neighbors, y = mean)) +
   geom_point() +
   geom_line() +
   labs(x = "Neighbors", y = "Accuracy Estimate") + 
@@ -1081,6 +1096,69 @@ that does not generalize well to new data. When fitting a model, we need to stri
 a balance between the two. You can see these two effects in Figure 
 \@ref(fig:06-decision-grid-K), which shows how the classifier changes as 
 we set the number of neighbors $K$ to 1, 7, 20, and 300.
+
+### Evaluating on the test set
+
+Now that we have tuned the KNN classifier and set $K =$ `r best_k`,
+we are done building the model and it is time to evaluate the quality of its predictions on the held out
+test data, as we did earlier in Section \@ref(eval-performance-cls2).
+We first need to retrain the KNN classifier
+on the entire training data set using the selected number of neighbors.
+
+```{r 06-eval-on-test-set-after-tuning, message = FALSE, warning = FALSE}
+cancer_recipe <- recipe(Class ~ Smoothness + Concavity, data = cancer_train) |>
+  step_scale(all_predictors()) |>
+  step_center(all_predictors())
+
+knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = best_k) |>
+  set_engine("kknn") |>
+  set_mode("classification")
+
+knn_fit <- workflow() |>
+  add_recipe(cancer_recipe) |>
+  add_model(knn_spec) |>
+  fit(data = cancer_train)
+
+knn_fit
+```
+
+Then to make predictions and assess the estimated accuracy of the best model on the test data, we use the
+`predict` and `conf_mat` functions as we did earlier in this chapter.
+
+```{r 06-predictions-after-tuning, message = FALSE, warning = FALSE}
+cancer_test_predictions <- predict(knn_fit, cancer_test) |>
+  bind_cols(cancer_test)
+
+cancer_test_predictions |>
+  metrics(truth = Class, estimate = .pred_class) |>
+  filter(.metric == "accuracy")
+```
+
+```{r 06-predictions-after-tuning-acc-save-hidden, echo = FALSE, message = FALSE, warning = FALSE}
+cancer_acc_tuned <- cancer_test_predictions |>
+    metrics(truth = Class, estimate = .pred_class) |>
+    filter(.metric == "accuracy") |>
+    pull(.estimate)
+```
+
+```{r 06-confusion-matrix-after-tuning, message = FALSE, warning = FALSE}
+confusion <- cancer_test_predictions |>
+             conf_mat(truth = Class, estimate = .pred_class)
+confusion
+```
+
+At first glance, this is a bit surprising: the performance of the classifier
+has not changed much despite tuning the number of neighbors! For example, our first model
+with $K =$ 3 (before we knew how to tune) had an estimated accuracy of `r round(100*cancer_acc_1$.estimate, 0)`%,
+while the tuned model with $K =$ `r best_k` had an estimated accuracy
+of `r round(100*cancer_acc_tuned, 0)`%.
+But upon examining Figure \@ref(fig:06-find-k) again closely&mdash;to revisit the
+cross validation accuracy estimates for a range of neighbors&mdash;this result
+becomes much less surprising. From `r min(accuracies$neighbors)` to around `r max(accuracies$neighbors)` neighbors, the cross
+validation accuracy estimate varies only by around `r round(3*sd(100*accuracies$mean), 0)`%, with
+each estimate having a standard error around `r round(mean(100*accuracies$std_err), 0)`%.
+Since the cross-validation accuracy estimates the test set accuracy,
+the fact that the test set accuracy also doesn't change much is expected.
 
 ## Summary
 
