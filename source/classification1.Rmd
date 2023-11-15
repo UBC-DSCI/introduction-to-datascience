@@ -65,8 +65,8 @@ By the end of the chapter, readers will be able to do the following:
 - Describe what a training data set is and how it is used in classification.
 - Interpret the output of a classifier.
 - Compute, by hand, the straight-line (Euclidean) distance between points on a graph when there are two predictor variables.
-- Explain the $K$-nearest neighbor classification algorithm.
-- Perform $K$-nearest neighbor classification in R using `tidymodels`.
+- Explain the K-nearest neighbors classification algorithm.
+- Perform K-nearest neighbors classification in R using `tidymodels`.
 - Use a `recipe` to center, scale, balance, and impute data as a preprocessing step.
 - Combine preprocessing and model training using a `workflow`.
 
@@ -93,7 +93,7 @@ the classifier to make predictions on new data for which we do not know the clas
 
 There are many possible methods that we could use to predict
 a categorical class/label for an observation. In this book, we will
-focus on the widely used **$K$-nearest neighbors** \index{K-nearest neighbors} algorithm [@knnfix; @knncover].
+focus on the widely used **K-nearest neighbors** \index{K-nearest neighbors} algorithm [@knnfix; @knncover].
 In your future studies, you might encounter decision trees, support vector machines (SVMs),
 logistic regression, neural networks, and more; see the additional resources
 section at the end of the next chapter for where to begin learning more about
@@ -272,7 +272,7 @@ malignant. Based on our visualization, it seems like it may be possible
 to make accurate predictions of the `Class` variable (i.e., a diagnosis) for
 tumor images with unknown diagnoses.
 
-## Classification with $K$-nearest neighbors
+## Classification with K-nearest neighbors
 
 ```{r 05-knn-0, echo = FALSE}
 ## Find the distance between new point and all others in data set
@@ -306,15 +306,15 @@ neighbors <- cancer[order(my_distances$Distance), ]
 
 In order to actually make predictions for new observations in practice, we
 will need a classification algorithm. 
-In this book, we will use the $K$-nearest neighbors \index{K-nearest neighbors!classification} classification algorithm.
+In this book, we will use the K-nearest neighbors \index{K-nearest neighbors!classification} classification algorithm.
 To predict the label of a new observation (here, classify it as either benign
-or malignant), the $K$-nearest neighbors classifier generally finds the $K$
+or malignant), the K-nearest neighbors classifier generally finds the $K$
 "nearest" or "most similar" observations in our training set, and then uses
 their diagnoses to make a prediction for the new observation's diagnosis. $K$ 
 is a number that we must choose in advance; for now, we will assume that someone has chosen
 $K$ for us. We will cover how to choose $K$ ourselves in the next chapter. 
 
-To illustrate the concept of $K$-nearest neighbors classification, we 
+To illustrate the concept of K-nearest neighbors classification, we 
 will walk through an example.  Suppose we have a
 new observation, with standardized perimeter of `r new_point[1]` and standardized concavity of `r new_point[2]`, whose 
 diagnosis "Class" is unknown. This new observation is depicted by the red, diamond point in
@@ -554,7 +554,7 @@ perim_concav + annotate("path",
 ### More than two explanatory variables 
 
 Although the above description is directed toward two predictor variables, 
-exactly the same $K$-nearest neighbors algorithm applies when you
+exactly the same K-nearest neighbors algorithm applies when you
 have a higher number of predictor variables.  Each predictor variable may give us new
 information to help create our classifier.  The only difference is the formula
 for the distance between points. Suppose we have $m$ predictor
@@ -675,9 +675,9 @@ if(!is_latex_output()){
 }
 ```
 
-### Summary of $K$-nearest neighbors algorithm
+### Summary of K-nearest neighbors algorithm
 
-In order to classify a new observation using a $K$-nearest neighbor classifier, we have to do the following:
+In order to classify a new observation using a K-nearest neighbors classifier, we have to do the following:
 
 1. Compute the distance between the new observation and each observation in the training set.
 2. Sort the data table in ascending order according to the distances.
@@ -685,12 +685,12 @@ In order to classify a new observation using a $K$-nearest neighbor classifier, 
 4. Classify the new observation based on a majority vote of the neighbor classes.
 
 
-## $K$-nearest neighbors with `tidymodels`
+## K-nearest neighbors with `tidymodels`
 
-Coding the $K$-nearest neighbors algorithm in R ourselves can get complicated,
+Coding the K-nearest neighbors algorithm in R ourselves can get complicated,
 especially if we want to handle multiple classes, more than two variables,
 or predict the class for multiple new observations. Thankfully, in R,
-the $K$-nearest neighbors algorithm is 
+the K-nearest neighbors algorithm is 
 implemented in [the `parsnip` R package](https://parsnip.tidymodels.org/) [@parsnip] 
 included in `tidymodels`, along with 
 many [other models](https://www.tidymodels.org/find/parsnip/) \index{tidymodels}\index{parsnip}
@@ -704,7 +704,7 @@ start by loading `tidymodels`.
 library(tidymodels)
 ```
 
-Let's walk through how to use `tidymodels` to perform $K$-nearest neighbors classification. 
+Let's walk through how to use `tidymodels` to perform K-nearest neighbors classification. 
 We will use the `cancer` data set from above, with
 perimeter and concavity as predictors and $K = 5$ neighbors to build our classifier. Then
 we will use the classifier to predict the diagnosis label for a new observation with
@@ -717,7 +717,7 @@ cancer_train <- cancer |>
 cancer_train
 ```
 
-Next, we create a *model specification* for \index{tidymodels!model specification} $K$-nearest neighbors classification
+Next, we create a *model specification* for \index{tidymodels!model specification} K-nearest neighbors classification
 by calling the `nearest_neighbor` function, specifying that we want to use $K = 5$ neighbors
 (we will discuss how to choose $K$ in the next chapter) and that each neighboring point should have the same weight when voting
 (`weight_func = "rectangular"`). The `weight_func` argument controls
@@ -726,7 +726,7 @@ each of the $K$ nearest neighbors gets exactly 1 vote as described above. Other 
 which weigh each neighbor's vote differently, can be found on 
 [the `parsnip` website](https://parsnip.tidymodels.org/reference/nearest_neighbor.html).
 In the `set_engine` \index{tidymodels!engine} argument, we specify which package or system will be used for training
-the model. Here `kknn` is the R package we will use for performing $K$-nearest neighbors classification.
+the model. Here `kknn` is the R package we will use for performing K-nearest neighbors classification.
 Finally, we specify that this is a classification problem with the `set_mode` function.
 
 ```{r 05-tidymodels-3}
@@ -766,7 +766,7 @@ hidden_print(knn_fit)
 
 Here you can see the final trained model summary. It confirms that the computational engine used
 to train the model  was `kknn::train.kknn`. It also shows the fraction of errors made by
-the nearest neighbor model, but we will ignore this for now and discuss it in more detail
+the K-nearest neighbors model, but we will ignore this for now and discuss it in more detail
 in the next chapter.
 Finally, it shows (somewhat confusingly) that the "best" weight function 
 was "rectangular" and "best" setting of $K$ was 5; but since we specified these earlier,
@@ -775,7 +775,7 @@ let R find the value of $K$ for us.
 
 Finally, we make the prediction on the new observation by calling the `predict` \index{tidymodels!predict} function,
 passing both the fit object we just created and the new observation itself. As above, 
-when we ran the $K$-nearest neighbors
+when we ran the K-nearest neighbors
 classification algorithm manually, the `knn_fit` object classifies the new observation as 
 malignant. Note that the `predict` function outputs a data frame with a single 
 variable named `.pred_class`.
@@ -795,7 +795,7 @@ learn ways to quantify how accurate we think our predictions are.
 
 ### Centering and scaling
 
-When using $K$-nearest neighbor classification, the *scale* \index{scaling} of each variable
+When using K-nearest neighbors classification, the *scale* \index{scaling} of each variable
 (i.e., its size and range of values) matters. Since the classifier predicts
 classes by identifying observations nearest to it, any variables with 
 a large scale will have a much larger effect than variables with a small
@@ -816,7 +816,7 @@ degrees Celsius, the two variables would differ by a constant shift of 273
 hypothetical job classification example, we would likely see that the center of
 the salary variable is in the tens of thousands, while the center of the years
 of education variable is in the single digits. Although this doesn't affect the
-$K$-nearest neighbor classification algorithm, this large shift can change the
+K-nearest neighbors classification algorithm, this large shift can change the
 outcome of using many other predictive models.  \index{centering}
 
 To scale and center our data, we need to find
@@ -825,8 +825,8 @@ set of numbers) and *standard deviation* (a number quantifying how spread out va
 For each observed value of the variable, we subtract the mean (i.e., center the variable) 
 and divide by the standard deviation (i.e., scale the variable). When we do this, the data 
 is said to be *standardized*, \index{standardization!K-nearest neighbors} and all variables in a data set will have a mean of 0 
-and a standard deviation of 1. To illustrate the effect that standardization can have on the $K$-nearest
-neighbor algorithm, we will read in the original, unstandardized Wisconsin breast
+and a standard deviation of 1. To illustrate the effect that standardization can have on the K-nearest
+neighbors algorithm, we will read in the original, unstandardized Wisconsin breast
 cancer data set; we have been using a standardized version of the data set up
 until now. As before, we will convert the `Class` variable to the factor type
 and rename the values to "Malignant" and "Benign." 
@@ -918,7 +918,7 @@ It may seem redundant that we had to both `bake` *and* `prep` to scale and cente
 
 You may wonder why we are doing so much work just to center and
 scale our variables. Can't we just manually scale and center the `Area` and
-`Smoothness` variables ourselves before building our $K$-nearest neighbor model? Well,
+`Smoothness` variables ourselves before building our K-nearest neighbors model? Well,
 technically *yes*; but doing so is error-prone.  In particular, we might
 accidentally forget to apply the same centering / scaling when making
 predictions, or accidentally apply a *different* centering / scaling than what
@@ -1074,7 +1074,7 @@ ggplot(unscaled_cancer, aes(x = Area,
 
 Another potential issue in a data set for a classifier is *class imbalance*, \index{balance}\index{imbalance}
 i.e., when one label is much more common than another. Since classifiers like
-the $K$-nearest neighbor algorithm use the labels of nearby points to predict
+the K-nearest neighbors algorithm use the labels of nearby points to predict
 the label of a new point, if there are many more data points with one label
 overall, the algorithm is more likely to pick that label in general (even if
 the "pattern" of data suggests otherwise). Class imbalance is actually quite a
@@ -1121,7 +1121,7 @@ rare_plot <- rare_cancer |>
 rare_plot
 ```
 
-Suppose we now decided to use $K = 7$ in $K$-nearest neighbor classification.
+Suppose we now decided to use $K = 7$ in K-nearest neighbors classification.
 With only 3 observations of malignant tumors, the classifier 
 will *always predict that the tumor is benign, no matter what its concavity and perimeter
 are!* This is because in a majority vote of 7 observations, at most 3 will be
@@ -1175,7 +1175,7 @@ rare_plot + geom_point(aes(x = new_point[1], y = new_point[2]),
 ```
 
 Figure \@ref(fig:05-upsample-2) shows what happens if we set the background color of 
-each area of the plot to the predictions the $K$-nearest neighbor 
+each area of the plot to the predictions the K-nearest neighbors 
 classifier would make. We can see that the decision is 
 always "benign," corresponding to the blue color.
 
@@ -1226,7 +1226,7 @@ Despite the simplicity of the problem, solving it in a statistically sound manne
 fairly nuanced, and a careful treatment would require a lot more detail and mathematics than we will cover in this textbook.
 For the present purposes, it will suffice to rebalance the data by *oversampling* the rare class. \index{oversampling}
 In other words, we will replicate rare observations multiple times in our data set to give them more
-voting power in the $K$-nearest neighbor algorithm. In order to do this, we will add an oversampling
+voting power in the K-nearest neighbors algorithm. In order to do this, we will add an oversampling
 step to the earlier `uc_recipe` recipe with the `step_upsample` function from the `themis` R package. \index{recipe!step\_upsample}
 We show below how to do this, and also
 use the `group_by` and `summarize` functions to see that our classes are now balanced:
@@ -1252,9 +1252,9 @@ upsampled_cancer |>
   summarize(n = n())
 ```
 
-Now suppose we train our $K$-nearest neighbor classifier with $K=7$ on this *balanced* data. 
+Now suppose we train our K-nearest neighbors classifier with $K=7$ on this *balanced* data. 
 Figure \@ref(fig:05-upsample-plot) shows what happens now when we set the background color 
-of each area of our scatter plot to the decision the $K$-nearest neighbor 
+of each area of our scatter plot to the decision the K-nearest neighbors 
 classifier would make. We can see that the decision is more reasonable; when the points are close
 to those labeled malignant, the classifier predicts a malignant tumor, and vice versa when they are 
 closer to the benign tumor observations.
@@ -1322,13 +1322,13 @@ missing_cancer <- read_csv("data/wdbc_missing.csv") |>
   mutate(Class = fct_recode(Class, "Malignant" = "M", "Benign" = "B"))
 missing_cancer
 ```
-Recall that K-nearest neighbor classification makes predictions by computing
+Recall that K-nearest neighbors classification makes predictions by computing
 the straight-line distance to nearby training observations, and hence requires
 access to the values of *all* variables for *all* observations in the training
-data.  So how can we perform K-nearest neighbor classification in the presence
+data.  So how can we perform K-nearest neighbors classification in the presence
 of missing data?  Well, since there are not too many observations with missing
 entries, one option is to simply remove those observations prior to building
-the K-nearest neighbor classifier. We can accomplish this by using the
+the K-nearest neighbors classifier. We can accomplish this by using the
 `drop_na` function from `tidyverse` prior to working with the data.
 
 ```{r 05-naomit}
@@ -1386,7 +1386,7 @@ unscaled_cancer <- read_csv("data/wdbc_unscaled.csv") |>
   mutate(Class = as_factor(Class)) |>
   mutate(Class = fct_recode(Class, "Malignant" = "M", "Benign" = "B"))
 
-# create the KNN model
+# create the K-NN model
 knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 7) |>
   set_engine("kknn") |>
   set_mode("classification")
@@ -1440,7 +1440,7 @@ prediction
 
 The classifier predicts that the first observation is benign, while the second is
 malignant. Figure \@ref(fig:05-workflow-plot-show) visualizes the predictions that this 
-trained $K$-nearest neighbor model will make on a large range of new observations.
+trained K-nearest neighbors model will make on a large range of new observations.
 Although you have seen colored prediction map visualizations like this a few times now,
 we have not included the code to generate them, as it is a little bit complicated.
 For the interested reader who wants a learning challenge, we now include it below. 
