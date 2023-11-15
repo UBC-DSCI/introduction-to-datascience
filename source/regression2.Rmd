@@ -221,11 +221,11 @@ can come back to after we choose our final model. Let's take care of that now.
 library(tidyverse)
 library(tidymodels)
 
-set.seed(1234)
+set.seed(7)
 
 sacramento <- read_csv("data/sacramento.csv")
 
-sacramento_split <- initial_split(sacramento, prop = 0.6, strata = price)
+sacramento_split <- initial_split(sacramento, prop = 0.75, strata = price)
 sacramento_train <- training(sacramento_split)
 sacramento_test <- testing(sacramento_split)
 ```
@@ -349,7 +349,8 @@ obtained from the same problem, shown in Figure \@ref(fig:08-compareRegression).
 
 ```{r 08-compareRegression, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 4.75, fig.width = 10, fig.cap = "Comparison of simple linear regression and K-NN regression."}
 set.seed(1234)
-sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 30) |>
+# neighbors = 52 from regression1 chapter
+sacr_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = 52) |>
   set_engine("kknn") |>
   set_mode("regression")
 
@@ -620,10 +621,9 @@ indicating that we should likely choose linear regression for predictions of
 house sale price on this data set. Revisiting the simple linear regression model
 with only a single predictor from earlier in this chapter, we see that the RMSPE for that model was
 \$`r format(lm_test_results |> filter(.metric == 'rmse') |> pull(.estimate), big.mark=",", nsmall=0, scientific = FALSE)`,
-which is slightly higher than that of our more complex model. Our model with two predictors
-provided a slightly better fit on test data than our model with just one.
-As mentioned earlier, this is not always the case: sometimes including more
-predictors can negatively impact the prediction performance on unseen
+which is almost the same as that of our more complex model.
+As mentioned earlier, this is not always the case: often including more
+predictors will either positively or negatively impact the prediction performance on unseen
 test data.
 
 ## Multicollinearity and outliers
