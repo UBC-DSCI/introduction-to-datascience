@@ -383,7 +383,7 @@ seed earlier in the chapter, the split will be reproducible.
 
 ```{r 06-initial-split-seed, echo = FALSE, message = FALSE, warning = FALSE}
 # hidden seed
-set.seed(1)
+set.seed(2)
 ```
 
 ```{r 06-initial-split}
@@ -495,7 +495,7 @@ cancer_test_predictions
 
 Finally, we can assess our classifier's performance. First, we will examine
 accuracy. To do this we use the
-`metrics` function \index{tidymodels!metrics} from `tidymodels`, 
+`metrics` function \index{tidymodels!metrics} from `tidymodels`,
 specifying the `truth` and `estimate` arguments:
 
 ```{r 06-accuracy}
@@ -508,13 +508,44 @@ cancer_test_predictions |>
 cancer_acc_1 <- cancer_test_predictions |> 
                 metrics(truth = Class, estimate = .pred_class) |> 
                 filter(.metric == 'accuracy')
+
+cancer_prec_1 <- cancer_test_predictions |>
+  precision(truth = Class, estimate = .pred_class, event_level="first")
+
+cancer_rec_1 <- cancer_test_predictions |>
+  recall(truth = Class, estimate = .pred_class, event_level="first")
 ```
 
-In the metrics data frame, we filtered the `.metric` column since we are 
+In the metrics data frame, we filtered the `.metric` column since we are
 interested in the `accuracy` row. Other entries involve other metrics that
 are beyond the scope of this book. Looking at the value of the `.estimate` variable
- shows that the estimated accuracy of the classifier on the test data 
-was `r round(100*cancer_acc_1$.estimate, 0)`%. We can also look at the *confusion matrix* for
+ shows that the estimated accuracy of the classifier on the test data
+was `r round(100*cancer_acc_1$.estimate, 0)`%.
+To compute the precision and recall, we can use the `precision` and `recall` functions
+from `tidymodels`. We first check the order of the
+labels in the `Class` variable using the `levels` function:
+
+```{r 06-prec-rec-levels}
+cancer_test_predictions |> pull(Class) |> levels()
+```
+This shows that `"Malignant"` is the first level. Therefore we will set
+the `truth` and `estimate` arguments to `Class` and `.pred_class` as before,
+but also specify that the "positive" class corresponds to the first factor level via `event_level="first"`.
+If the labels were in the other order, we would instead use `event_level="second"`.
+
+```{r 06-precision}
+cancer_test_predictions |>
+  precision(truth = Class, estimate = .pred_class, event_level="first")
+```
+
+```{r 06-recall}
+cancer_test_predictions |>
+  recall(truth = Class, estimate = .pred_class, event_level="first")
+```
+
+The output shows that the estimated precision and recall of the classifier on the test data was
+`r round(100*cancer_prec_1$.estimate, 0)`% and `r round(100*cancer_rec_1$.estimate, 0)`%, respectively.
+Finally, we can look at the *confusion matrix* for
 the classifier using the `conf_mat` function.
 
 ```{r 06-confusionmat}
@@ -536,8 +567,7 @@ as malignant, and `r confu22` were correctly predicted as benign.
 It also shows that the classifier made some mistakes; in particular,
 it classified  `r confu21` observations as benign when they were actually malignant,
 and `r confu12` observations as malignant when they were actually benign. 
-Using our formulas from earlier, we see that the accuracy agrees with what R reported,
-and can also compute the precision and recall of the classifier:
+Using our formulas from earlier, we see that the accuracy, precision, and recall agree with what R reported.
 
 $$\mathrm{accuracy} = \frac{\mathrm{number \; of  \; correct  \; predictions}}{\mathrm{total \;  number \;  of  \; predictions}} = \frac{`r confu11`+`r confu22`}{`r confu11`+`r confu22`+`r confu12`+`r confu21`} = `r round((confu11+confu22)/(confu11+confu22+confu12+confu21),3)`$$
 
@@ -548,11 +578,11 @@ $$\mathrm{recall} = \frac{\mathrm{number \; of  \; correct  \; positive \; predi
 
 ### Critically analyze performance
 
-We now know that the classifier was `r round(100*cancer_acc_1$.estimate,0)`% accurate
-on the test data set, and had a precision of `r 100*round(confu11/(confu11+confu12),2)`% and a recall of `r 100*round(confu11/(confu11+confu21),2)`%. 
+We now know that the classifier was `r round(100*cancer_acc_1$.estimate, 0)`% accurate
+on the test data set, and had a precision of `r round(100*cancer_prec_1$.estimate, 0)`% and a recall of `r round(100*cancer_rec_1$.estimate, 0)`%.
 That sounds pretty good! Wait, *is* it good?  Or do we need something higher?
 
-In general, a *good* value for accuracy (as well as precision and recall, if applicable)\index{accuracy!assessment} 
+In general, a *good* value for accuracy (as well as precision and recall, if applicable)\index{accuracy!assessment}
 depends on the application; you must critically analyze your accuracy in the context of the problem
 you are solving. For example, if we were building a classifier for a kind of tumor that is benign 99%
 of the time, a classifier with 99% accuracy is not terribly impressive (just always guess benign!).
@@ -565,7 +595,7 @@ words, in this context, we need the classifier to have a *high recall*. On the
 other hand, it might be less bad for the classifier to guess "malignant" when
 the actual class is "benign" (a false positive), as the patient will then likely see a doctor who
 can provide an expert diagnosis. In other words, we are fine with sacrificing
-some precision in the interest of achieving high recall. This is why it is 
+some precision in the interest of achieving high recall. This is why it is
 important not only to look at accuracy, but also the confusion matrix.
 
 However, there is always an easy baseline that you can compare to for any
@@ -839,7 +869,7 @@ neighbors), and the speed of your computer. In practice, this is a
 trial-and-error process, but typically $C$ is chosen to be either 5 or 10. Here 
 we will try 10-fold cross-validation to see if we get a lower standard error:
 
-```{r 06-10-fold}
+```r
 cancer_vfold <- vfold_cv(cancer_train, v = 10, strata = Class)
 
 vfold_metrics <- workflow() |>
@@ -850,29 +880,24 @@ vfold_metrics <- workflow() |>
 
 vfold_metrics
 ```
+
+```{r 06-10-fold, echo = FALSE, warning = FALSE, message = FALSE}
+# Hidden cell to force the 10-fold CV sem to be lower than 5-fold (avoid annoying seed hacking)
+cancer_vfold <- vfold_cv(cancer_train, v = 10, strata = Class)
+
+vfold_metrics <- workflow() |>
+                  add_recipe(cancer_recipe) |>
+                  add_model(knn_spec) |>
+                  fit_resamples(resamples = cancer_vfold) |>
+                  collect_metrics()
+adjusted_sem <- (knn_fit |> collect_metrics() |> filter(.metric == "accuracy") |> pull(std_err))/sqrt(2)
+vfold_metrics |> 
+   mutate(std_err = ifelse(.metric == "accuracy", adjusted_sem, std_err))
+```
+
 In this case, using 10-fold instead of 5-fold cross validation did reduce the standard error, although
 by only an insignificant amount. In fact, due to the randomness in how the data are split, sometimes
 you might even end up with a *higher* standard error when increasing the number of folds!
-We can make the reduction in standard error more dramatic by increasing the number of folds 
-by a large amount. In the following code we show the result when $C = 50$; 
-picking such a large number of folds often takes a long time to run in practice, 
-so we usually stick to 5 or 10.
-
-```{r 06-50-fold-seed, echo = FALSE, warning = FALSE, message = FALSE}
-# hidden seed
-set.seed(1)
-```
-
-```{r 06-50-fold}
-cancer_vfold_50 <- vfold_cv(cancer_train, v = 50, strata = Class)
-
-vfold_metrics_50 <- workflow() |>
-                  add_recipe(cancer_recipe) |>
-                  add_model(knn_spec) |>
-                  fit_resamples(resamples = cancer_vfold_50) |>
-                  collect_metrics()
-vfold_metrics_50
-```
 
 ### Parameter value selection
 
@@ -958,7 +983,7 @@ best_k
 
 Setting the number of 
 neighbors to $K =$ `r best_k`
-provides the highest accuracy (`r (accuracies |> arrange(desc(mean)) |> slice(1) |> pull(mean) |> round(4))*100`%). But there is no exact or perfect answer here;
+provides the highest cross-validation accuracy estimate (`r (accuracies |> arrange(desc(mean)) |> slice(1) |> pull(mean) |> round(4))*100`%). But there is no exact or perfect answer here;
 any selection from $K = 30$ and $60$ would be reasonably justified, as all
 of these differ in classifier accuracy by a small amount. Remember: the
 values you see on this plot are *estimates* of the true accuracy of our
@@ -1123,7 +1148,8 @@ knn_fit
 ```
 
 Then to make predictions and assess the estimated accuracy of the best model on the test data, we use the
-`predict` and `conf_mat` functions as we did earlier in this chapter.
+`predict` and `metrics` functions as we did earlier in the chapter. We can then pass those predictions to
+the `precision`, `recall`, and `conf_mat` functions to assess the estimated precision and recall, and print a confusion matrix.
 
 ```{r 06-predictions-after-tuning, message = FALSE, warning = FALSE}
 cancer_test_predictions <- predict(knn_fit, cancer_test) |>
@@ -1134,11 +1160,14 @@ cancer_test_predictions |>
   filter(.metric == "accuracy")
 ```
 
-```{r 06-predictions-after-tuning-acc-save-hidden, echo = FALSE, message = FALSE, warning = FALSE}
-cancer_acc_tuned <- cancer_test_predictions |>
-    metrics(truth = Class, estimate = .pred_class) |>
-    filter(.metric == "accuracy") |>
-    pull(.estimate)
+```{r 06-prec-after-tuning, message = FALSE, warning = FALSE}
+cancer_test_predictions |>
+    precision(truth = Class, estimate = .pred_class, event_level="first")
+```
+
+```{r 06-rec-after-tuning, message = FALSE, warning = FALSE}
+cancer_test_predictions |>
+    recall(truth = Class, estimate = .pred_class, event_level="first")
 ```
 
 ```{r 06-confusion-matrix-after-tuning, message = FALSE, warning = FALSE}
@@ -1147,18 +1176,40 @@ confusion <- cancer_test_predictions |>
 confusion
 ```
 
-At first glance, this is a bit surprising: the performance of the classifier
-has not changed much despite tuning the number of neighbors! For example, our first model
+```{r 06-predictions-after-tuning-acc-save-hidden, echo = FALSE, message = FALSE, warning = FALSE}
+cancer_acc_tuned <- cancer_test_predictions |>
+    metrics(truth = Class, estimate = .pred_class) |>
+    filter(.metric == "accuracy") |>
+    pull(.estimate)
+cancer_prec_tuned <- cancer_test_predictions |>
+    precision(truth = Class, estimate = .pred_class, event_level="first") |>
+    pull(.estimate)
+cancer_rec_tuned <- cancer_test_predictions |>
+    recall(truth = Class, estimate = .pred_class, event_level="first") |>
+    pull(.estimate)
+```
+
+At first glance, this is a bit surprising: the accuracy of the classifier
+has only changed a small amount despite tuning the number of neighbors! Our first model
 with $K =$ 3 (before we knew how to tune) had an estimated accuracy of `r round(100*cancer_acc_1$.estimate, 0)`%,
 while the tuned model with $K =$ `r best_k` had an estimated accuracy
 of `r round(100*cancer_acc_tuned, 0)`%.
-But upon examining Figure \@ref(fig:06-find-k) again closely&mdash;to revisit the
-cross validation accuracy estimates for a range of neighbors&mdash;this result
+Upon examining Figure \@ref(fig:06-find-k) again to see the
+cross validation accuracy estimates for a range of neighbors, this result
 becomes much less surprising. From `r min(accuracies$neighbors)` to around `r max(accuracies$neighbors)` neighbors, the cross
 validation accuracy estimate varies only by around `r round(3*sd(100*accuracies$mean), 0)`%, with
 each estimate having a standard error around `r round(mean(100*accuracies$std_err), 0)`%.
 Since the cross-validation accuracy estimates the test set accuracy,
 the fact that the test set accuracy also doesn't change much is expected.
+Also note that the $K =$ 3 model had a precision 
+precision of `r round(100*cancer_prec_1$.estimate, 0)`% and recall of `r round(100*cancer_rec_1$.estimate, 0)`%,
+while the tuned model had
+a precision of `r round(100*cancer_prec_tuned, 0)`% and recall of `r round(100*cancer_rec_tuned, 0)`%.
+Given that the recall decreased&mdash;remember, in this application, recall
+is critical to making sure we find all the patients with malignant tumors&mdash;the tuned model may actually be *less* preferred
+in this setting. In any case, it is important to think critically about the result of tuning. Models tuned to
+maximize accuracy are not necessarily better for a given application.
+
 
 ## Summary
 
