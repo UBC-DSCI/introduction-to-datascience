@@ -117,7 +117,7 @@ a single number.  But prediction accuracy by itself does not tell the whole
 story.  In particular, accuracy alone only tells us how often the classifier
 makes mistakes in general, but does not tell us anything about the *kinds* of
 mistakes the classifier makes.  A more comprehensive view of performance can be
-obtained by additionally examining the **confusion matrix**. The confusion
+obtained by additionally examining the **confusion matrix**. The confusion\index{confusion matrix}
 matrix shows how many test set labels of each type are predicted correctly and
 incorrectly, which gives us more detail about the kinds of mistakes the
 classifier tends to make.  Table \@ref(tab:confusion-matrix) shows an example
@@ -148,7 +148,8 @@ disastrous error, since it may lead to a patient who requires treatment not rece
 Since we are particularly interested in identifying malignant cases, this
 classifier would likely be unacceptable even with an accuracy of 89%.
 
-Focusing more on one label than the other is
+Focusing more on one label than the other
+is\index{positive label}\index{negative label}\index{true positive}\index{false positive}\index{true negative}\index{false negative}
 common in classification problems. In such cases, we typically refer to the label we are more
 interested in identifying as the *positive* label, and the other as the
 *negative* label. In the tumor example, we would refer to malignant
@@ -166,7 +167,7 @@ therefore, 100% accuracy). However, classifiers in practice will almost always
 make some errors. So you should think about which kinds of error are most
 important in your application, and use the confusion matrix to quantify and
 report them. Two commonly used metrics that we can compute using the confusion
-matrix are the **precision** and **recall** of the classifier. These are often
+matrix are the **precision** and **recall** of the classifier.\index{precision}\index{recall} These are often
 reported together with accuracy.  *Precision* quantifies how many of the
 positive predictions the classifier made were actually positive. Intuitively,
 we would like a classifier to have a *high* precision: for a classifier with
@@ -582,7 +583,7 @@ We now know that the classifier was `r round(100*cancer_acc_1$.estimate, 0)`% ac
 on the test data set, and had a precision of `r round(100*cancer_prec_1$.estimate, 0)`% and a recall of `r round(100*cancer_rec_1$.estimate, 0)`%.
 That sounds pretty good! Wait, *is* it good?  Or do we need something higher?
 
-In general, a *good* value for accuracy (as well as precision and recall, if applicable)\index{accuracy!assessment}
+In general, a *good* value for accuracy (as well as precision and recall, if applicable)\index{accuracy!assessment}\index{precision!assessment}\index{recall!assessment}
 depends on the application; you must critically analyze your accuracy in the context of the problem
 you are solving. For example, if we were building a classifier for a kind of tumor that is benign 99%
 of the time, a classifier with 99% accuracy is not terribly impressive (just always guess benign!).
@@ -845,7 +846,7 @@ The `collect_metrics`\index{tidymodels!collect\_metrics}\index{cross-validation!
 of the classifier's validation accuracy across the folds. You will find results
 related to the accuracy in the row with `accuracy` listed under the `.metric` column.
 You should consider the mean (`mean`) to be the estimated accuracy, while the standard
-error (`std_err`) is a measure of how uncertain we are in the mean value. A detailed treatment of this
+error (`std_err`) is\index{standard error}\index{sem|see{standard error}} a measure of how uncertain we are in the mean value. A detailed treatment of this
 is beyond the scope of this chapter; but roughly, if your estimated mean is `r round(filter(collect_metrics(knn_fit), .metric == "accuracy")$mean,2)` and standard
 error is `r round(filter(collect_metrics(knn_fit), .metric == "accuracy")$std_err,2)`, you can expect the *true* average accuracy of the
 classifier to be somewhere roughly between `r (round(filter(collect_metrics(knn_fit), .metric == "accuracy")$mean,2) - round(filter(collect_metrics(knn_fit), .metric == "accuracy")$std_err,2))*100`% and `r (round(filter(collect_metrics(knn_fit), .metric == "accuracy")$mean,2) + round(filter(collect_metrics(knn_fit), .metric == "accuracy")$std_err,2))*100`% (although it may
@@ -859,7 +860,7 @@ knn_fit |>
   collect_metrics()
 ```
 
-We can choose any number of folds, and typically the more we use the better our
+We can choose any number of folds,\index{cross-validation!folds} and typically the more we use the better our
 accuracy estimate will be (lower standard error). However, we are limited
 by computational power: the
 more folds we choose, the  more computation it takes, and hence the more time
@@ -1180,6 +1181,7 @@ knn_fit
 Then to make predictions and assess the estimated accuracy of the best model on the test data, we use the
 `predict` and `metrics` functions as we did earlier in the chapter. We can then pass those predictions to
 the `precision`, `recall`, and `conf_mat` functions to assess the estimated precision and recall, and print a confusion matrix.
+\index{predict}\index{precision}\index{recall}\index{conf\_mat}
 
 ```{r 06-predictions-after-tuning, message = FALSE, warning = FALSE}
 cancer_test_predictions <- predict(knn_fit, cancer_test) |>
@@ -1393,24 +1395,8 @@ accs <- accs |> unlist()
 nghbrs <- nghbrs |> unlist()
 fixedaccs <- fixedaccs |> unlist()
 
-## get accuracy if we always just guess the most frequent label
-#base_acc <- cancer_irrelevant |>
-#                group_by(Class) |>
-#                summarize(n = n()) |>
-#                mutate(frac = n/sum(n)) |>
-#                summarize(mx = max(frac)) |>
-#                select(mx)
-#base_acc <- base_acc$mx |> unlist()
-
 # plot
 res <- tibble(ks = ks, accs = accs, fixedaccs = fixedaccs, nghbrs = nghbrs)
-#res <- res |> mutate(base_acc = base_acc)
-#plt_irrelevant_accuracies <- res |>
-#  ggplot() +
-#  geom_line(mapping = aes(x=ks, y=accs, linetype="Tuned K-NN")) +
-#  geom_hline(data=res, mapping=aes(yintercept=base_acc, linetype="Always Predict Benign")) +
-#  labs(x = "Number of Irrelevant Predictors", y = "Model Accuracy Estimate") +
-#  scale_linetype_manual(name="Method", values = c("dashed", "solid"))
 
 plt_irrelevant_accuracies <- ggplot(res) +
               geom_line(mapping = aes(x=ks, y=accs)) +
@@ -1533,7 +1519,7 @@ Therefore we will continue the rest of this section using forward selection.
 
 ### Forward selection in R
 
-We now turn to implementing forward selection in R.
+We now turn to implementing forward selection in R.\index{variable selection!implementation}
 Unfortunately there is no built-in way to do this using the `tidymodels` framework,
 so we will have to code it ourselves. First we will use the `select` function to extract a smaller set of predictors
 to work with in this illustrative example&mdash;`Smoothness`, `Concavity`, `Perimeter`, `Irrelevant1`, `Irrelevant2`, and `Irrelevant3`&mdash;as
