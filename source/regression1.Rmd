@@ -244,13 +244,17 @@ nearest_neighbors <- small_sacramento |>
 nearest_neighbors
 ```
 
-```{r 07-knn3-example, echo = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with lines to 5 nearest neighbors."}
+```{r 07-knn3-example, echo = FALSE, fig.height = 3.5, fig.width = 4.5, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with lines to 5 nearest neighbors (highlighted in orange)."}
 nearest_neighbors <- mutate(nearest_neighbors, twothou = rep(2000, 5))
 
 nn_plot <- small_plot +
   geom_segment(
     data = nearest_neighbors,
-    aes(x = twothou, xend = sqft, y = price, yend = price), color = "orange"
+    aes(x = twothou, xend = sqft, y = price, yend = price), color = "black"
+  ) +
+  geom_point(
+    data = nearest_neighbors,
+    aes(x = sqft, y = price), color = "darkorange"
   )
 
 nn_plot
@@ -347,13 +351,13 @@ different from the true values, then RMSPE will be quite large. When we
 use cross-validation, we will choose the $K$ that gives
 us the smallest RMSPE.
 
-```{r 07-verticalerrors, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with example predictions (blue line) and the error in those predictions compared with true response values for three selected observations (vertical red lines).", fig.height = 3.5, fig.width = 4.5}
+```{r 07-verticalerrors, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Scatter plot of price (USD) versus house size (square feet) with example predictions (blue line) and the error in those predictions compared with true response values (vertical lines).", fig.height = 3.5, fig.width = 4.5}
 # save the seed
 seedval <- .Random.seed
 
 # (synthetic) new prediction points
-pts <- tibble(sqft = c(1250, 1850, 2250), price = c(250000, 200000, 500000))
-finegrid <- tibble(sqft = seq(from = 900, to = 3900, by = 10))
+pts <- tibble(sqft = c(1500, 1810, 2200), price = c(300000, 160000, 500000))
+finegrid <- tibble(sqft = seq(from = 500, to = 4100, by = 10))
 
 # fit the model
 sacr_recipe_hid <- recipe(price ~ sqft, data = small_sacramento) |>
@@ -375,8 +379,8 @@ sacr_full_preds_hid <- sacr_fit_hid |>
                            bind_cols(finegrid)
 
 sacr_new_preds_hid <- sacr_fit_hid |>
-                           predict(pts) |>
-                           bind_cols(pts)
+                           predict(small_sacramento) |>
+                           bind_cols(small_sacramento)
 
 # plot the vertical prediction errors
 errors_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
@@ -386,11 +390,11 @@ errors_plot <- ggplot(small_sacramento, aes(x = sqft, y = price)) +
   scale_y_continuous(labels = dollar_format()) +
   geom_line(data = sacr_full_preds_hid,
             aes(x = sqft, y = .pred),
-            color = "blue") +
+            color = "steelblue", linewidth=1) +
   geom_segment(
     data = sacr_new_preds_hid,
     aes(x = sqft, xend = sqft, y = price, yend = .pred),
-    color = "red") +
+    color = "black") +
   geom_point(data = sacr_new_preds_hid,
              aes(x = sqft, y = price),
              color = "black")
@@ -543,7 +547,7 @@ for (i in 1:6) {
         xlab("House size (square feet)") +
         ylab("Price (USD)") +
         scale_y_continuous(labels = dollar_format()) +
-        geom_line(data = sacr_preds, aes(x = sqft, y = .pred), color = "blue") +
+        geom_line(data = sacr_preds, aes(x = sqft, y = .pred), color = "steelblue", linewidth=1) +
         ggtitle(paste0("K = ", gridvals[[i]])) +
         theme(text = element_text(size = 20), axis.title=element_text(size=20))
 }
@@ -676,7 +680,8 @@ plot_final <- ggplot(sacramento, aes(x = sqft, y = price)) +
   geom_point(alpha = 0.4) +
   geom_line(data = sacr_preds,
             mapping = aes(x = sqft, y = .pred),
-            color = "blue") +
+            color = "steelblue",
+            linewidth = 1) +
   xlab("House size (square feet)") +
   ylab("Price (USD)") +
   scale_y_continuous(labels = dollar_format()) +
