@@ -10,7 +10,7 @@ library(egg)
 
 
 #center breaks latex here
-knitr::opts_chunk$set(warning = FALSE, fig.align = "default") 
+knitr::opts_chunk$set(warning = FALSE, fig.align = "default")
 
 cleanup_and_print <- function(output){
    for (i in seq_along(output)) {
@@ -41,42 +41,40 @@ hidden_print_cli <- function(x){
    cleanup_and_print(cli::cli_fmt(capture.output(x)))
 }
 
-# set the colors in the graphs, 
-# some graphs with the code shown to students are hard coded 
+# set the colors in the graphs,
+# some graphs with the code shown to students are hard coded
 cbbPalette <- c(brewer.pal(9, "Paired"))
-cbpalette <- c("darkorange3", "dodgerblue3", "goldenrod1")
+cbpalette <- c("darkorange", "steelblue", "goldenrod1")
 
-theme_update(axis.title = element_text(size = 12)) # modify axis label size in plots 
+theme_update(axis.title = element_text(size = 12)) # modify axis label size in plots
 ```
 
-## Overview 
+## Overview
 As part of exploratory data analysis, it is often helpful to see if there are
-meaningful subgroups (or *clusters*) in the data. 
-This grouping can be used for many purposes, 
-such as generating new questions or improving predictive analyses. 
-This chapter provides an introduction to clustering 
+meaningful subgroups (or *clusters*) in the data.
+This grouping can be used for many purposes,
+such as generating new questions or improving predictive analyses.
+This chapter provides an introduction to clustering
 using the K-means algorithm,
 including techniques to choose the number of clusters.
 
-## Chapter learning objectives 
+## Chapter learning objectives
 By the end of the chapter, readers will be able to do the following:
 
-* Describe a situation in which clustering is an appropriate technique to use, 
+- Describe a situation in which clustering is an appropriate technique to use,
 and what insight it might extract from the data.
-* Explain the K-means clustering algorithm.
-* Interpret the output of a K-means analysis.
-* Differentiate between clustering and classification.
-* Identify when it is necessary to scale variables before clustering, 
-and do this using R.
-* Perform K-means clustering in R using `tidymodels` workflows.
-* Use the elbow method to choose the number of clusters for K-means.
-* Visualize the output of K-means clustering in R using colored scatter plots.
-* Describe the advantages, 
-limitations and assumptions of the K-means clustering algorithm.
+- Explain the K-means clustering algorithm.
+- Interpret the output of a K-means analysis.
+- Differentiate between clustering, classification, and regression.
+- Identify when it is necessary to scale variables before clustering, and do this using R.
+- Perform K-means clustering in R using `tidymodels` workflows.
+- Use the elbow method to choose the number of clusters for K-means.
+- Visualize the output of K-means clustering in R using colored scatter plots.
+- Describe the advantages, limitations and assumptions of the K-means clustering algorithm.
 
 ## Clustering
-Clustering \index{clustering} is a data analysis technique 
-involving separating a data set into subgroups of related data. 
+Clustering \index{clustering} is a data analysis technique
+involving separating a data set into subgroups of related data.
 For example, we might use clustering to separate a
 data set of documents into groups that correspond to topics, a data set of
 human genetic information into groups that correspond to ancestral
@@ -86,23 +84,23 @@ use the subgroups to generate new questions about the data and follow up with a
 predictive modeling exercise. In this course, clustering will be used only for
 exploratory analysis, i.e., uncovering patterns in the data.
 
-Note that clustering is a fundamentally different kind of task 
-than classification or regression. 
-In particular, both classification and regression are *supervised tasks* 
-\index{classification}\index{regression}\index{supervised} 
-where there is a *response variable* (a category label or value), 
-and we have examples of past data with labels/values 
-that help us predict those of future data. 
-By contrast, clustering is an *unsupervised task*, 
-\index{unsupervised} as we are trying to understand 
-and examine the structure of data without any response variable labels 
-or values to help us. 
-This approach has both advantages and disadvantages. 
-Clustering requires no additional annotation or input on the data. 
-For example, while it would be nearly impossible to annotate 
-all the articles on Wikipedia with human-made topic labels, 
-we can cluster the articles without this information 
-to find groupings corresponding to topics automatically. 
+Note that clustering is a fundamentally different kind of task
+than classification or regression.
+In particular, both classification and regression are *supervised tasks*
+\index{classification}\index{regression}\index{supervised}
+where there is a *response variable* (a category label or value),
+and we have examples of past data with labels/values
+that help us predict those of future data.
+By contrast, clustering is an *unsupervised task*,
+\index{unsupervised} as we are trying to understand
+and examine the structure of data without any response variable labels
+or values to help us.
+This approach has both advantages and disadvantages.
+Clustering requires no additional annotation or input on the data.
+For example, while it would be nearly impossible to annotate
+all the articles on Wikipedia with human-made topic labels,
+we can cluster the articles without this information
+to find groupings corresponding to topics automatically.
 However, given that there is no response variable, it is not as easy to evaluate
 the "quality" of a clustering.  With classification, we can use a test data set
 to assess prediction performance. In clustering, there is not a single good
@@ -110,77 +108,54 @@ choice for evaluation. In this book, we will use visualization to ascertain the
 quality of a clustering, and leave rigorous evaluation for more advanced
 courses.
 
-As in the case of classification, 
-there are many possible methods that we could use to cluster our observations 
-to look for subgroups. 
-In this book, we will focus on the widely used K-means \index{K-means} algorithm [@kmeans]. 
+As in the case of classification,
+there are many possible methods that we could use to cluster our observations
+to look for subgroups.
+In this book, we will focus on the widely used K-means \index{K-means} algorithm [@kmeans].
 In your future studies, you might encounter hierarchical clustering,
-principal component analysis, multidimensional scaling, and more; 
-see the additional resources section at the end of this chapter 
+principal component analysis, multidimensional scaling, and more;
+see the additional resources section at the end of this chapter
 for where to begin learning more about these other methods.
 
 \newpage
 
-> **Note:** There are also so-called *semisupervised* tasks, \index{semisupervised} 
-> where only some of the data come with response variable labels/values, 
-> but the vast majority don't. 
-> The goal is to try to uncover underlying structure in the data 
-> that allows one to guess the missing labels. 
-> This sort of task is beneficial, for example, 
-> when one has an unlabeled data set that is too large to manually label, 
-> but one is willing to provide a few informative example labels as a "seed" 
+> **Note:** There are also so-called *semisupervised* tasks, \index{semisupervised}
+> where only some of the data come with response variable labels/values,
+> but the vast majority don't.
+> The goal is to try to uncover underlying structure in the data
+> that allows one to guess the missing labels.
+> This sort of task is beneficial, for example,
+> when one has an unlabeled data set that is too large to manually label,
+> but one is willing to provide a few informative example labels as a "seed"
 > to guess the labels for all the data.
 
-**An illustrative example** 
+## An illustrative example
 
-Here we will present an illustrative example using a data set \index{Palmer penguins} from
-[the `palmerpenguins` R package](https://allisonhorst.github.io/palmerpenguins/) [@palmerpenguins]. This 
+In this chapter we will focus on a data set \index{Palmer penguins} from
+[the `palmerpenguins` R package](https://allisonhorst.github.io/palmerpenguins/) [@palmerpenguins]. This
 data set was collected by Dr. Kristen Gorman and
 the Palmer Station, Antarctica Long Term Ecological Research Site, and includes
-measurements for adult penguins found near there [@penguinpaper]. We have
-modified the data set for use in this chapter. Here we will focus on using two
-variables&mdash;penguin bill and flipper length, both in millimeters&mdash;to determine whether 
+measurements for adult penguins (Figure \@ref(fig:09-penguins)) found near there [@penguinpaper].
+Our goal will be to use two
+variables&mdash;penguin bill and flipper length, both in millimeters&mdash;to determine whether
 there are distinct types of penguins in our data.
 Understanding this might help us with species discovery and classification in a data-driven
-way.
+way. Note that we have reduced the size of the data set to 18 observations and 2 variables;
+this will help us make clear visualizations that illustrate how clustering works for learning purposes.
 
-```{r 09-penguins, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Gentoo penguin.", out.width="60%", fig.align = "center", fig.retina = 2}
+```{r 09-penguins, echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center", fig.cap = "A Gentoo penguin.", out.width="60%", fig.align = "center", fig.retina = 2}
 # image source: https://commons.wikimedia.org/wiki/File:Gentoo_Penguin._(8671680772).jpg
 knitr::include_graphics("img/clustering/gentoo.jpg")
 ```
 
-To learn about K-means clustering 
-we will work with `penguin_data` in this chapter.
-`penguin_data` is a subset of 18 observations of the original data, 
-which has already been standardized 
-(remember from Chapter \@ref(classification1) 
-that scaling is part of the standardization process). 
-We will discuss scaling for K-means in more detail later in this chapter. 
-\index{mutate}\index{read function!read\_csv} 
-
-Before we get started, we will load the `tidyverse` metapackage 
+Before we get started, we will load the `tidyverse` metapackage
 as well as set a random seed.
-This will ensure we have access to the functions we need 
+This will ensure we have access to the functions we need
 and that our analysis will be reproducible.
-As we will learn in more detail later in the chapter, 
-setting the seed here is important 
+As we will learn in more detail later in the chapter,
+setting the seed here is important
 because the K-means clustering algorithm uses randomness
 when choosing a starting position for each cluster.
-
-
-```{r 10-toy-example-data, echo = FALSE, message = FALSE, warning = FALSE}
-library(tidyverse)
-
-data <- read_csv("data/penguins_toy.csv") |>
-  mutate(cluster = as_factor(cluster)) |>
-  mutate(flipper_length_standardized = as.double(scale(flipper_length_mm)), 
-         bill_length_standardized = as.double(scale(bill_length_mm)))
-
-penguin_data <- data |> select(flipper_length_standardized, 
-bill_length_standardized)
-
-write_csv(penguin_data, "data/penguins_standardized.csv")
-```
 
 \index{seed!set.seed}
 
@@ -189,29 +164,45 @@ library(tidyverse)
 set.seed(1)
 ```
 
-Now we can load and preview the data.
+Now we can load and preview the `penguins` data.\index{read function!read\_csv}
 
-```{r, message = FALSE, warning = FALSE}
-penguin_data <- read_csv("data/penguins_standardized.csv")
-penguin_data
+```{r message = FALSE, warning = FALSE}
+penguins <- read_csv("data/penguins.csv")
+penguins
 ```
 
-Next, we can create a scatter plot using this data set 
+We will begin by using a version of the data that we have standardized, `penguins_standardized`,
+to illustrate how K-means clustering works (recall standardization from Chapter \@ref(classification1)).
+Later in this chapter, we will return to the original `penguins` data to see how to include standardization automatically
+in the clustering pipeline.
+```{r 10-toy-example-data, echo = FALSE, message = FALSE, warning = FALSE}
+penguins_standardized <- penguins |>
+  mutate(bill_length_standardized = (bill_length_mm - mean(bill_length_mm))/sd(bill_length_mm)) |>
+  mutate(flipper_length_standardized = (flipper_length_mm - mean(flipper_length_mm))/sd(flipper_length_mm)) |>
+  select(bill_length_standardized, flipper_length_standardized)
+```
+
+```{r message = FALSE, warning = FALSE}
+penguins_standardized
+```
+
+Next, we can create a scatter plot using this data set
 to see if we can detect subtypes or groups in our data set.
 
 \newpage
 
 ```{r 10-toy-example-plot, warning = FALSE, fig.height = 3.25, fig.width = 3.5, fig.align = "center", fig.pos = "H", out.extra="", fig.cap = "Scatter plot of standardized bill length versus standardized flipper length."}
-ggplot(data, aes(x = flipper_length_standardized, 
-                 y = bill_length_standardized)) +
+ggplot(penguins_standardized,
+	   aes(x = flipper_length_standardized,
+           y = bill_length_standardized)) +
   geom_point() +
   xlab("Flipper Length (standardized)") +
-  ylab("Bill Length (standardized)") + 
+  ylab("Bill Length (standardized)") +
   theme(text = element_text(size = 12))
 ```
 
-Based \index{ggplot}\index{ggplot!geom\_point} on the visualization 
-in Figure \@ref(fig:10-toy-example-plot), 
+Based \index{ggplot}\index{ggplot!geom\_point} on the visualization
+in Figure \@ref(fig:10-toy-example-plot),
 we might suspect there are a few subtypes of penguins within our data set.
 We can see roughly 3 groups of observations in Figure \@ref(fig:10-toy-example-plot),
 including:
@@ -221,28 +212,53 @@ including:
 3. a large  flipper and bill length group.
 
 Data visualization is a great tool to give us a rough sense of such patterns
-when we have a small number of variables. 
-But if we are to group data&mdash;and select the number of groups&mdash;as part of 
+when we have a small number of variables.
+But if we are to group data&mdash;and select the number of groups&mdash;as part of
 a reproducible analysis, we need something a bit more automated.
-Additionally, finding groups via visualization becomes more difficult 
+Additionally, finding groups via visualization becomes more difficult
 as we increase the number of variables we consider when clustering.
-The way to rigorously separate the data into groups 
+The way to rigorously separate the data into groups
 is to use a clustering algorithm.
-In this chapter, we will focus on the *K-means* algorithm, 
-\index{K-means} a widely used and often very effective clustering method, 
-combined with the *elbow method* \index{elbow method} 
-for selecting the number of clusters. 
+In this chapter, we will focus on the *K-means* algorithm,
+\index{K-means} a widely used and often very effective clustering method,
+combined with the *elbow method* \index{elbow method}
+for selecting the number of clusters.
 This procedure will separate the data into groups;
 Figure \@ref(fig:10-toy-example-clustering) shows these groups
 denoted by colored scatter points.
 
-```{r 10-toy-example-clustering, echo = FALSE, warning = FALSE, fig.height = 3.25, fig.width = 4.25, fig.align = "center", fig.cap = "Scatter plot of standardized bill length versus standardized flipper length with colored groups."}
-ggplot(data, aes(y = bill_length_standardized, 
+```{r 10-toy-example-clustering, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 3.25, fig.width = 4.25, fig.align = "center", fig.cap = "Scatter plot of standardized bill length versus standardized flipper length with colored groups."}
+library(tidyclust)
+library(tidymodels)
+
+set.seed(2)
+
+kmeans_recipe <- recipe(~ ., data=penguins_standardized)
+
+kmeans_spec <- k_means(num_clusters = 3) |>
+    set_engine("stats")
+
+kmeans_fit <- workflow() |>
+    add_recipe(kmeans_recipe) |>
+    add_model(kmeans_spec) |>
+    fit(data = penguins_standardized)
+
+# augment the clustered data with labels, swap 2 and 3 (for coloring consistency with previous version)
+penguins_clustered <- kmeans_fit |>
+                    augment(penguins_standardized) |>
+					rename(cluster = .pred_cluster) |>
+					mutate(cluster = as.integer(cluster)) |>
+					mutate(cluster = replace(cluster, cluster == 3, 4)) |>
+					mutate(cluster = replace(cluster, cluster == 2, 3)) |>
+					mutate(cluster = replace(cluster, cluster == 4, 2)) |>
+					mutate(cluster = as_factor(cluster))
+
+ggplot(penguins_clustered, aes(y = bill_length_standardized,
                  x = flipper_length_standardized, color = cluster)) +
   geom_point() +
   xlab("Flipper Length (standardized)") +
-  ylab("Bill Length (standardized)") + 
-  scale_color_manual(values= c("darkorange3", "dodgerblue3", "goldenrod1"))
+  ylab("Bill Length (standardized)") +
+  scale_color_manual(values= c("darkorange", "steelblue", "goldenrod1"))
 ```
 
 What are the labels for these groups? Unfortunately, we don't have any. K-means,
@@ -252,7 +268,7 @@ where we can easily visualize the clusters on a scatter plot, we can give
 human-made labels to the groups using their positions on
 the plot:
 
-- small flipper length and small bill length (<font color="#D55E00">orange cluster</font>), 
+- small flipper length and small bill length (<font color="#D55E00">orange cluster</font>),
 - small flipper length and large bill length (<font color="#0072B2">blue cluster</font>).
 - and large flipper length and large bill  length (<font color="#F0E442">yellow cluster</font>).
 
@@ -260,16 +276,16 @@ Once we have made these determinations, we can use them to inform our species
 classifications or ask further questions about our data. For example, we might
 be interested in understanding the relationship between flipper length and bill
 length, and that relationship may differ depending on the type of penguin we
-have. 
+have.
 
-## K-means 
+## K-means
 
 ### Measuring cluster quality
 
 ```{r 10-toy-example-clus1, echo = FALSE, message = FALSE, warning = FALSE}
 library(tidyverse)
 
-clus1 <- filter(data, cluster == 2) |>
+clus1 <- filter(penguins_clustered, cluster == 2) |>
   select(bill_length_standardized, flipper_length_standardized)
 ```
 
@@ -277,188 +293,199 @@ The K-means algorithm is a procedure that groups data into K clusters.
 It starts with an initial clustering of the data, and then iteratively
 improves it by making adjustments to the assignment of data
 to clusters until it cannot improve any further. But how do we measure
-the "quality" of a clustering, and what does it mean to improve it? 
-In K-means clustering, we measure the quality of a cluster 
-by its\index{within-cluster sum-of-squared-distances|see{WSSD}}\index{WSSD} *within-cluster sum-of-squared-distances* (WSSD). 
+the "quality" of a clustering, and what does it mean to improve it?
+In K-means clustering, we measure the quality of a cluster
+by its\index{within-cluster sum of squared distances|see{WSSD}}\index{WSSD} *within-cluster sum-of-squared-distances* (WSSD).
 Computing this involves two steps.
-First, we find the cluster centers by computing the mean of each variable 
-over data points in the cluster. For example, suppose we have a 
+First, we find the cluster centers by computing the mean of each variable
+over data points in the cluster. For example, suppose we have a
 cluster containing four observations, and we are using two variables, $x$ and $y$, to cluster the data.
 Then we would compute the coordinates, $\mu_x$ and $\mu_y$, of the cluster center via
 
 $$\mu_x = \frac{1}{4}(x_1+x_2+x_3+x_4) \quad \mu_y = \frac{1}{4}(y_1+y_2+y_3+y_4).$$
 
-In the first cluster from the example, there are `r nrow(clus1)` data points. These are shown with their cluster center 
-(`r paste("flipper_length_standardized =", round(mean(clus1$flipper_length_standardized),2))` and `r paste("bill_length_standardized =", round(mean(clus1$bill_length_standardized),2))`) highlighted 
+In the first cluster from the example, there are `r nrow(clus1)` data points. These are shown with their cluster center
+(standardized flipper length `r round(mean(clus1$flipper_length_standardized),2)`, standardized bill length `r round(mean(clus1$bill_length_standardized),2)`) highlighted
 in Figure \@ref(fig:10-toy-example-clus1-center).
 
-(ref:10-toy-example-clus1-center) Cluster 1 from the `penguin_data` data set example. Observations are in blue, with the cluster center highlighted in red.
+(ref:10-toy-example-clus1-center) Cluster 1 from the `penguins_standardized` data set example. Observations are small blue points, with the cluster center highlighted as a large blue point with a black outline.
 
 ```{r 10-toy-example-clus1-center, echo = FALSE, warning = FALSE, fig.height = 3.25, fig.width = 3.5, fig.align = "center", fig.cap = "(ref:10-toy-example-clus1-center)"}
-base <- ggplot(data, aes(x = flipper_length_standardized, y = bill_length_standardized)) +
+base <- ggplot(penguins_clustered, aes(x = flipper_length_standardized, y = bill_length_standardized)) +
   geom_point() +
   xlab("Flipper Length (standardized)") +
   ylab("Bill Length (standardized)")
 
 base <- ggplot(clus1) +
-  geom_point(aes(y = bill_length_standardized, x = flipper_length_standardized),  
-  col = "dodgerblue3") +
+  geom_point(aes(y = bill_length_standardized, x = flipper_length_standardized),
+  col = "steelblue") +
   labs(x = "Flipper Length (standardized)", y = "Bill Length (standardized)") +
   xlim(c(
-    min(clus1$flipper_length_standardized) - 0.25 * 
+    min(clus1$flipper_length_standardized) - 0.25 *
       sd(clus1$flipper_length_standardized),
-    max(clus1$flipper_length_standardized) + 0.25 * 
+    max(clus1$flipper_length_standardized) + 0.25 *
       sd(clus1$flipper_length_standardized)
   )) +
   ylim(c(
-    min(clus1$bill_length_standardized) - 0.25 * 
+    min(clus1$bill_length_standardized) - 0.25 *
       sd(clus1$bill_length_standardized),
-    max(clus1$bill_length_standardized) + 0.25 * 
+    max(clus1$bill_length_standardized) + 0.25 *
       sd(clus1$bill_length_standardized)
   )) +
-  geom_point(aes(y = mean(bill_length_standardized), 
-                 x = mean(flipper_length_standardized)), 
-             color = "#F8766D", 
-             size = 5) +
+  geom_point(aes(y = mean(bill_length_standardized),
+                 x = mean(flipper_length_standardized)),
+               size = 4,
+               shape = 21,
+               stroke = 1,
+               color = "black",
+               fill = "steelblue")+
   theme(legend.position = "none")
 
 base
 ```
 
-The second step in computing the WSSD is to add up the squared distance 
-\index{distance!K-means} between each point in the cluster 
-and the cluster center.
-We use the straight-line / Euclidean distance formula 
+The second step in computing the WSSD is to add up the squared distance
+\index{distance!K-means} between each point in the cluster and the cluster center.
+We use the straight-line / Euclidean distance formula
 that we learned about in Chapter \@ref(classification1).
-In the `r nrow(clus1)`-observation cluster example above, 
+In the `r nrow(clus1)`-observation cluster example above,
 we would compute the WSSD $S^2$ via
 
 \begin{align*}
 S^2 = \left((x_1 - \mu_x)^2 + (y_1 - \mu_y)^2\right) + \left((x_2 - \mu_x)^2 + (y_2 - \mu_y)^2\right) + \\ \left((x_3 - \mu_x)^2 + (y_3 - \mu_y)^2\right)  +  \left((x_4 - \mu_x)^2 + (y_4 - \mu_y)^2\right).
 \end{align*}
 
-These distances are denoted by lines in Figure \@ref(fig:10-toy-example-clus1-dists) for the first cluster of the penguin data example. 
+These distances are denoted by lines in Figure \@ref(fig:10-toy-example-clus1-dists) for the first cluster of the penguin data example.
 
-(ref:10-toy-example-clus1-dists) Cluster 1 from the `penguin_data` data set example. Observations are in blue, with the cluster center highlighted in red. The distances from the observations to the cluster center are represented as black lines.
+(ref:10-toy-example-clus1-dists) Cluster 1 from the `penguins_standardized` data set example. Observations are small blue points, with the cluster center highlighted as a large blue point with a black outline. The distances from the observations to the cluster center are represented as black lines.
 
 ```{r 10-toy-example-clus1-dists, echo = FALSE, warning = FALSE, fig.height = 3.25, fig.width = 3.5, fig.align = "center", fig.cap = "(ref:10-toy-example-clus1-dists)"}
-base <- ggplot(clus1) +
-  geom_point(aes(y = bill_length_standardized, 
-                 x = flipper_length_standardized),
-             col = "dodgerblue3") +
-  labs(x = "Flipper Length (standardized)", y = "Bill Length (standardized)") +
-  theme(legend.position = "none") 
+base <- ggplot(clus1)
 
-mn <- clus1 |> 
-  summarize(flipper_length_standardized = mean(flipper_length_standardized), 
+mn <- clus1 |>
+  summarize(flipper_length_standardized = mean(flipper_length_standardized),
             bill_length_standardized = mean(bill_length_standardized))
 for (i in 1:nrow(clus1)) {
   base <- base + geom_segment(
-    x = unlist(mn[1, "flipper_length_standardized"]), 
+    x = unlist(mn[1, "flipper_length_standardized"]),
     y = unlist(mn[1, "bill_length_standardized"]),
-    xend = unlist(clus1[i, "flipper_length_standardized"]), 
+    xend = unlist(clus1[i, "flipper_length_standardized"]),
     yend = unlist(clus1[i, "bill_length_standardized"])
   )
 }
-base <- base + 
-  geom_point(aes(y = mean(bill_length_standardized), 
-                 x = mean(flipper_length_standardized)), 
-             color = "#F8766D", 
-             size = 5)
+base <- base +
+  geom_point(aes(y = mean(bill_length_standardized),
+                 x = mean(flipper_length_standardized)),
+               size = 4,
+               shape = 21,
+               stroke = 1,
+               color = "black",
+               fill = "steelblue")
+
+base <- base +
+  geom_point(aes(y = bill_length_standardized,
+                 x = flipper_length_standardized),
+             col = "steelblue") +
+  labs(x = "Flipper Length (standardized)", y = "Bill Length (standardized)") +
+  theme(legend.position = "none")
+
 base
 ```
 
-The larger the value of $S^2$, the more spread out the cluster is, since large $S^2$ means that points are far from the cluster center.
-Note, however, that "large" is relative to *both* the scale of the variables for clustering *and* the number of points in the cluster. A cluster where points are very close to the center might still have a large $S^2$ if there are many data points in the cluster.
+The larger the value of $S^2$, the more spread out the cluster is, since large $S^2$ means
+that points are far from the cluster center. Note, however, that "large" is relative to *both* the
+scale of the variables for clustering *and* the number of points in the cluster. A cluster where points
+are very close to the center might still have a large $S^2$ if there are many data points in the cluster.
 
-After we have calculated the WSSD for all the clusters, 
-we sum them together to get the *total WSSD*.
-For our example, 
+After we have calculated the WSSD for all the clusters,
+we sum them together to get the *total WSSD*. For our example,
 this means adding up all the squared distances for the 18 observations.
 These distances are denoted by black lines in
 Figure \@ref(fig:10-toy-example-all-clus-dists).
 
-(ref:10-toy-example-all-clus-dists) All clusters from the `penguin_data` data set example. Observations are in orange, blue, and yellow with the cluster center highlighted in red. The distances from the observations to each of the respective cluster centers are represented as black lines.
+(ref:10-toy-example-all-clus-dists) All clusters from the `penguins_standardized` data set example. Observations are small orange, blue, and yellow points with cluster centers denoted by larger points with a black outline. The distances from the observations to each of the respective cluster centers are represented as black lines.
 
 ```{r 10-toy-example-all-clus-dists, echo = FALSE, warning = FALSE, fig.height = 3.25, fig.width = 4.25, fig.align = "center", fig.cap = "(ref:10-toy-example-all-clus-dists)"}
+all_clusters_base <- ggplot(penguins_clustered)
 
-
-all_clusters_base <- data |>
-  ggplot(aes(y = bill_length_standardized,
-             x = flipper_length_standardized,
-             color = cluster)) +
-  geom_point() +
-  xlab("Flipper Length (standardized)") +
-  ylab("Bill Length (standardized)") + 
-  scale_color_manual(values= c("darkorange3", 
-                               "dodgerblue3", 
-                               "goldenrod1"))
 cluster_centers <- tibble(x = c(0, 0, 0),
                           y = c(0, 0, 0))
 
 for (cluster_number in seq_along(1:3)) {
-  
-  clus <- filter(data, cluster == cluster_number) |>
+
+  clus <- filter(penguins_clustered, cluster == cluster_number) |>
     select(bill_length_standardized, flipper_length_standardized)
-  
-  mn <- clus |> 
+
+  mn <- clus |>
     summarize(flipper_length_standardized = mean(flipper_length_standardized),
               bill_length_standardized = mean(bill_length_standardized))
-  
+
   for (i in 1:nrow(clus)) {
-    all_clusters_base <- all_clusters_base + 
-      geom_segment(x = unlist(mn[1, "flipper_length_standardized"]), 
+    all_clusters_base <- all_clusters_base +
+      geom_segment(x = unlist(mn[1, "flipper_length_standardized"]),
                    y = unlist(mn[1, "bill_length_standardized"]),
-      xend = unlist(clus[i, "flipper_length_standardized"]), 
+      xend = unlist(clus[i, "flipper_length_standardized"]),
       yend = unlist(clus[i, "bill_length_standardized"]),
       color = "black"
     )
   }
-  
-  #all_clusters_base <- all_clusters_base + 
-  #  geom_point(aes(y = mean(clus$bill_length_standardized), 
-  #                 x = mean(clus$flipper_length_standardized)), 
-  #                 color = "#F8766D", size = 3)
-  #print(mean(clus$bill_length_standardized))
-  #print(mean(clus$flipper_length_standardized))
+
   cluster_centers[cluster_number, 1] <- mean(clus$flipper_length_standardized)
   cluster_centers[cluster_number, 2] <- mean(clus$bill_length_standardized)
 }
 
-all_clusters_base <- all_clusters_base + 
-  geom_point(aes(y = cluster_centers$y[1], 
-                 x = cluster_centers$x[1]), 
-             color = "#F8766D", size = 3) +
-  geom_point(aes(y = cluster_centers$y[2], 
-                 x = cluster_centers$x[2]), 
-             color = "#F8766D", size = 3) +
-  geom_point(aes(y = cluster_centers$y[3], 
-                 x = cluster_centers$x[3]), 
-             color = "#F8766D", size = 3)
+all_clusters_base <- all_clusters_base +
+  geom_point(aes(y = bill_length_standardized,
+             x = flipper_length_standardized,
+             color = cluster)) +
+  xlab("Flipper Length (standardized)") +
+  ylab("Bill Length (standardized)") +
+  scale_color_manual(values= c("darkorange",
+                               "steelblue",
+                               "goldenrod1"))
+
+all_clusters_base <- all_clusters_base +
+  geom_point(aes(y = cluster_centers$y[1],
+                 x = cluster_centers$x[1]),
+             color = "black", fill = "darkorange", size = 4, stroke = 1, shape = 21) +
+  geom_point(aes(y = cluster_centers$y[2],
+                 x = cluster_centers$x[2]),
+             color = "black", fill = "steelblue", size = 4, stroke = 1, shape = 21) +
+  geom_point(aes(y = cluster_centers$y[3],
+                 x = cluster_centers$x[3]),
+             color = "black", fill = "goldenrod1", size = 4, stroke = 1, shape = 21)
 
 all_clusters_base
 ```
+
+Since K-means uses the straight-line distance to measure the quality of a clustering,
+it is limited to clustering based on quantitative variables.
+However, note that there are variants of the K-means algorithm,
+as well as other clustering algorithms entirely,
+that use other distance metrics
+to allow for non-quantitative data to be clustered.
+These are beyond the scope of this book.
 
 \newpage
 
 ### The clustering algorithm
 
-We begin the K-means \index{K-means!algorithm} algorithm by picking K, 
-and randomly assigning a roughly equal number of observations 
+We begin the K-means \index{K-means!algorithm} algorithm by picking K,
+and randomly assigning a roughly equal number of observations
 to each of the K clusters.
 An example random initialization is shown in Figure \@ref(fig:10-toy-kmeans-init).
 
 ```{r 10-toy-kmeans-init, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 3.5, fig.width = 3.75, fig.align = "center", fig.cap = "Random initialization of labels."}
 set.seed(14)
-penguin_data["label"] <- factor(sample(1:3, nrow(penguin_data), replace = TRUE))
+penguins_standardized["label"] <- factor(sample(1:3, nrow(penguins_standardized), replace = TRUE))
 
-plt_lbl <- ggplot(penguin_data, aes(y = bill_length_standardized, 
-                                    x = flipper_length_standardized, 
+plt_lbl <- ggplot(penguins_standardized, aes(y = bill_length_standardized,
+                                    x = flipper_length_standardized,
                                     color = label)) +
   geom_point(size = 2) +
   xlab("Flipper Length (standardized)") +
   ylab("Bill Length (standardized)") +
-  theme(legend.position = "none") + 
+  theme(legend.position = "none") +
   scale_color_manual(values= cbpalette)
 
 plt_lbl
@@ -472,11 +499,12 @@ sum of WSSDs over all the clusters, i.e., the \index{WSSD!total} *total WSSD*:
 
 These two steps are repeated until the cluster assignments no longer change.
 We show what the first four iterations of K-means would look like in
-Figure \@ref(fig:10-toy-kmeans-iter). There each row corresponds to an iteration,
-where the left column depicts the center update, 
-and the right column depicts the reassignment of data to clusters.
+Figure \@ref(fig:10-toy-kmeans-iter). There each pair of plots
+in each row corresponds to an iteration,
+where the left figure in the pair depicts the center update,
+and the right figure in the pair depicts the label update (i.e., the reassignment of data to clusters).
 
-(ref:10-toy-kmeans-iter) First four iterations of K-means clustering on the `penguin_data` example data set. Each pair of plots corresponds to an iteration. Within the pair, the first plot depicts the center update, and the second plot depicts the reassignment of data to clusters. Cluster centers are indicated by larger points that are outlined in black.
+(ref:10-toy-kmeans-iter) First four iterations of K-means clustering on the `penguins_standardized` example data set. Each pair of plots corresponds to an iteration. Within the pair, the first plot depicts the center update, and the second plot depicts the reassignment of data to clusters. Cluster centers are indicated by larger points that are outlined in black.
 
 ```{r 10-toy-kmeans-iter, echo = FALSE, warning = FALSE, fig.height = 4.5, fig.width = 8, fig.align = "center", fig.cap = "(ref:10-toy-kmeans-iter)"}
 list_plot_cntrs <- vector(mode = "list", length = 4)
@@ -484,70 +512,70 @@ list_plot_lbls <- vector(mode = "list", length = 4)
 
 for (i in 1:4) {
   # compute centers
-  centers <- penguin_data |>
+  centers <- penguins_standardized |>
     group_by(label) |>
     summarize_all(funs(mean))
   nclus <- nrow(centers)
   # replot with centers
-  plt_ctr <- ggplot(penguin_data, aes(y = bill_length_standardized, 
-                                      x = flipper_length_standardized, 
+  plt_ctr <- ggplot(penguins_standardized, aes(y = bill_length_standardized,
+                                      x = flipper_length_standardized,
                                       color = label)) +
     geom_point(size = 2) +
     xlab("Flipper Length\n(standardized)") +
     ylab("Bill Length\n(standardized)") +
     theme(legend.position = "none") +
-    scale_color_manual(values= cbpalette) + 
-    geom_point(data = centers, 
-               aes(y = bill_length_standardized, 
-                                   x = flipper_length_standardized, 
-                                   fill = label), 
-               size = 4, 
-               shape = 21, 
-               stroke = 1, 
-               color = "black", 
+    scale_color_manual(values= cbpalette) +
+    geom_point(data = centers,
+               aes(y = bill_length_standardized,
+                                   x = flipper_length_standardized,
+                                   fill = label),
+               size = 4,
+               shape = 21,
+               stroke = 1,
+               color = "black",
                fill = cbpalette) +
-    annotate("text", x = -0.5, y = 1.5, label = paste0("Iteration ", i), size = 5)+ 
-    theme(text = element_text(size = 14), axis.title=element_text(size=14)) 
-  
+    annotate("text", x = -0.5, y = 1.5, label = paste0("Iteration ", i), size = 5)+
+    theme(text = element_text(size = 14), axis.title=element_text(size=14))
+
   if (i == 1 | i == 2) {
     plt_ctr <- plt_ctr +
       ggtitle("Center Update")
   }
-  
+
   # reassign labels
-  dists <- rbind(centers, penguin_data) |>
+  dists <- rbind(centers, penguins_standardized) |>
     select("flipper_length_standardized", "bill_length_standardized") |>
     dist() |>
     as.matrix()
   dists <- as_tibble(dists[-(1:nclus), 1:nclus])
-  penguin_data <- penguin_data |> 
+  penguins_standardized <- penguins_standardized |>
     mutate(label = apply(dists, 1, function(x) names(x)[which.min(x)]))
 
-  plt_lbl <- ggplot(penguin_data, 
-                    aes(y = bill_length_standardized, 
-                        x = flipper_length_standardized, 
+  plt_lbl <- ggplot(penguins_standardized,
+                    aes(y = bill_length_standardized,
+                        x = flipper_length_standardized,
                         color = label)) +
     geom_point(size = 2) +
     xlab("Flipper Length\n(standardized)") +
     ylab("Bill Length\n(standardized)") +
     theme(legend.position = "none") +
     scale_color_manual(values= cbpalette) +
-    geom_point(data = centers, 
-               aes(y = bill_length_standardized, 
-                   x = flipper_length_standardized, fill = label), 
-               size = 4, 
-               shape = 21, 
-               stroke = 1, 
-               color = "black", 
+    geom_point(data = centers,
+               aes(y = bill_length_standardized,
+                   x = flipper_length_standardized, fill = label),
+               size = 4,
+               shape = 21,
+               stroke = 1,
+               color = "black",
                fill = cbpalette) +
-    annotate("text", x = -0.5, y = 1.5, label = paste0("Iteration ", i), size = 5) + 
-    theme(text = element_text(size = 14), axis.title=element_text(size=14)) 
+    annotate("text", x = -0.5, y = 1.5, label = paste0("Iteration ", i), size = 5) +
+    theme(text = element_text(size = 14), axis.title=element_text(size=14))
 
   if (i == 1 | i ==2) {
     plt_lbl <- plt_lbl +
       ggtitle("Label Update")
   }
-  
+
   list_plot_cntrs[[i]] <- plt_ctr
   list_plot_lbls[[i]] <- plt_lbl
 }
@@ -560,17 +588,17 @@ iter_plot_list <- c(list_plot_cntrs[1], list_plot_lbls[1],
 ggarrange(iter_plot_list[[1]] +
                theme(axis.text.x = element_blank(),
                      axis.ticks.x = element_blank(),
-                     axis.title.x = element_blank(), 
-                     plot.margin = margin(r = 2, b = 2)), 
-          iter_plot_list[[2]] + 
+                     axis.title.x = element_blank(),
+                     plot.margin = margin(r = 2, b = 2)),
+          iter_plot_list[[2]] +
                theme(axis.text.y = element_blank(),
                      axis.ticks.y = element_blank(),
                      axis.title.y = element_blank(),
                      axis.text.x = element_blank(),
                      axis.ticks.x = element_blank(),
                      axis.title.x = element_blank(),
-                     plot.margin = margin(r = 2, l = 2, b = 2) ), 
-          iter_plot_list[[3]] + 
+                     plot.margin = margin(r = 2, l = 2, b = 2) ),
+          iter_plot_list[[3]] +
                theme(axis.text.y = element_blank(),
                      axis.ticks.y = element_blank(),
                      axis.title.y = element_blank(),
@@ -578,29 +606,29 @@ ggarrange(iter_plot_list[[1]] +
                      axis.ticks.x = element_blank(),
                      axis.title.x = element_blank(),
                      plot.margin = margin(r = 2, l = 2, b = 2)  ),
-          iter_plot_list[[4]] + 
+          iter_plot_list[[4]] +
             theme(axis.text.y = element_blank(),
                      axis.ticks.y = element_blank(),
-                     axis.title.y = element_blank(), 
+                     axis.title.y = element_blank(),
                      axis.text.x = element_blank(),
                      axis.ticks.x = element_blank(),
                      axis.title.x = element_blank(),
                      plot.margin = margin(l = 2, b = 2)  ),
           iter_plot_list[[5]] +
-               theme(plot.margin = margin(r = 2, t = 2)), 
-          iter_plot_list[[6]] + 
+               theme(plot.margin = margin(r = 2, t = 2)),
+          iter_plot_list[[6]] +
                theme(axis.text.y = element_blank(),
                      axis.ticks.y = element_blank(),
                      axis.title.y = element_blank(),
-                     plot.margin = margin(r = 2, l = 2, t = 2) ), 
-          iter_plot_list[[7]] + 
+                     plot.margin = margin(r = 2, l = 2, t = 2) ),
+          iter_plot_list[[7]] +
                theme(axis.text.y = element_blank(),
                      axis.ticks.y = element_blank(),
                      axis.title.y = element_blank(),
                      plot.margin = margin(r = 2, l = 2, t = 2)  ),
           iter_plot_list[[8]] + theme(axis.text.y = element_blank(),
                      axis.ticks.y = element_blank(),
-                     axis.title.y = element_blank(), 
+                     axis.title.y = element_blank(),
                      plot.margin = margin(l = 2, t = 2)  ),
            nrow = 2)
 ```
@@ -615,29 +643,18 @@ in the fourth iteration; both the centers and labels will remain the same from t
 > ways to assign the data to clusters. So at some point, the total WSSD must stop decreasing, which means none of the assignments
 > are changing, and the algorithm terminates.
 
-What kind of data is suitable for K-means clustering? 
-In the simplest version of K-means clustering that we have presented here,
-the straight-line distance is used to measure the 
-distance between observations and cluster centers. 
-This means that only quantitative data should be used with this algorithm.
-There are variants on the K-means algorithm, 
-as well as other clustering algorithms entirely, 
-that use other distance metrics 
-to allow for non-quantitative data to be clustered. 
-These, however, are beyond the scope of this book.
-
 ### Random restarts
 
-Unlike the classification and regression models we studied in previous chapters, K-means \index{K-means!restart, nstart} can get "stuck" in a bad solution.
+Unlike the classification and regression models we studied in previous chapters, K-means \index{K-means!restart} can get "stuck" in a bad solution.
 For example, Figure \@ref(fig:10-toy-kmeans-bad-init) illustrates an unlucky random initialization by K-means.
 
 ```{r 10-toy-kmeans-bad-init, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 3.25, fig.width = 3.75, fig.pos = "H", out.extra="", fig.align = "center", fig.cap = "Random initialization of labels."}
-penguin_data <- penguin_data |>
-  mutate(label = as_factor(c(3L, 3L, 1L, 1L, 2L, 1L, 2L, 1L, 1L, 
+penguins_standardized <- penguins_standardized |>
+  mutate(label = as_factor(c(3L, 3L, 1L, 1L, 2L, 1L, 2L, 1L, 1L,
                              1L, 3L, 1L, 2L, 2L, 2L, 3L, 3L, 3L)))
 
-plt_lbl <- ggplot(penguin_data, aes(y = bill_length_standardized, 
-                                    x = flipper_length_standardized, 
+plt_lbl <- ggplot(penguins_standardized, aes(y = bill_length_standardized,
+                                    x = flipper_length_standardized,
                                     color = label)) +
   geom_point(size = 2) +
   xlab("Flipper Length (standardized)") +
@@ -650,7 +667,7 @@ plt_lbl
 
 Figure \@ref(fig:10-toy-kmeans-bad-iter) shows what the iterations of K-means would look like with the unlucky random initialization shown in Figure \@ref(fig:10-toy-kmeans-bad-init).
 
-(ref:10-toy-kmeans-bad-iter) First five iterations of K-means clustering on the `penguin_data` example data set with a poor random initialization. Each pair of plots corresponds to an iteration. Within the pair, the first plot depicts the center update, and the second plot depicts the reassignment of data to clusters. Cluster centers are indicated by larger points that are outlined in black.
+(ref:10-toy-kmeans-bad-iter) First five iterations of K-means clustering on the `penguins_standardized` example data set with a poor random initialization. Each pair of plots corresponds to an iteration. Within the pair, the first plot depicts the center update, and the second plot depicts the reassignment of data to clusters. Cluster centers are indicated by larger points that are outlined in black.
 
 ```{r 10-toy-kmeans-bad-iter, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 6.75, fig.width = 8, fig.pos = "H", out.extra="", fig.align = "center", fig.cap = "(ref:10-toy-kmeans-bad-iter)"}
 list_plot_cntrs <- vector(mode = "list", length = 5)
@@ -658,68 +675,68 @@ list_plot_lbls <- vector(mode = "list", length = 5)
 
 for (i in 1:5) {
   # compute centers
-  centers <- penguin_data |>
+  centers <- penguins_standardized |>
     group_by(label) |>
     summarize_all(funs(mean))
   nclus <- nrow(centers)
   # replot with centers
-  plt_ctr <- ggplot(penguin_data, aes(y = bill_length_standardized, 
-                                      x = flipper_length_standardized, 
-                                      color = label)) +
-    geom_point(size = 2) +
-    xlab("Flipper Length\n(standardized)") +
-    ylab("Bill Length\n(standardized)") +
-    theme(legend.position = "none") +
-    scale_color_manual(values= cbpalette) + 
-    geom_point(data = centers, aes(y = bill_length_standardized, 
-                                   x = flipper_length_standardized, 
-                                   fill = label), 
-               size = 4, 
-               shape = 21, 
-               stroke = 1, 
-               color = "black", 
-               fill = cbpalette) +
-    annotate("text", x = -0.5, y = 1.5, label = paste0("Iteration ", i), size = 5) + 
-    theme(text = element_text(size = 14), axis.title=element_text(size=14)) 
-
-  if (i == 1 | i == 2) {
-    plt_ctr <- plt_ctr +
-      ggtitle("Center Update")
-  }
-  
-  # reassign labels
-  dists <- rbind(centers, penguin_data) |>
-    select("flipper_length_standardized", "bill_length_standardized") |>
-    dist() |>
-    as.matrix()
-  dists <- as_tibble(dists[-(1:nclus), 1:nclus])
-  penguin_data <- penguin_data |> 
-    mutate(label = apply(dists, 1, function(x) names(x)[which.min(x)]))
-
-  plt_lbl <- ggplot(penguin_data, aes(y = bill_length_standardized, 
-                                      x = flipper_length_standardized, 
+  plt_ctr <- ggplot(penguins_standardized, aes(y = bill_length_standardized,
+                                      x = flipper_length_standardized,
                                       color = label)) +
     geom_point(size = 2) +
     xlab("Flipper Length\n(standardized)") +
     ylab("Bill Length\n(standardized)") +
     theme(legend.position = "none") +
     scale_color_manual(values= cbpalette) +
-    geom_point(data = centers, aes(y = bill_length_standardized, 
-                                   x = flipper_length_standardized, 
-                                   fill = label), 
-               size = 4, 
-               shape = 21, 
-               stroke = 1, 
-               color = "black", 
+    geom_point(data = centers, aes(y = bill_length_standardized,
+                                   x = flipper_length_standardized,
+                                   fill = label),
+               size = 4,
+               shape = 21,
+               stroke = 1,
+               color = "black",
                fill = cbpalette) +
-    annotate("text", x = -0.5, y = 1.5, label = paste0("Iteration ", i), size = 5) + 
-    theme(text = element_text(size = 14), axis.title=element_text(size=14)) 
+    annotate("text", x = -0.5, y = 1.5, label = paste0("Iteration ", i), size = 5) +
+    theme(text = element_text(size = 14), axis.title=element_text(size=14))
+
+  if (i == 1 | i == 2) {
+    plt_ctr <- plt_ctr +
+      ggtitle("Center Update")
+  }
+
+  # reassign labels
+  dists <- rbind(centers, penguins_standardized) |>
+    select("flipper_length_standardized", "bill_length_standardized") |>
+    dist() |>
+    as.matrix()
+  dists <- as_tibble(dists[-(1:nclus), 1:nclus])
+  penguins_standardized <- penguins_standardized |>
+    mutate(label = apply(dists, 1, function(x) names(x)[which.min(x)]))
+
+  plt_lbl <- ggplot(penguins_standardized, aes(y = bill_length_standardized,
+                                      x = flipper_length_standardized,
+                                      color = label)) +
+    geom_point(size = 2) +
+    xlab("Flipper Length\n(standardized)") +
+    ylab("Bill Length\n(standardized)") +
+    theme(legend.position = "none") +
+    scale_color_manual(values= cbpalette) +
+    geom_point(data = centers, aes(y = bill_length_standardized,
+                                   x = flipper_length_standardized,
+                                   fill = label),
+               size = 4,
+               shape = 21,
+               stroke = 1,
+               color = "black",
+               fill = cbpalette) +
+    annotate("text", x = -0.5, y = 1.5, label = paste0("Iteration ", i), size = 5) +
+    theme(text = element_text(size = 14), axis.title=element_text(size=14))
 
   if (i == 1 | i == 2) {
     plt_lbl <- plt_lbl +
       ggtitle("Label Update")
   }
-  
+
   list_plot_cntrs[[i]] <- plt_ctr
   list_plot_lbls[[i]] <- plt_lbl
 }
@@ -733,17 +750,17 @@ iter_plot_list <- c(list_plot_cntrs[1], list_plot_lbls[1],
 ggarrange(iter_plot_list[[1]] +
                theme(axis.text.x = element_blank(),  #remove x axis
                      axis.ticks.x = element_blank(),
-                     axis.title.x = element_blank(), 
+                     axis.title.x = element_blank(),
                      plot.margin = margin(r = 2, b = 2)), # change margins
-          iter_plot_list[[2]] + 
+          iter_plot_list[[2]] +
                theme(axis.text.y = element_blank(),
                      axis.ticks.y = element_blank(),
                      axis.title.y = element_blank(),
                      axis.text.x = element_blank(),
                      axis.ticks.x = element_blank(),
                      axis.title.x = element_blank(),
-                     plot.margin = margin(r = 2, l = 2, b = 2) ), 
-          iter_plot_list[[3]] + 
+                     plot.margin = margin(r = 2, l = 2, b = 2) ),
+          iter_plot_list[[3]] +
                theme(axis.text.y = element_blank(),
                      axis.ticks.y = element_blank(),
                      axis.title.y = element_blank(),
@@ -751,10 +768,10 @@ ggarrange(iter_plot_list[[1]] +
                      axis.ticks.x = element_blank(),
                      axis.title.x = element_blank(),
                      plot.margin = margin(r = 2, l = 2, b = 2)),
-          iter_plot_list[[4]] + 
+          iter_plot_list[[4]] +
             theme(axis.text.y = element_blank(),
                      axis.ticks.y = element_blank(),
-                     axis.title.y = element_blank(), 
+                     axis.title.y = element_blank(),
                      axis.text.x = element_blank(),
                      axis.ticks.x = element_blank(),
                      axis.title.x = element_blank(),
@@ -764,30 +781,30 @@ ggarrange(iter_plot_list[[1]] +
                      axis.ticks.x = element_blank(),
                      axis.title.x = element_blank(),
                      plot.margin = margin(r = 2, t = 2, b = 2)),
-          iter_plot_list[[6]] + 
+          iter_plot_list[[6]] +
                theme(axis.text.y = element_blank(),
                      axis.ticks.y = element_blank(),
                      axis.title.y = element_blank(),
                      axis.text.x = element_blank(),
                      axis.ticks.x = element_blank(),
                      axis.title.x = element_blank(),
-                     plot.margin = margin(r = 2, l = 2, t = 2, b = 2) ), 
-          iter_plot_list[[7]] + 
+                     plot.margin = margin(r = 2, l = 2, t = 2, b = 2) ),
+          iter_plot_list[[7]] +
                theme(axis.text.y = element_blank(),
                      axis.ticks.y = element_blank(),
                      axis.title.y = element_blank(),
                      plot.margin = margin(r = 2, l = 2, t = 2, b = 2)  ),
           iter_plot_list[[8]] + theme(axis.text.y = element_blank(),
                      axis.ticks.y = element_blank(),
-                     axis.title.y = element_blank(), 
-                     plot.margin = margin(l = 2, t = 2, b = 2)),  
+                     axis.title.y = element_blank(),
+                     plot.margin = margin(l = 2, t = 2, b = 2)),
           ggplot() + theme_void(), ggplot() + theme_void(), ggplot() + theme_void(), ggplot() + theme_void(), # adding third row of empty plots to change space between third and fourth row
-          iter_plot_list[[9]] + 
+          iter_plot_list[[9]] +
                theme(plot.margin = margin(r = 2)),
-          iter_plot_list[[10]] + 
+          iter_plot_list[[10]] +
             theme(axis.text.y = element_blank(),
                      axis.ticks.y = element_blank(),
-                     axis.title.y = element_blank(), 
+                     axis.title.y = element_blank(),
                      plot.margin = margin(l = 2)  ),
          heights = c(3, 3, -1, 3),
           ncol = 4)
@@ -799,26 +816,26 @@ and pick the clustering that has the lowest final total WSSD.
 
 ### Choosing K
 
-In order to cluster data using K-means, 
+In order to cluster data using K-means,
 we also have to pick the number of clusters, K.
-But unlike in classification, we have no response variable 
+But unlike in classification, we have no response variable
 and cannot perform cross-validation with some measure of model prediction error.
 Further, if K is chosen too small, then multiple clusters get grouped together;
-if K is too large, then clusters get subdivided. 
-In both cases, we will potentially miss interesting structure in the data. 
-Figure \@ref(fig:10-toy-kmeans-vary-k) illustrates the impact of K 
-on K-means clustering of our penguin flipper and bill length data 
+if K is too large, then clusters get subdivided.
+In both cases, we will potentially miss interesting structure in the data.
+Figure \@ref(fig:10-toy-kmeans-vary-k) illustrates the impact of K
+on K-means clustering of our penguin flipper and bill length data
 by showing the different clusterings for K's ranging from 1 to 9.
 
-```{r 10-toy-kmeans-vary-k, echo = FALSE, warning = FALSE, fig.height = 6.25, fig.width = 6, fig.pos = "H", out.extra="", fig.cap = "Clustering of the penguin data for K clusters ranging from 1 to 9. Cluster centers are indicated by larger points that are outlined in black."}
+```{r 10-toy-kmeans-vary-k, echo = FALSE, warning = FALSE, fig.height = 6.25, fig.width = 6, fig.pos = "H", out.extra="", fig.align = "center", fig.cap = "Clustering of the penguin data for K clusters ranging from 1 to 9. Cluster centers are indicated by larger points that are outlined in black."}
 set.seed(3)
 
 kclusts <- tibble(k = 1:9) |>
   mutate(
-    kclust = map(k, ~ kmeans(penguin_data[-3], .x)),
+    kclust = map(k, ~ kmeans(penguins_standardized[-3], .x)),
     tidied = map(kclust, tidy),
     glanced = map(kclust, glance),
-    augmented = map(kclust, augment, penguin_data[-3])
+    augmented = map(kclust, augment, penguins_standardized[-3])
   )
 
 clusters <- kclusts |>
@@ -830,14 +847,14 @@ assignments <- kclusts |>
 clusterings <- kclusts |>
   unnest(glanced, .drop = TRUE)
 
-clusters_levels <- c("1 Cluster", 
-                     "2 Clusters", 
-                     "3 Clusters", 
-                     "4 Clusters", 
-                     "5 Clusters", 
-                     "6 Clusters", 
-                     "7 Clusters", 
-                     "8 Clusters", 
+clusters_levels <- c("1 Cluster",
+                     "2 Clusters",
+                     "3 Clusters",
+                     "4 Clusters",
+                     "5 Clusters",
+                     "6 Clusters",
+                     "7 Clusters",
+                     "8 Clusters",
                      "9 Clusters")
 
 assignments$k <- factor(assignments$k)
@@ -846,44 +863,44 @@ levels(assignments$k) <- clusters_levels
 clusters$k <- factor(clusters$k)
 levels(clusters$k) <- clusters_levels
 
-p1 <- ggplot(assignments, aes(flipper_length_standardized, 
+p1 <- ggplot(assignments, aes(flipper_length_standardized,
                               bill_length_standardized)) +
   geom_point(aes(color = .cluster, size = I(2))) +
   facet_wrap(~k) +   scale_color_manual(values = cbbPalette) +
-  labs(x = "Flipper Length (standardized)", 
-       y = "Bill Length (standardized)", 
+  labs(x = "Flipper Length (standardized)",
+       y = "Bill Length (standardized)",
        color = "Cluster") +
   theme(legend.position = "none") +
-  geom_point(data = clusters, 
-             aes(fill = cluster), 
-             color = "black", 
-             size = 4, 
-             shape = 21, 
-             stroke = 1) + 
-  scale_fill_manual(values = cbbPalette) +     
-  theme(text = element_text(size = 12), axis.title=element_text(size=12)) 
+  geom_point(data = clusters,
+             aes(fill = cluster),
+             color = "black",
+             size = 4,
+             shape = 21,
+             stroke = 1) +
+  scale_fill_manual(values = cbbPalette) +
+  theme(text = element_text(size = 12), axis.title=element_text(size=12))
 
 
 p1
 ```
 
-If we set K less than 3, then the clustering merges separate groups of data; this causes a large 
-total WSSD, since the cluster center is not close to any of the data in the cluster. On 
-the other hand, if we set K greater than 3, the clustering subdivides subgroups of data; this does indeed still 
-decrease the total WSSD, but by only a *diminishing amount*. If we plot the total WSSD versus the number of 
-clusters, we see that the decrease in total WSSD levels off (or forms an "elbow shape") \index{elbow method} when we reach roughly 
+If we set K less than 3, then the clustering merges separate groups of data; this causes a large
+total WSSD, since the cluster center is not close to any of the data in the cluster. On
+the other hand, if we set K greater than 3, the clustering subdivides subgroups of data; this does indeed still
+decrease the total WSSD, but by only a *diminishing amount*. If we plot the total WSSD versus the number of
+clusters, we see that the decrease in total WSSD levels off (or forms an "elbow shape") \index{elbow method} when we reach roughly
 the right number of clusters (Figure \@ref(fig:10-toy-kmeans-elbow)).
 
-```{r 10-toy-kmeans-elbow, echo = FALSE, warning = FALSE, fig.align = 'center', fig.height = 3.25, fig.width = 4.25, fig.pos = "H", out.extra="", fig.cap = "Total WSSD for K clusters ranging from 1 to 9."}
+```{r 10-toy-kmeans-elbow, echo = FALSE, warning = FALSE, fig.align = "center", fig.height = 3.25, fig.width = 4.25, fig.pos = "H", out.extra="", fig.cap = "Total WSSD for K clusters ranging from 1 to 9."}
 p2 <- ggplot(clusterings, aes(x = k, y = tot.withinss)) +
   geom_point(size = 2) +
   geom_line() +
   # annotate(geom = "line", x = 4, y = 35, xend = 2.65, yend = 27, arrow = arrow(length = unit(2, "mm"))) +
-  geom_segment(aes(x = 4, y = 17, 
-                   xend = 3.1, 
-                   yend = 6), 
+  geom_segment(aes(x = 4, y = 17,
+                   xend = 3.1,
+                   yend = 6),
                arrow = arrow(length = unit(0.2, "cm"))) +
-  annotate("text", x = 4.4, y = 19, label = "Elbow", size = 7, color = "blue") +
+  annotate("text", x = 4.4, y = 19, label = "Elbow", size = 5) +
   labs(x = "Number of Clusters", y = "Total WSSD") +
   #theme(text = element_text(size = 20)) +
   scale_x_continuous(breaks = 1:9)
@@ -897,46 +914,34 @@ p2
 set.seed(1)
 ```
 
-We can perform K-means clustering in R using a `tidymodels` workflow similar 
-to those in the earlier classification and regression chapters. 
-We will begin by loading the `tidyclust`\index{tidyclust} library, which contains the necessary
-functionality, and then read in the 
-original (i.e., unstandardized) subset of 18 observations
-from the penguins dataset.
-
-```{r 10-get-unscaled-data, echo = FALSE, message = FALSE, warning = FALSE}
-unstandardized_data <- read_csv("data/penguins_toy.csv") |>
-  select(bill_length_mm, flipper_length_mm)
-
-write_csv(unstandardized_data, "data/penguins.csv")
-```
-
+We can perform K-means clustering in R using a `tidymodels` workflow similar
+to those in the earlier classification and regression chapters.
+We will begin by loading the `tidyclust`\index{K-means}\index{tidyclust} library, which contains the necessary
+functionality.
 ```{r, echo = TRUE, warning = FALSE, message = FALSE}
 library(tidyclust)
-
-penguins <- read_csv("data/penguins.csv")
-penguins
 ```
 
-Recall that K-means clustering uses straight-line 
-distance to decide which points are similar to 
+Returning to the original (unstandardized) `penguins` data,
+recall that K-means clustering uses straight-line
+distance to decide which points are similar to
 each other. Therefore, the *scale* of each of the variables in the data
 will influence which cluster data points end up being assigned.
-Variables with a large scale will have a much larger 
-effect on deciding cluster assignment than variables with a small scale. 
-To address this problem, we need to create a recipe that 
-standardizes\index{standardization!K-means}\index{K-means!standardization} our data 
+Variables with a large scale will have a much larger
+effect on deciding cluster assignment than variables with a small scale.
+To address this problem, we need to create a recipe that
+standardizes\index{standardization!K-means}\index{K-means!standardization} our data
 before clustering using the `step_scale` and `step_center` preprocessing steps.\index{recipe!step\_scale}\index{recipe!step\_center}
-Standardization will ensure that each variable has a mean 
+Standardization will ensure that each variable has a mean
 of 0 and standard deviation of 1 prior to clustering.
 We will designate that all variables are to be used in clustering via
 the model formula `~ .`.
 
-> **Note:** Recipes were originally designed specifically for *predictive* data 
+> **Note:** Recipes were originally designed specifically for *predictive* data
 > analysis problems&mdash;like classification and regression&mdash;not clustering
 > problems. So the functions in R that we use to construct recipes are a little bit
 > awkward in the setting of clustering In particular, we will have to treat
-> "predictors" here as if it meant "variables to be used in clustering". So the 
+> "predictors" here as if it meant "variables to be used in clustering". So the
 > model formula `~ .` specifies that all variables are "predictors", i.e., all variables
 > should be used for clustering. Similarly, when we use the `all_predictors()` function
 > in the preprocessing steps, we really mean "apply this step to all variables used for
@@ -984,9 +989,9 @@ hidden_print(kmeans_fit)
 
 As you can see above, the fit object has a lot of information
 that can be used to visualize the clusters, pick K, and evaluate the total WSSD.
-Let's start by visualizing the clusters as a colored scatter plot! In 
-order to do that, we first need to augment our 
-original data frame with the cluster assignments. We can 
+Let's start by visualizing the clusters as a colored scatter plot! In
+order to do that, we first need to augment our
+original data frame with the cluster assignments. We can
 achieve this using the `augment` function from `tidyclust`.\index{tidyclust!augment}\index{augment}
 ```{r 10-kmeans-extract-augment}
 clustered_data <- kmeans_fit |>
@@ -994,46 +999,34 @@ clustered_data <- kmeans_fit |>
 clustered_data
 ```
 
-<!--
-If for some reason we need access to just the cluster assignments,
-we can extract those from the fit as a data frame using 
-the `extract_cluster_assignment` function. Note that in this case,
-the cluster assignments variable is named `.cluster`, while the `augment`
-function earlier creates a variable named `.pred_cluster`.
-
-```{r 10-kmeans-extract-clusterasgn}
-extract_cluster_assignment(kmeans_fit)
-```
--->
-
-Now that we have the cluster assignments included in the `clustered_data` tidy data frame, we can 
+Now that we have the cluster assignments included in the `clustered_data` tidy data frame, we can
 visualize them as shown in Figure \@ref(fig:10-plot-clusters-2).
-Note that we are plotting the *un-standardized* data here; if we for some reason wanted to 
+Note that we are plotting the *un-standardized* data here; if we for some reason wanted to
 visualize the *standardized* data from the recipe, we would need to use the `bake` function
 to obtain that first.
 
 ```{r 10-plot-clusters-2, fig.height = 3.25, fig.width = 4.25, fig.align = "center", fig.pos = "H", out.extra="", fig.cap = "The data colored by the cluster assignments returned by K-means."}
 cluster_plot <- ggplot(clustered_data,
-  aes(x = flipper_length_mm, 
-      y = bill_length_mm, 
-      color = .pred_cluster), 
+  aes(x = flipper_length_mm,
+      y = bill_length_mm,
+      color = .pred_cluster),
   size = 2) +
   geom_point() +
-  labs(x = "Flipper Length", 
-       y = "Bill Length", 
-       color = "Cluster") + 
-  scale_color_manual(values = c("dodgerblue3",
-                                "darkorange3",  
-                                "goldenrod1")) + 
+  labs(x = "Flipper Length",
+       y = "Bill Length",
+       color = "Cluster") +
+  scale_color_manual(values = c("steelblue",
+                                "darkorange",
+                                "goldenrod1")) +
   theme(text = element_text(size = 12))
 
 cluster_plot
 ```
 
 As mentioned above, we also need to select K by finding
-where the "elbow" occurs in the plot of total WSSD versus the number of clusters. 
+where the "elbow" occurs in the plot of total WSSD versus the number of clusters.
 We can obtain the total WSSD (`tot.withinss`) \index{WSSD!total} from our
-clustering with 3 clusters using the `glance` function. 
+clustering with 3 clusters using the `glance` function.
 
 ```{r 10-glance}
 glance(kmeans_fit)
@@ -1041,14 +1034,14 @@ glance(kmeans_fit)
 
 To calculate the total WSSD for a variety of Ks, we will
 create a data frame with a column named `num_clusters` with rows containing
-each value of K we want to run K-means with (here, 1 to 9). 
+each value of K we want to run K-means with (here, 1 to 9).
 
 ```{r 10-choose-k-part1}
 penguin_clust_ks <- tibble(num_clusters = 1:9)
 penguin_clust_ks
 ```
 
-Then we construct our model specification again, this time 
+Then we construct our model specification again, this time
 specifying that we want to tune the `num_clusters` parameter.
 
 ```{r 10-kmeans-spec-tune, message=FALSE, echo=TRUE, results=FALSE}
@@ -1062,7 +1055,7 @@ hidden_print(kmeans_spec)
 We combine the recipe and specification in a workflow, and then
 use the `tune_cluster` function\index{tidyclust!tune\_cluster} to run K-means on each of the different
 settings of `num_clusters`. The `grid` argument controls which values of
-K we want to try&mdash;in this case, the values from 1 to 9 that are 
+K we want to try&mdash;in this case, the values from 1 to 9 that are
 stored in the `penguin_clust_ks` data frame. We set the `resamples`
 argument to `apparent(penguins)` to\index{tidymodels!apparent} tell K-means to run on the whole
 data set for each value of `num_clusters`. Finally, we collect the results
@@ -1084,14 +1077,14 @@ The total WSSD results correspond to the `mean` column when the `.metric` variab
 We can obtain a tidy data frame with this information using `filter` and `mutate`.\index{filter}\index{mutate}
 
 ```{r 10-kmeans-next}
-kmeans_results <- kmeans_results |> 
+kmeans_results <- kmeans_results |>
     filter(.metric == "sse_within_total") |>
     mutate(total_WSSD = mean) |>
     select(num_clusters, total_WSSD)
 kmeans_results
 ```
 
-Now that we have `total_WSSD` and `num_clusters` as columns in a data frame, we can make a line plot 
+Now that we have `total_WSSD` and `num_clusters` as columns in a data frame, we can make a line plot
 (Figure \@ref(fig:10-plot-choose-k)) and search for the "elbow" to find which value of K to use. \index{elbow method}
 
 ```{r 10-plot-choose-k, fig.height = 3.25, fig.width = 4.25, fig.align = "center", fig.pos = "H", out.extra="", fig.cap = "A plot showing the total WSSD versus the number of clusters."}
@@ -1100,20 +1093,20 @@ elbow_plot <- ggplot(kmeans_results, aes(x = num_clusters, y = total_WSSD)) +
   geom_line() +
   xlab("K") +
   ylab("Total within-cluster sum of squares") +
-  scale_x_continuous(breaks = 1:9) + 
+  scale_x_continuous(breaks = 1:9) +
   theme(text = element_text(size = 12))
 
 elbow_plot
 ```
 
 It looks like 3 clusters is the right choice for this data.
-But why is there a "bump" in the total WSSD plot here? 
-Shouldn't total WSSD always decrease as we add more clusters? 
-Technically yes, but remember:  K-means can get "stuck" in a bad solution. 
+But why is there a "bump" in the total WSSD plot here?
+Shouldn't total WSSD always decrease as we add more clusters?
+Technically yes, but remember:  K-means can get "stuck" in a bad solution.
 Unfortunately, for K = 8 we had an unlucky initialization
-and found a bad clustering! \index{K-means!restart, nstart} 
-We can help prevent finding a bad clustering 
-by trying a few different random initializations 
+and found a bad clustering! \index{K-means!restart, nstart}
+We can help prevent finding a bad clustering
+by trying a few different random initializations
 via the `nstart` argument in the model specification.
 Here we will try using 10 restarts.
 
@@ -1126,7 +1119,7 @@ kmeans_spec
 hidden_print(kmeans_spec)
 ```
 
-Now if we rerun the same workflow with the new model specification, 
+Now if we rerun the same workflow with the new model specification,
 K-means clustering will be performed `nstart = 10` times for each value of K.
 The `collect_metrics` function will then pick the best clustering of the 10 runs for each value of K,
 and report the results for that best clustering.
@@ -1137,8 +1130,8 @@ the more likely we are to find a good clustering (if one exists).
 What value should you choose for `nstart`? The answer is that it depends
 on many factors: the size and characteristics of your data set,
 as well as how powerful your computer is.
-The larger the `nstart` value the better from an analysis perspective, 
-but there is a trade-off that doing many clusterings 
+The larger the `nstart` value the better from an analysis perspective,
+but there is a trade-off that doing many clusterings
 could take a long time.
 So this is something that needs to be balanced.
 
@@ -1159,7 +1152,7 @@ elbow_plot <- ggplot(kmeans_results, aes(x = num_clusters, y = total_WSSD)) +
   geom_line() +
   xlab("K") +
   ylab("Total within-cluster sum of squares") +
-  scale_x_continuous(breaks = 1:9) + 
+  scale_x_continuous(breaks = 1:9) +
   theme(text = element_text(size = 12))
 
 elbow_plot
@@ -1168,8 +1161,8 @@ elbow_plot
 
 ## Exercises
 
-Practice exercises for the material covered in this chapter 
-can be found in the accompanying 
+Practice exercises for the material covered in this chapter
+can be found in the accompanying
 [worksheets repository](https://worksheets.datasciencebook.ca)
 in the "Clustering" row.
 You can launch an interactive version of the worksheet in your browser by clicking the "launch binder" button.
@@ -1188,5 +1181,5 @@ and guidance that the worksheets provide will function as intended.
   clustering for when you expect there to be subgroups, and then subgroups within
   subgroups, etc., in your data. In the realm of more general unsupervised
   learning, it covers *principal components analysis (PCA)*, which is a very
-  popular technique for reducing the number of predictors in a dataset. 
+  popular technique for reducing the number of predictors in a data set.
 

@@ -12,7 +12,7 @@ print_html_nodes <- function(html_nodes_object) {
     html_nodes_object
   } else {
     output <- capture.output(html_nodes_object)
-    
+
     for (i in seq_along(output)) {
       if (nchar(output[i]) <= 79) {
         cat(output[i], sep = "\n")
@@ -24,10 +24,10 @@ print_html_nodes <- function(html_nodes_object) {
 }
 ```
 
-## Overview 
+## Overview
 
 In this chapter, you’ll learn to read tabular data of various formats into R
-from your local device (e.g., your laptop) and the web. “Reading” (or “loading”)
+from your local device (e.g., your laptop) and the web. "Reading" (or "loading")
 \index{loading|see{reading}}\index{reading!definition} is the process of
 converting data (stored as plain text, a database, HTML, etc.) into an object
 (e.g., a data frame) that R can easily access and manipulate. Thus reading data
@@ -42,33 +42,33 @@ tied well before going for a run so that you don’t trip later on!
 ## Chapter learning objectives
 By the end of the chapter, readers will be able to do the following:
 
-- Define the following:
+- Define the types of path and use them to locate files:
     - absolute file path
     - relative file path
-    - **U**niform **R**esource **L**ocator (URL)
-- Read data into R using a relative path and a URL.
-- Compare and contrast the following functions:
-    - `read_csv` 
+    - Uniform Resource Locator (URL)
+- Read data into R from various types of path using:
+    - `read_csv`
     - `read_tsv`
     - `read_csv2`
     - `read_delim`
     - `read_excel`
-- Match the following `tidyverse` `read_*` function arguments to their descriptions:
-    - `file` 
+- Compare and contrast the `read_*` functions.
+- Describe when to use the following `read_*` function arguments:
+    - `skip`
     - `delim`
     - `col_names`
-    - `skip`
 - Choose the appropriate `tidyverse` `read_*` function and function arguments to load a given plain text tabular data set into R.
 - Use the `rename` function to rename columns in a data frame.
-- Use `readxl` package's `read_excel` function and arguments to load a sheet from an excel file into R.
-- Connect to a database using the `DBI` package's `dbConnect` function.
-- List the tables in a database using the `DBI` package's `dbListTables` function.
-- Create a reference to a database table that is queriable using the `tbl` from the `dbplyr` package.
-- Retrieve data from a database query and bring it into R using the `collect` function from the `dbplyr` package.
+- Use `read_excel` function and arguments to load a sheet from an excel file into R.
+- Work with databases using functions from `dbplyr` and `DBI`:
+    - Connect to a database with `dbConnect`.
+    - List tables in the database with `dbListTables`.
+    - Create a reference to a database table with `tbl`.
+    - Bring data from a database into R using `collect`.
 - Use `write_csv` to save a data frame to a `.csv` file.
-- (*Optional*) Obtain data using **a**pplication **p**rogramming **i**nterfaces (APIs) and web scraping.
+- (*Optional*) Obtain data from the web using scraping and application programming interfaces (APIs):
     - Read HTML source code from a URL using the `rvest` package.
-    - Read data from the Twitter API using the `rtweet` package.
+    - Read data from the NASA "Astronomy Picture of the Day" API using the `httr2` package.
     - Compare downloading tabular data from a plain text file (e.g., `.csv`), accessing data from an API, and scraping the HTML source code from a website.
 
 ## Absolute and relative file paths
@@ -77,95 +77,112 @@ This chapter will discuss the different functions we can use to import data
 into R, but before we can talk about *how* we read the data into R with these
 functions, we first need to talk about *where* the data lives. When you load a
 data set into R, you first need to tell R where those files live. The file
-could live on your  computer (*local*) 
-\index{location|see{path}} \index{path!local, remote, relative, absolute} 
-or somewhere on the internet (*remote*). 
+could live on your  computer (*local*)
+\index{location|see{path}} \index{path!local}\index{path!remote}\index{path!relative}\index{path!absolute}
+or somewhere on the internet (*remote*).
 
-The place where the file lives on your computer is called the "path". You can
+The place where the file lives on your computer is referred to as its "path". You can
 think of the path as directions to the file. There are two kinds of paths:
-*relative* paths and *absolute* paths. A relative path is where the file is
-with respect to where you currently are on the computer (e.g., where the file
-you're working in is). On the other hand, an absolute path is where the file is
-in respect to the computer's filesystem base (or root) folder.
+*relative* paths and *absolute* paths. A relative path indicates where the file is
+with respect to your *working directory* (i.e., "where you are currently") on the computer.
+On the other hand, an absolute path indicates where the file is
+with respect to the computer's filesystem base (or *root*) folder, regardless of where you are working.
 
 Suppose our computer's filesystem looks like the picture in Figure
-\@ref(fig:file-system-for-export-to-intro-datascience), and we are working in a
-file titled `worksheet_02.ipynb`. If we want to 
-read the `.csv` file named `happiness_report.csv` into R, we could do this
-using either a relative or an absolute path.  We show both choices
-below.\index{Happiness Report}
+\@ref(fig:file-system-for-export-to-intro-datascience). We are working in a
+file titled `project3.ipynb`, and our current working directory is `project3`;
+typically, as is the case here, the working directory is the directory containing the file you are currently
+working on.
 
-```{r file-system-for-export-to-intro-datascience, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Example file system.", fig.retina = 2, out.width="100%"}
-knitr::include_graphics("img/reading/filesystem.jpeg")
+```{r file-system-for-export-to-intro-datascience, echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center", fig.cap = "Example file system.", fig.retina = 2, out.width="100%"}
+knitr::include_graphics("img/reading/filesystem.png")
 ```
 
-**Reading `happiness_report.csv` using a relative path:**
-
+Let's say we wanted to open the `happiness_report.csv` file. We have two options to indicate
+where the file is: using a relative path, or using an absolute path.
+The absolute path of the file always starts with a slash `/`&mdash;representing the root folder on the computer&mdash;and
+proceeds by listing out the sequence of folders you would have to enter to reach the file, each separated by another slash `/`.
+So in this case, `happiness_report.csv` would be reached by starting at the root, and entering the `home` folder,
+then the `dsci-100` folder, then the `project3` folder, and then finally the `data` folder. So its absolute
+path would be `/home/dsci-100/project3/data/happiness_report.csv`. We can load the file using its absolute path
+as a string passed to the `read_csv` function.
+```{r eval = FALSE}
+happy_data <- read_csv("/home/dsci-100/project3/data/happiness_report.csv")
+```
+If we instead wanted to use a relative path, we would need to list out the sequence of steps needed to get from our current
+working directory to the file, with slashes `/` separating each step. Since we are currently in the `project3` folder,
+we just need to enter the `data` folder to reach our desired file. Hence the relative path is `data/happiness_report.csv`,
+and we can load the file using its relative path as a string passed to `read_csv`.
 ```{r eval = FALSE}
 happy_data <- read_csv("data/happiness_report.csv")
 ```
+Note that there is no forward slash at the beginning of a relative path; if we accidentally typed `"/data/happiness_report.csv"`,
+R would look for a folder named `data` in the root folder of the computer&mdash;but that doesn't exist!
 
-**Reading `happiness_report.csv` using an absolute path:**
+Aside from specifying places to go in a path using folder names (like `data` and `project3`), we can also specify two additional
+special places: the *current directory* \index{path!current} and the *previous directory*. \index{path!previous}
+We indicate the current working directory with a single dot `.`, and \index{aaaaaacurdirsymb@\texttt{.}|see{path}}
+the previous directory with two dots `..`. \index{aaaaaprevdirsymb@\texttt{..}|see{path}} So for instance, if we wanted to reach the `bike_share.csv` file from the `project3` folder, we could
+use the relative path `../project2/bike_share.csv`. We can even combine these two; for example, we could reach the `bike_share.csv` file using
+the (very silly) path `../project2/../project2/./bike_share.csv` with quite a few redundant directions: it says to go back a folder, then open `project2`,
+then go back a folder again, then open `project2` again, then stay in the current directory, then finally get to `bike_share.csv`. Whew, what a long trip!
 
-```{r eval = FALSE}
-happy_data <- read_csv("/home/dsci-100/worksheet_02/data/happiness_report.csv")
-```
-
-So which one should you use? Generally speaking, you should use relative paths. 
-Using a relative path helps ensure that your code can be run 
+So which kind of path should you use: relative, or absolute? Generally speaking, you should use relative paths.
+Using a relative path helps ensure that your code can be run
 on a different computer (and as an added bonus, relative paths are often shorter&mdash;easier to type!).
 This is because a file's relative path is often the same across different computers, while a
-file's absolute path (the names of 
-all of the folders between the computer's root, represented by `/`, and the file) isn't usually the same 
-across different computers. For example, suppose Fatima and Jayden are working on a 
-project together on the `happiness_report.csv` data. Fatima's file is stored at 
+file's absolute path (the names of
+all of the folders between the computer's root, represented by `/`, and the file) isn't usually the same
+across different computers. For example, suppose Fatima and Jayden are working on a
+project together on the `happiness_report.csv` data. Fatima's file is stored at
 
-`/home/Fatima/project/data/happiness_report.csv`, 
+`/home/Fatima/project3/data/happiness_report.csv`,
 
-while Jayden's is stored at 
+while Jayden's is stored at
 
-`/home/Jayden/project/data/happiness_report.csv`.
- 
+`/home/Jayden/project3/data/happiness_report.csv`.
+
 Even though Fatima and Jayden stored their files in the same place on their
 computers (in their home folders), the absolute paths are different due to
 their different usernames.  If Jayden has code that loads the
 `happiness_report.csv` data using an absolute path, the code won't work on
-Fatima's computer.  But the relative path from inside the `project` folder
+Fatima's computer.  But the relative path from inside the `project3` folder
 (`data/happiness_report.csv`) is the same on both computers; any code that uses
-relative paths will work on both! In the additional resources section, 
+relative paths will work on both! In the additional resources section,
 we include a link to a short video on the
 difference between absolute and relative paths. You can also check out the
 `here` package, which provides methods for finding and constructing file paths
-in R.  
+in R.
 
 Beyond files stored on your computer (i.e., locally), we also need a way to locate resources
-stored elsewhere on the internet (i.e., remotely). For this purpose we use a *Uniform Resource Locator (URL)*,
-i.e., a web address that looks something like https://datasciencebook.ca/. \index{URL}
-URLs indicate the location of a resource on the internet and
-help us retrieve that resource. 
+stored elsewhere on the internet (i.e., remotely). For this purpose we use a
+*Uniform Resource Locator (URL)*, i.e., a web address that looks something
+like https://datasciencebook.ca/. URLs indicate the location of a resource on the internet, and
+start with a web domain, followed by a forward slash `/`, and then a path
+to where the resource is located on the remote machine. \index{URL}
 
 ## Reading tabular data from a plain text file into R
 
 ### `read_csv` to read in comma-separated values files {#readcsv}
 
 Now that we have learned about *where* data could be, we will learn about *how*
-to import data into R using various functions. Specifically, we will learn how 
+to import data into R using various functions. Specifically, we will learn how
 to *read* tabular data from a plain text file (a document containing only text)
 *into* R and *write* tabular data to a file *out of* R. The function we use to do this
 depends on the file's format. For example, in the last chapter, we learned about using
 the `tidyverse` `read_csv` function when reading `.csv` (**c**omma-**s**eparated **v**alues)
 files. \index{csv} In that case, the separator or *delimiter* \index{reading!delimiter} that divided our columns was a
-comma (`,`). We only learned the case where the data matched the expected defaults 
+comma (`,`). We only learned the case where the data matched the expected defaults
 of the `read_csv` function \index{read function!read\_csv}
-(column names are present, and commas are used as the delimiter between columns). 
-In this section, we will learn how to read 
+(column names are present, and commas are used as the delimiter between columns).
+In this section, we will learn how to read
 files that do not satisfy the default expectations of `read_csv`.
 
-Before we jump into the cases where the data aren't in the expected default format 
+Before we jump into the cases where the data aren't in the expected default format
 for `tidyverse` and `read_csv`, let's revisit the more straightforward
 case where the defaults hold, and the only argument we need to give to the function
-is the path to the file, `data/can_lang.csv`. The `can_lang` data set contains 
-language data from the 2016 Canadian census. \index{Canadian languages!canlang data} 
+is the path to the file, `data/can_lang.csv`. The `can_lang` data set contains
+language data from the 2016 Canadian census. \index{Canadian languages!canlang data}
 We put `data/` before the file's
 name when we are loading the data set because this data set is located in a
 sub-folder, named `data`, relative to where we are running our R code.
@@ -184,29 +201,27 @@ Non-Official & Non-Aboriginal languages,American Sign Language,2685,3020,1145,21
 Non-Official & Non-Aboriginal languages,Amharic,22465,12785,200,33670
 ```
 
-And here is a review of how we can use `read_csv` to load it into R. First we 
+And here is a review of how we can use `read_csv` to load it into R. First we
 load the `tidyverse` \index{tidyverse} package to gain access to useful
-functions for reading the data. 
+functions for reading the data.
 
 ```{r, message = FALSE}
 library(tidyverse)
 ```
 
 Next we use `read_csv` to load the data into R, and in that call we specify the
-relative path to the file.
+relative path to the file. Note that it is normal and expected that \index{warning} a message is
+printed out after using the `read_csv` and related functions. This message lets you know the data types
+of each of the columns that R inferred while reading the data into R.  In the
+future when we use this and related functions to load data in this book, we will
+silence these messages to help with the readability of the book.
+
 
 ```{r load-data, message = TRUE}
 canlang_data <- read_csv("data/can_lang.csv")
 ```
 
 \newpage
-
-> **Note:** It is also normal and expected that \index{warning} a message is
-> printed out after using
-> the `read_csv` and related functions. This message lets you know the data types
-> of each of the columns that R inferred while reading the data into R.  In the
-> future when we use this and related functions to load data in this book, we will
-> silence these messages to help with the readability of the book.
 
 Finally, to view the first 10 rows of the data frame,
 we must call it:
@@ -244,34 +259,29 @@ Non-Official & Non-Aboriginal languages,Amharic,22465,12785,200,33670
 With this extra information being present at the top of the file, using
 `read_csv` as we did previously does not allow us to correctly load the data
 into R. In the case of this file we end up only reading in one column of the
-data set:
+data set. In contrast to the normal and expected messages above, this time R
+prints out a warning for us indicating that there might be a problem with how
+our data is being read in. \index{warning}
 
 ```{r}
 canlang_data <- read_csv("data/can_lang_meta-data.csv")
-```
-
-> **Note:** In contrast to the normal and expected messages above, this time R 
-> printed out a warning for us indicating that there might be a problem with how
-> our data is being read in. \index{warning}
-
-```{r}
 canlang_data
 ```
 
-To successfully read data like this into R, the `skip` 
-argument \index{read function!skip argument} can be useful to tell R 
+To successfully read data like this into R, the `skip`
+argument \index{read function!skip argument} can be useful to tell R
 how many lines to skip before
 it should start reading in the data. In the example above, we would set this
 value to 3.
 
 ```{r}
-canlang_data <- read_csv("data/can_lang_meta-data.csv", 
+canlang_data <- read_csv("data/can_lang_meta-data.csv",
                          skip = 3)
 canlang_data
 ```
 
 How did we know to skip three lines? We looked at the data! The first three lines
-of the data had information we didn't need to import: 
+of the data had information we didn't need to import:
 
 ```code
 Data source: https://ttimbers.github.io/canlang/
@@ -279,30 +289,30 @@ Data originally published in: Statistics Canada Census of Population 2016.
 Reproduced and distributed on an as-is basis with their permission.
 ```
 
-The column names began at line 4, so we skipped the first three lines. 
+The column names began at line 4, so we skipped the first three lines.
 
 ### `read_tsv` to read in tab-separated values files
 
 Another common way data is stored is with tabs as the delimiter. Notice the
 data file, `can_lang.tsv`, has tabs in between the columns instead of
-commas. 
+commas.
 
 ```code
 category    language    mother_tongue   most_at_home    most_at_work    lang_kno
 Aboriginal languages    Aboriginal languages, n.o.s.    590 235 30  665
 Non-Official & Non-Aboriginal languages Afrikaans   10260   4785    85  23415
-Non-Official & Non-Aboriginal languages Afro-Asiatic languages, n.i.e.  1150    
+Non-Official & Non-Aboriginal languages Afro-Asiatic languages, n.i.e.  1150
 Non-Official & Non-Aboriginal languages Akan (Twi)  13460   5985    25  22150
 Non-Official & Non-Aboriginal languages Albanian    26895   13135   345 31930
 Aboriginal languages    Algonquian languages, n.i.e.    45  10  0   120
 Aboriginal languages    Algonquin   1260    370 40  2480
-Non-Official & Non-Aboriginal languages American Sign Language  2685    3020    
+Non-Official & Non-Aboriginal languages American Sign Language  2685    3020
 Non-Official & Non-Aboriginal languages Amharic 22465   12785   200 33670
 ```
 
 We can use the `read_tsv` function
 \index{tab-separated values|see{tsv}}\index{tsv}\index{read function!read\_tsv}
-to read in `.tsv` (**t**ab **s**eparated **v**alues) files. 
+to read in `.tsv` (**t**ab **s**eparated **v**alues) files.
 
 ```{r 01-read-tab}
 canlang_data <- read_tsv("data/can_lang.tsv")
@@ -311,57 +321,57 @@ canlang_data
 
 If you compare the data frame here to the data frame we obtained in Section
 \@ref(readcsv) using `read_csv`, you'll notice that they look identical:
-they have the same number of columns and rows, the same column names, and the same entries! So 
+they have the same number of columns and rows, the same column names, and the same entries! So
 even though we needed to use a different
 function depending on the file format, our resulting data frame
-(`canlang_data`) in both cases was the same. 
+(`canlang_data`) in both cases was the same.
 
 ### `read_delim` as a more flexible method to get tabular data into R
 
 The `read_csv` and `read_tsv` functions are actually just special cases of the more general
 `read_delim` \index{read function!read\_delim} function. We can use
 `read_delim` to import both comma and tab-separated values files, and more; we just
-have to specify the delimiter. 
+have to specify the delimiter.
 For example, the `can_lang_no_names.tsv` file contains a different version of
 this same data set with no column names and uses tabs as the delimiter
-\index{reading!delimiter} instead of commas. 
+\index{reading!delimiter} instead of commas.
 Here is how the file would look in a plain text editor:
 
 ```code
 Aboriginal languages    Aboriginal languages, n.o.s.    590 235 30  665
 Non-Official & Non-Aboriginal languages Afrikaans   10260   4785    85  23415
-Non-Official & Non-Aboriginal languages Afro-Asiatic languages, n.i.e.  1150    
+Non-Official & Non-Aboriginal languages Afro-Asiatic languages, n.i.e.  1150
 Non-Official & Non-Aboriginal languages Akan (Twi)  13460   5985    25  22150
 Non-Official & Non-Aboriginal languages Albanian    26895   13135   345 31930
 Aboriginal languages    Algonquian languages, n.i.e.    45  10  0   120
 Aboriginal languages    Algonquin   1260    370 40  2480
-Non-Official & Non-Aboriginal languages American Sign Language  2685    3020    
+Non-Official & Non-Aboriginal languages American Sign Language  2685    3020
 Non-Official & Non-Aboriginal languages Amharic 22465   12785   200 33670
 Non-Official & Non-Aboriginal languages Arabic  419890  223535  5585    629055
 ```
 
-To read this into R using the `read_delim` function, we specify the path 
+To read this into R using the `read_delim` function, we specify the path
 to the file as the first argument, provide
-the tab character `"\t"` as the `delim` argument \index{read function!delim argument},
-and set the `col_names` argument to `FALSE` to denote that there are no column names
+the tab character `"\t"` as the `delim` argument,
+and set \index{read function!delim argument} the `col_names` argument to `FALSE` to denote that there are no column names
 provided in the data. Note that the `read_csv`, `read_tsv`, and `read_delim` functions
-all have a `col_names` argument \index{read function!col\_names argument} with 
-the default value `TRUE`. 
+all have a `col_names` argument \index{read function!col\_names argument} with
+the default value `TRUE`.
 
-> **Note:** `\t` is an example of an *escaped character*, 
+> **Note:** `\t` is an example of an *escaped character*,
 > which always starts with a backslash (`\`). \index{escape character}
-> Escaped characters are used to represent non-printing characters 
-> (like the tab) or those with special meanings (such as quotation marks). 
+> Escaped characters are used to represent non-printing characters
+> (like the tab) or those with special meanings (such as quotation marks).
 
 ```{r}
-canlang_data <- read_delim("data/can_lang_no_names.tsv", 
-                           delim = "\t", 
+canlang_data <- read_delim("data/can_lang_no_names.tsv",
+                           delim = "\t",
                            col_names = FALSE)
 canlang_data
 ```
 
 
-Data frames in R need to have column names.  Thus if you read in data 
+Data frames in R need to have column names.  Thus if you read in data
 without column names, R will assign names automatically. In this example,
 R assigns the column names `X1, X2, X3, X4, X5, X6`.
 It is best to rename your columns manually in this scenario. The current
@@ -370,18 +380,18 @@ To rename your columns, you can use the `rename` function
 \index{rename} from [the `dplyr` R package](https://dplyr.tidyverse.org/) [@dplyr]
  \index{dplyr} (one of the packages
 loaded with `tidyverse`, so we don't need to load it separately). The first
-argument is the data set, and in the subsequent arguments you 
-write `new_name = old_name` for the selected variables to 
+argument is the data set, and in the subsequent arguments you
+write `new_name = old_name` for the selected variables to
 rename. We rename the `X1, X2, ..., X6`
-columns in the `canlang_data` data frame to more descriptive names below. 
+columns in the `canlang_data` data frame to more descriptive names below.
 
 ```{r 01-rename-columns}
 canlang_data <- rename(canlang_data,
-       category = X1, 
-       language = X2, 
+       category = X1,
+       language = X2,
        mother_tongue = X3,
-       most_at_home = X4, 
-       most_at_work = X5, 
+       most_at_home = X4,
+       most_at_work = X5,
        lang_known = X6)
 canlang_data
 ```
@@ -407,7 +417,7 @@ Occasionally the data available at a URL is not formatted nicely enough to use
 `read_csv`, `read_tsv`, `read_delim`, or other related functions to read the data
 directly into R. In situations where it is necessary to download a file
 to our local computer prior to working with it in R, we can use the `download.file`
-function. The first argument is the URL, and the second is a path where we would 
+function. The first argument is the URL, and the second is a path where we would
 like to store the downloaded file.
 
 ```r
@@ -424,7 +434,7 @@ canlang_data
 
 In many of the examples above, we gave you previews of the data file before we read
 it into R. Previewing data is essential to see whether or not there are column
-names, what the delimiters are, and if there are lines you need to skip. 
+names, what the delimiters are, and if there are lines you need to skip.
 You should do this yourself when trying to read in data files: open the file in
 whichever text editor you prefer to inspect its contents prior to reading it into R.
 
@@ -440,7 +450,7 @@ though `.csv` and `.xlsx` files look almost identical when loaded into Excel,
 the data themselves are stored completely differently.  While `.csv` files are
 plain text files, where the characters you see when you open the file in a text
 editor are exactly the data they represent, this is not the case for `.xlsx`
-files. Take a look at a snippet of what a `.xlsx` file would look like in a text editor: 
+files. Take a look at a snippet of what a `.xlsx` file would look like in a text editor:
 
 
 ```
@@ -453,8 +463,8 @@ t                                                       8f??3wn
                        ?Pd(??J-?E???7?'t(?-GZ?????y???c~N?g[^_r?4
                                                                   yG?O
                                                                       ?K??G?
-                                                                      
-                                                                                                                    
+
+
      ]TUEe??O??c[???????6q??s??d?m???\???H?^????3} ?rZY? ?:L60?^?????XTP+?|?
 X?a??4VT?,D?Jq
 ```
@@ -463,7 +473,7 @@ This type of file representation allows Excel files to store additional things
 that you cannot store in a `.csv` file, such as fonts, text formatting,
 graphics, multiple sheets and more. And despite looking odd in a plain text
 editor, we can read Excel spreadsheets into R using the `readxl` package
-developed specifically for this 
+developed specifically for this
 purpose. \index{readxl}\index{read function!read\_excel}
 
 ```{r}
@@ -477,13 +487,13 @@ If the `.xlsx` file has multiple sheets, you have to use the `sheet` argument
 to specify the sheet number or name. You can also specify cell ranges using the
 `range` argument. This functionality is useful when a single sheet contains
 multiple tables (a sad thing that happens to many Excel spreadsheets since this
-makes reading in data more difficult). 
+makes reading in data more difficult).
 
 As with plain text files, you should always explore the data file before
 importing it into R. Exploring the data beforehand helps you decide which
 arguments you need to load the data into R successfully. If you do not have
 the Excel program on your computer, you can use other programs to preview the
-file. Examples include Google Sheets and Libre Office. 
+file. Examples include Google Sheets and Libre Office.
 
 In Table \@ref(tab:read-table) we summarize the `read_*` functions we covered
 in this chapter. We also include the `read_csv2` function for data separated by
@@ -515,7 +525,7 @@ different relational database management systems each have their own advantages
 and limitations. Almost all employ SQL (*structured query language*) to obtain
 data from the database. But you don't need to know SQL to analyze data from
 a database; several packages have been written that allow you to connect to
-relational databases and use the R programming language 
+relational databases and use the R programming language
 to obtain data. In this book, we will give examples of how to do this
 using R with SQLite and PostgreSQL databases.
 
@@ -524,9 +534,9 @@ using R with SQLite and PostgreSQL databases.
 SQLite \index{database!SQLite} is probably the simplest relational database system
 that one can use in combination with R. SQLite databases are self-contained, and are
 usually stored and accessed locally on one computer from
-a file with a `.db` extension (or sometimes an `.sqlite` extension). 
+a file with a `.db` extension (or sometimes an `.sqlite` extension).
 Similar to Excel files, these are not plain text
-files and cannot be read in a plain text editor. 
+files and cannot be read in a plain text editor.
 
 The first thing you need to do to read data into R from a database is to
 connect to the database. We do that using the `dbConnect` function from the
@@ -541,7 +551,7 @@ conn_lang_data <- dbConnect(RSQLite::SQLite(), "data/can_lang.db")
 ```
 
 Often relational databases have many tables; thus, in order to retrieve
-data from a database, you need to know the name of the table 
+data from a database, you need to know the name of the table
 in which the data is stored. You can get the names of
 all the tables in the database using the `dbListTables` \index{database!tables}
 function:
@@ -553,7 +563,7 @@ tables
 
 The `dbListTables` function returned only one name, which tells us
 that there is only one table in this database. To reference a table in the
-database (so that we can perform operations like selecting columns and filtering rows), we 
+database (so that we can perform operations like selecting columns and filtering rows), we
 use the `tbl` function \index{database!tbl} from the `dbplyr` package. The object returned
 by the `tbl` function \index{dbplyr|see{database}}\index{database!dbplyr} allows us to work with data
 stored in databases as if they were just regular data frames; but secretly, behind
@@ -564,7 +574,7 @@ into SQL queries!
 library(dbplyr)
 
 lang_db <- tbl(conn_lang_data, "lang")
-lang_db 
+lang_db
 ```
 
 Although it looks like we just got a data frame from the database, we didn't!
@@ -573,19 +583,19 @@ It's a *reference*; the data is still stored only in the SQLite database. The
 and joining large data sets than R. And typically the database will not even
 be stored on your computer, but rather a more powerful machine somewhere on the
 web. So R is lazy and waits to bring this data into memory until you explicitly
-tell it to using the `collect` \index{database!collect} function. 
+tell it to using the `collect` \index{database!collect} function.
 Figure \@ref(fig:01-ref-vs-tibble) highlights the difference
 between a `tibble` object in R and the output we just created. Notice in the table
 on the right, the first two lines of the output indicate the source is SQL. The
 last line doesn't show how many rows there are (R is trying to avoid performing
-expensive query operations), whereas the output for the `tibble` object does. 
+expensive query operations), whereas the output for the `tibble` object does.
 
 ```{r 01-ref-vs-tibble, echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center", fig.cap = "Comparison of a reference to data in a database and a tibble in R.", fig.retina = 2, out.width="80%"}
 image_read("img/reading/ref_vs_tibble.001.jpeg") |>
   image_crop("3632x1600")
 ```
 
-We can look at the SQL commands that are sent to the database when we write 
+We can look at the SQL commands that are sent to the database when we write
 `tbl(conn_lang_data, "lang")` in R with the `show_query` function from the
 `dbplyr` package. \index{database!show\_query}
 
@@ -596,51 +606,63 @@ show_query(tbl(conn_lang_data, "lang"))
 The output above shows the SQL code that is sent to the database. When we
 write `tbl(conn_lang_data, "lang")` in R, in the background, the function is
 translating the R code into SQL, sending that SQL to the database, and then translating the
-response for us. So `dbplyr` does all the hard work of translating from R to SQL and back for us; 
-we can just stick with R! 
+response for us. So `dbplyr` does all the hard work of translating from R to SQL and back for us;
+we can just stick with R!
 
-With our `lang_db` table reference for the 2016 Canadian Census data in hand, we 
-can mostly continue onward as if it were a regular data frame. For example, 
-we can use the `filter` function
-to obtain only certain rows. Below we filter the data to include only Aboriginal languages.
+With our `lang_db` table reference for the 2016 Canadian Census data in hand, we
+can mostly continue onward as if it were a regular data frame. For example, let's do the same exercise
+from Chapter \@ref(intro): we will obtain only those rows corresponding to Aboriginal languages, and keep only
+the `language` and `mother_tongue` columns.
+We can use the `filter` function to obtain only certain rows. Below we filter the data to include only Aboriginal languages.
 
 ```{r}
 aboriginal_lang_db <- filter(lang_db, category == "Aboriginal languages")
-aboriginal_lang_db 
+aboriginal_lang_db
 ```
 
 Above you can again see the hints that this data is not actually stored in R yet:
-the source is a `lazy query [?? x 6]` and the output says `... with more rows` at the end
+the source is `SQL [?? x 6]` and the output says `... more rows` at the end
 (both indicating that R does not know how many rows there are in total!),
-and a database type `sqlite 3.36.0` is listed.
+and a database type `sqlite` is listed.
+We didn't use the `collect` function because we are not ready to bring the data into R yet. \index{collect}
+We can still use the database to do some work to obtain *only* the small amount of data we want to work with locally
+in R. Let's add the second part of our database query: selecting only the `language` and `mother_tongue` columns
+using the `select` function.
+
+```{r}
+aboriginal_lang_selected_db <- select(aboriginal_lang_db, language, mother_tongue)
+aboriginal_lang_selected_db
+```
+
+Now you can see that the database will return only the two columns we asked for with the `select` function.
 In order to actually retrieve this data in R as a data frame,
 we use the `collect` function. \index{filter}
 Below you will see that after running `collect`, R knows that the retrieved
 data has 67 rows, and there is no database listed any more.
 
 ```{r}
-aboriginal_lang_data <- collect(aboriginal_lang_db)
+aboriginal_lang_data <- collect(aboriginal_lang_selected_db)
 aboriginal_lang_data
 ```
 
 Aside from knowing the number of rows, the data looks pretty similar in both
-outputs shown above. And `dbplyr` provides many more functions (not just `filter`) 
-that you can use to directly feed the database reference (`lang_db`) into 
-downstream analysis functions (e.g., `ggplot2` for data visualization). 
+outputs shown above. And `dbplyr` provides many more functions (not just `filter`)
+that you can use to directly feed the database reference (`lang_db`) into
+downstream analysis functions (e.g., `ggplot2` for data visualization).
 But `dbplyr` does not provide *every* function that we need for analysis;
 we do eventually need to call `collect`.
 For example, look what happens when we try to use `nrow` to count rows
 in a data frame: \index{nrow}
 
 ```{r}
-nrow(aboriginal_lang_db)
+nrow(aboriginal_lang_selected_db)
 ```
- 
+
 or `tail` to preview the last six rows of a data frame:
 \index{tail}
 
 ```{r, eval = FALSE}
-tail(aboriginal_lang_db)
+tail(aboriginal_lang_selected_db)
 ```
 
 ```
@@ -656,11 +678,11 @@ But be very careful using `collect`: databases are often *very* big,
 and reading an entire table into R might take a long time to run or even possibly
 crash your machine. So make sure you use `filter` and `select` on the database table
 to reduce the data to a reasonable size before using `collect` to read it into R!
- 
-### Reading data from a PostgreSQL database 
+
+### Reading data from a PostgreSQL database
 
 PostgreSQL (also called Postgres) \index{database!PostgreSQL} is a very popular
-and open-source option for relational database software. 
+and open-source option for relational database software.
 Unlike SQLite,
 PostgreSQL uses a client–server database engine, as it was designed to be used
 and accessed on a network. This means that you have to provide more information
@@ -676,8 +698,8 @@ need to include when you call the `dbConnect` function is listed below:
 Additionally, we must use the `RPostgres` package instead of `RSQLite` in the
 `dbConnect` function call.  Below we demonstrate how to connect to a version of
 the `can_mov_db` database, which contains information about Canadian movies.
-Note that the `host` (`fakeserver.stat.ubc.ca`), `user` (`user0001`), and 
-`password` (`abc123`) below are *not real*; you will not actually 
+Note that the `host` (`fakeserver.stat.ubc.ca`), `user` (`user0001`), and
+`password` (`abc123`) below are *not real*; you will not actually
 be able to connect to a database using this information.
 
 ```{r, eval = FALSE}
@@ -696,8 +718,8 @@ dbListTables(conn_mov_data)
 ```
 
 ```
- [1] "themes"            "medium"           "titles"     "title_aliases"       "forms"            
- [6] "episodes"          "names"      "names_occupations" "occupation"       "ratings" 
+ [1] "themes"            "medium"           "titles"     "title_aliases"       "forms"
+ [6] "episodes"          "names"      "names_occupations" "occupation"       "ratings"
 ```
 
 We see that there are 10 tables in this database. Let's first look at the
@@ -783,27 +805,27 @@ been a really bad movie...
 
 ### Why should we bother with databases at all?
 
-Opening a database \index{database!reasons to use} 
+Opening a database \index{database!reasons to use}
 involved a lot more effort than just opening a `.csv`, `.tsv`, or any of the
-other plain text or Excel formats. We had to open a connection to the database, 
+other plain text or Excel formats. We had to open a connection to the database,
 then use `dbplyr` to translate `tidyverse`-like
 commands (`filter`, `select` etc.) into SQL commands that the database
-understands, and then finally `collect` the results. And not 
+understands, and then finally `collect` the results. And not
 all `tidyverse` commands can currently be translated to work with
 databases. For example, we can compute a mean with a database
 but can't easily compute a median. So you might be wondering: why should we use
-databases at all? 
+databases at all?
 
 Databases are beneficial in a large-scale setting:
 
 - They enable storing large data sets across multiple computers with backups.
 - They provide mechanisms for ensuring data integrity and validating input.
 - They provide security and data access control.
-- They allow multiple users to access data simultaneously 
+- They allow multiple users to access data simultaneously
   and remotely without conflicts and errors.
-  For example, there are billions of Google searches conducted daily in 2021 [@googlesearches]. 
-  Can you imagine if Google stored all of the data 
-  from those searches in a single `.csv` file!? Chaos would ensue! 
+  For example, there are billions of Google searches conducted daily in 2021 [@googlesearches].
+  Can you imagine if Google stored all of the data
+  from those searches in a single `.csv` file!? Chaos would ensue!
 
 ## Writing data from R to a `.csv` file
 
@@ -822,7 +844,7 @@ no_official_lang_data <- filter(can_lang, category != "Official languages")
 write_csv(no_official_lang_data, "data/no_official_languages.csv")
 ```
 
-## Obtaining data from the web 
+## Obtaining data from the web
 
 > **Note:** This section is not required reading for the remainder of the textbook. It
 > is included for those readers interested in learning a little bit more about
@@ -839,7 +861,7 @@ offer something known as an **a**pplication **p**rogramming **i**nterface
 provides a programmatic way to ask for subsets of a data set. This allows the
 website owner to control *who* has access to the data, *what portion* of the
 data they have access to, and *how much* data they can access.  Typically, the
-website owner will give you a *token* (a secret string of characters somewhat
+website owner will give you a *token* or *key* (a secret string of characters somewhat
 like a password) that you have to provide when accessing the API.
 
 Another interesting thought: websites themselves *are* data! When you type a
@@ -849,25 +871,25 @@ website) to give it the website's data, and then your browser translates that
 data into something you can see. If the website shows you some information that
 you're interested in, you could *create* a data set for yourself by copying and
 pasting that information into a file. This process of taking information
-directly from what a website displays is called \index{web scraping} 
+directly from what a website displays is called \index{web scraping}
 *web scraping* (or sometimes *screen scraping*). Now, of course, copying and pasting
 information manually is a painstaking and error-prone process, especially when
 there is a lot of information to gather. So instead of asking your browser to
 translate the information that the web server provides into something you can
 see, you can collect that data programmatically&mdash;in the form of
-**h**yper**t**ext **m**arkup **l**anguage 
-(HTML) \index{hypertext markup language|see{HTML}}\index{cascading style sheet|see{CSS}}\index{CSS}\index{HTML} 
-and **c**ascading **s**tyle **s**heet (CSS) code&mdash;and process it 
+**h**yper**t**ext **m**arkup **l**anguage
+(HTML) \index{hypertext markup language|see{HTML}}\index{cascading style sheet|see{CSS}}\index{CSS}\index{HTML}
+and **c**ascading **s**tyle **s**heet (CSS) code&mdash;and process it
 to extract useful information. HTML provides the
 basic structure of a site and tells the webpage how to display the content
 (e.g., titles, paragraphs, bullet lists etc.), whereas CSS helps style the
-content and tells the webpage how the HTML elements should 
-be presented (e.g., colors, layouts, fonts etc.). 
+content and tells the webpage how the HTML elements should
+be presented (e.g., colors, layouts, fonts etc.).
 
 This subsection will show you the basics of both web scraping
 with the [`rvest` R package](https://rvest.tidyverse.org/) [@rvest]
-and accessing the Twitter API
-using the [`rtweet` R package](https://github.com/ropensci/rtweet) [@rtweet].
+and accessing the NASA "Astronomy Picture of the Day" API
+using the [`httr2` R package](https://httr2.r-lib.org/) [@httr2].
 
 ### Web scraping
 
@@ -875,18 +897,18 @@ using the [`rtweet` R package](https://github.com/ropensci/rtweet) [@rtweet].
 
 When you enter a URL into your browser, your browser connects to the
 web server at that URL and asks for the *source code* for the website.
-This is the data that the browser translates 
+This is the data that the browser translates
 \index{web scraping}\index{HTML!selector}\index{CSS!selector}
 into something you can see; so if we
 are going to create our own data by scraping a website, we have to first understand
 what that data looks like! For example, let's say we are interested
 in knowing the average rental price (per square foot) of the most recently
-available one-bedroom apartments in Vancouver 
+available one-bedroom apartments in Vancouver
 on [Craiglist](https://vancouver.craigslist.org). When we visit the Vancouver Craigslist
-website \index{Craigslist} and search for one-bedroom apartments, 
+website \index{Craigslist} and search for one-bedroom apartments,
 we should see something similar to Figure \@ref(fig:craigslist-human).
 
-```{r craigslist-human, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Craigslist webpage of advertisements for one-bedroom apartments.", fig.retina = 2, out.width="100%"}
+```{r craigslist-human, echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center", fig.cap = "Craigslist webpage of advertisements for one-bedroom apartments.", fig.retina = 2, out.width="100%"}
 knitr::include_graphics("img/reading/craigslist_human.png")
 ```
 
@@ -894,42 +916,30 @@ Based on what our browser shows us, it's pretty easy to find the size and price
 for each apartment listed. But we would like to be able to obtain that information
 using R, without any manual human effort or copying and pasting. We do this by
 examining the *source code* that the web server actually sent our browser to
-display for us. We show a snippet of it below; the 
-entire source 
+display for us. We show a snippet of it below; the
+entire source
 is [included with the code for this book](https://github.com/UBC-DSCI/introduction-to-datascience/blob/main/img/reading/website_source.txt):
 
 ```html
-        <span class="result-meta">
-                <span class="result-price">$800</span>
-
-                <span class="housing">
-                    1br -
-                </span>
-
-                <span class="result-hood"> (13768 108th Avenue)</span>
-
-                <span class="result-tags">
-                    <span class="maptag" data-pid="6786042973">map</span>
-                </span>
-
-                <span class="banish icon icon-trash" role="button">
-                    <span class="screen-reader-text">hide this posting</span>
-                </span>
-
-            <span class="unbanish icon icon-trash red" role="button" aria-hidden
-            <a href="#" class="restore-link">
-                <span class="restore-narrow-text">restore</span>
-                <span class="restore-wide-text">restore this posting</span>
-            </a>
-
+<span class="result-meta">
+        <span class="result-price">$800</span>
+        <span class="housing">
+            1br -
         </span>
-    </p>
-</li>
-         <li class="result-row" data-pid="6788463837">
-                  
-        <a href="https://vancouver.craigslist.org/nvn/apa/d/north-vancouver-luxu
-                <span class="result-price">$2285</span>
-        </a>
+        <span class="result-hood"> (13768 108th Avenue)</span>
+        <span class="result-tags">
+            <span class="maptag" data-pid="6786042973">map</span>
+        </span>
+        <span class="banish icon icon-trash" role="button">
+            <span class="screen-reader-text">hide this posting</span>
+        </span>
+    <span class="unbanish icon icon-trash red" role="button"></span>
+    <a href="#" class="restore-link">
+        <span class="restore-narrow-text">restore</span>
+        <span class="restore-wide-text">restore this posting</span>
+    </a>
+    <span class="result-price">$2285</span>
+</span>
 ```
 
 Oof...you can tell that the source code for a web page is not really designed
@@ -941,7 +951,7 @@ above you can see a line that looks like
 ```html
 <span class="result-price">$800</span>
 ```
-That is definitely storing the price of a particular apartment. With some more
+That snippet is definitely storing the price of a particular apartment. With some more
 investigation, you should be able to find things like the date and time of the
 listing, the address of the listing, and more. So this source code most likely
 contains all the information we are interested in!
@@ -967,44 +977,44 @@ take a look at another line of the source snippet above:
 It's yet another price for an apartment listing, and the tags surrounding it
 have the `"result-price"` class. Wonderful! Now that we know what pattern we
 are looking for&mdash;a dollar amount between opening and closing tags that have the
-`"result-price"` class&mdash;we should be able to use code to pull out all of the 
+`"result-price"` class&mdash;we should be able to use code to pull out all of the
 matching patterns from the source code to obtain our data. This sort of "pattern"
 is known as a *CSS selector* (where CSS stands for **c**ascading **s**tyle **s**heet).
 
-The above was a simple example of "finding the pattern to look for"; many 
+The above was a simple example of "finding the pattern to look for"; many
 websites are quite a bit larger and more complex, and so is their website
 source code. Fortunately, there are tools available to make this process
-easier. For example, 
-[SelectorGadget](https://selectorgadget.com/) is 
-an open-source tool that simplifies identifying the generating 
-and finding of CSS selectors. 
+easier. For example,
+[SelectorGadget](https://selectorgadget.com/) is
+an open-source tool that simplifies identifying the generating
+and finding of CSS selectors.
 At the end of the chapter in the additional resources section, we include a link to
-a short video on how to install and use the SelectorGadget tool to 
-obtain CSS selectors for use in web scraping. 
-After installing and enabling the tool, you can click the 
-website element for which you want an appropriate selector. For 
+a short video on how to install and use the SelectorGadget tool to
+obtain CSS selectors for use in web scraping.
+After installing and enabling the tool, you can click the
+website element for which you want an appropriate selector. For
 example, if we click the price of an apartment listing, we
 find that SelectorGadget shows us the selector `.result-price`
 in its toolbar, and highlights all the other apartment
 prices that would be obtained using that selector (Figure \@ref(fig:sg1)).
 
-```{r sg1, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Using the SelectorGadget on a Craigslist webpage to obtain the CCS selector useful for obtaining apartment prices.", fig.retina = 2, out.width="100%"}
+```{r sg1, echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center", fig.cap = "Using the SelectorGadget on a Craigslist webpage to obtain the CCS selector useful for obtaining apartment prices.", fig.retina = 2, out.width="100%"}
 knitr::include_graphics("img/reading/sg1.png")
 ```
 
 If we then click the size of an apartment listing, SelectorGadget shows us
 the `span` selector, and highlights many of the lines on the page; this indicates that the
-`span` selector is not specific enough to capture only apartment sizes (Figure \@ref(fig:sg3)). 
+`span` selector is not specific enough to capture only apartment sizes (Figure \@ref(fig:sg3)).
 
-```{r sg3, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Using the SelectorGadget on a Craigslist webpage to obtain a CCS selector useful for obtaining apartment sizes.", fig.retina = 2, out.width="100%"}
+```{r sg3, echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center", fig.cap = "Using the SelectorGadget on a Craigslist webpage to obtain a CCS selector useful for obtaining apartment sizes.", fig.retina = 2, out.width="100%"}
 knitr::include_graphics("img/reading/sg3.png")
 ```
 
 To narrow the selector, we can click one of the highlighted elements that
-we *do not* want. For example, we can deselect the "pic/map" links, 
+we *do not* want. For example, we can deselect the "pic/map" links,
 resulting in only the data we want highlighted using the `.housing` selector (Figure \@ref(fig:sg2)).
 
-```{r sg2, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Using the SelectorGadget on a Craigslist webpage to refine the CCS selector to one that is most useful for obtaining apartment sizes.", fig.retina = 2, out.width="100%"}
+```{r sg2, echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center", fig.cap = "Using the SelectorGadget on a Craigslist webpage to refine the CCS selector to one that is most useful for obtaining apartment sizes.", fig.retina = 2, out.width="100%"}
 knitr::include_graphics("img/reading/sg2.png")
 ```
 
@@ -1015,12 +1025,13 @@ The selector gadget returns them to us as a comma-separated list (here
 `.housing , .result-price`), which is exactly the format we need to provide to
 R if we are using more than one CSS selector.
 
-**Stop! Are you allowed to scrape that website?**
+**Caution: are you allowed to scrape that website?**
+
 *Before* scraping \index{web scraping!permission} data from the web, you should always check whether or not
 you are *allowed* to scrape it! There are two documents that are important
 for this: the `robots.txt` file and the Terms of Service
 document. If we take a look at [Craigslist's Terms of Service document](https://www.craigslist.org/about/terms.of.use),
-we find the following text: *"You agree not to copy/collect CL content 
+we find the following text: *"You agree not to copy/collect CL content
 via robots, spiders, scripts, scrapers, crawlers, or any automated or manual equivalent (e.g., by hand)."*
 So unfortunately, without explicit permission, we are not allowed to scrape the website.
 
@@ -1031,12 +1042,12 @@ to find data about rental prices in Vancouver, we must go elsewhere.
 To continue learning how to scrape data from the web, let's instead
 scrape data on the population of Canadian cities from Wikipedia. \index{Wikipedia}
 We have checked the [Terms of Service document](https://foundation.wikimedia.org/wiki/Terms_of_Use/en),
-and it does not mention that web scraping is disallowed. 
+and it does not mention that web scraping is disallowed.
 We will use the SelectorGadget tool to pick elements that we are interested in
-(city names and population counts) and deselect others to indicate that we are not 
+(city names and population counts) and deselect others to indicate that we are not
 interested in them (province names), as shown in Figure \@ref(fig:sg4).
 
-```{r sg4, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Using the SelectorGadget on a Wikipedia webpage.", fig.retina = 2, out.width="100%"}
+```{r sg4, echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center", fig.cap = "Using the SelectorGadget on a Wikipedia webpage.", fig.retina = 2, out.width="100%"}
 knitr::include_graphics("img/reading/sg4.png")
 ```
 
@@ -1045,20 +1056,18 @@ in the additional resources section. SelectorGadget provides in its toolbar
 the following list of CSS selectors to use:
 
 ```
-td:nth-child(5), 
-td:nth-child(7), 
-.infobox:nth-child(122) td:nth-child(1), 
-.infobox td:nth-child(3)
+td:nth-child(8) ,
+td:nth-child(4) ,
+.largestCities-cell-background+ td a
 ```
 
 Now that we have the CSS selectors that describe the properties of the elements
-that we want to target, we can use them to find
-certain elements in web pages and extract data. 
+that we want to target, we can use them to find certain elements in web pages and extract data.
 
-**Using `rvest`**
+#### Using `rvest` {-}
 
-Now that we have our CSS selectors we can use the `rvest` R package \index{rvest} to scrape our
-desired data from the website. We start by loading the `rvest` package:
+We will use the `rvest` R package \index{rvest} to scrape data from the Wikipedia page.
+We start by loading the `rvest` package:
 
 ```{r 01-load-rvest}
 library(rvest)
@@ -1070,52 +1079,34 @@ Next, we tell R what page we want to scrape by providing the webpage's URL in qu
 page <- read_html("https://en.wikipedia.org/wiki/Canada")
 ```
 
-The `read_html` function \index{read function!read\_html} directly downloads the source code for the page at 
-the URL you specify, just like your browser would if you navigated to that site. But 
-instead of  displaying the website to you, the `read_html` function just returns 
+```{r echo=FALSE, warning = FALSE}
+# the above cell doesn't actually run; this one does run
+# and loads the html data from a local, static file
+
+page <- read_html("data/canada_wiki.html")
+```
+
+The `read_html` function \index{read function!read\_html} directly downloads the source code for the page at
+the URL you specify, just like your browser would if you navigated to that site. But
+instead of  displaying the website to you, the `read_html` function just returns
 the HTML source code itself, which we have
 stored in the `page` variable. Next, we send the page object to the `html_nodes`
 function, along with the CSS selectors we obtained from
 the SelectorGadget tool. Make sure to surround the selectors with quotation marks; the function, `html_nodes`, expects that
-argument is a string. The `html_nodes` function then selects *nodes* from the HTML document that 
-match the CSS selectors you specified.  A *node* is an HTML tag pair (e.g.,
-`<td>` and `</td>` which defines the cell of a table) combined with the content
-stored between the tags. For our CSS selector `td:nth-child(5)`, an example
-node that would be selected would be:
-
-```html
-<td style="text-align:left;background:#f0f0f0;">
-<a href="/wiki/London,_Ontario" title="London, Ontario">London</a>
-</td>
-```
-
-We store the result of the `html_nodes` function in the `population_nodes` variable.
+argument is a string. We store the result of the `html_nodes` function in the `population_nodes` variable.
 Note that below we use the `paste` function with a comma separator (`sep=","`)
-to build the list of selectors. The `paste` function converts 
-elements to characters and combines the values into a list. We use this function to 
+to build the list of selectors. The `paste` function converts
+elements to characters and combines the values into a list. We use this function to
 build the list of selectors to maintain code readability; this avoids
-having one very long line of code with the string
-`"td:nth-child(5),td:nth-child(7),.infobox:nth-child(122) td:nth-child(1),.infobox td:nth-child(3)"`
-as the second argument of `html_nodes`:
+having a very long line of code.
 
-```r
-selectors <- paste("td:nth-child(5)",
-             "td:nth-child(7)",
-             ".infobox:nth-child(122) td:nth-child(1)",
-             ".infobox td:nth-child(3)", sep = ",")
+```{r}
+selectors <- paste("td:nth-child(8)",
+             "td:nth-child(4)",
+             ".largestCities-cell-background+ td a", sep = ",")
 
 population_nodes <- html_nodes(page, selectors)
 head(population_nodes)
-```
-
-```
-## {xml_nodeset (6)}
-## [1] <td style="text-align:left;background:#f0f0f0;"><a href="/wiki/London,_On ...
-## [2] <td style="text-align:right;">543,551\n</td>
-## [3] <td style="text-align:left;background:#f0f0f0;"><a href="/wiki/Halifax,_N ...
-## [4] <td style="text-align:right;">465,703\n</td>
-## [5] <td style="text-align:left;background:#f0f0f0;">\n<a href="/wiki/St._Cath ...
-## [6] <td style="text-align:right;">433,604\n</td>
 ```
 
 > **Note:** `head` is a function that is often useful for viewing only a short
@@ -1126,21 +1117,29 @@ head(population_nodes)
 > But not *all* R objects do this, and that's where the `head` function helps
 > summarize things for you.
 
-Next we extract the meaningful data&mdash;in other words, we get rid of the HTML code syntax and tags&mdash;from 
-the nodes using the `html_text`
-function. In the case of the example
-node above, `html_text` function returns `"London"`.
 
-```r
+Each of the items in the `population_nodes` list is a *node* from the HTML
+document that matches the CSS selectors you specified. A *node* is an HTML tag
+pair (e.g., `<td>` and `</td>` which defines the cell of a table) combined with
+the content stored between the tags. For our CSS selector `td:nth-child(4)`, an
+example node that would be selected would be:
+
+```html
+<td style="text-align:left;background:#f0f0f0;">
+<a href="/wiki/London,_Ontario" title="London, Ontario">London</a>
+</td>
+```
+
+Next we extract the meaningful data&mdash;in other words, we get rid of the
+HTML code syntax and tags&mdash;from the nodes using the `html_text` function.
+In the case of the example node above, `html_text` function returns `"London"`.
+
+```{r}
 population_text <- html_text(population_nodes)
 head(population_text)
 ```
-```
-## [1] "London"                 "543,551\n"              "Halifax"               
-## [4] "465,703\n"              "St. Catharines–Niagara" "433,604\n"
-```
 
-Fantastic! We seem to have extracted the data of interest from the 
+Fantastic! We seem to have extracted the data of interest from the
 raw HTML source code. But we are not quite done; the data
 is not yet in an optimal format for data analysis. Both the city names and
 population are encoded as characters in a single vector, instead of being in a
@@ -1154,134 +1153,189 @@ such as this into a more useful format for data analysis using R.
 ### Using an API
 
 Rather than posting a data file at a URL for you to download, many websites these days
-provide an API \index{API} that must be accessed through a programming language like R. The benefit of this
+provide an API \index{API} that must be accessed through a programming language like R. The benefit of using an API
 is that data owners have much more control over the data they provide to users. However, unlike
 web scraping, there is no consistent way to access an API across websites. Every website typically
 has its own API designed especially for its own use case. Therefore we will just provide one example
 of accessing data through an API in this book, with the hope that it gives you enough of a basic
-idea that you can learn how to use another API if needed.
+idea that you can learn how to use another API if needed.  In particular, in this book we will show you the basics
+of how to use the `httr2` package in R\index{API!httr2}\index{httr2}\index{NASA} to access data from the NASA "Astronomy Picture
+of the Day" API (a great source of desktop backgrounds, by the way&mdash;take a look at the stunning
+picture of the Rho-Ophiuchi cloud complex [@rhoophiuchi] in Figure \@ref(fig:NASA-API-Rho-Ophiuchi) from July 13, 2023!).
 
-In particular, in this book we will show you the basics of how to use
-the `rtweet` package in R\index{API!rtweet}\index{rtweet}\index{Twitter} to access
-data from the Twitter API. One nice feature of this particular 
-API is that you don't need  a special *token* \index{API!token} to access it; you simply need to 
-make an account with them. Your access to the data will then be authenticated and controlled through
-your account username and password. If you have a Twitter 
-account already (or are willing to make one), you can follow
-along with the examples that we show here. To get started, load the `rtweet` package:
+(ref:NASA-API-Rho-Ophiuchi) The James Webb Space Telescope's NIRCam image of the Rho Ophiuchi molecular cloud complex.
 
-```r
-library(rtweet)
+```{r NASA-API-Rho-Ophiuchi, echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center", fig.cap = "(ref:NASA-API-Rho-Ophiuchi)", fig.retina = 2, out.width="60%"}
+knitr::include_graphics("img/reading/NASA-API-Rho-Ophiuchi.png")
 ```
 
-This package provides an extensive set of functions to search 
-Twitter for tweets, users, their followers, and more. 
-Let's construct a small data set of the last 400 tweets and 
-retweets from the [\@tidyverse](https://twitter.com/tidyverse) account. A few of the most recent tweets
-are shown in Figure \@ref(fig:01-tidyverse-twitter).
+First, you will need to visit the [NASA APIs page](https://api.nasa.gov/) and generate an API key (i.e., a password used to identify you when accessing the API).
+Note that a valid email address is required to
+associate with the key. The signup form looks something like Figure \@ref(fig:NASA-API-signup).
+After filling out the basic information, you will receive the token via email.
+Make sure to store the key in a safe place, and keep it private.
 
-```{r 01-tidyverse-twitter, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "The tidyverse account Twitter feed.", fig.retina = 2, out.width="100%"}
-knitr::include_graphics("img/reading/tidyverse_twitter.png")
+```{r NASA-API-signup, echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center", fig.cap = "Generating the API access token for the NASA API", fig.retina = 2, out.width="100%"}
+knitr::include_graphics("img/reading/NASA-API-signup.png")
 ```
 
-**Stop! Think about your API usage carefully!**
+**Caution: think about your API usage carefully!**
 
 When you access an API, you are initiating a transfer of data from a web server
 to your computer. Web servers are expensive to run and do not have infinite resources.
-If you try to ask for *too much data* at once, you can use up a huge amount of the server's bandwidth. 
-If you try to ask for data *too frequently*&mdash;e.g., if you 
+If you try to ask for *too much data* at once, you can use up a huge amount of the server's bandwidth.
+If you try to ask for data *too frequently*&mdash;e.g., if you
 make many requests to the server in quick succession&mdash;you can also bog the server down and make
 it unable to talk to anyone else. Most servers have mechanisms to revoke your access if you are not
 careful, but you should try to prevent issues from happening in the first place by being extra careful
 with how you write and run your code. You should also keep in mind that when a website owner
 grants you API access, they also usually specify a limit (or *quota*) of how much data you can ask for.
-Be careful not to overrun your quota! In this example, we should take a look at
- [the Twitter website](https://developer.twitter.com/en/docs/twitter-api/rate-limits) to see what limits
-we should abide by when using the API. 
+Be careful not to overrun your quota! So *before* we try to use the API, we will first visit
+[the NASA website](https://api.nasa.gov/) to see what limits we should abide by when using the API.
+These limits are outlined in Figure \@ref(fig:NASA-API-limits).
 
-**Using `rtweet`**
+```{r NASA-API-limits, echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center", fig.cap = "The NASA website specifies an hourly limit of 1,000 requests.", fig.retina = 2, out.width="100%"}
+knitr::include_graphics("img/reading/NASA-API-limits.png")
+```
 
-After checking the Twitter website, it seems like asking for 400 tweets one time is acceptable.
-So we can use the `get_timelines` function to ask for the last 400 tweets from the [\@tidyverse](https://twitter.com/tidyverse) account.
+After checking the NASA website, it seems like we can send at most 1,000 requests per hour.
+That should be more than enough for our purposes in this section.
+
+#### Accessing the NASA API {-}
+
+The NASA API is what is known as an *HTTP API*: \index{API!HTTP} this is a particularly common
+kind of API, where you can obtain data simply by accessing a
+particular URL as if it were a regular website.  To make a query to the NASA
+API, we need to specify three things.  First, we specify the URL *endpoint* of \index{API!endpoint}
+the API, which is simply a URL that helps the remote server understand which
+API you are trying to access. NASA offers a variety of APIs, each with its own
+endpoint; in the case of the NASA "Astronomy Picture of the Day" API, the URL
+endpoint is `https://api.nasa.gov/planetary/apod`. Second, we write `?`, which denotes that a
+list of *query parameters* \index{API!query parameters} will follow. And finally, we specify a list of
+query parameters of the form `parameter=value`, separated by `&` characters. The NASA
+"Astronomy Picture of the Day" API accepts the parameters shown in
+Figure \@ref(fig:NASA-API-parameters).
+
+```{r NASA-API-parameters, echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center", fig.cap = 'The set of parameters that you can specify when querying the NASA "Astronomy Picture of the Day" API, along with syntax, default settings, and a description of each.', fig.retina = 2, out.width="100%"}
+knitr::include_graphics("img/reading/NASA-API-parameters.png")
+```
+
+So for example, to obtain the image of the day
+from July 13, 2023, the API query would have two parameters: `api_key=YOUR_API_KEY`
+and `date=2023-07-13`. Remember to replace `YOUR_API_KEY` with the API key you
+received from NASA in your email! Putting it all together, the query will look like the following:
+```
+https://api.nasa.gov/planetary/apod?api_key=YOUR_API_KEY&date=2023-07-13
+```
+If you try putting this URL into your web browser, you'll actually find that the server
+responds to your request with some text:
+
+```json
+{"date":"2023-07-13","explanation":"A mere 390 light-years away, Sun-like stars
+and future planetary systems are forming in the Rho Ophiuchi molecular cloud
+complex, the closest star-forming region to our fair planet. The James Webb
+Space Telescope's NIRCam peered into the nearby natal chaos to capture this
+infrared image at an inspiring scale. The spectacular cosmic snapshot was
+released to celebrate the successful first year of Webb's exploration of the
+Universe. The frame spans less than a light-year across the Rho Ophiuchi region
+and contains about 50 young stars. Brighter stars clearly sport Webb's
+characteristic pattern of diffraction spikes. Huge jets of shocked molecular
+hydrogen blasting from newborn stars are red in the image, with the large,
+yellowish dusty cavity carved out by the energetic young star near its center.
+Near some stars in the stunning image are shadows cast by their protoplanetary
+disks.","hdurl":"https://apod.nasa.gov/apod/image/2307/STScI-01_RhoOph.png",
+"media_type":"image","service_version":"v1","title":"Webb's
+Rho Ophiuchi","url":"https://apod.nasa.gov/apod/image/2307/STScI-01_RhoOph1024.png"}
+```
+
+Neat! There is definitely some data there, but it's a bit hard to
+see what it all is. As it turns out, this is a common format for data called
+*JSON* (JavaScript Object Notation). \index{JSON}\index{JavaScript Object Notation|see{JSON}}
+We won't encounter this kind of data much in this book,
+but for now you can interpret this data as `key : value` pairs separated by
+commas. For example, if you look closely, you'll see that the first entry is
+`"date":"2023-07-13"`, which indicates that we indeed successfully received
+data corresponding to July 13, 2023.
+
+So now our job is to do all of this programmatically in R. We will load
+the `httr2` package, and construct the query using the `request` function, which takes a single URL argument;
+you will recognize the same query URL that we pasted into the browser earlier.
+We will then send the query using the `req_perform` function, and finally
+obtain a JSON representation of the response using the `resp_body_json` function.
+\index{httr2!req\_perform}\index{httr2!resp\_body\_json}
+
+<!-- we have disabled the below code for reproducibility, with hidden setting
+of the nasa_data object. But you can reproduce this using the DEMO_KEY key -->
+```r
+library(httr2)
+
+req <- request("https://api.nasa.gov/planetary/apod?api_key=YOUR_API_KEY&date=2023-07-13")
+resp <- req_perform(req)
+nasa_data_single <- resp_body_json(resp)
+nasa_data_single
+```
+
+```{r hidden_query, echo = FALSE, warning = FALSE, message = FALSE}
+library(jsonlite)
+
+nasa_data <- read_json("data/nasa.json")
+
+# the last entry in the stored data is July 13, 2023, so print that
+nasa_data[[74]]
+```
+
+We can obtain more records at once by using the `start_date` and `end_date` parameters, as
+shown in the table of parameters in \@ref(fig:NASA-API-parameters).
+Let's obtain all the records between May 1, 2023, and July 13, 2023, and store the result
+in an object called `nasa_data`; now the response
+will take the form of an R *list* (you'll learn more about these in Chapter \@ref(wrangling)).
+Each item in the list will correspond to a single day's record (just like the `nasa_data_single` object),
+and there will be 74 items total, one for each day between the start and end dates:
 
 ```r
-tidyverse_tweets <- get_timelines('tidyverse', n=400)
+req <- request("https://api.nasa.gov/planetary/apod?api_key=YOUR_API_KEY&start_date=2023-05-01&end_date=2023-07-13")
+resp <- req_perform(req)
+nasa_data <- resp_body_json(response)
+length(nasa_data)
 ```
 
-When you call the `get_timelines` for the first time (or any other `rtweet` function that accesses the API), 
-you will see a browser pop-up that looks something like Figure \@ref(fig:01-tidyverse-authorize).
-
-(ref:01-tidyverse-authorize) The `rtweet` authorization prompt.
-
-```{r 01-tidyverse-authorize, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "(ref:01-tidyverse-authorize)", fig.retina = 2, out.width="100%"}
-knitr::include_graphics("img/reading/authorize_question.png")
+```{r hidden_query_2, echo = FALSE, warning = FALSE, message = FALSE}
+library(dplyr)
+length(nasa_data)
 ```
 
-This is the `rtweet` package asking you to provide your own Twitter account's login information.
-When `rtweet` talks to the Twitter API, it uses your account information to authenticate requests;
-Twitter then can keep track of how much data you're asking for, and how frequently you're asking.
-If you want to follow along with this example using your own Twitter account, you should read
-over the list of permissions you are granting `rtweet` *very carefully* and make sure you are comfortable
-with it. Note that `rtweet` can be used to manage most aspects of your account (make posts, follow others, etc.),
-which is why `rtweet` asks for such extensive permissions.
-If you decide to allow `rtweet` to talk to the Twitter API using your account information, then 
-input your username and password and hit "Sign In." Twitter will probably send you an email to say
-that there was an unusual login attempt on your account, and in that case you will have to take
-the one-time code they send you and provide that to the `rtweet` login page too. 
+For further data processing using the techniques in this book, you'll need to turn this list of items
+into a data frame. Here we will extract the `date`, `title`, `copyright`, and `url` variables
+from the JSON data, and construct a data frame using the extracted information.
 
-> **Note:** Every API has its own way to authenticate users when they try to access data. Many APIs require you to
-> sign up to receive a *token*, which is a secret password that you input into the R package (like `rtweet`) 
-> that you are using to access the API. 
+> **Note:** Understanding this code is not required for the remainder of the textbook. It is included for those
+> readers who would like to parse JSON data into a data frame in their own data analyses.
 
-With the authentication setup out of the way, let's run the `get_timelines` function again to actually access
-the API and take a look at what was returned:
-
-```r
-tidyverse_tweets <- get_timelines('tidyverse', n = 400)
-tidyverse_tweets
+```{r extract_data_json}
+nasa_df_all <- tibble(bind_rows(lapply(nasa_data, as.data.frame.list)))
+nasa_df <- select(nasa_df_all, date, title, copyright, url)
+nasa_df
 ```
 
-```{r 01-reading-hidden-load-tweets, echo = FALSE, message = FALSE, warning = FALSE}
-tidyverse_tweets <- read_csv("data/tweets.csv")
-tidyverse_tweets
-```
 
-The data has quite a few variables! (Notice that the output above shows that we
-have a data table with 293 rows and 71 columns). Let's reduce this down to a
-few variables of interest: `created_at`,  `retweet_screen_name`, `is_retweet`,
-and `text`.
-
-```{r 01-select-tweets, message = FALSE, warning = FALSE}
-tidyverse_tweets <- select(tidyverse_tweets, 
-                           created_at, 
-                           retweet_screen_name,
-                           is_retweet, 
-                           text)
-
-tidyverse_tweets
-```
-
-If you look back up at the image of the [\@tidyverse](https://twitter.com/tidyverse) Twitter page, you will
-recognize the text of the most recent few tweets in the above data frame.  In
-other words, we have successfully created a small data set using the Twitter
-API&mdash;neat! This data is also quite different from what we obtained from web scraping;
-it is already well-organized into a `tidyverse` data frame (although not *every* API
-will provide data in such a nice format).
- From this point onward, the `tidyverse_tweets` data frame is stored on your
+Success&mdash;we have created a small data set using the NASA
+API! This data is also quite different from what we obtained from web scraping;
+the extracted information is readily available in a JSON format, as opposed to raw
+HTML code (although not *every* API will provide data in such a nice format).
+From this point onward, the `nasa_df` data frame is stored on your
 machine, and you can play with it to your heart's content. For example, you can use
-`write_csv` to save it to a file and `read_csv` to read it into R again later; 
+`write_csv` to save it to a file and `read_csv` to read it into R again later;
 and after reading the next few chapters you will have the skills to
-compute the percentage of retweets versus tweets, find the most oft-retweeted
-account, make visualizations of the data, and much more! If you decide that you want 
-to ask the Twitter API for more data 
-(see [the `rtweet` page](https://github.com/ropensci/rtweet)
+do even more interesting things! If you decide that you want
+to ask any of the various NASA APIs for more data
+(see [the list of awesome NASA APIS here](https://api.nasa.gov/)
 for more examples of what is possible), just be mindful as usual about how much
-data you are requesting and how frequently you are making requests. 
+data you are requesting and how frequently you are making requests.
 
 ## Exercises
 
-Practice exercises for the material covered in this chapter 
-can be found in the accompanying 
+Practice exercises for the material covered in this chapter
+can be found in the accompanying
 [worksheets repository](https://worksheets.datasciencebook.ca)
 in the "Reading in data locally and from the web" row.
 You can launch an interactive version of the worksheet in your browser by clicking the "launch binder" button.
@@ -1292,7 +1346,7 @@ found in Chapter \@ref(setup). This will ensure that the automated feedback
 and guidance that the worksheets provide will function as intended.
 
 ## Additional resources
-- The [`readr` documentation](https://readr.tidyverse.org/) 
+- The [`readr` documentation](https://readr.tidyverse.org/)
   provides the documentation for many of the reading functions we cover in this chapter.
   It is where you should look if you want to learn more about the functions in this
   chapter, the full set of arguments you can use, and other related functions.
@@ -1304,10 +1358,10 @@ and guidance that the worksheets provide will function as intended.
   Science* [@wickham2016r], which goes into a lot more detail about how R parses
   text from files into data frames.
 - The [`here` R package](https://here.r-lib.org/) [@here]
-  provides a way for you to construct or find your files' paths. 
+  provides a way for you to construct or find your files' paths.
 - The [`readxl` documentation](https://readxl.tidyverse.org/) provides more
   details on reading data from Excel, such as reading in data with multiple
-  sheets, or specifying the cells to read in. 
+  sheets, or specifying the cells to read in.
 - The [`rio` R package](https://github.com/leeper/rio) [@rio] provides an alternative
   set of tools for reading and writing data in R. It aims to be a "Swiss army
   knife" for data reading/writing/converting, and supports a wide variety of data
@@ -1319,6 +1373,6 @@ and guidance that the worksheets provide will function as intended.
   APIs, we provide two companion tutorial video links for how to use the
   SelectorGadget tool to obtain desired CSS selectors for:
     - [extracting the data for apartment listings on Craigslist](https://www.youtube.com/embed/YdIWI6K64zo), and
-    - [extracting Canadian city names and 2016 populations from Wikipedia](https://www.youtube.com/embed/O9HKbdhqYzk).
+    - [extracting Canadian city names and populations from Wikipedia](https://www.youtube.com/embed/O9HKbdhqYzk).
 - The [`polite` R package](https://dmi3kno.github.io/polite/) [@polite] provides
-  a set of tools for responsibly scraping data from websites. 
+  a set of tools for responsibly scraping data from websites.

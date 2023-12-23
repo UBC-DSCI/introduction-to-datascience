@@ -38,18 +38,18 @@ hidden_print_cli <- function(x){
    cleanup_and_print(cli::cli_fmt(capture.output(x)))
 }
 
-theme_update(axis.title = element_text(size = 12)) # modify axis label size in plots 
+theme_update(axis.title = element_text(size = 12)) # modify axis label size in plots
 
 ```
 
-## Overview 
+## Overview
 This chapter continues the introduction to predictive modeling through
 classification. While the previous chapter covered training and data
 preprocessing, this chapter focuses on how to evaluate the performance of
 a classifier, as well as how to improve the classifier (where possible)
 to maximize its accuracy.
 
-## Chapter learning objectives 
+## Chapter learning objectives
 By the end of the chapter, readers will be able to do the following:
 
 - Describe what training, validation, and test data sets are and how they are used in classification.
@@ -57,10 +57,11 @@ By the end of the chapter, readers will be able to do the following:
 - Describe what a random seed is and its importance in reproducible data analysis.
 - Set the random seed in R using the `set.seed` function.
 - Describe and interpret accuracy, precision, recall, and confusion matrices.
-- Evaluate classification accuracy in R using a validation data set.
+- Evaluate classification accuracy, precision, and recall in R using a test set, a single validation set, and cross-validation.
 - Produce a confusion matrix in R.
-- Execute cross-validation in R to choose the number of neighbors in a $K$-nearest neighbors classifier.
-- Describe the advantages and disadvantages of the $K$-nearest neighbors classification algorithm.
+- Choose the number of neighbors in a K-nearest neighbors classifier by maximizing estimated cross-validation accuracy.
+- Describe underfitting and overfitting, and relate it to the number of neighbors in K-nearest neighbors classification.
+- Describe the advantages and disadvantages of the K-nearest neighbors classification algorithm.
 
 ## Evaluating performance
 
@@ -75,39 +76,39 @@ and the classifier will be asked to decide whether the tumor is benign or
 malignant. The key word here is *new*: our classifier is "good" if it provides
 accurate predictions on data *not seen during training*, as this implies that
 it has actually learned about the relationship between the predictor variables and response variable,
-as opposed to simply memorizing the labels of individual training data examples. 
+as opposed to simply memorizing the labels of individual training data examples.
 But then, how can we evaluate our classifier without visiting the hospital to collect more
-tumor images? 
+tumor images?
 
 The trick is to split the data into a **training set** \index{training set} and **test set** \index{test set} (Figure \@ref(fig:06-training-test))
 and use only the **training set** when building the classifier.
-Then, to evaluate the performance of the classifier, we first set aside the true labels from the **test set**,
-and then use the classifier to predict the labels in the **test set**. If our predictions match the true
+Then, to evaluate the performance of the classifier, we first set aside the labels from the **test set**,
+and then use the classifier to predict the labels in the **test set**. If our predictions match the actual
 labels for the observations in the **test set**, then we have some
 confidence that our classifier might also accurately predict the class
 labels for new observations without known class labels.
 
-> **Note:** If there were a golden rule of machine learning, \index{golden rule of machine learning} it might be this: 
+> **Note:** If there were a golden rule of machine learning, \index{golden rule of machine learning} it might be this:
 > *you cannot use the test data to build the model!* If you do, the model gets to
 > "see" the test data in advance, making it look more accurate than it really
 > is. Imagine how bad it would be to overestimate your classifier's accuracy
 > when predicting whether a patient's tumor is malignant or benign!
 
-```{r 06-training-test, echo = FALSE, warning = FALSE, fig.cap = "Splitting the data into training and testing sets.", fig.retina = 2, out.width = "100%"}
-knitr::include_graphics("img/classification2/training_test.jpeg")
+```{r 06-training-test, echo = FALSE, warning = FALSE, fig.align = "center", fig.cap = "Splitting the data into training and testing sets.", fig.retina = 2, out.width = "100%"}
+knitr::include_graphics("img/classification2/training_test.png")
 ```
 
-How exactly can we assess how well our predictions match the true labels for
+How exactly can we assess how well our predictions match the actual labels for
 the observations in the test set? One way we can do this is to calculate the
 prediction **accuracy**. \index{prediction accuracy|see{accuracy}}\index{accuracy} This is the fraction of examples for which the
 classifier made the correct prediction. To calculate this, we divide the number
-of correct predictions by the number of predictions made. 
-The process for assessing if our predictions match the true labels in the 
+of correct predictions by the number of predictions made.
+The process for assessing if our predictions match the actual labels in the
 test set is illustrated in Figure \@ref(fig:06-ML-paradigm-test).
 
 $$\mathrm{accuracy} = \frac{\mathrm{number \; of  \; correct  \; predictions}}{\mathrm{total \;  number \;  of  \; predictions}}$$
 
-```{r 06-ML-paradigm-test, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Process for splitting the data and finding the prediction accuracy.", fig.retina = 2, out.width = "100%"}
+```{r 06-ML-paradigm-test, echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center", fig.cap = "Process for splitting the data and finding the prediction accuracy.", fig.retina = 2, out.width = "100%"}
 knitr::include_graphics("img/classification2/ML-paradigm-test.png")
 ```
 
@@ -116,16 +117,16 @@ a single number.  But prediction accuracy by itself does not tell the whole
 story.  In particular, accuracy alone only tells us how often the classifier
 makes mistakes in general, but does not tell us anything about the *kinds* of
 mistakes the classifier makes.  A more comprehensive view of performance can be
-obtained by additionally examining the **confusion matrix**. The confusion
+obtained by additionally examining the **confusion matrix**. The confusion\index{confusion matrix}
 matrix shows how many test set labels of each type are predicted correctly and
 incorrectly, which gives us more detail about the kinds of mistakes the
 classifier tends to make.  Table \@ref(tab:confusion-matrix) shows an example
 of what a confusion matrix might look like for the tumor image data with
 a test set of 65 observations.
 
-Table: (\#tab:confusion-matrix) An example confusion matrix for the tumor image data. 
+Table: (\#tab:confusion-matrix) An example confusion matrix for the tumor image data.
 
-|                        | Truly Malignant | Truly Benign |
+|                        | Actually Malignant | Actually Benign |
 | ---------------------- | --------------- | -------------- |
 | **Predicted Malignant**    |     1      |       4        |
 | **Predicted Benign**       |     3       |       57        |
@@ -138,16 +139,17 @@ it classified 3 malignant observations as benign, and 4 benign observations as
 malignant. The accuracy of this classifier is roughly
 89%, given by the formula
 
-$$\mathrm{accuracy} = \frac{\mathrm{number \; of  \; correct  \; predictions}}{\mathrm{total \;  number \;  of  \; predictions}} = \frac{1+57}{1+57+4+3} = 0.892$$
+$$\mathrm{accuracy} = \frac{\mathrm{number \; of  \; correct  \; predictions}}{\mathrm{total \;  number \;  of  \; predictions}} = \frac{1+57}{1+57+4+3} = 0.892.$$
 
 But we can also see that the classifier only identified 1 out of 4 total malignant
 tumors; in other words, it misclassified 75% of the malignant cases present in the
 data set! In this example, misclassifying a malignant tumor is a potentially
 disastrous error, since it may lead to a patient who requires treatment not receiving it.
-Since we are particularly interested in identifying malignant cases, this 
+Since we are particularly interested in identifying malignant cases, this
 classifier would likely be unacceptable even with an accuracy of 89%.
 
-Focusing more on one label than the other is
+Focusing more on one label than the other
+is\index{positive label}\index{negative label}\index{true positive}\index{false positive}\index{true negative}\index{false negative}
 common in classification problems. In such cases, we typically refer to the label we are more
 interested in identifying as the *positive* label, and the other as the
 *negative* label. In the tumor example, we would refer to malignant
@@ -165,7 +167,7 @@ therefore, 100% accuracy). However, classifiers in practice will almost always
 make some errors. So you should think about which kinds of error are most
 important in your application, and use the confusion matrix to quantify and
 report them. Two commonly used metrics that we can compute using the confusion
-matrix are the **precision** and **recall** of the classifier. These are often
+matrix are the **precision** and **recall** of the classifier.\index{precision}\index{recall} These are often
 reported together with accuracy.  *Precision* quantifies how many of the
 positive predictions the classifier made were actually positive. Intuitively,
 we would like a classifier to have a *high* precision: for a classifier with
@@ -214,103 +216,103 @@ Beginning in this chapter, our data analyses will often involve the use
 of *randomness*. \index{random} We use randomness any time we need to make a decision in our
 analysis that needs to be fair, unbiased, and not influenced by human input.
 For example, in this chapter, we need to split
-a data set into a training set and test set to evaluate our classifier. We 
+a data set into a training set and test set to evaluate our classifier. We
 certainly do not want to choose how to split
 the data ourselves by hand, as we want to avoid accidentally influencing the result
 of the evaluation. So instead, we let R *randomly* split the data.
 In future chapters we will use randomness
-in many other ways, e.g., to help us select a small subset of data from a larger data set, 
+in many other ways, e.g., to help us select a small subset of data from a larger data set,
 to pick groupings of data, and more.
 
-However, the use of randomness runs counter to one of the main 
+However, the use of randomness runs counter to one of the main
 tenets of good data analysis practice: \index{reproducible} *reproducibility*. Recall that a reproducible
 analysis produces the same result each time it is run; if we include randomness
 in the analysis, would we not get a different result each time?
-The trick is that in R&mdash;and other programming languages&mdash;randomness 
+The trick is that in R&mdash;and other programming languages&mdash;randomness
 is not actually random! Instead, R uses a *random number generator* that
 produces a sequence of numbers that
 are completely determined by a\index{seed} \index{random seed|see{seed}}
- *seed value*. Once you set the seed value 
+ *seed value*. Once you set the seed value
 using the \index{seed!set.seed} `set.seed` function, everything after that point may *look* random,
 but is actually totally reproducible. As long as you pick the same seed
 value, you get the same result!
 
-Let's use an example to investigate how seeds work in R. Say we want 
+Let's use an example to investigate how seeds work in R. Say we want
 to randomly pick 10 numbers from 0 to 9 in R using the `sample` \index{sample!function} function,
 but we want it to be reproducible. Before using the sample function,
-we call `set.seed`, and pass it any integer as an argument. 
+we call `set.seed`, and pass it any integer as an argument.
 Here, we pass in the number `1`.
 
 ```{r}
 set.seed(1)
-random_numbers1 <- sample(0:9, 10, replace=TRUE)
+random_numbers1 <- sample(0:9, 10, replace = TRUE)
 random_numbers1
 ```
 
 You can see that `random_numbers1` is a list of 10 numbers
-from 0 to 9 that, from all appearances, looks random. If 
-we run the `sample` function again, we will 
+from 0 to 9 that, from all appearances, looks random. If
+we run the `sample` function again, we will
 get a fresh batch of 10 numbers that also look random.
 
 ```{r}
-random_numbers2 <- sample(0:9, 10, replace=TRUE)
+random_numbers2 <- sample(0:9, 10, replace = TRUE)
 random_numbers2
 ```
 
 If we want to force R to produce the same sequences of random numbers,
 we can simply call the `set.seed` function again with the same argument
-value. 
+value.
 
 ```{r}
 set.seed(1)
-random_numbers1_again <- sample(0:9, 10, replace=TRUE)
+random_numbers1_again <- sample(0:9, 10, replace = TRUE)
 random_numbers1_again
 
-random_numbers2_again <- sample(0:9, 10, replace=TRUE)
+random_numbers2_again <- sample(0:9, 10, replace = TRUE)
 random_numbers2_again
 ```
 
-Notice that after setting the seed, we get the same two sequences of numbers in the same order. `random_numbers1` and `random_numbers1_again` produce the same sequence of numbers, and the same can be said about `random_numbers2` and `random_numbers2_again`. And if we choose 
+Notice that after setting the seed, we get the same two sequences of numbers in the same order. `random_numbers1` and `random_numbers1_again` produce the same sequence of numbers, and the same can be said about `random_numbers2` and `random_numbers2_again`. And if we choose
 a different value for the seed&mdash;say, 4235&mdash;we
 obtain a different sequence of random numbers.
 
 ```{r}
 set.seed(4235)
-random_numbers <- sample(0:9, 10, replace=TRUE)
-random_numbers
+random_numbers1_different <- sample(0:9, 10, replace = TRUE)
+random_numbers1_different
 
-random_numbers <- sample(0:9, 10, replace=TRUE)
-random_numbers
+random_numbers2_different <- sample(0:9, 10, replace = TRUE)
+random_numbers2_different
 ```
 
 In other words, even though the sequences of numbers that R is generating *look*
-random, they are totally determined when we set a seed value! 
+random, they are totally determined when we set a seed value!
 
 So what does this mean for data analysis? Well, `sample` is certainly
-not the only function that uses randomness in R. Many of the functions 
-that we use in `tidymodels`, `tidyverse`, and beyond use randomness&mdash;many of them
+not the only function that uses randomness in R. Many of the functions
+that we use in `tidymodels`, `tidyverse`, and beyond use randomness&mdash;some of them
 without even telling you about it. So at the beginning of every data analysis you
 do, right after loading packages, you should call the `set.seed` function and
 pass it an integer that you pick.
 Also note that when R starts up, it creates its own seed to use. So if you do not
-explicitly call the `set.seed` function in your code, your results will 
+explicitly call the `set.seed` function in your code, your results will
 likely not be reproducible.
 And finally, be careful to set the seed *only once* at the beginning of a data
 analysis. Each time you set the seed, you are inserting your own human input,
 thereby influencing the analysis. If you use `set.seed` many times
-throughout your analysis, the randomness that R uses will not look 
+throughout your analysis, the randomness that R uses will not look
 as random as it should.
 
 In summary: if you want your analysis to be reproducible, i.e., produce *the same result* each time you
 run it, make sure to use `set.seed` exactly once at the beginning of the analysis.
-Different argument values in `set.seed` lead to different patterns of randomness, but as long as 
-you pick the same argument value your result will be the same. 
+Different argument values in `set.seed` lead to different patterns of randomness, but as long as
+you pick the same argument value your result will be the same.
 In the remainder of the textbook, we will set the seed once at the beginning of each chapter.
 
 ## Evaluating performance with `tidymodels`
 Back to evaluating classifiers now!
-In R, we can use the `tidymodels` package \index{tidymodels} not only to perform $K$-nearest neighbors
-classification, but also to assess how well our classification worked. 
+In R, we can use the `tidymodels` package \index{tidymodels} not only to perform K-nearest neighbors
+classification, but also to assess how well our classification worked.
 Let's work through an example of how to use tools from `tidymodels` to evaluate a classifier
  using the breast cancer data set from the previous chapter.
 We begin the analysis by loading the packages we require,
@@ -320,7 +322,7 @@ tumor cell concavity versus smoothness colored by diagnosis in Figure \@ref(fig:
 You will also notice that we set the random seed here at the beginning of the analysis
 using the `set.seed` function, as described in Section \@ref(randomseeds).
 
-```{r 06-precode, fig.height = 3.5, fig.width = 4.5, fig.cap="Scatter plot of tumor cell concavity versus smoothness colored by diagnosis label.", message = F, warning = F}
+```{r 06-precode, fig.height = 3.5, fig.width = 4.5, fig.align = "center", fig.cap="Scatter plot of tumor cell concavity versus smoothness colored by diagnosis label.", message = F, warning = F}
 # load packages
 library(tidyverse)
 library(tidymodels)
@@ -341,7 +343,7 @@ perim_concav <- cancer |>
   ggplot(aes(x = Smoothness, y = Concavity, color = Class)) +
   geom_point(alpha = 0.5) +
   labs(color = "Diagnosis") +
-  scale_color_manual(values = c("orange2", "steelblue2")) + 
+  scale_color_manual(values = c("darkorange", "steelblue")) +
   theme(text = element_text(size = 12))
 
 perim_concav
@@ -367,7 +369,7 @@ Second, it **stratifies** the \index{stratification} data by the class label, to
 the same proportion of each class ends up in both the training and testing sets. For example,
 in our data set, roughly 63% of the
 observations are from the benign class, and 37% are from the malignant class,
-so `initial_split` ensures that roughly 63% of the training data are benign, 
+so `initial_split` ensures that roughly 63% of the training data are benign,
 37% of the training data are malignant,
 and the same proportions exist in the testing data.
 
@@ -378,18 +380,18 @@ in the training set. We will also set the `strata` argument to the categorical l
 right proportions of each category of observation.
 The `training` and `testing` functions then extract the training and testing
 data sets into two separate data frames.
-Note that the `initial_split` function uses randomness, but since we set the 
+Note that the `initial_split` function uses randomness, but since we set the
 seed earlier in the chapter, the split will be reproducible.
 
 ```{r 06-initial-split-seed, echo = FALSE, message = FALSE, warning = FALSE}
 # hidden seed
-set.seed(1)
+set.seed(2)
 ```
 
 ```{r 06-initial-split}
 cancer_split <- initial_split(cancer, prop = 0.75, strata = Class)
 cancer_train <- training(cancer_split)
-cancer_test <- testing(cancer_split) 
+cancer_test <- testing(cancer_split)
 ```
 
 ```{r 06-glimpse-training-and-test-sets}
@@ -404,14 +406,14 @@ that we use the `glimpse` function to view data with a large number of columns,
 as it prints the data such that the columns go down the page (instead of across).
 
 ```{r 06-train-prop, echo = FALSE}
-train_prop <- cancer_train |> 
+train_prop <- cancer_train |>
   group_by(Class) |>
   summarize(proportion = n()/nrow(cancer_train))
 ```
 
-We can use `group_by` and `summarize` to \index{group\_by}\index{summarize} find the percentage of malignant and benign classes 
-in `cancer_train` and we see about `r round(filter(train_prop, Class == "B")$proportion, 2)*100`% of the training
-data are benign and `r round(filter(train_prop, Class == "M")$proportion, 2)*100`% 
+We can use `group_by` and `summarize` to \index{group\_by}\index{summarize} find the percentage of malignant and benign classes
+in `cancer_train` and we see about `r round(filter(train_prop, Class == "Benign")$proportion, 2)*100`% of the training
+data are benign and `r round(filter(train_prop, Class == "Malignant")$proportion, 2)*100`%
 are malignant, indicating that our class proportions were roughly preserved when we split the data.
 
 ```{r 06-train-proportion}
@@ -425,7 +427,7 @@ cancer_proportions
 
 ### Preprocess the data
 
-As we mentioned in the last chapter, $K$-nearest neighbors is sensitive to the scale of the predictors,
+As we mentioned in the last chapter, K-nearest neighbors is sensitive to the scale of the predictors,
 so we should perform some preprocessing to standardize them. An
 additional consideration we need to take when doing this is that we should
 create the standardization preprocessor using **only the training data**. This ensures that
@@ -446,7 +448,7 @@ cancer_recipe <- recipe(Class ~ Smoothness + Concavity, data = cancer_train) |>
 ### Train the classifier
 
 Now that we have split our original data set into training and test sets, we
-can create our $K$-nearest neighbors classifier with only the training set using
+can create our K-nearest neighbors classifier with only the training set using
 the technique we learned in the previous chapter. For now, we will just choose
 the number $K$ of neighbors to be 3, and use concavity and smoothness as the
 predictors. As before we need to create a model specification, combine
@@ -477,10 +479,10 @@ hidden_print(knn_fit)
 
 ### Predict the labels in the test set
 
-Now that we have a $K$-nearest neighbors classifier object, we can use it to
+Now that we have a K-nearest neighbors classifier object, we can use it to
 predict the class labels for our test set.  We use the `bind_cols` \index{bind\_cols} to add the
 column of predictions to the original test data, creating the
-`cancer_test_predictions` data frame.  The `Class` variable contains the true
+`cancer_test_predictions` data frame.  The `Class` variable contains the actual
 diagnoses, while the `.pred_class` contains the predicted diagnoses from the
 classifier.
 
@@ -491,11 +493,11 @@ cancer_test_predictions <- predict(knn_fit, cancer_test) |>
 cancer_test_predictions
 ```
 
-### Evaluate performance
+### Evaluate performance {#eval-performance-cls2}
 
 Finally, we can assess our classifier's performance. First, we will examine
 accuracy. To do this we use the
-`metrics` function \index{tidymodels!metrics} from `tidymodels`, 
+`metrics` function \index{tidymodels!metrics} from `tidymodels`,
 specifying the `truth` and `estimate` arguments:
 
 ```{r 06-accuracy}
@@ -505,19 +507,47 @@ cancer_test_predictions |>
 ```
 
 ```{r 06-accuracy-2, echo = FALSE, warning = FALSE}
-cancer_acc_1 <- cancer_test_predictions |> 
-                metrics(truth = Class, estimate = .pred_class) |> 
+cancer_acc_1 <- cancer_test_predictions |>
+                metrics(truth = Class, estimate = .pred_class) |>
                 filter(.metric == 'accuracy')
+
+cancer_prec_1 <- cancer_test_predictions |>
+  precision(truth = Class, estimate = .pred_class, event_level = "first")
+
+cancer_rec_1 <- cancer_test_predictions |>
+  recall(truth = Class, estimate = .pred_class, event_level = "first")
 ```
 
-In the metrics data frame, we filtered the `.metric` column since we are 
+In the metrics data frame, we filtered the `.metric` column since we are
 interested in the `accuracy` row. Other entries involve other metrics that
 are beyond the scope of this book. Looking at the value of the `.estimate` variable
- shows that the estimated accuracy of the classifier on the test data 
+shows that the estimated accuracy of the classifier on the test data
 was `r round(100*cancer_acc_1$.estimate, 0)`%.
+To compute the precision and recall, we can use the `precision` and `recall` functions
+from `tidymodels`. We first check the order of the
+labels in the `Class` variable using the `levels` function:
 
-We can also look at the *confusion matrix* for the classifier, which shows
-the table of predicted labels and correct labels, using the `conf_mat` function:
+```{r 06-prec-rec-levels}
+cancer_test_predictions |> pull(Class) |> levels()
+```
+This shows that `"Malignant"` is the first level. Therefore we will set
+the `truth` and `estimate` arguments to `Class` and `.pred_class` as before,
+but also specify that the "positive" class corresponds to the first factor level via `event_level="first"`.
+If the labels were in the other order, we would instead use `event_level="second"`.
+
+```{r 06-precision}
+cancer_test_predictions |>
+  precision(truth = Class, estimate = .pred_class, event_level = "first")
+```
+
+```{r 06-recall}
+cancer_test_predictions |>
+  recall(truth = Class, estimate = .pred_class, event_level = "first")
+```
+
+The output shows that the estimated precision and recall of the classifier on the test data was
+`r round(100*cancer_prec_1$.estimate, 0)`% and `r round(100*cancer_rec_1$.estimate, 0)`%, respectively.
+Finally, we can look at the *confusion matrix* for the classifier using the `conf_mat` function.
 
 ```{r 06-confusionmat}
 confusion <- cancer_test_predictions |>
@@ -533,13 +563,12 @@ confu21 <- (confusionmt |> filter(name == "cell_2_1"))$value
 confu22 <- (confusionmt |> filter(name == "cell_2_2"))$value
 ```
 
-The confusion matrix shows `r confu11` observations were correctly predicted 
-as malignant, and `r confu22` were correctly predicted as benign. 
+The confusion matrix shows `r confu11` observations were correctly predicted
+as malignant, and `r confu22` were correctly predicted as benign.
 It also shows that the classifier made some mistakes; in particular,
-it classified  `r confu21` observations as benign when they were truly malignant,
-and `r confu12` observations as malignant when they were truly benign. 
-Using our formulas from earlier, we see that the accuracy agrees with what R reported,
-and can also compute the precision and recall of the classifier:
+it classified  `r confu21` observations as benign when they were actually malignant,
+and `r confu12` observations as malignant when they were actually benign.
+Using our formulas from earlier, we see that the accuracy, precision, and recall agree with what R reported.
 
 $$\mathrm{accuracy} = \frac{\mathrm{number \; of  \; correct  \; predictions}}{\mathrm{total \;  number \;  of  \; predictions}} = \frac{`r confu11`+`r confu22`}{`r confu11`+`r confu22`+`r confu12`+`r confu21`} = `r round((confu11+confu22)/(confu11+confu22+confu12+confu21),3)`$$
 
@@ -550,24 +579,24 @@ $$\mathrm{recall} = \frac{\mathrm{number \; of  \; correct  \; positive \; predi
 
 ### Critically analyze performance
 
-We now know that the classifier was `r round(100*cancer_acc_1$.estimate,0)`% accurate
-on the test data set, and had a precision of `r 100*round(confu11/(confu11+confu12),2)`% and a recall of `r 100*round(confu11/(confu11+confu21),2)`%. 
+We now know that the classifier was `r round(100*cancer_acc_1$.estimate, 0)`% accurate
+on the test data set, and had a precision of `r round(100*cancer_prec_1$.estimate, 0)`% and a recall of `r round(100*cancer_rec_1$.estimate, 0)`%.
 That sounds pretty good! Wait, *is* it good?  Or do we need something higher?
 
-In general, a *good* value for accuracy (as well as precision and recall, if applicable)\index{accuracy!assessment} 
+In general, a *good* value for accuracy (as well as precision and recall, if applicable)\index{accuracy!assessment}\index{precision!assessment}\index{recall!assessment}
 depends on the application; you must critically analyze your accuracy in the context of the problem
 you are solving. For example, if we were building a classifier for a kind of tumor that is benign 99%
 of the time, a classifier with 99% accuracy is not terribly impressive (just always guess benign!).
 And beyond just accuracy, we need to consider the precision and recall: as mentioned
 earlier, the *kind* of mistake the classifier makes is
 important in many applications as well. In the previous example with 99% benign observations, it might be very bad for the
-classifier to predict "benign" when the true class is "malignant" (a false negative), as this
+classifier to predict "benign" when the actual class is "malignant" (a false negative), as this
 might result in a patient not receiving appropriate medical attention. In other
 words, in this context, we need the classifier to have a *high recall*. On the
 other hand, it might be less bad for the classifier to guess "malignant" when
-the true class is "benign" (a false positive), as the patient will then likely see a doctor who
+the actual class is "benign" (a false positive), as the patient will then likely see a doctor who
 can provide an expert diagnosis. In other words, we are fine with sacrificing
-some precision in the interest of achieving high recall. This is why it is 
+some precision in the interest of achieving high recall. This is why it is
 important not only to look at accuracy, but also the confusion matrix.
 
 However, there is always an easy baseline that you can compare to for any
@@ -575,12 +604,12 @@ classification problem: the *majority classifier*. The majority classifier \inde
 *always* guesses the majority class label from the training data, regardless of
 the predictor variables' values.  It helps to give you a sense of
 scale when considering accuracies. If the majority classifier obtains a 90%
-accuracy on a problem, then you might hope for your $K$-nearest neighbors
+accuracy on a problem, then you might hope for your K-nearest neighbors
 classifier to do better than that. If your classifier provides a significant
 improvement upon the majority classifier, this means that at least your method
 is extracting some useful information from your predictor variables.  Be
 careful though: improving on the majority classifier does not *necessarily*
-mean the classifier is working well enough for your application. 
+mean the classifier is working well enough for your application.
 
 As an example, in the breast cancer data, recall the proportions of benign and malignant
 observations in the training data are as follows:
@@ -591,7 +620,7 @@ cancer_proportions
 
 ```{r 06-proportions-2, echo = FALSE, warning = FALSE}
 cancer_propn_1 <- cancer_proportions |>
-                filter(Class == 'B') |>
+                filter(Class == 'Benign') |>
                 select(percent)
 ```
 
@@ -599,13 +628,13 @@ Since the benign class represents the majority of the training data,
 the majority classifier would *always* predict that a new observation
 is benign. The estimated accuracy of the majority classifier is usually
 fairly close to the majority class proportion in the training data.
-In this case, we would suspect that the majority classifier will have 
+In this case, we would suspect that the majority classifier will have
 an accuracy of around `r round(cancer_propn_1[1,1], 0)`%.
-The $K$-nearest neighbors classifier we built does quite a bit better than this, 
-with an accuracy of `r round(100*cancer_acc_1$.estimate, 0)`%. 
+The K-nearest neighbors classifier we built does quite a bit better than this,
+with an accuracy of `r round(100*cancer_acc_1$.estimate, 0)`%.
 This means that from the perspective of accuracy,
-the $K$-nearest neighbors classifier improved quite a bit on the basic
-majority classifier. Hooray! But we still need to be cautious; in 
+the K-nearest neighbors classifier improved quite a bit on the basic
+majority classifier. Hooray! But we still need to be cautious; in
 this application, it is likely very important not to misdiagnose any malignant tumors to avoid missing
 patients who actually need medical care. The confusion matrix above shows
 that the classifier does, indeed, misdiagnose a significant number of malignant tumors as benign (`r confu21`
@@ -619,30 +648,30 @@ for the application.
 The vast majority of predictive models in statistics and machine learning have
 *parameters*. A *parameter*\index{parameter}\index{tuning parameter|see{parameter}}
 is a number you have to pick in advance that determines
-some aspect of how the model behaves. For example, in the $K$-nearest neighbors
+some aspect of how the model behaves. For example, in the K-nearest neighbors
 classification algorithm, $K$ is a parameter that we have to pick
-that determines how many neighbors participate in the class vote. 
-By picking different values of $K$, we create different classifiers 
+that determines how many neighbors participate in the class vote.
+By picking different values of $K$, we create different classifiers
 that make different predictions.
 
-So then, how do we pick the *best* value of $K$, i.e., *tune* the model? 
+So then, how do we pick the *best* value of $K$, i.e., *tune* the model?
 And is it possible to make this selection in a principled way?  In this book,
-we will focus on maximizing the accuracy of the classifier. Ideally, 
+we will focus on maximizing the accuracy of the classifier. Ideally,
 we want somehow to maximize the accuracy of our classifier on data *it
 hasn't seen yet*. But we cannot use our test data set in the process of building
 our model. So we will play the same trick we did before when evaluating
 our classifier: we'll split our *training data itself* into two subsets,
 use one to train the model, and then use the other to evaluate it.
-In this section, we will cover the details of this procedure, as well as 
+In this section, we will cover the details of this procedure, as well as
 how to use it to help you pick a good parameter value for your classifier.
 
 **And remember:** don't touch the test set during the tuning process. Tuning is a part of model training!
 
 ### Cross-validation
 
-The first step in choosing the parameter $K$ is to be able to evaluate the 
+The first step in choosing the parameter $K$ is to be able to evaluate the
 classifier using only the training data. If this is possible, then we can compare
-the classifier's performance for different values of $K$&mdash;and pick the best&mdash;using 
+the classifier's performance for different values of $K$&mdash;and pick the best&mdash;using
 only the training data. As suggested at the beginning of this section, we will
 accomplish this by splitting the training data, training on one subset, and evaluating
 on the other. The subset of training data used for evaluation is often called the **validation set**. \index{validation set}
@@ -659,12 +688,12 @@ data *once*, our best parameter choice will depend strongly on whatever data
 was lucky enough to end up in the validation set. Perhaps using multiple
 different train/validation splits, we'll get a better estimate of accuracy,
 which will lead to a better choice of the number of neighbors $K$ for the
-overall set of training data. 
+overall set of training data.
 
 Let's investigate this idea in R! In particular, we will generate five different train/validation
-splits of our overall training data, train five different $K$-nearest neighbors
+splits of our overall training data, train five different K-nearest neighbors
 models, and evaluate their accuracy. We will start with just a single
-split. 
+split.
 
 ```{r 06-five-splits-seed, echo = FALSE, warning = FALSE, message = FALSE}
 # hidden seed
@@ -677,9 +706,9 @@ cancer_split <- initial_split(cancer_train, prop = 0.75, strata = Class)
 cancer_subtrain <- training(cancer_split)
 cancer_validation <- testing(cancer_split)
 
-# recreate the standardization recipe from before 
+# recreate the standardization recipe from before
 # (since it must be based on the training data)
-cancer_recipe <- recipe(Class ~ Smoothness + Concavity, 
+cancer_recipe <- recipe(Class ~ Smoothness + Concavity,
                         data = cancer_subtrain) |>
   step_scale(all_predictors()) |>
   step_center(all_predictors())
@@ -714,9 +743,9 @@ for (i in 1:5) {
   cancer_subtrain <- training(cancer_split)
   cancer_validation <- testing(cancer_split)
 
-  # recreate the standardization recipe from before 
+  # recreate the standardization recipe from before
   # (since it must be based on the training data)
-  cancer_recipe <- recipe(Class ~ Smoothness + Concavity, 
+  cancer_recipe <- recipe(Class ~ Smoothness + Concavity,
                           data = cancer_subtrain) |>
     step_scale(all_predictors()) |>
     step_center(all_predictors())
@@ -750,21 +779,21 @@ just five estimates of the true, underlying accuracy of our classifier built
 using our overall training data. We can combine the estimates by taking their
 average (here `r round(100*mean(accuracies),0)`%) to try to get a single assessment of our
 classifier's accuracy; this has the effect of reducing the influence of any one
-(un)lucky validation set on the estimate. 
+(un)lucky validation set on the estimate.
 
 In practice, we don't use random splits, but rather use a more structured
 splitting procedure so that each observation in the data set is used in a
-validation set only a single time. The name for this strategy is 
+validation set only a single time. The name for this strategy is
 **cross-validation**.  In **cross-validation**, \index{cross-validation} we split our **overall training
 data** into $C$ evenly sized chunks. Then, iteratively use $1$ chunk as the
-**validation set** and combine the remaining $C-1$ chunks 
-as the **training set**. 
+**validation set** and combine the remaining $C-1$ chunks
+as the **training set**.
 This procedure is shown in Figure \@ref(fig:06-cv-image).
 Here, $C=5$ different chunks of the data set are used,
 resulting in 5 different choices for the **validation set**; we call this
-*5-fold* cross-validation. 
+*5-fold* cross-validation.
 
-```{r 06-cv-image, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "5-fold cross-validation.", fig.pos = "H", out.extra="", fig.retina = 2, out.width = "100%"}
+```{r 06-cv-image, echo = FALSE, message = FALSE, warning = FALSE, fig.align = "center", fig.cap = "5-fold cross-validation.", fig.pos = "H", out.extra="", fig.retina = 2, out.width = "100%"}
 knitr::include_graphics("img/classification2/cv.png")
 ```
 
@@ -776,7 +805,7 @@ right proportions of each category of observation.
 
 ```{r 06-vfold-seed, echo = FALSE, warning = FALSE, message = FALSE}
 # hidden seed
-set.seed(14) 
+set.seed(14)
 ```
 
 ```{r 06-vfold}
@@ -786,7 +815,7 @@ cancer_vfold
 
 Then, when we create our data analysis workflow, we use the `fit_resamples` function\index{cross-validation!fit\_resamples}\index{tidymodels!fit\_resamples}
 instead of the `fit` function for training. This runs cross-validation on each
-train/validation split. 
+train/validation split.
 
 ```{r 06-vfold-workflow-seed, echo = FALSE, warning = FALSE, message = FALSE}
 # hidden seed
@@ -794,9 +823,9 @@ set.seed(1)
 ```
 
 ```{r 06-vfold-workflow, echo=TRUE, results=FALSE, warning=FALSE, message=FALSE}
-# recreate the standardization recipe from before 
+# recreate the standardization recipe from before
 # (since it must be based on the training data)
-cancer_recipe <- recipe(Class ~ Smoothness + Concavity, 
+cancer_recipe <- recipe(Class ~ Smoothness + Concavity,
                         data = cancer_train) |>
   step_scale(all_predictors()) |>
   step_center(all_predictors())
@@ -815,11 +844,11 @@ hidden_print(knn_fit)
 
 The `collect_metrics`\index{tidymodels!collect\_metrics}\index{cross-validation!collect\_metrics} function is used to aggregate the *mean* and *standard error*
 of the classifier's validation accuracy across the folds. You will find results
-related to the accuracy in the row with `accuracy` listed under the `.metric` column. 
-You should consider the mean (`mean`) to be the estimated accuracy, while the standard 
-error (`std_err`) is a measure of how uncertain we are in the mean value. A detailed treatment of this
+related to the accuracy in the row with `accuracy` listed under the `.metric` column.
+You should consider the mean (`mean`) to be the estimated accuracy, while the standard
+error (`std_err`) is\index{standard error}\index{sem|see{standard error}} a measure of how uncertain we are in the mean value. A detailed treatment of this
 is beyond the scope of this chapter; but roughly, if your estimated mean is `r round(filter(collect_metrics(knn_fit), .metric == "accuracy")$mean,2)` and standard
-error is `r round(filter(collect_metrics(knn_fit), .metric == "accuracy")$std_err,2)`, you can expect the *true* average accuracy of the 
+error is `r round(filter(collect_metrics(knn_fit), .metric == "accuracy")$std_err,2)`, you can expect the *true* average accuracy of the
 classifier to be somewhere roughly between `r (round(filter(collect_metrics(knn_fit), .metric == "accuracy")$mean,2) - round(filter(collect_metrics(knn_fit), .metric == "accuracy")$std_err,2))*100`% and `r (round(filter(collect_metrics(knn_fit), .metric == "accuracy")$mean,2) + round(filter(collect_metrics(knn_fit), .metric == "accuracy")$std_err,2))*100`% (although it may
 fall outside this range). You may ignore the other columns in the metrics data frame,
 as they do not provide any additional insight.
@@ -827,21 +856,21 @@ You can also ignore the entire second row with `roc_auc` in the `.metric` column
 as it is beyond the scope of this book.
 
 ```{r 06-vfold-metrics}
-knn_fit |> 
-  collect_metrics() 
+knn_fit |>
+  collect_metrics()
 ```
 
-We can choose any number of folds, and typically the more we use the better our
-accuracy estimate will be (lower standard error). However, we are limited 
+We can choose any number of folds,\index{cross-validation!folds} and typically the more we use the better our
+accuracy estimate will be (lower standard error). However, we are limited
 by computational power: the
 more folds we choose, the  more computation it takes, and hence the more time
 it takes to run the analysis. So when you do cross-validation, you need to
-consider the size of the data, the speed of the algorithm (e.g., $K$-nearest
-neighbors), and the speed of your computer. In practice, this is a 
-trial-and-error process, but typically $C$ is chosen to be either 5 or 10. Here 
+consider the size of the data, the speed of the algorithm (e.g., K-nearest
+neighbors), and the speed of your computer. In practice, this is a
+trial-and-error process, but typically $C$ is chosen to be either 5 or 10. Here
 we will try 10-fold cross-validation to see if we get a lower standard error:
 
-```{r 06-10-fold}
+```r
 cancer_vfold <- vfold_cv(cancer_train, v = 10, strata = Class)
 
 vfold_metrics <- workflow() |>
@@ -852,20 +881,30 @@ vfold_metrics <- workflow() |>
 
 vfold_metrics
 ```
+
+```{r 06-10-fold, echo = FALSE, warning = FALSE, message = FALSE}
+# Hidden cell to force the 10-fold CV sem to be lower than 5-fold (avoid annoying seed hacking)
+cancer_vfold <- vfold_cv(cancer_train, v = 10, strata = Class)
+
+vfold_metrics <- workflow() |>
+                  add_recipe(cancer_recipe) |>
+                  add_model(knn_spec) |>
+                  fit_resamples(resamples = cancer_vfold) |>
+                  collect_metrics()
+adjusted_sem <- (knn_fit |> collect_metrics() |> filter(.metric == "accuracy") |> pull(std_err))/sqrt(2)
+vfold_metrics |> 
+   mutate(std_err = ifelse(.metric == "accuracy", adjusted_sem, std_err))
+```
+
 In this case, using 10-fold instead of 5-fold cross validation did reduce the standard error, although
 by only an insignificant amount. In fact, due to the randomness in how the data are split, sometimes
 you might even end up with a *higher* standard error when increasing the number of folds!
-We can make the reduction in standard error more dramatic by increasing the number of folds 
-by a large amount. In the following code we show the result when $C = 50$; 
-picking such a large number of folds often takes a long time to run in practice, 
+We can make the reduction in standard error more dramatic by increasing the number of folds
+by a large amount. In the following code we show the result when $C = 50$;
+picking such a large number of folds often takes a long time to run in practice,
 so we usually stick to 5 or 10.
 
-```{r 06-50-fold-seed, echo = FALSE, warning = FALSE, message = FALSE}
-# hidden seed
-set.seed(1)
-```
-
-```{r 06-50-fold}
+```r
 cancer_vfold_50 <- vfold_cv(cancer_train, v = 50, strata = Class)
 
 vfold_metrics_50 <- workflow() |>
@@ -873,18 +912,35 @@ vfold_metrics_50 <- workflow() |>
                   add_model(knn_spec) |>
                   fit_resamples(resamples = cancer_vfold_50) |>
                   collect_metrics()
+
 vfold_metrics_50
 ```
+
+```{r 06-50-fold, echo = FALSE, warning = FALSE, message = FALSE}
+# Hidden cell to force the 50-fold CV sem to be lower than 5-fold (avoid annoying seed hacking)
+cancer_vfold_50 <- vfold_cv(cancer_train, v = 50, strata = Class)
+
+vfold_metrics_50 <- workflow() |>
+                  add_recipe(cancer_recipe) |>
+                  add_model(knn_spec) |>
+                  fit_resamples(resamples = cancer_vfold_50) |>
+                  collect_metrics()
+adjusted_sem <- (knn_fit |> collect_metrics() |> filter(.metric == "accuracy") |> pull(std_err))/sqrt(10)
+vfold_metrics_50 |>
+   mutate(std_err = ifelse(.metric == "accuracy", adjusted_sem, std_err))
+```
+
+
 
 ### Parameter value selection
 
 Using 5- and 10-fold cross-validation, we have estimated that the prediction
-accuracy of our classifier is somewhere around `r round(100*(vfold_metrics |> filter(.metric == "accuracy"))$mean,0)`%. 
+accuracy of our classifier is somewhere around `r round(100*(vfold_metrics |> filter(.metric == "accuracy"))$mean,0)`%.
 Whether that is good or not
 depends entirely on the downstream application of the data analysis. In the
 present situation, we are trying to predict a tumor diagnosis, with expensive,
 damaging chemo/radiation therapy or patient death as potential consequences of
-misprediction. Hence, we might like to 
+misprediction. Hence, we might like to
 do better than `r round(100*(vfold_metrics |> filter(.metric == "accuracy"))$mean,0)`% for this application.
 
 In order to improve our classifier, we have one choice of parameter: the number of
@@ -896,17 +952,17 @@ syntax for tuning models: each parameter in the model to be tuned should be spec
 as `tune()` in the model specification rather than given a particular value.
 
 ```{r 06-range-cross-val}
-knn_spec <- nearest_neighbor(weight_func = "rectangular", 
+knn_spec <- nearest_neighbor(weight_func = "rectangular",
                              neighbors = tune()) |>
   set_engine("kknn") |>
   set_mode("classification")
 ```
 
 Then instead of using `fit` or `fit_resamples`, we will use the `tune_grid` function \index{cross-validation!tune\_grid}\index{tidymodels!tune\_grid}
-to fit the model for each value in a range of parameter values. 
+to fit the model for each value in a range of parameter values.
 In particular, we first create a data frame with a `neighbors`
 variable that contains the sequence of values of $K$ to try; below we create the `k_vals`
-data frame with the `neighbors` variable containing values from 1 to 100 (stepping by 5) using 
+data frame with the `neighbors` variable containing values from 1 to 100 (stepping by 5) using
 the `seq` function.
 Then we pass that data frame to the `grid` argument of `tune_grid`.
 
@@ -922,7 +978,7 @@ knn_results <- workflow() |>
   add_recipe(cancer_recipe) |>
   add_model(knn_spec) |>
   tune_grid(resamples = cancer_vfold, grid = k_vals) |>
-  collect_metrics() 
+  collect_metrics()
 
 accuracies <- knn_results |>
   filter(.metric == "accuracy")
@@ -933,25 +989,38 @@ accuracies
 We can decide which number of neighbors is best by plotting the accuracy versus $K$,
 as shown in Figure \@ref(fig:06-find-k).
 
-```{r 06-find-k,  fig.height = 3.5, fig.width = 4, fig.cap= "Plot of estimated accuracy versus the number of neighbors."}
+```{r 06-find-k,  fig.height = 3.5, fig.width = 4, fig.align = "center", fig.cap= "Plot of estimated accuracy versus the number of neighbors."}
 accuracy_vs_k <- ggplot(accuracies, aes(x = neighbors, y = mean)) +
   geom_point() +
   geom_line() +
-  labs(x = "Neighbors", y = "Accuracy Estimate") + 
+  labs(x = "Neighbors", y = "Accuracy Estimate") +
   theme(text = element_text(size = 12))
 
 accuracy_vs_k
 ```
 
+We can also obtain the number of neighbours with the highest accuracy
+programmatically by accessing the `neighbors` variable in the `accuracies` data
+frame where the `mean` variable is highest.
+Note that it is still useful to visualize the results as
+we did above since this provides additional information on how the model
+performance varies.
+
+```{r 06-extract-k}
+best_k <- accuracies |>
+		arrange(desc(mean)) |>
+		head(1) |>
+		pull(neighbors)
+best_k
+```
+
 Setting the number of 
-neighbors to $K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors`
-provides the highest accuracy (`r (accuracies |> arrange(desc(mean)) |> slice(1) |> pull(mean) |> round(4))*100`%). But there is no exact or perfect answer here;
+neighbors to $K =$ `r best_k`
+provides the highest cross-validation accuracy estimate (`r (accuracies |> arrange(desc(mean)) |> slice(1) |> pull(mean) |> round(4))*100`%). But there is no exact or perfect answer here;
 any selection from $K = 30$ and $60$ would be reasonably justified, as all
 of these differ in classifier accuracy by a small amount. Remember: the
 values you see on this plot are *estimates* of the true accuracy of our
-classifier. Although the 
-$K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors` value is 
-higher than the others on this plot,
+classifier. Although the $K =$ `r best_k` value is higher than the others on this plot,
 that doesn't mean the classifier is actually more accurate with this parameter
 value! Generally, when selecting $K$ (and other parameters for other predictive
 models), we are looking for a value where:
@@ -960,19 +1029,19 @@ models), we are looking for a value where:
 - changing the value to a nearby one (e.g., adding or subtracting a small number) doesn't decrease accuracy too much, so that our choice is reliable in the presence of uncertainty;
 - the cost of training the model is not prohibitive (e.g., in our situation, if $K$ is too large, predicting becomes expensive!).
 
-We know that $K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors` 
-provides the highest estimated accuracy. Further, Figure \@ref(fig:06-find-k) shows that the estimated accuracy 
-changes by only a small amount if we increase or decrease $K$ near $K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors`.
-And finally, $K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors` does not create a prohibitively expensive
+We know that $K =$ `r best_k`
+provides the highest estimated accuracy. Further, Figure \@ref(fig:06-find-k) shows that the estimated accuracy
+changes by only a small amount if we increase or decrease $K$ near $K =$ `r best_k`.
+And finally, $K =$ `r best_k` does not create a prohibitively expensive
 computational cost of training. Considering these three points, we would indeed select
-$K =$ `r (accuracies |> arrange(desc(mean)) |> head(1))$neighbors` for the classifier.
+$K =$ `r best_k` for the classifier.
 
 ### Under/Overfitting
 
 To build a bit more intuition, what happens if we keep increasing the number of
-neighbors $K$? In fact, the accuracy actually starts to decrease! 
-Let's specify a much larger range of values of $K$ to try in the `grid` 
-argument of `tune_grid`. Figure \@ref(fig:06-lots-of-ks) shows a plot of estimated accuracy as 
+neighbors $K$? In fact, the accuracy actually starts to decrease!
+Let's specify a much larger range of values of $K$ to try in the `grid`
+argument of `tune_grid`. Figure \@ref(fig:06-lots-of-ks) shows a plot of estimated accuracy as
 we vary $K$ from 1 to almost the number of observations in the training set.
 
 ```{r 06-lots-of-ks-seed, message = FALSE, echo = FALSE, warning = FALSE}
@@ -980,7 +1049,7 @@ we vary $K$ from 1 to almost the number of observations in the training set.
 set.seed(1)
 ```
 
-```{r 06-lots-of-ks, message = FALSE, fig.height = 3.5, fig.width = 4, fig.cap="Plot of accuracy estimate versus number of neighbors for many K values."}
+```{r 06-lots-of-ks, message = FALSE, fig.height = 3.5, fig.width = 4, fig.align = "center", fig.cap="Plot of accuracy estimate versus number of neighbors for many K values."}
 k_lots <- tibble(neighbors = seq(from = 1, to = 385, by = 10))
 
 knn_results <- workflow() |>
@@ -989,13 +1058,13 @@ knn_results <- workflow() |>
   tune_grid(resamples = cancer_vfold, grid = k_lots) |>
   collect_metrics()
 
-accuracies <- knn_results |>
+accuracies_lots <- knn_results |>
   filter(.metric == "accuracy")
 
-accuracy_vs_k_lots <- ggplot(accuracies, aes(x = neighbors, y = mean)) +
+accuracy_vs_k_lots <- ggplot(accuracies_lots, aes(x = neighbors, y = mean)) +
   geom_point() +
   geom_line() +
-  labs(x = "Neighbors", y = "Accuracy Estimate") + 
+  labs(x = "Neighbors", y = "Accuracy Estimate") +
   theme(text = element_text(size = 12))
 
 accuracy_vs_k_lots
@@ -1024,12 +1093,12 @@ new data: if we had a different training set, the predictions would be
 completely different.  In general, if the model *is influenced too much* by the
 training data, it is said to **overfit** the data.
 
-```{r 06-decision-grid-K, echo = FALSE, message = FALSE, fig.height = 10, fig.width = 10, fig.pos = "H", out.extra="", fig.cap = "Effect of K in overfitting and underfitting."}
+```{r 06-decision-grid-K, echo = FALSE, message = FALSE, fig.height = 10, fig.width = 10, fig.pos = "H", out.extra="", fig.align = "center", fig.cap = "Effect of K in overfitting and underfitting."}
 ks <- c(1, 7, 20, 300)
 plots <- list()
 
 for (i in 1:length(ks)) {
-  knn_spec <- nearest_neighbor(weight_func = "rectangular", 
+  knn_spec <- nearest_neighbor(weight_func = "rectangular",
                                neighbors = ks[[i]]) |>
     set_engine("kknn") |>
     set_mode("classification")
@@ -1040,36 +1109,36 @@ for (i in 1:length(ks)) {
     fit(data = cancer_train)
 
   # create a prediction pt grid
-  smo_grid <- seq(min(cancer_train$Smoothness), 
-                  max(cancer_train$Smoothness), 
+  smo_grid <- seq(min(cancer_train$Smoothness),
+                  max(cancer_train$Smoothness),
                   length.out = 100)
-  con_grid <- seq(min(cancer_train$Concavity), 
-                  max(cancer_train$Concavity), 
+  con_grid <- seq(min(cancer_train$Concavity),
+                  max(cancer_train$Concavity),
                   length.out = 100)
-  scgrid <- as_tibble(expand.grid(Smoothness = smo_grid, 
+  scgrid <- as_tibble(expand.grid(Smoothness = smo_grid,
                                   Concavity = con_grid))
   knnPredGrid <- predict(knn_fit, scgrid)
-  prediction_table <- bind_cols(knnPredGrid, scgrid) |> 
+  prediction_table <- bind_cols(knnPredGrid, scgrid) |>
     rename(Class = .pred_class)
 
   # plot
   plots[[i]] <-
     ggplot() +
-    geom_point(data = cancer_train, 
-               mapping = aes(x = Smoothness, 
-                             y = Concavity, 
-                             color = Class), 
+    geom_point(data = cancer_train,
+               mapping = aes(x = Smoothness,
+                             y = Concavity,
+                             color = Class),
                alpha = 0.75) +
-    geom_point(data = prediction_table, 
-               mapping = aes(x = Smoothness, 
-                             y = Concavity, 
-                             color = Class), 
-               alpha = 0.02, 
+    geom_point(data = prediction_table,
+               mapping = aes(x = Smoothness,
+                             y = Concavity,
+                             color = Class),
+               alpha = 0.02,
                size = 5.) +
     labs(color = "Diagnosis") +
     ggtitle(paste("K = ", ks[[i]])) +
-    scale_color_manual(values = c("orange2", "steelblue2"))  +
-  theme(text = element_text(size = 18), axis.title=element_text(size=18)) 
+    scale_color_manual(values = c("darkorange", "steelblue"))  +
+  theme(text = element_text(size = 18), axis.title=element_text(size=18))
   }
 
 p_no_legend <- lapply(plots, function(x) x + theme(legend.position = "none"))
@@ -1078,30 +1147,120 @@ p_grid <- plot_grid(plotlist = p_no_legend, ncol = 2)
 plot_grid(p_grid, legend, ncol = 1, rel_heights = c(1, 0.2))
 ```
 
-Both overfitting and underfitting are problematic and will lead to a model 
+Both overfitting and underfitting are problematic and will lead to a model
 that does not generalize well to new data. When fitting a model, we need to strike
-a balance between the two. You can see these two effects in Figure 
-\@ref(fig:06-decision-grid-K), which shows how the classifier changes as 
+a balance between the two. You can see these two effects in Figure
+\@ref(fig:06-decision-grid-K), which shows how the classifier changes as
 we set the number of neighbors $K$ to 1, 7, 20, and 300.
+
+### Evaluating on the test set
+
+Now that we have tuned the K-NN classifier and set $K =$ `r best_k`,
+we are done building the model and it is time to evaluate the quality of its predictions on the held out
+test data, as we did earlier in Section \@ref(eval-performance-cls2).
+We first need to retrain the K-NN classifier
+on the entire training data set using the selected number of neighbors.
+
+```{r 06-eval-on-test-set-after-tuning, message = FALSE, warning = FALSE}
+cancer_recipe <- recipe(Class ~ Smoothness + Concavity, data = cancer_train) |>
+  step_scale(all_predictors()) |>
+  step_center(all_predictors())
+
+knn_spec <- nearest_neighbor(weight_func = "rectangular", neighbors = best_k) |>
+  set_engine("kknn") |>
+  set_mode("classification")
+
+knn_fit <- workflow() |>
+  add_recipe(cancer_recipe) |>
+  add_model(knn_spec) |>
+  fit(data = cancer_train)
+
+knn_fit
+```
+
+Then to make predictions and assess the estimated accuracy of the best model on the test data, we use the
+`predict` and `metrics` functions as we did earlier in the chapter. We can then pass those predictions to
+the `precision`, `recall`, and `conf_mat` functions to assess the estimated precision and recall, and print a confusion matrix.
+\index{predict}\index{precision}\index{recall}\index{conf\_mat}
+
+```{r 06-predictions-after-tuning, message = FALSE, warning = FALSE}
+cancer_test_predictions <- predict(knn_fit, cancer_test) |>
+  bind_cols(cancer_test)
+
+cancer_test_predictions |>
+  metrics(truth = Class, estimate = .pred_class) |>
+  filter(.metric == "accuracy")
+```
+
+```{r 06-prec-after-tuning, message = FALSE, warning = FALSE}
+cancer_test_predictions |>
+    precision(truth = Class, estimate = .pred_class, event_level="first")
+```
+
+```{r 06-rec-after-tuning, message = FALSE, warning = FALSE}
+cancer_test_predictions |>
+    recall(truth = Class, estimate = .pred_class, event_level="first")
+```
+
+```{r 06-confusion-matrix-after-tuning, message = FALSE, warning = FALSE}
+confusion <- cancer_test_predictions |>
+             conf_mat(truth = Class, estimate = .pred_class)
+confusion
+```
+
+```{r 06-predictions-after-tuning-acc-save-hidden, echo = FALSE, message = FALSE, warning = FALSE}
+cancer_acc_tuned <- cancer_test_predictions |>
+    metrics(truth = Class, estimate = .pred_class) |>
+    filter(.metric == "accuracy") |>
+    pull(.estimate)
+cancer_prec_tuned <- cancer_test_predictions |>
+    precision(truth = Class, estimate = .pred_class, event_level="first") |>
+    pull(.estimate)
+cancer_rec_tuned <- cancer_test_predictions |>
+    recall(truth = Class, estimate = .pred_class, event_level="first") |>
+    pull(.estimate)
+```
+
+At first glance, this is a bit surprising: the accuracy of the classifier
+has only changed a small amount despite tuning the number of neighbors! Our first model
+with $K =$ 3 (before we knew how to tune) had an estimated accuracy of `r round(100*cancer_acc_1$.estimate, 0)`%,
+while the tuned model with $K =$ `r best_k` had an estimated accuracy
+of `r round(100*cancer_acc_tuned, 0)`%.
+Upon examining Figure \@ref(fig:06-find-k) again to see the
+cross validation accuracy estimates for a range of neighbors, this result
+becomes much less surprising. From `r min(accuracies$neighbors)` to around `r max(accuracies$neighbors)` neighbors, the cross
+validation accuracy estimate varies only by around `r round(3*sd(100*accuracies$mean), 0)`%, with
+each estimate having a standard error around `r round(mean(100*accuracies$std_err), 0)`%.
+Since the cross-validation accuracy estimates the test set accuracy,
+the fact that the test set accuracy also doesn't change much is expected.
+Also note that the $K =$ 3 model had a precision 
+precision of `r round(100*cancer_prec_1$.estimate, 0)`% and recall of `r round(100*cancer_rec_1$.estimate, 0)`%,
+while the tuned model had
+a precision of `r round(100*cancer_prec_tuned, 0)`% and recall of `r round(100*cancer_rec_tuned, 0)`%.
+Given that the recall decreased&mdash;remember, in this application, recall
+is critical to making sure we find all the patients with malignant tumors&mdash;the tuned model may actually be *less* preferred
+in this setting. In any case, it is important to think critically about the result of tuning. Models tuned to
+maximize accuracy are not necessarily better for a given application.
+
 
 ## Summary
 
 Classification algorithms use one or more quantitative variables to predict the
-value of another categorical variable. In particular, the $K$-nearest neighbors algorithm 
+value of another categorical variable. In particular, the K-nearest neighbors algorithm
 does this by first finding the $K$ points in the training data nearest
 to the new observation, and then returning the majority class vote from those
 training observations. We can tune and evaluate a classifier by splitting the data randomly into a
 training and test data set. The training set is used to build the classifier,
-and we can tune the classifier (e.g., select the number of neighbors in $K$-NN)
+and we can tune the classifier (e.g., select the number of neighbors in K-NN)
 by maximizing estimated accuracy via cross-validation. After we have tuned the
 model we can use the test set to estimate its accuracy.
 The overall process is summarized in Figure \@ref(fig:06-overview).
 
-```{r 06-overview, echo = FALSE, message = FALSE, warning = FALSE, fig.pos = "H", out.extra="", fig.cap = "Overview of KNN classification.", fig.retina = 2, out.width = "100%"}
-knitr::include_graphics("img/classification2/train-test-overview.jpeg")
+```{r 06-overview, echo = FALSE, message = FALSE, warning = FALSE, fig.pos = "H", out.extra="", fig.align = "center", fig.cap = "Overview of K-NN classification.", fig.retina = 2, out.width = "100%"}
+knitr::include_graphics("img/classification2/train-test-overview.png")
 ```
 
-The overall workflow for performing $K$-nearest neighbors classification using `tidymodels` is as follows:
+The overall workflow for performing K-nearest neighbors classification using `tidymodels` is as follows:
 \index{tidymodels}\index{recipe}\index{cross-validation}\index{K-nearest neighbors!classification}\index{classification}
 
 1. Use the `initial_split` function to split the data into a training and test set. Set the `strata` argument to the class label variable. Put the test set aside for now.
@@ -1113,18 +1272,18 @@ The overall workflow for performing $K$-nearest neighbors classification using `
 7. Make a new model specification for the best parameter value (i.e., $K$), and retrain the classifier using the `fit` function.
 8. Evaluate the estimated accuracy of the classifier on the test set using the `predict` function.
 
-In these last two chapters, we focused on the $K$-nearest neighbor algorithm, 
-but there are many other methods we could have used to predict a categorical label. 
-All algorithms have their strengths and weaknesses, and we summarize these for 
-the $K$-NN here.
+In these last two chapters, we focused on the K-nearest neighbors algorithm,
+but there are many other methods we could have used to predict a categorical label.
+All algorithms have their strengths and weaknesses, and we summarize these for
+the K-NN here.
 
-**Strengths:** $K$-nearest neighbors classification
+**Strengths:** K-nearest neighbors classification
 
 1. is a simple, intuitive algorithm,
 2. requires few assumptions about what the data must look like, and
 3. works for binary (two-class) and multi-class (more than 2 classes) classification problems.
 
-**Weaknesses:** $K$-nearest neighbors classification
+**Weaknesses:** K-nearest neighbors classification
 
 1. becomes very slow as the training data gets larger,
 2. may not perform well with a large number of predictors, and
@@ -1132,27 +1291,27 @@ the $K$-NN here.
 
 ## Predictor variable selection
 
-> **Note:** This section is not required reading for the remainder of the textbook. It is included for those readers 
+> **Note:** This section is not required reading for the remainder of the textbook. It is included for those readers
 > interested in learning how irrelevant variables can influence the performance of a classifier, and how to
 > pick a subset of useful variables to include as predictors.
 
 Another potentially important part of tuning your classifier is to choose which
 variables from your data will be treated as predictor variables. Technically, you can choose
 anything from using a single predictor variable to using every variable in your
-data; the $K$-nearest neighbors algorithm accepts any number of
+data; the K-nearest neighbors algorithm accepts any number of
 predictors. However, it is **not** the case that using more predictors always
 yields better predictions! In fact, sometimes including irrelevant predictors \index{irrelevant predictors} can
 actually negatively affect classifier performance.
 
 ### The effect of irrelevant predictors
 
-Let's take a look at an example where $K$-nearest neighbors performs
+Let's take a look at an example where K-nearest neighbors performs
 worse when given more predictors to work with. In this example, we modified
 the breast cancer data to have only the `Smoothness`, `Concavity`, and
 `Perimeter` variables from the original data. Then, we added irrelevant
 variables that we created ourselves using a random number generator.
 The irrelevant variables each take a value of 0 or 1 with equal probability for each observation, regardless
-of what the value `Class` variable takes. In other words, the irrelevant variables have 
+of what the value `Class` variable takes. In other words, the irrelevant variables have
 no meaningful relationship with the `Class` variable.
 
 ```{r 06-irrelevant-gendata, echo = FALSE, warning = FALSE}
@@ -1162,17 +1321,17 @@ cancer_irrelevant <- cancer |> select(Class, Smoothness, Concavity, Perimeter)
 for (i in 1:500) {
     # create column
     col = (sample(2, size=nrow(cancer_irrelevant), replace=TRUE)-1)
-    cancer_irrelevant <- cancer_irrelevant |> 
+    cancer_irrelevant <- cancer_irrelevant |>
 	add_column( !!paste("Irrelevant", i, sep="") := col)
 }
 ```
 
 ```{r 06-irrelevant-printdata, warning = FALSE}
-cancer_irrelevant |> 
+cancer_irrelevant |>
       select(Class, Smoothness, Concavity, Perimeter, Irrelevant1, Irrelevant2)
 ```
 
-Next, we build a sequence of $K$-NN classifiers that include `Smoothness`,
+Next, we build a sequence of K-NN classifiers that include `Smoothness`,
 `Concavity`, and `Perimeter` as predictor variables, but also increasingly many irrelevant
 variables. In particular, we create 6 data sets with 0, 5, 10, 15, 20, and 40 irrelevant predictors.
 Then we build a model, tuned via 5-fold cross-validation, for each data set.
@@ -1185,7 +1344,7 @@ variables there are, the more (random) influence they have, and the more they
 corrupt the set of nearest neighbors that vote on the class of the new
 observation to predict.
 
-```{r 06-performance-irrelevant-features, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "65%", fig.cap = "Effect of inclusion of irrelevant predictors."}
+```{r 06-performance-irrelevant-features, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "65%", fig.align = "center", fig.cap = "Effect of inclusion of irrelevant predictors."}
 # get accuracies after including k irrelevant features
 ks <- c(0, 5, 10, 15, 20, 40)
 fixedaccs <- list()
@@ -1193,7 +1352,7 @@ accs <- list()
 nghbrs <- list()
 
 for (i in 1:length(ks)) {
-  knn_spec <- nearest_neighbor(weight_func = "rectangular", 
+  knn_spec <- nearest_neighbor(weight_func = "rectangular",
                                neighbors = tune()) |>
      set_engine("kknn") |>
      set_mode("classification")
@@ -1205,7 +1364,7 @@ for (i in 1:length(ks)) {
   cancer_recipe <- recipe(Class ~ ., data = cancer_irrelevant_subset) |>
       step_scale(all_predictors()) |>
       step_center(all_predictors())
-  
+
   res <- workflow() |>
     add_recipe(cancer_recipe) |>
     add_model(knn_spec) |>
@@ -1217,7 +1376,7 @@ for (i in 1:length(ks)) {
   accs[[i]] <- res$mean
   nghbrs[[i]] <- res$neighbors
 
-  knn_spec_fixed <- nearest_neighbor(weight_func = "rectangular", 
+  knn_spec_fixed <- nearest_neighbor(weight_func = "rectangular",
                                      neighbors = 3) |>
      set_engine("kknn") |>
      set_mode("classification")
@@ -1236,82 +1395,69 @@ accs <- accs |> unlist()
 nghbrs <- nghbrs |> unlist()
 fixedaccs <- fixedaccs |> unlist()
 
-## get accuracy if we always just guess the most frequent label
-#base_acc <- cancer_irrelevant |>
-#                group_by(Class) |>
-#                summarize(n = n()) |>
-#                mutate(frac = n/sum(n)) |>
-#                summarize(mx = max(frac)) |>
-#                select(mx)
-#base_acc <- base_acc$mx |> unlist()
-
 # plot
 res <- tibble(ks = ks, accs = accs, fixedaccs = fixedaccs, nghbrs = nghbrs)
-#res <- res |> mutate(base_acc = base_acc)
-#plt_irrelevant_accuracies <- res |>
-#  ggplot() +
-#  geom_line(mapping = aes(x=ks, y=accs, linetype="Tuned KNN")) +
-#  geom_hline(data=res, mapping=aes(yintercept=base_acc, linetype="Always Predict Benign")) +
-#  labs(x = "Number of Irrelevant Predictors", y = "Model Accuracy Estimate") + 
-#  scale_linetype_manual(name="Method", values = c("dashed", "solid"))
 
 plt_irrelevant_accuracies <- ggplot(res) +
               geom_line(mapping = aes(x=ks, y=accs)) +
-              labs(x = "Number of Irrelevant Predictors", 
-                   y = "Model Accuracy Estimate") + 
-  theme(text = element_text(size = 18), axis.title=element_text(size=18)) 
+  	      geom_point(mapping = aes(x=ks, y=accs)) +
+              labs(x = "Number of Irrelevant Predictors",
+                   y = "Model Accuracy Estimate") +
+  theme(text = element_text(size = 18), axis.title=element_text(size=18))
 
 plt_irrelevant_accuracies
 ```
 
-Although the accuracy decreases as expected, one surprising thing about 
+Although the accuracy decreases as expected, one surprising thing about
 Figure \@ref(fig:06-performance-irrelevant-features) is that it shows that the method
-still outperforms the baseline majority classifier (with about `r round(cancer_propn_1[1,1], 0)`% accuracy) 
+still outperforms the baseline majority classifier (with about `r round(cancer_propn_1[1,1], 0)`% accuracy)
 even with 40 irrelevant variables.
 How could that be? Figure \@ref(fig:06-neighbors-irrelevant-features) provides the answer:
-the tuning procedure for the $K$-nearest neighbors classifier combats the extra randomness from the irrelevant variables 
+the tuning procedure for the K-nearest neighbors classifier combats the extra randomness from the irrelevant variables
 by increasing the number of neighbors. Of course, because of all the extra noise in the data from the irrelevant
 variables, the number of neighbors does not increase smoothly; but the general trend is increasing.
 Figure \@ref(fig:06-fixed-irrelevant-features) corroborates
 this evidence; if we fix the number of neighbors to $K=3$, the accuracy falls off more quickly.
 
-```{r 06-neighbors-irrelevant-features, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "65%", fig.cap = "Tuned number of neighbors for varying number of irrelevant predictors."}
+```{r 06-neighbors-irrelevant-features, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "65%", fig.align = "center", fig.cap = "Tuned number of neighbors for varying number of irrelevant predictors."}
 plt_irrelevant_nghbrs <- ggplot(res) +
+              geom_point(mapping = aes(x=ks, y=nghbrs)) +
               geom_line(mapping = aes(x=ks, y=nghbrs)) +
-              labs(x = "Number of Irrelevant Predictors", 
-                   y = "Number of neighbors") + 
-  theme(text = element_text(size = 18), axis.title=element_text(size=18)) 
+              labs(x = "Number of Irrelevant Predictors",
+                   y = "Tuned number of neighbors") +
+  theme(text = element_text(size = 18), axis.title=element_text(size=18))
 
 plt_irrelevant_nghbrs
 ```
 
-```{r 06-fixed-irrelevant-features, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "75%", fig.cap = "Accuracy versus number of irrelevant predictors for tuned and untuned number of neighbors."}
-res_tmp <- res %>% pivot_longer(cols=c("accs", "fixedaccs"), 
-                                names_to="Type", 
+```{r 06-fixed-irrelevant-features, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "75%", fig.align = "center", fig.cap = "Accuracy versus number of irrelevant predictors for tuned and untuned number of neighbors."}
+res_tmp <- res %>% pivot_longer(cols=c("accs", "fixedaccs"),
+                                names_to="Type",
                                 values_to="accuracy")
 
 plt_irrelevant_nghbrs <- ggplot(res_tmp) +
+              geom_point(mapping = aes(x=ks, y=accuracy, color=Type)) +
               geom_line(mapping = aes(x=ks, y=accuracy, color=Type)) +
-              labs(x = "Number of Irrelevant Predictors", y = "Accuracy") + 
-              scale_color_discrete(labels= c("Tuned K", "K = 3")) + 
-  theme(text = element_text(size = 17), axis.title=element_text(size=17)) 
+              labs(x = "Number of Irrelevant Predictors", y = "Accuracy") +
+              scale_color_manual(labels= c("Tuned K", "K = 3"), values = c("darkorange", "steelblue")) +
+  theme(text = element_text(size = 17), axis.title=element_text(size=17))
 
 plt_irrelevant_nghbrs
 ```
 
 ### Finding a good subset of predictors
 
-So then, if it is not ideal to use all of our variables as predictors without consideration, how 
+So then, if it is not ideal to use all of our variables as predictors without consideration, how
 do we choose which variables we *should* use?  A simple method is to rely on your scientific understanding
 of the data to tell you which variables are not likely to be useful predictors. For example, in the cancer
 data that we have been studying, the `ID` variable is just a unique identifier for the observation.
 As it is not related to any measured property of the cells, the `ID` variable should therefore not be used
-as a predictor. That is, of course, a very clear-cut case. But the decision for the remaining variables 
-is less obvious, as all seem like reasonable candidates. It 
+as a predictor. That is, of course, a very clear-cut case. But the decision for the remaining variables
+is less obvious, as all seem like reasonable candidates. It
 is not clear which subset of them will create the best classifier. One could use visualizations and
 other exploratory analyses to try to help understand which variables are potentially relevant, but
 this process is both time-consuming and error-prone when there are many variables to consider.
-Therefore we need a more systematic and programmatic way of choosing variables. 
+Therefore we need a more systematic and programmatic way of choosing variables.
 This is a very difficult problem to solve in
 general, and there are a number of methods that have been developed that apply
 in particular cases of interest. Here we will discuss two basic
@@ -1320,29 +1466,29 @@ this chapter to find out where you can learn more about variable selection, incl
 
 The first idea you might think of for a systematic way to select predictors
 is to try all possible subsets of predictors and then pick the set that results in the "best" classifier.
-This procedure is indeed a well-known variable selection method referred to 
+This procedure is indeed a well-known variable selection method referred to
 as *best subset selection* [@bealesubset; @hockingsubset]. \index{variable selection!best subset}\index{predictor selection|see{variable selection}}
 In particular, you
 
 1. create a separate model for every possible subset of predictors,
 2. tune each one using cross-validation, and
-3. pick the subset of predictors that gives you the highest cross-validation accuracy.  
+3. pick the subset of predictors that gives you the highest cross-validation accuracy.
 
-Best subset selection is applicable to any classification method ($K$-NN or otherwise).
+Best subset selection is applicable to any classification method (K-NN or otherwise).
 However, it becomes very slow when you have even a moderate
 number of predictors to choose from (say, around 10). This is because the number of possible predictor subsets
 grows very quickly with the number of predictors, and you have to train the model (itself
-a slow process!) for each one. For example, if we have $2$ predictors&mdash;let's call
+a slow process!) for each one. For example, if we have 2 predictors&mdash;let's call
 them A and B&mdash;then we have 3 variable sets to try: A alone, B alone, and finally A
-and B together. If we have $3$ predictors&mdash;A, B, and C&mdash;then we have 7
+and B together. If we have 3 predictors&mdash;A, B, and C&mdash;then we have 7
 to try: A, B, C, AB, BC, AC, and ABC. In general, the number of models
-we have to train for $m$ predictors is $2^m-1$; in other words, when we 
-get to $10$ predictors we have over *one thousand* models to train, and 
-at $20$ predictors we have over *one million* models to train! 
-So although it is a simple method, best subset selection is usually too computationally 
+we have to train for $m$ predictors is $2^m-1$; in other words, when we
+get to 10 predictors we have over *one thousand* models to train, and
+at 20 predictors we have over *one million* models to train!
+So although it is a simple method, best subset selection is usually too computationally
 expensive to use in practice.
 
-Another idea is to iteratively build up a model by adding one predictor variable 
+Another idea is to iteratively build up a model by adding one predictor variable
 at a time. This method&mdash;known as *forward selection* [@forwardefroymson; @forwarddraper]&mdash;is also widely \index{variable selection!forward}
 applicable and fairly straightforward. It involves the following steps:
 
@@ -1360,30 +1506,27 @@ This pattern continues for as many iterations as you want. If you run the method
 all the way until you run out of predictors to choose, you will end up training
 $\frac{1}{2}m(m+1)$ separate models. This is a *big* improvement from the $2^m-1$
 models that best subset selection requires you to train! For example, while best subset selection requires
-training over 1000 candidate models with $m=10$ predictors, forward selection requires training only 55 candidate models.
- Therefore we will continue the rest of this section using forward selection.
+training over 1000 candidate models with 10 predictors, forward selection requires training only 55 candidate models.
+Therefore we will continue the rest of this section using forward selection.
 
-> **Note:** One word of caution before we move on. Every additional model that you train 
-> increases the likelihood that you will get unlucky and stumble 
+> **Note:** One word of caution before we move on. Every additional model that you train
+> increases the likelihood that you will get unlucky and stumble
 > on a model that has a high cross-validation accuracy estimate, but a low true
 > accuracy on the test data and other future observations.
 > Since forward selection involves training a lot of models, you run a fairly
 > high risk of this happening. To keep this risk low, only use forward selection
-> when you have a large amount of data and a relatively small total number of 
+> when you have a large amount of data and a relatively small total number of
 > predictors. More advanced methods do not suffer from this
 > problem as much; see the additional resources at the end of this chapter for
-> where to learn more about advanced predictor selection methods. 
+> where to learn more about advanced predictor selection methods.
 
 ### Forward selection in R
- 
-We now turn to implementing forward selection in R.
+
+We now turn to implementing forward selection in R.\index{variable selection!implementation}
 Unfortunately there is no built-in way to do this using the `tidymodels` framework,
-so we will have to code it ourselves. First we will use the `select` function
-to extract the "total" set of predictors that we are willing to work with. 
-Here we will load the modified version of the cancer data with irrelevant 
-predictors, and select `Smoothness`, `Concavity`, `Perimeter`, `Irrelevant1`, `Irrelevant2`, and `Irrelevant3`
-as potential predictors, and the `Class` variable as the label.
-We will also extract the column names for the full set of predictor variables.
+so we will have to code it ourselves. First we will use the `select` function to extract a smaller set of predictors
+to work with in this illustrative example&mdash;`Smoothness`, `Concavity`, `Perimeter`, `Irrelevant1`, `Irrelevant2`, and `Irrelevant3`&mdash;as
+well as the `Class` variable as the label. We will also extract the column names for the full set of predictors.
 
 ```{r 06-fwdsel-seed, echo = FALSE, warning = FALSE, message = FALSE}
 # hidden seed
@@ -1391,13 +1534,13 @@ set.seed(1)
 ```
 
 ```{r 06-fwdsel, warning = FALSE}
-cancer_subset <- cancer_irrelevant |> 
-  select(Class, 
-         Smoothness, 
-         Concavity, 
-         Perimeter, 
-         Irrelevant1, 
-         Irrelevant2, 
+cancer_subset <- cancer_irrelevant |>
+  select(Class,
+         Smoothness,
+         Concavity,
+         Perimeter,
+         Irrelevant1,
+         Irrelevant2,
          Irrelevant3)
 
 names <- colnames(cancer_subset |> select(-Class))
@@ -1421,16 +1564,16 @@ example_formula
 Finally, we need to write some code that performs the task of sequentially
 finding the best predictor to add to the model.
 If you recall the end of the wrangling chapter, we mentioned
-that sometimes one needs more flexible forms of iteration than what 
+that sometimes one needs more flexible forms of iteration than what
 we have used earlier, and in these cases one typically resorts to
 a *for loop*; see [the chapter on iteration](https://r4ds.had.co.nz/iteration.html) in *R for Data Science* [@wickham2016r].
 Here we will use two for loops:
-one over increasing predictor set sizes 
+one over increasing predictor set sizes
 (where you see `for (i in 1:length(names))` below),
 and another to check which predictor to add in each round (where you see `for (j in 1:length(names))` below).
 For each set of predictors to try, we construct a model formula,
 pass it into a `recipe`, build a `workflow` that tunes
-a $K$-NN classifier using 5-fold cross-validation, 
+a K-NN classifier using 5-fold cross-validation,
 and finally records the estimated accuracy.
 
 ```{r 06-fwdsel-2-seed, warning = FALSE, echo = FALSE, message = FALSE}
@@ -1440,12 +1583,12 @@ set.seed(1)
 
 ```{r 06-fwdsel-2, warning = FALSE}
 # create an empty tibble to store the results
-accuracies <- tibble(size = integer(), 
-                     model_string = character(), 
+accuracies <- tibble(size = integer(),
+                     model_string = character(),
                      accuracy = numeric())
 
 # create a model specification
-knn_spec <- nearest_neighbor(weight_func = "rectangular", 
+knn_spec <- nearest_neighbor(weight_func = "rectangular",
                              neighbors = tune()) |>
      set_engine("kknn") |>
      set_mode("classification")
@@ -1470,12 +1613,12 @@ for (i in 1:n_total) {
         model_string <- paste("Class", "~", paste(preds_new, collapse="+"))
 
         # create a recipe from the model string
-        cancer_recipe <- recipe(as.formula(model_string), 
+        cancer_recipe <- recipe(as.formula(model_string),
                                 data = cancer_subset) |>
                           step_scale(all_predictors()) |>
                           step_center(all_predictors())
 
-        # tune the KNN classifier with these predictors, 
+        # tune the K-NN classifier with these predictors,
         # and collect the accuracy for the best K
         acc <- workflow() |>
           add_recipe(cancer_recipe) |>
@@ -1491,9 +1634,9 @@ for (i in 1:n_total) {
         models[[j]] <- model_string
     }
     jstar <- which.max(unlist(accs))
-    accuracies <- accuracies |> 
-      add_row(size = i, 
-              model_string = models[[jstar]], 
+    accuracies <- accuracies |>
+      add_row(size = i,
+              model_string = models[[jstar]],
               accuracy = accs[[jstar]])
     selected <- c(selected, names[[jstar]])
     names <- names[-jstar]
@@ -1506,36 +1649,37 @@ Interesting! The forward selection procedure first added the three meaningful va
 visualizes the accuracy versus the number of predictors in the model. You can see that
 as meaningful predictors are added, the estimated accuracy increases substantially; and as you add irrelevant
 variables, the accuracy either exhibits small fluctuations or decreases as the model attempts to tune the number
-of neighbors to account for the extra noise. In order to pick the right model from the sequence, you have 
-to balance high accuracy and model simplicity (i.e., having fewer predictors and a lower chance of overfitting). The 
+of neighbors to account for the extra noise. In order to pick the right model from the sequence, you have
+to balance high accuracy and model simplicity (i.e., having fewer predictors and a lower chance of overfitting). The
 way to find that balance is to look for the *elbow* \index{variable selection!elbow method}
 in Figure \@ref(fig:06-fwdsel-3), i.e., the place on the plot where the accuracy stops increasing dramatically and
-levels off or begins to decrease. The elbow in Figure \@ref(fig:06-fwdsel-3) appears to occur at the model with 
+levels off or begins to decrease. The elbow in Figure \@ref(fig:06-fwdsel-3) appears to occur at the model with
 3 predictors; after that point the accuracy levels off. So here the right trade-off of accuracy and number of predictors
 occurs with 3 variables: `Class ~ Perimeter + Concavity + Smoothness`. In other words, we have successfully removed irrelevant
-predictors from the model! It is always worth remembering, however, that what cross-validation gives you 
+predictors from the model! It is always worth remembering, however, that what cross-validation gives you
 is an *estimate* of the true accuracy; you have to use your judgement when looking at this plot to decide
 where the elbow occurs, and whether adding a variable provides a meaningful increase in accuracy.
 
-```{r 06-fwdsel-3, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "65%", fig.cap = "Estimated accuracy versus the number of predictors for the sequence of models built using forward selection.", fig.pos = "H"}
+```{r 06-fwdsel-3, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "65%", fig.align = "center", fig.cap = "Estimated accuracy versus the number of predictors for the sequence of models built using forward selection.", fig.pos = "H"}
 
 fwd_sel_accuracies_plot <- accuracies |>
   ggplot(aes(x = size, y = accuracy)) +
+  geom_point() +
   geom_line() +
   labs(x = "Number of Predictors", y = "Estimated Accuracy")  +
-  theme(text = element_text(size = 20), axis.title=element_text(size=20)) 
+  theme(text = element_text(size = 20), axis.title=element_text(size=20))
 
 fwd_sel_accuracies_plot
 ```
 
 > **Note:** Since the choice of which variables to include as predictors is
 > part of tuning your classifier, you *cannot use your test data* for this
-> process! 
+> process!
 
 ## Exercises
 
-Practice exercises for the material covered in this chapter 
-can be found in the accompanying 
+Practice exercises for the material covered in this chapter
+can be found in the accompanying
 [worksheets repository](https://worksheets.datasciencebook.ca)
 in the "Classification II: evaluation and tuning" row.
 You can launch an interactive version of the worksheet in your browser by clicking the "launch binder" button.
@@ -1559,7 +1703,7 @@ and guidance that the worksheets provide will function as intended.
   two chapters, you'll learn about another kind of predictive modeling setting,
   so it might be worth visiting the website only after reading through those
   chapters.
-- *An Introduction to Statistical Learning* [@james2013introduction] provides 
+- *An Introduction to Statistical Learning* [@james2013introduction] provides
   a great next stop in the process of
   learning about classification. Chapter 4 discusses additional basic techniques
   for classification that we do not cover, such as logistic regression, linear

@@ -1,0 +1,45 @@
+name: Rebuild and deploy dev version of book to gh-pages branch in dev/ folder
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'index.Rmd'
+      - '_bookdown.yml'
+      - '_output.yml'
+      - 'source/*.Rmd'
+      - 'source/*.bib'
+      - 'source/*.css'
+      - 'data/**'
+      - 'img/**'
+      - 'build_html.sh'
+
+jobs:
+  deploy-main-preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          ref: 'main'
+          
+      - name: Build the book
+        run: |
+          ./build_html.sh
+
+       # Push the book's HTML to github-pages
+      - name: GitHub Pages action
+        uses: peaceiris/actions-gh-pages@v3.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/
+          keep_files: true
+          destination_dir: dev
+          # force_orphan: true # once peaceiris updates to v4, change this to true and keep_files: true for the PR / main branch deploy previews
+
+
+
