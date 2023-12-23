@@ -139,7 +139,7 @@ it classified 3 malignant observations as benign, and 4 benign observations as
 malignant. The accuracy of this classifier is roughly
 89%, given by the formula
 
-$$\mathrm{accuracy} = \frac{\mathrm{number \; of  \; correct  \; predictions}}{\mathrm{total \;  number \;  of  \; predictions}} = \frac{1+57}{1+57+4+3} = 0.892$$
+$$\mathrm{accuracy} = \frac{\mathrm{number \; of  \; correct  \; predictions}}{\mathrm{total \;  number \;  of  \; predictions}} = \frac{1+57}{1+57+4+3} = 0.892.$$
 
 But we can also see that the classifier only identified 1 out of 4 total malignant
 tumors; in other words, it misclassified 75% of the malignant cases present in the
@@ -245,7 +245,7 @@ Here, we pass in the number `1`.
 
 ```{r}
 set.seed(1)
-random_numbers1 <- sample(0:9, 10, replace=TRUE)
+random_numbers1 <- sample(0:9, 10, replace = TRUE)
 random_numbers1
 ```
 
@@ -255,7 +255,7 @@ we run the `sample` function again, we will
 get a fresh batch of 10 numbers that also look random.
 
 ```{r}
-random_numbers2 <- sample(0:9, 10, replace=TRUE)
+random_numbers2 <- sample(0:9, 10, replace = TRUE)
 random_numbers2
 ```
 
@@ -265,10 +265,10 @@ value.
 
 ```{r}
 set.seed(1)
-random_numbers1_again <- sample(0:9, 10, replace=TRUE)
+random_numbers1_again <- sample(0:9, 10, replace = TRUE)
 random_numbers1_again
 
-random_numbers2_again <- sample(0:9, 10, replace=TRUE)
+random_numbers2_again <- sample(0:9, 10, replace = TRUE)
 random_numbers2_again
 ```
 
@@ -278,11 +278,11 @@ obtain a different sequence of random numbers.
 
 ```{r}
 set.seed(4235)
-random_numbers <- sample(0:9, 10, replace=TRUE)
-random_numbers
+random_numbers1_different <- sample(0:9, 10, replace = TRUE)
+random_numbers1_different
 
-random_numbers <- sample(0:9, 10, replace=TRUE)
-random_numbers
+random_numbers2_different <- sample(0:9, 10, replace = TRUE)
+random_numbers2_different
 ```
 
 In other words, even though the sequences of numbers that R is generating *look*
@@ -290,7 +290,7 @@ random, they are totally determined when we set a seed value!
 
 So what does this mean for data analysis? Well, `sample` is certainly
 not the only function that uses randomness in R. Many of the functions
-that we use in `tidymodels`, `tidyverse`, and beyond use randomness&mdash;many of them
+that we use in `tidymodels`, `tidyverse`, and beyond use randomness&mdash;some of them
 without even telling you about it. So at the beginning of every data analysis you
 do, right after loading packages, you should call the `set.seed` function and
 pass it an integer that you pick.
@@ -512,10 +512,10 @@ cancer_acc_1 <- cancer_test_predictions |>
                 filter(.metric == 'accuracy')
 
 cancer_prec_1 <- cancer_test_predictions |>
-  precision(truth = Class, estimate = .pred_class, event_level="first")
+  precision(truth = Class, estimate = .pred_class, event_level = "first")
 
 cancer_rec_1 <- cancer_test_predictions |>
-  recall(truth = Class, estimate = .pred_class, event_level="first")
+  recall(truth = Class, estimate = .pred_class, event_level = "first")
 ```
 
 In the metrics data frame, we filtered the `.metric` column since we are
@@ -537,12 +537,12 @@ If the labels were in the other order, we would instead use `event_level="second
 
 ```{r 06-precision}
 cancer_test_predictions |>
-  precision(truth = Class, estimate = .pred_class, event_level="first")
+  precision(truth = Class, estimate = .pred_class, event_level = "first")
 ```
 
 ```{r 06-recall}
 cancer_test_predictions |>
-  recall(truth = Class, estimate = .pred_class, event_level="first")
+  recall(truth = Class, estimate = .pred_class, event_level = "first")
 ```
 
 The output shows that the estimated precision and recall of the classifier on the test data was
@@ -1400,6 +1400,7 @@ res <- tibble(ks = ks, accs = accs, fixedaccs = fixedaccs, nghbrs = nghbrs)
 
 plt_irrelevant_accuracies <- ggplot(res) +
               geom_line(mapping = aes(x=ks, y=accs)) +
+  	      geom_point(mapping = aes(x=ks, y=accs)) +
               labs(x = "Number of Irrelevant Predictors",
                    y = "Model Accuracy Estimate") +
   theme(text = element_text(size = 18), axis.title=element_text(size=18))
@@ -1420,9 +1421,10 @@ this evidence; if we fix the number of neighbors to $K=3$, the accuracy falls of
 
 ```{r 06-neighbors-irrelevant-features, echo = FALSE, warning = FALSE, fig.retina = 2, out.width = "65%", fig.align = "center", fig.cap = "Tuned number of neighbors for varying number of irrelevant predictors."}
 plt_irrelevant_nghbrs <- ggplot(res) +
+              geom_point(mapping = aes(x=ks, y=nghbrs)) +
               geom_line(mapping = aes(x=ks, y=nghbrs)) +
               labs(x = "Number of Irrelevant Predictors",
-                   y = "Number of neighbors") +
+                   y = "Tuned number of neighbors") +
   theme(text = element_text(size = 18), axis.title=element_text(size=18))
 
 plt_irrelevant_nghbrs
@@ -1434,6 +1436,7 @@ res_tmp <- res %>% pivot_longer(cols=c("accs", "fixedaccs"),
                                 values_to="accuracy")
 
 plt_irrelevant_nghbrs <- ggplot(res_tmp) +
+              geom_point(mapping = aes(x=ks, y=accuracy, color=Type)) +
               geom_line(mapping = aes(x=ks, y=accuracy, color=Type)) +
               labs(x = "Number of Irrelevant Predictors", y = "Accuracy") +
               scale_color_manual(labels= c("Tuned K", "K = 3"), values = c("darkorange", "steelblue")) +
@@ -1661,6 +1664,7 @@ where the elbow occurs, and whether adding a variable provides a meaningful incr
 
 fwd_sel_accuracies_plot <- accuracies |>
   ggplot(aes(x = size, y = accuracy)) +
+  geom_point() +
   geom_line() +
   labs(x = "Number of Predictors", y = "Estimated Accuracy")  +
   theme(text = element_text(size = 20), axis.title=element_text(size=20))
