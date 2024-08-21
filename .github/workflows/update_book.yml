@@ -27,13 +27,22 @@ jobs:
         with:
           ref: 'gh-pages'
 
-      - name: remove all pull and diff folders
+      - name: Copy contents of dev/ to home folder
         run: |
-          rm -rf pull* diff*
+          yes | cp -rf dev ${{ runner.home }}
 
-      - name: copy dev website to root directory
+      # Push update website to dev/ and clean out old commits
+      - name: Update website to contents of dev, remove all old commits and subpages
+        uses: peaceiris/actions-gh-pages@v3.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dev/
+          force_orphan: true # this will clean up all previous PR previews / main branch preview
+          cname: datasciencebook.ca
+
+      - name: copy dev/ website back in
         run: |
-          yes | cp -rf dev/* .
+          yes | cp -rf ${{ runner.home }}/dev dev
 
       - name: push the result to gh-pages
         uses: stefanzweifel/git-auto-commit-action@v5
