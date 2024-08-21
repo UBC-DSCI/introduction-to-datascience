@@ -1,0 +1,48 @@
+name: Rebuild and deploy book to gh-pages branch
+on:
+  push:
+    branches:
+      - production
+    paths:
+      - 'index.Rmd'
+      - '_bookdown.yml'
+      - '_output.yml'
+      - 'source/*.Rmd'
+      - 'source/*.bib'
+      - 'source/*.css'
+      - 'data/**'
+      - 'img/**'
+      - 'build_html.sh'
+      
+jobs:
+  deploy-book:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: checkout gh-pages
+        uses: actions/checkout@v2
+        with:
+          ref: 'gh-pages'
+
+      - name: Copy contents of dev/ to home folder
+        run: |
+          yes | cp -rf dev ${{ runner.home }}
+
+      # Push update website to dev/ and clean out old commits
+      - name: Update website to contents of dev, remove all old commits and subpages
+        uses: peaceiris/actions-gh-pages@v3.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dev/
+          force_orphan: true # this will clean up all previous PR previews / main branch preview
+          cname: datasciencebook.ca
+
+      - name: copy dev/ website back in
+        run: |
+          yes | cp -rf ${{ runner.home }}/dev dev
+
+      - name: push the result to gh-pages
+        uses: stefanzweifel/git-auto-commit-action@v5
