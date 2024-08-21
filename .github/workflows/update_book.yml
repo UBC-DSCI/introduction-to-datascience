@@ -1,0 +1,39 @@
+name: Rebuild and deploy book to gh-pages branch
+on:
+  push:
+    branches:
+      - production
+    paths:
+      - 'index.Rmd'
+      - '_bookdown.yml'
+      - '_output.yml'
+      - 'source/*.Rmd'
+      - 'source/*.bib'
+      - 'source/*.css'
+      - 'data/**'
+      - 'img/**'
+      - 'build_html.sh'
+      
+jobs:
+  deploy-book:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: checkout gh-pages
+        uses: actions/checkout@v2
+        with:
+          ref: 'gh-pages'
+
+      - name: remove all pull and diff folders
+        run: |
+          rm -rf pull* diff*
+
+      - name: copy dev website to root directory
+        run: |
+          yes | cp -rf dev/* .
+
+      - name: push the result to gh-pages
+        uses: stefanzweifel/git-auto-commit-action@v5
