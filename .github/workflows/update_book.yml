@@ -27,27 +27,17 @@ jobs:
         with:
           ref: 'gh-pages'
 
-      - name: Copy contents of dev/ to home folder
+      - name: Clean the site contents except for dev, pull contents of dev/ to main site
         run: |
-          yes | cp -rf dev $HOME
-
-      # Push update website to dev/ and clean out old commits
-      - name: Update website to contents of dev, remove all old commits and subpages
+          # delete everything except the dev folder
+          ls -1 --hide=dev | xargs rm -rf
+          # copy the contents of dev into the root
+          cp -rf dev/* .
+          
+      # Push updated website, clean out old commits
+      - name: Update website
         uses: peaceiris/actions-gh-pages@v3.8.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: dev/
           force_orphan: true # this will clean up all previous PR previews / main branch preview
           cname: datasciencebook.ca
-
-      - name: checkout gh-pages again (to grab new orphaned upstream branch)
-        uses: actions/checkout@v2
-        with:
-          ref: 'gh-pages'
-
-      - name: copy dev/ website back in
-        run: |
-          yes | cp -rf $HOME/dev dev
-
-      - name: push the result to gh-pages
-        uses: stefanzweifel/git-auto-commit-action@v5
