@@ -22,6 +22,13 @@ jobs:
       packages: write
 
     steps:
+      - name: Get Actions user id
+        id: get_uid
+        run: |
+          actions_user_id=`id -u $USER`
+          echo $actions_user_id
+          echo "uid=$actions_user_id" >> $GITHUB_OUTPUT
+          
       - name: checkout
         uses: actions/checkout@v2
         with:
@@ -30,6 +37,11 @@ jobs:
       - name: Build the book
         run: |
           ./build_html.sh
+          
+      - name: Reset ownership of workspace after build
+        uses: peter-murray/reset-workspace-ownership-action@v1
+        with:
+          user_id: ${{ steps.get_uid.outputs.uid }}
 
        # Push the book's HTML to github-pages
       - name: GitHub Pages action
