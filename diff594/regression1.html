@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+
+<html lang="" xml:lang="">
+<head>
+<meta charset="utf-8"/>
+<meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+<title>Chapter 7 Regression I: K-nearest neighbors |  Data Science</title>
+<meta content="This is a textbook for teaching a first introduction to data science." name="description"/>
+<meta content="bookdown 0.34 and GitBook 2.6.7" name="generator"/>
+<meta content="Chapter 7 Regression I: K-nearest neighbors |  Data Science" property="og:title"/>
+<meta content="book" property="og:type"/>
+<meta content="This is a textbook for teaching a first introduction to data science." property="og:description"/>
+<meta content="UBC-DSCI/introduction-to-datascience" name="github-repo"/>
+<meta content="summary" name="twitter:card"/>
+<meta content="Chapter 7 Regression I: K-nearest neighbors |  Data Science" name="twitter:title"/>
+<meta content="This is a textbook for teaching a first introduction to data science." name="twitter:description"/>
+<meta content="Tiffany Timbers, Trevor Campbell, and Melissa Lee" name="author"/>
+<meta content="2024-12-30" name="date"/><meta content="2024-08-21" name="date"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black" name="apple-mobile-web-app-status-bar-style"/>
+<link href="classification2.html" rel="prev"/>
+<link href="regression2.html" rel="next"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet"/>
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet"/>
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet"/>
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet"/>
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet"/>
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet"/>
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet"/>
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet"/>
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet"/>
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+<script src="libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="libs/lightable-0.0.1/lightable.css" rel="stylesheet"/>
+<script src="libs/htmlwidgets-1.6.2/htmlwidgets.js"></script>
+<script src="libs/plotly-binding-4.10.2/plotly.js"></script>
+<script src="libs/typedarray-0.1/typedarray.min.js"></script>
+<link href="libs/crosstalk-1.2.0/css/crosstalk.min.css" rel="stylesheet"/>
+<script src="libs/crosstalk-1.2.0/js/crosstalk.min.js"></script>
+<link href="libs/plotly-htmlwidgets-css-2.11.1/plotly-htmlwidgets.css" rel="stylesheet"/>
+<script src="libs/plotly-main-2.11.1/plotly-latest.min.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-JJ9MD0LBF5"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-JJ9MD0LBF5');
+</script>
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+<style type="text/css">
+/* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+<link href="source/style.css" rel="stylesheet" type="text/css"/>
+<script src="website_diff.js"></script><link href="website_diff.css" rel="stylesheet" type="text/css"/></head>
+<body>
+<div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+<div class="book-summary">
+<nav role="navigation">
+<ul class="summary">
+<li><a href="https://datasciencebook.ca">Data Science: A First Introduction</a></li>
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a class="link-to-diff" href="index.html"><i class="fa fa-check"></i>Welcome!</a></li>
+<li class="chapter" data-level="" data-path="foreword.html"><a href="foreword.html"><i class="fa fa-check"></i>Foreword</a></li>
+<li class="chapter" data-level="" data-path="preface.html"><a class="link-to-diff" href="preface.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="" data-path="acknowledgments.html"><a href="acknowledgments.html"><i class="fa fa-check"></i>Acknowledgments</a></li>
+<li class="chapter" data-level="" data-path="about-the-authors.html"><a href="about-the-authors.html"><i class="fa fa-check"></i>About the authors</a></li>
+<li class="chapter" data-level="1" data-path="intro.html"><a class="link-to-diff" href="intro.html"><i class="fa fa-check"></i><b>1</b> R and the Tidyverse</a>
+<ul>
+<li class="chapter" data-level="1.1" data-path="intro.html"><a class="link-to-diff" href="intro.html#overview"><i class="fa fa-check"></i><b>1.1</b> Overview</a></li>
+<li class="chapter" data-level="1.2" data-path="intro.html"><a class="link-to-diff" href="intro.html#chapter-learning-objectives"><i class="fa fa-check"></i><b>1.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="1.3" data-path="intro.html"><a class="link-to-diff" href="intro.html#canadian-languages-data-set"><i class="fa fa-check"></i><b>1.3</b> Canadian languages data set</a></li>
+<li class="chapter" data-level="1.4" data-path="intro.html"><a class="link-to-diff" href="intro.html#asking-a-question"><i class="fa fa-check"></i><b>1.4</b> Asking a question</a></li>
+<li class="chapter" data-level="1.5" data-path="intro.html"><a class="link-to-diff" href="intro.html#loading-a-tabular-data-set"><i class="fa fa-check"></i><b>1.5</b> Loading a tabular data set</a></li>
+<li class="chapter" data-level="1.6" data-path="intro.html"><a class="link-to-diff" href="intro.html#naming-things-in-r"><i class="fa fa-check"></i><b>1.6</b> Naming things in R</a></li>
+<li class="chapter" data-level="1.7" data-path="intro.html"><a class="link-to-diff" href="intro.html#creating-subsets-of-data-frames-with-filter-select"><i class="fa fa-check"></i><b>1.7</b> Creating subsets of data frames with <code>filter</code> &amp; <code>select</code></a>
+<ul>
+<li class="chapter" data-level="1.7.1" data-path="intro.html"><a class="link-to-diff" href="intro.html#using-filter-to-extract-rows"><i class="fa fa-check"></i><b>1.7.1</b> Using <code>filter</code> to extract rows</a></li>
+<li class="chapter" data-level="1.7.2" data-path="intro.html"><a class="link-to-diff" href="intro.html#using-select-to-extract-columns"><i class="fa fa-check"></i><b>1.7.2</b> Using <code>select</code> to extract columns</a></li>
+</ul></li>
+<li class="chapter" data-level="1.8" data-path="intro.html"><a class="link-to-diff" href="intro.html#arrangesliceintro"><i class="fa fa-check"></i><b>1.8</b> Using <code>arrange</code> to order and <code>slice</code> to select rows by index number</a></li>
+<li class="chapter" data-level="1.9" data-path="intro.html"><a class="link-to-diff" href="intro.html#adding-and-modifying-columns-using-mutate"><i class="fa fa-check"></i><b>1.9</b> Adding and modifying columns using <code>mutate</code></a></li>
+<li class="chapter" data-level="1.10" data-path="intro.html"><a class="link-to-diff" href="intro.html#exploring-data-with-visualizations"><i class="fa fa-check"></i><b>1.10</b> Exploring data with visualizations</a>
+<ul>
+<li class="chapter" data-level="1.10.1" data-path="intro.html"><a class="link-to-diff" href="intro.html#using-ggplot-to-create-a-bar-plot"><i class="fa fa-check"></i><b>1.10.1</b> Using <code>ggplot</code> to create a bar plot</a></li>
+<li class="chapter" data-level="1.10.2" data-path="intro.html"><a class="link-to-diff" href="intro.html#formatting-ggplot-objects"><i class="fa fa-check"></i><b>1.10.2</b> Formatting ggplot objects</a></li>
+<li class="chapter" data-level="1.10.3" data-path="intro.html"><a class="link-to-diff" href="intro.html#putting-it-all-together"><i class="fa fa-check"></i><b>1.10.3</b> Putting it all together</a></li>
+</ul></li>
+<li class="chapter" data-level="1.11" data-path="intro.html"><a class="link-to-diff" href="intro.html#accessing-documentation"><i class="fa fa-check"></i><b>1.11</b> Accessing documentation</a></li>
+<li class="chapter" data-level="1.12" data-path="intro.html"><a class="link-to-diff" href="intro.html#exercises"><i class="fa fa-check"></i><b>1.12</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="reading.html"><a class="link-to-diff" href="reading.html"><i class="fa fa-check"></i><b>2</b> Reading in data locally and from the web</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="reading.html"><a class="link-to-diff" href="reading.html#overview-1"><i class="fa fa-check"></i><b>2.1</b> Overview</a></li>
+<li class="chapter" data-level="2.2" data-path="reading.html"><a class="link-to-diff" href="reading.html#chapter-learning-objectives-1"><i class="fa fa-check"></i><b>2.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="2.3" data-path="reading.html"><a class="link-to-diff" href="reading.html#absolute-and-relative-file-paths"><i class="fa fa-check"></i><b>2.3</b> Absolute and relative file paths</a></li>
+<li class="chapter" data-level="2.4" data-path="reading.html"><a class="link-to-diff" href="reading.html#reading-tabular-data-from-a-plain-text-file-into-r"><i class="fa fa-check"></i><b>2.4</b> Reading tabular data from a plain text file into R</a>
+<ul>
+<li class="chapter" data-level="2.4.1" data-path="reading.html"><a class="link-to-diff" href="reading.html#readcsv"><i class="fa fa-check"></i><b>2.4.1</b> <code>read_csv</code> to read in comma-separated values files</a></li>
+<li class="chapter" data-level="2.4.2" data-path="reading.html"><a class="link-to-diff" href="reading.html#skipping-rows-when-reading-in-data"><i class="fa fa-check"></i><b>2.4.2</b> Skipping rows when reading in data</a></li>
+<li class="chapter" data-level="2.4.3" data-path="reading.html"><a class="link-to-diff" href="reading.html#read_tsv-to-read-in-tab-separated-values-files"><i class="fa fa-check"></i><b>2.4.3</b> <code>read_tsv</code> to read in tab-separated values files</a></li>
+<li class="chapter" data-level="2.4.4" data-path="reading.html"><a class="link-to-diff" href="reading.html#read_delim-as-a-more-flexible-method-to-get-tabular-data-into-r"><i class="fa fa-check"></i><b>2.4.4</b> <code>read_delim</code> as a more flexible method to get tabular data into R</a></li>
+<li class="chapter" data-level="2.4.5" data-path="reading.html"><a class="link-to-diff" href="reading.html#reading-tabular-data-directly-from-a-url"><i class="fa fa-check"></i><b>2.4.5</b> Reading tabular data directly from a URL</a></li>
+<li class="chapter" data-level="2.4.6" data-path="reading.html"><a class="link-to-diff" href="reading.html#downloading-data-from-a-url"><i class="fa fa-check"></i><b>2.4.6</b> Downloading data from a URL</a></li>
+<li class="chapter" data-level="2.4.7" data-path="reading.html"><a class="link-to-diff" href="reading.html#previewing-a-data-file-before-reading-it-into-r"><i class="fa fa-check"></i><b>2.4.7</b> Previewing a data file before reading it into R</a></li>
+</ul></li>
+<li class="chapter" data-level="2.5" data-path="reading.html"><a class="link-to-diff" href="reading.html#reading-tabular-data-from-a-microsoft-excel-file"><i class="fa fa-check"></i><b>2.5</b> Reading tabular data from a Microsoft Excel file</a></li>
+<li class="chapter" data-level="2.6" data-path="reading.html"><a class="link-to-diff" href="reading.html#reading-data-from-a-database"><i class="fa fa-check"></i><b>2.6</b> Reading data from a database</a>
+<ul>
+<li class="chapter" data-level="2.6.1" data-path="reading.html"><a class="link-to-diff" href="reading.html#reading-data-from-a-sqlite-database"><i class="fa fa-check"></i><b>2.6.1</b> Reading data from a SQLite database</a></li>
+<li class="chapter" data-level="2.6.2" data-path="reading.html"><a class="link-to-diff" href="reading.html#reading-data-from-a-postgresql-database"><i class="fa fa-check"></i><b>2.6.2</b> Reading data from a PostgreSQL database</a></li>
+<li class="chapter" data-level="2.6.3" data-path="reading.html"><a class="link-to-diff" href="reading.html#why-should-we-bother-with-databases-at-all"><i class="fa fa-check"></i><b>2.6.3</b> Why should we bother with databases at all?</a></li>
+</ul></li>
+<li class="chapter" data-level="2.7" data-path="reading.html"><a class="link-to-diff" href="reading.html#writing-data-from-r-to-a-.csv-file"><i class="fa fa-check"></i><b>2.7</b> Writing data from R to a <code>.csv</code> file</a></li>
+<li class="chapter" data-level="2.8" data-path="reading.html"><a class="link-to-diff" href="reading.html#obtaining-data-from-the-web"><i class="fa fa-check"></i><b>2.8</b> Obtaining data from the web</a>
+<ul>
+<li class="chapter" data-level="2.8.1" data-path="reading.html"><a class="link-to-diff" href="reading.html#web-scraping"><i class="fa fa-check"></i><b>2.8.1</b> Web scraping</a></li>
+<li class="chapter" data-level="2.8.2" data-path="reading.html"><a class="link-to-diff" href="reading.html#using-an-api"><i class="fa fa-check"></i><b>2.8.2</b> Using an API</a></li>
+</ul></li>
+<li class="chapter" data-level="2.9" data-path="reading.html"><a class="link-to-diff" href="reading.html#exercises-1"><i class="fa fa-check"></i><b>2.9</b> Exercises</a></li>
+<li class="chapter" data-level="2.10" data-path="reading.html"><a class="link-to-diff" href="reading.html#additional-resources"><i class="fa fa-check"></i><b>2.10</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html"><i class="fa fa-check"></i><b>3</b> Cleaning and wrangling data</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#overview-2"><i class="fa fa-check"></i><b>3.1</b> Overview</a></li>
+<li class="chapter" data-level="3.2" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#chapter-learning-objectives-2"><i class="fa fa-check"></i><b>3.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="3.3" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#data-frames-vectors-and-lists"><i class="fa fa-check"></i><b>3.3</b> Data frames, vectors, and lists</a>
+<ul>
+<li class="chapter" data-level="3.3.1" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#what-is-a-data-frame"><i class="fa fa-check"></i><b>3.3.1</b> What is a data frame?</a></li>
+<li class="chapter" data-level="3.3.2" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#what-is-a-vector"><i class="fa fa-check"></i><b>3.3.2</b> What is a vector?</a></li>
+<li class="chapter" data-level="3.3.3" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#what-is-a-list"><i class="fa fa-check"></i><b>3.3.3</b> What is a list?</a></li>
+<li class="chapter" data-level="3.3.4" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#what-does-this-have-to-do-with-data-frames"><i class="fa fa-check"></i><b>3.3.4</b> What does this have to do with data frames?</a></li>
+</ul></li>
+<li class="chapter" data-level="3.4" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#tidy-data"><i class="fa fa-check"></i><b>3.4</b> Tidy data</a>
+<ul>
+<li class="chapter" data-level="3.4.1" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#tidying-up-going-from-wide-to-long-using-pivot_longer"><i class="fa fa-check"></i><b>3.4.1</b> Tidying up: going from wide to long using <code>pivot_longer</code></a></li>
+<li class="chapter" data-level="3.4.2" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#pivot-wider"><i class="fa fa-check"></i><b>3.4.2</b> Tidying up: going from long to wide using <code>pivot_wider</code></a></li>
+<li class="chapter" data-level="3.4.3" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#separate"><i class="fa fa-check"></i><b>3.4.3</b> Tidying up: using <code>separate</code> to deal with multiple delimiters</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#using-select-to-extract-a-range-of-columns"><i class="fa fa-check"></i><b>3.5</b> Using <code>select</code> to extract a range of columns</a></li>
+<li class="chapter" data-level="3.6" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#using-filter-to-extract-rows-1"><i class="fa fa-check"></i><b>3.6</b> Using <code>filter</code> to extract rows</a>
+<ul>
+<li class="chapter" data-level="3.6.1" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#extracting-rows-that-have-a-certain-value-with"><i class="fa fa-check"></i><b>3.6.1</b> Extracting rows that have a certain value with <code>==</code></a></li>
+<li class="chapter" data-level="3.6.2" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#extracting-rows-that-do-not-have-a-certain-value-with"><i class="fa fa-check"></i><b>3.6.2</b> Extracting rows that do not have a certain value with <code>!=</code></a></li>
+<li class="chapter" data-level="3.6.3" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#filter-and"><i class="fa fa-check"></i><b>3.6.3</b> Extracting rows satisfying multiple conditions using <code>,</code> or <code>&amp;</code></a></li>
+<li class="chapter" data-level="3.6.4" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#extracting-rows-satisfying-at-least-one-condition-using"><i class="fa fa-check"></i><b>3.6.4</b> Extracting rows satisfying at least one condition using <code>|</code></a></li>
+<li class="chapter" data-level="3.6.5" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#extracting-rows-with-values-in-a-vector-using-in"><i class="fa fa-check"></i><b>3.6.5</b> Extracting rows with values in a vector using <code>%in%</code></a></li>
+<li class="chapter" data-level="3.6.6" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#extracting-rows-above-or-below-a-threshold-using-and"><i class="fa fa-check"></i><b>3.6.6</b> Extracting rows above or below a threshold using <code>&gt;</code> and <code>&lt;</code></a></li>
+</ul></li>
+<li class="chapter" data-level="3.7" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#using-mutate-to-modify-or-add-columns"><i class="fa fa-check"></i><b>3.7</b> Using <code>mutate</code> to modify or add columns</a>
+<ul>
+<li class="chapter" data-level="3.7.1" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#using-mutate-to-modify-columns"><i class="fa fa-check"></i><b>3.7.1</b> Using <code>mutate</code> to modify columns</a></li>
+<li class="chapter" data-level="3.7.2" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#using-mutate-to-create-new-columns"><i class="fa fa-check"></i><b>3.7.2</b> Using <code>mutate</code> to create new columns</a></li>
+</ul></li>
+<li class="chapter" data-level="3.8" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#combining-functions-using-the-pipe-operator"><i class="fa fa-check"></i><b>3.8</b> Combining functions using the pipe operator, <code>|&gt;</code></a>
+<ul>
+<li class="chapter" data-level="3.8.1" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#using-to-combine-filter-and-select"><i class="fa fa-check"></i><b>3.8.1</b> Using <code>|&gt;</code> to combine <code>filter</code> and <code>select</code></a></li>
+<li class="chapter" data-level="3.8.2" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#using-with-more-than-two-functions"><i class="fa fa-check"></i><b>3.8.2</b> Using <code>|&gt;</code> with more than two functions</a></li>
+</ul></li>
+<li class="chapter" data-level="3.9" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#aggregating-data-with-summarize-and-map"><i class="fa fa-check"></i><b>3.9</b> Aggregating data with <code>summarize</code> and <code>map</code></a>
+<ul>
+<li class="chapter" data-level="3.9.1" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#calculating-summary-statistics-on-whole-columns"><i class="fa fa-check"></i><b>3.9.1</b> Calculating summary statistics on whole columns</a></li>
+<li class="chapter" data-level="3.9.2" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#calculating-summary-statistics-when-there-are-nas"><i class="fa fa-check"></i><b>3.9.2</b> Calculating summary statistics when there are <code>NA</code>s</a></li>
+<li class="chapter" data-level="3.9.3" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#calculating-summary-statistics-for-groups-of-rows"><i class="fa fa-check"></i><b>3.9.3</b> Calculating summary statistics for groups of rows</a></li>
+<li class="chapter" data-level="3.9.4" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#calculating-summary-statistics-on-many-columns"><i class="fa fa-check"></i><b>3.9.4</b> Calculating summary statistics on many columns</a></li>
+</ul></li>
+<li class="chapter" data-level="3.10" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#apply-functions-across-many-columns-with-mutate-and-across"><i class="fa fa-check"></i><b>3.10</b> Apply functions across many columns with <code>mutate</code> and <code>across</code></a></li>
+<li class="chapter" data-level="3.11" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#apply-functions-across-columns-within-one-row-with-rowwise-and-mutate"><i class="fa fa-check"></i><b>3.11</b> Apply functions across columns within one row with <code>rowwise</code> and <code>mutate</code></a></li>
+<li class="chapter" data-level="3.12" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#summary"><i class="fa fa-check"></i><b>3.12</b> Summary</a></li>
+<li class="chapter" data-level="3.13" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#exercises-2"><i class="fa fa-check"></i><b>3.13</b> Exercises</a></li>
+<li class="chapter" data-level="3.14" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#additional-resources-1"><i class="fa fa-check"></i><b>3.14</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="viz.html"><a class="link-to-diff" href="viz.html"><i class="fa fa-check"></i><b>4</b> Effective data visualization</a>
+<ul>
+<li class="chapter" data-level="4.1" data-path="viz.html"><a class="link-to-diff" href="viz.html#overview-3"><i class="fa fa-check"></i><b>4.1</b> Overview</a></li>
+<li class="chapter" data-level="4.2" data-path="viz.html"><a class="link-to-diff" href="viz.html#chapter-learning-objectives-3"><i class="fa fa-check"></i><b>4.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="4.3" data-path="viz.html"><a class="link-to-diff" href="viz.html#choosing-the-visualization"><i class="fa fa-check"></i><b>4.3</b> Choosing the visualization</a></li>
+<li class="chapter" data-level="4.4" data-path="viz.html"><a class="link-to-diff" href="viz.html#refining-the-visualization"><i class="fa fa-check"></i><b>4.4</b> Refining the visualization</a></li>
+<li class="chapter" data-level="4.5" data-path="viz.html"><a class="link-to-diff" href="viz.html#creating-visualizations-with-ggplot2"><i class="fa fa-check"></i><b>4.5</b> Creating visualizations with <code>ggplot2</code></a>
+<ul>
+<li class="chapter" data-level="4.5.1" data-path="viz.html"><a class="link-to-diff" href="viz.html#scatter-plots-and-line-plots-the-mauna-loa-co_text2-data-set"><i class="fa fa-check"></i><b>4.5.1</b> Scatter plots and line plots: the Mauna Loa CO<span class="math inline">\(_{\text{2}}\)</span> data set</a></li>
+<li class="chapter" data-level="4.5.2" data-path="viz.html"><a class="link-to-diff" href="viz.html#scatter-plots-the-old-faithful-eruption-time-data-set"><i class="fa fa-check"></i><b>4.5.2</b> Scatter plots: the Old Faithful eruption time data set</a></li>
+<li class="chapter" data-level="4.5.3" data-path="viz.html"><a class="link-to-diff" href="viz.html#axis-transformation-and-colored-scatter-plots-the-canadian-languages-data-set"><i class="fa fa-check"></i><b>4.5.3</b> Axis transformation and colored scatter plots: the Canadian languages data set</a></li>
+<li class="chapter" data-level="4.5.4" data-path="viz.html"><a class="link-to-diff" href="viz.html#bar-plots-the-island-landmass-data-set"><i class="fa fa-check"></i><b>4.5.4</b> Bar plots: the island landmass data set</a></li>
+<li class="chapter" data-level="4.5.5" data-path="viz.html"><a class="link-to-diff" href="viz.html#histogramsviz"><i class="fa fa-check"></i><b>4.5.5</b> Histograms: the Michelson speed of light data set</a></li>
+</ul></li>
+<li class="chapter" data-level="4.6" data-path="viz.html"><a class="link-to-diff" href="viz.html#explaining-the-visualization"><i class="fa fa-check"></i><b>4.6</b> Explaining the visualization</a></li>
+<li class="chapter" data-level="4.7" data-path="viz.html"><a class="link-to-diff" href="viz.html#saving-the-visualization"><i class="fa fa-check"></i><b>4.7</b> Saving the visualization</a></li>
+<li class="chapter" data-level="4.8" data-path="viz.html"><a class="link-to-diff" href="viz.html#exercises-3"><i class="fa fa-check"></i><b>4.8</b> Exercises</a></li>
+<li class="chapter" data-level="4.9" data-path="viz.html"><a class="link-to-diff" href="viz.html#additional-resources-2"><i class="fa fa-check"></i><b>4.9</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="classification1.html"><a class="link-to-diff" href="classification1.html"><i class="fa fa-check"></i><b>5</b> Classification I: training &amp; predicting</a>
+<ul>
+<li class="chapter" data-level="5.1" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#overview-4"><i class="fa fa-check"></i><b>5.1</b> Overview</a></li>
+<li class="chapter" data-level="5.2" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#chapter-learning-objectives-4"><i class="fa fa-check"></i><b>5.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="5.3" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#the-classification-problem"><i class="fa fa-check"></i><b>5.3</b> The classification problem</a></li>
+<li class="chapter" data-level="5.4" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#exploring-a-data-set"><i class="fa fa-check"></i><b>5.4</b> Exploring a data set</a>
+<ul>
+<li class="chapter" data-level="5.4.1" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#loading-the-cancer-data"><i class="fa fa-check"></i><b>5.4.1</b> Loading the cancer data</a></li>
+<li class="chapter" data-level="5.4.2" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#describing-the-variables-in-the-cancer-data-set"><i class="fa fa-check"></i><b>5.4.2</b> Describing the variables in the cancer data set</a></li>
+<li class="chapter" data-level="5.4.3" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#exploring-the-cancer-data"><i class="fa fa-check"></i><b>5.4.3</b> Exploring the cancer data</a></li>
+</ul></li>
+<li class="chapter" data-level="5.5" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#classification-with-k-nearest-neighbors"><i class="fa fa-check"></i><b>5.5</b> Classification with K-nearest neighbors</a>
+<ul>
+<li class="chapter" data-level="5.5.1" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#distance-between-points"><i class="fa fa-check"></i><b>5.5.1</b> Distance between points</a></li>
+<li class="chapter" data-level="5.5.2" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#more-than-two-explanatory-variables"><i class="fa fa-check"></i><b>5.5.2</b> More than two explanatory variables</a></li>
+<li class="chapter" data-level="5.5.3" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#summary-of-k-nearest-neighbors-algorithm"><i class="fa fa-check"></i><b>5.5.3</b> Summary of K-nearest neighbors algorithm</a></li>
+</ul></li>
+<li class="chapter" data-level="5.6" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#k-nearest-neighbors-with-tidymodels"><i class="fa fa-check"></i><b>5.6</b> K-nearest neighbors with <code>tidymodels</code></a></li>
+<li class="chapter" data-level="5.7" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#data-preprocessing-with-tidymodels"><i class="fa fa-check"></i><b>5.7</b> Data preprocessing with <code>tidymodels</code></a>
+<ul>
+<li class="chapter" data-level="5.7.1" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#centering-and-scaling"><i class="fa fa-check"></i><b>5.7.1</b> Centering and scaling</a></li>
+<li class="chapter" data-level="5.7.2" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#balancing"><i class="fa fa-check"></i><b>5.7.2</b> Balancing</a></li>
+<li class="chapter" data-level="5.7.3" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#missing-data"><i class="fa fa-check"></i><b>5.7.3</b> Missing data</a></li>
+</ul></li>
+<li class="chapter" data-level="5.8" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#puttingittogetherworkflow"><i class="fa fa-check"></i><b>5.8</b> Putting it together in a <code>workflow</code></a></li>
+<li class="chapter" data-level="5.9" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#exercises-4"><i class="fa fa-check"></i><b>5.9</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="classification2.html"><a class="link-to-diff" href="classification2.html"><i class="fa fa-check"></i><b>6</b> Classification II: evaluation &amp; tuning</a>
+<ul>
+<li class="chapter" data-level="6.1" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#overview-5"><i class="fa fa-check"></i><b>6.1</b> Overview</a></li>
+<li class="chapter" data-level="6.2" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#chapter-learning-objectives-5"><i class="fa fa-check"></i><b>6.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="6.3" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#evaluating-performance"><i class="fa fa-check"></i><b>6.3</b> Evaluating performance</a></li>
+<li class="chapter" data-level="6.4" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#randomseeds"><i class="fa fa-check"></i><b>6.4</b> Randomness and seeds</a></li>
+<li class="chapter" data-level="6.5" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#evaluating-performance-with-tidymodels"><i class="fa fa-check"></i><b>6.5</b> Evaluating performance with <code>tidymodels</code></a>
+<ul>
+<li class="chapter" data-level="6.5.1" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#create-the-train-test-split"><i class="fa fa-check"></i><b>6.5.1</b> Create the train / test split</a></li>
+<li class="chapter" data-level="6.5.2" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#preprocess-the-data"><i class="fa fa-check"></i><b>6.5.2</b> Preprocess the data</a></li>
+<li class="chapter" data-level="6.5.3" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#train-the-classifier"><i class="fa fa-check"></i><b>6.5.3</b> Train the classifier</a></li>
+<li class="chapter" data-level="6.5.4" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#predict-the-labels-in-the-test-set"><i class="fa fa-check"></i><b>6.5.4</b> Predict the labels in the test set</a></li>
+<li class="chapter" data-level="6.5.5" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#eval-performance-cls2"><i class="fa fa-check"></i><b>6.5.5</b> Evaluate performance</a></li>
+<li class="chapter" data-level="6.5.6" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#critically-analyze-performance"><i class="fa fa-check"></i><b>6.5.6</b> Critically analyze performance</a></li>
+</ul></li>
+<li class="chapter" data-level="6.6" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#tuning-the-classifier"><i class="fa fa-check"></i><b>6.6</b> Tuning the classifier</a>
+<ul>
+<li class="chapter" data-level="6.6.1" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#cross-validation"><i class="fa fa-check"></i><b>6.6.1</b> Cross-validation</a></li>
+<li class="chapter" data-level="6.6.2" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#parameter-value-selection"><i class="fa fa-check"></i><b>6.6.2</b> Parameter value selection</a></li>
+<li class="chapter" data-level="6.6.3" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#underoverfitting"><i class="fa fa-check"></i><b>6.6.3</b> Under/Overfitting</a></li>
+<li class="chapter" data-level="6.6.4" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#evaluating-on-the-test-set"><i class="fa fa-check"></i><b>6.6.4</b> Evaluating on the test set</a></li>
+</ul></li>
+<li class="chapter" data-level="6.7" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#summary-1"><i class="fa fa-check"></i><b>6.7</b> Summary</a></li>
+<li class="chapter" data-level="6.8" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#predictor-variable-selection"><i class="fa fa-check"></i><b>6.8</b> Predictor variable selection</a>
+<ul>
+<li class="chapter" data-level="6.8.1" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#the-effect-of-irrelevant-predictors"><i class="fa fa-check"></i><b>6.8.1</b> The effect of irrelevant predictors</a></li>
+<li class="chapter" data-level="6.8.2" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#finding-a-good-subset-of-predictors"><i class="fa fa-check"></i><b>6.8.2</b> Finding a good subset of predictors</a></li>
+<li class="chapter" data-level="6.8.3" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#forward-selection-in-r"><i class="fa fa-check"></i><b>6.8.3</b> Forward selection in R</a></li>
+</ul></li>
+<li class="chapter" data-level="6.9" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#exercises-5"><i class="fa fa-check"></i><b>6.9</b> Exercises</a></li>
+<li class="chapter" data-level="6.10" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#additional-resources-3"><i class="fa fa-check"></i><b>6.10</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="regression1.html"><a class="link-to-diff" href="regression1.html"><i class="fa fa-check"></i><b>7</b> Regression I: K-nearest neighbors</a>
+<ul>
+<li class="chapter" data-level="7.1" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#overview-6"><i class="fa fa-check"></i><b>7.1</b> Overview</a></li>
+<li class="chapter" data-level="7.2" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#chapter-learning-objectives-6"><i class="fa fa-check"></i><b>7.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="7.3" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#the-regression-problem"><i class="fa fa-check"></i><b>7.3</b> The regression problem</a></li>
+<li class="chapter" data-level="7.4" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#exploring-a-data-set-1"><i class="fa fa-check"></i><b>7.4</b> Exploring a data set</a></li>
+<li class="chapter" data-level="7.5" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#k-nearest-neighbors-regression"><i class="fa fa-check"></i><b>7.5</b> K-nearest neighbors regression</a></li>
+<li class="chapter" data-level="7.6" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#training-evaluating-and-tuning-the-model"><i class="fa fa-check"></i><b>7.6</b> Training, evaluating, and tuning the model</a></li>
+<li class="chapter" data-level="7.7" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#underfitting-and-overfitting"><i class="fa fa-check"></i><b>7.7</b> Underfitting and overfitting</a></li>
+<li class="chapter" data-level="7.8" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#evaluating-on-the-test-set-1"><i class="fa fa-check"></i><b>7.8</b> Evaluating on the test set</a></li>
+<li class="chapter" data-level="7.9" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#multivariable-k-nn-regression"><i class="fa fa-check"></i><b>7.9</b> Multivariable K-NN regression</a></li>
+<li class="chapter" data-level="7.10" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#strengths-and-limitations-of-k-nn-regression"><i class="fa fa-check"></i><b>7.10</b> Strengths and limitations of K-NN regression</a></li>
+<li class="chapter" data-level="7.11" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#exercises-6"><i class="fa fa-check"></i><b>7.11</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="regression2.html"><a class="link-to-diff" href="regression2.html"><i class="fa fa-check"></i><b>8</b> Regression II: linear regression</a>
+<ul>
+<li class="chapter" data-level="8.1" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#overview-7"><i class="fa fa-check"></i><b>8.1</b> Overview</a></li>
+<li class="chapter" data-level="8.2" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#chapter-learning-objectives-7"><i class="fa fa-check"></i><b>8.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="8.3" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#simple-linear-regression"><i class="fa fa-check"></i><b>8.3</b> Simple linear regression</a></li>
+<li class="chapter" data-level="8.4" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#linear-regression-in-r"><i class="fa fa-check"></i><b>8.4</b> Linear regression in R</a></li>
+<li class="chapter" data-level="8.5" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#comparing-simple-linear-and-k-nn-regression"><i class="fa fa-check"></i><b>8.5</b> Comparing simple linear and K-NN regression</a></li>
+<li class="chapter" data-level="8.6" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#multivariable-linear-regression"><i class="fa fa-check"></i><b>8.6</b> Multivariable linear regression</a></li>
+<li class="chapter" data-level="8.7" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#multicollinearity-and-outliers"><i class="fa fa-check"></i><b>8.7</b> Multicollinearity and outliers</a>
+<ul>
+<li class="chapter" data-level="8.7.1" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#outliers"><i class="fa fa-check"></i><b>8.7.1</b> Outliers</a></li>
+<li class="chapter" data-level="8.7.2" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#multicollinearity"><i class="fa fa-check"></i><b>8.7.2</b> Multicollinearity</a></li>
+</ul></li>
+<li class="chapter" data-level="8.8" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#designing-new-predictors"><i class="fa fa-check"></i><b>8.8</b> Designing new predictors</a></li>
+<li class="chapter" data-level="8.9" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#the-other-sides-of-regression"><i class="fa fa-check"></i><b>8.9</b> The other sides of regression</a></li>
+<li class="chapter" data-level="8.10" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#exercises-7"><i class="fa fa-check"></i><b>8.10</b> Exercises</a></li>
+<li class="chapter" data-level="8.11" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#additional-resources-4"><i class="fa fa-check"></i><b>8.11</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="9" data-path="clustering.html"><a class="link-to-diff" href="clustering.html"><i class="fa fa-check"></i><b>9</b> Clustering</a>
+<ul>
+<li class="chapter" data-level="9.1" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#overview-8"><i class="fa fa-check"></i><b>9.1</b> Overview</a></li>
+<li class="chapter" data-level="9.2" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#chapter-learning-objectives-8"><i class="fa fa-check"></i><b>9.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="9.3" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#clustering-1"><i class="fa fa-check"></i><b>9.3</b> Clustering</a></li>
+<li class="chapter" data-level="9.4" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#an-illustrative-example"><i class="fa fa-check"></i><b>9.4</b> An illustrative example</a></li>
+<li class="chapter" data-level="9.5" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#k-means"><i class="fa fa-check"></i><b>9.5</b> K-means</a>
+<ul>
+<li class="chapter" data-level="9.5.1" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#measuring-cluster-quality"><i class="fa fa-check"></i><b>9.5.1</b> Measuring cluster quality</a></li>
+<li class="chapter" data-level="9.5.2" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#the-clustering-algorithm"><i class="fa fa-check"></i><b>9.5.2</b> The clustering algorithm</a></li>
+<li class="chapter" data-level="9.5.3" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#random-restarts"><i class="fa fa-check"></i><b>9.5.3</b> Random restarts</a></li>
+<li class="chapter" data-level="9.5.4" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#choosing-k"><i class="fa fa-check"></i><b>9.5.4</b> Choosing K</a></li>
+</ul></li>
+<li class="chapter" data-level="9.6" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#k-means-in-r"><i class="fa fa-check"></i><b>9.6</b> K-means in R</a></li>
+<li class="chapter" data-level="9.7" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#exercises-8"><i class="fa fa-check"></i><b>9.7</b> Exercises</a></li>
+<li class="chapter" data-level="9.8" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#additional-resources-5"><i class="fa fa-check"></i><b>9.8</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="10" data-path="inference.html"><a class="link-to-diff" href="inference.html"><i class="fa fa-check"></i><b>10</b> Statistical inference</a>
+<ul>
+<li class="chapter" data-level="10.1" data-path="inference.html"><a class="link-to-diff" href="inference.html#overview-9"><i class="fa fa-check"></i><b>10.1</b> Overview</a></li>
+<li class="chapter" data-level="10.2" data-path="inference.html"><a class="link-to-diff" href="inference.html#chapter-learning-objectives-9"><i class="fa fa-check"></i><b>10.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="10.3" data-path="inference.html"><a class="link-to-diff" href="inference.html#why-do-we-need-sampling"><i class="fa fa-check"></i><b>10.3</b> Why do we need sampling?</a></li>
+<li class="chapter" data-level="10.4" data-path="inference.html"><a class="link-to-diff" href="inference.html#sampling-distributions"><i class="fa fa-check"></i><b>10.4</b> Sampling distributions</a>
+<ul>
+<li class="chapter" data-level="10.4.1" data-path="inference.html"><a class="link-to-diff" href="inference.html#sampling-distributions-for-proportions"><i class="fa fa-check"></i><b>10.4.1</b> Sampling distributions for proportions</a></li>
+<li class="chapter" data-level="10.4.2" data-path="inference.html"><a class="link-to-diff" href="inference.html#sampling-distributions-for-means"><i class="fa fa-check"></i><b>10.4.2</b> Sampling distributions for means</a></li>
+<li class="chapter" data-level="10.4.3" data-path="inference.html"><a class="link-to-diff" href="inference.html#summary-2"><i class="fa fa-check"></i><b>10.4.3</b> Summary</a></li>
+</ul></li>
+<li class="chapter" data-level="10.5" data-path="inference.html"><a class="link-to-diff" href="inference.html#bootstrapping"><i class="fa fa-check"></i><b>10.5</b> Bootstrapping</a>
+<ul>
+<li class="chapter" data-level="10.5.1" data-path="inference.html"><a class="link-to-diff" href="inference.html#overview-10"><i class="fa fa-check"></i><b>10.5.1</b> Overview</a></li>
+<li class="chapter" data-level="10.5.2" data-path="inference.html"><a class="link-to-diff" href="inference.html#bootstrapping-in-r"><i class="fa fa-check"></i><b>10.5.2</b> Bootstrapping in R</a></li>
+<li class="chapter" data-level="10.5.3" data-path="inference.html"><a class="link-to-diff" href="inference.html#using-the-bootstrap-to-calculate-a-plausible-range"><i class="fa fa-check"></i><b>10.5.3</b> Using the bootstrap to calculate a plausible range</a></li>
+</ul></li>
+<li class="chapter" data-level="10.6" data-path="inference.html"><a class="link-to-diff" href="inference.html#exercises-9"><i class="fa fa-check"></i><b>10.6</b> Exercises</a></li>
+<li class="chapter" data-level="10.7" data-path="inference.html"><a class="link-to-diff" href="inference.html#additional-resources-6"><i class="fa fa-check"></i><b>10.7</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="11" data-path="jupyter.html"><a href="jupyter.html"><i class="fa fa-check"></i><b>11</b> Combining code and text with Jupyter</a>
+<ul>
+<li class="chapter" data-level="11.1" data-path="jupyter.html"><a href="jupyter.html#overview-11"><i class="fa fa-check"></i><b>11.1</b> Overview</a></li>
+<li class="chapter" data-level="11.2" data-path="jupyter.html"><a href="jupyter.html#chapter-learning-objectives-10"><i class="fa fa-check"></i><b>11.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="11.3" data-path="jupyter.html"><a href="jupyter.html#jupyter-1"><i class="fa fa-check"></i><b>11.3</b> Jupyter</a>
+<ul>
+<li class="chapter" data-level="11.3.1" data-path="jupyter.html"><a href="jupyter.html#accessing-jupyter"><i class="fa fa-check"></i><b>11.3.1</b> Accessing Jupyter</a></li>
+</ul></li>
+<li class="chapter" data-level="11.4" data-path="jupyter.html"><a href="jupyter.html#code-cells"><i class="fa fa-check"></i><b>11.4</b> Code cells</a>
+<ul>
+<li class="chapter" data-level="11.4.1" data-path="jupyter.html"><a href="jupyter.html#executing-code-cells"><i class="fa fa-check"></i><b>11.4.1</b> Executing code cells</a></li>
+<li class="chapter" data-level="11.4.2" data-path="jupyter.html"><a href="jupyter.html#the-kernel"><i class="fa fa-check"></i><b>11.4.2</b> The Kernel</a></li>
+<li class="chapter" data-level="11.4.3" data-path="jupyter.html"><a href="jupyter.html#creating-new-code-cells"><i class="fa fa-check"></i><b>11.4.3</b> Creating new code cells</a></li>
+</ul></li>
+<li class="chapter" data-level="11.5" data-path="jupyter.html"><a href="jupyter.html#markdown-cells"><i class="fa fa-check"></i><b>11.5</b> Markdown cells</a>
+<ul>
+<li class="chapter" data-level="11.5.1" data-path="jupyter.html"><a href="jupyter.html#editing-markdown-cells"><i class="fa fa-check"></i><b>11.5.1</b> Editing Markdown cells</a></li>
+<li class="chapter" data-level="11.5.2" data-path="jupyter.html"><a href="jupyter.html#creating-new-markdown-cells"><i class="fa fa-check"></i><b>11.5.2</b> Creating new Markdown cells</a></li>
+</ul></li>
+<li class="chapter" data-level="11.6" data-path="jupyter.html"><a href="jupyter.html#saving-your-work"><i class="fa fa-check"></i><b>11.6</b> Saving your work</a></li>
+<li class="chapter" data-level="11.7" data-path="jupyter.html"><a href="jupyter.html#best-practices-for-running-a-notebook"><i class="fa fa-check"></i><b>11.7</b> Best practices for running a notebook</a>
+<ul>
+<li class="chapter" data-level="11.7.1" data-path="jupyter.html"><a href="jupyter.html#best-practices-for-executing-code-cells"><i class="fa fa-check"></i><b>11.7.1</b> Best practices for executing code cells</a></li>
+<li class="chapter" data-level="11.7.2" data-path="jupyter.html"><a href="jupyter.html#best-practices-for-including-r-packages-in-notebooks"><i class="fa fa-check"></i><b>11.7.2</b> Best practices for including R packages in notebooks</a></li>
+<li class="chapter" data-level="11.7.3" data-path="jupyter.html"><a href="jupyter.html#summary-of-best-practices-for-running-a-notebook"><i class="fa fa-check"></i><b>11.7.3</b> Summary of best practices for running a notebook</a></li>
+</ul></li>
+<li class="chapter" data-level="11.8" data-path="jupyter.html"><a href="jupyter.html#exploring-data-files"><i class="fa fa-check"></i><b>11.8</b> Exploring data files</a></li>
+<li class="chapter" data-level="11.9" data-path="jupyter.html"><a href="jupyter.html#exporting-to-a-different-file-format"><i class="fa fa-check"></i><b>11.9</b> Exporting to a different file format</a>
+<ul>
+<li class="chapter" data-level="11.9.1" data-path="jupyter.html"><a href="jupyter.html#exporting-to-html"><i class="fa fa-check"></i><b>11.9.1</b> Exporting to HTML</a></li>
+<li class="chapter" data-level="11.9.2" data-path="jupyter.html"><a href="jupyter.html#exporting-to-pdf"><i class="fa fa-check"></i><b>11.9.2</b> Exporting to PDF</a></li>
+</ul></li>
+<li class="chapter" data-level="11.10" data-path="jupyter.html"><a href="jupyter.html#creating-a-new-jupyter-notebook"><i class="fa fa-check"></i><b>11.10</b> Creating a new Jupyter notebook</a></li>
+<li class="chapter" data-level="11.11" data-path="jupyter.html"><a href="jupyter.html#additional-resources-7"><i class="fa fa-check"></i><b>11.11</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="12" data-path="version-control.html"><a class="link-to-diff" href="version-control.html"><i class="fa fa-check"></i><b>12</b> Collaboration with version control</a>
+<ul>
+<li class="chapter" data-level="12.1" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#overview-12"><i class="fa fa-check"></i><b>12.1</b> Overview</a></li>
+<li class="chapter" data-level="12.2" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#chapter-learning-objectives-11"><i class="fa fa-check"></i><b>12.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="12.3" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#what-is-version-control-and-why-should-i-use-it"><i class="fa fa-check"></i><b>12.3</b> What is version control, and why should I use it?</a></li>
+<li class="chapter" data-level="12.4" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#version-control-repositories"><i class="fa fa-check"></i><b>12.4</b> Version control repositories</a></li>
+<li class="chapter" data-level="12.5" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#version-control-workflows"><i class="fa fa-check"></i><b>12.5</b> Version control workflows</a>
+<ul>
+<li class="chapter" data-level="12.5.1" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#commit-changes"><i class="fa fa-check"></i><b>12.5.1</b> Committing changes to a local repository</a></li>
+<li class="chapter" data-level="12.5.2" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#pushing-changes-to-a-remote-repository"><i class="fa fa-check"></i><b>12.5.2</b> Pushing changes to a remote repository</a></li>
+<li class="chapter" data-level="12.5.3" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#pulling-changes-from-a-remote-repository"><i class="fa fa-check"></i><b>12.5.3</b> Pulling changes from a remote repository</a></li>
+</ul></li>
+<li class="chapter" data-level="12.6" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#working-with-remote-repositories-using-github"><i class="fa fa-check"></i><b>12.6</b> Working with remote repositories using GitHub</a>
+<ul>
+<li class="chapter" data-level="12.6.1" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#creating-a-remote-repository-on-github"><i class="fa fa-check"></i><b>12.6.1</b> Creating a remote repository on GitHub</a></li>
+<li class="chapter" data-level="12.6.2" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#editing-files-on-github-with-the-pen-tool"><i class="fa fa-check"></i><b>12.6.2</b> Editing files on GitHub with the pen tool</a></li>
+<li class="chapter" data-level="12.6.3" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#creating-files-on-github-with-the-add-file-menu"><i class="fa fa-check"></i><b>12.6.3</b> Creating files on GitHub with the “Add file” menu</a></li>
+</ul></li>
+<li class="chapter" data-level="12.7" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#local-repo-jupyter"><i class="fa fa-check"></i><b>12.7</b> Working with local repositories using Jupyter</a>
+<ul>
+<li class="chapter" data-level="12.7.1" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#generating-a-github-personal-access-token"><i class="fa fa-check"></i><b>12.7.1</b> Generating a GitHub personal access token</a></li>
+<li class="chapter" data-level="12.7.2" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#cloning-a-repository-using-jupyter"><i class="fa fa-check"></i><b>12.7.2</b> Cloning a repository using Jupyter</a></li>
+<li class="chapter" data-level="12.7.3" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#specifying-files-to-commit"><i class="fa fa-check"></i><b>12.7.3</b> Specifying files to commit</a></li>
+<li class="chapter" data-level="12.7.4" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#making-the-commit"><i class="fa fa-check"></i><b>12.7.4</b> Making the commit</a></li>
+<li class="chapter" data-level="12.7.5" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#pushing-the-commits-to-github"><i class="fa fa-check"></i><b>12.7.5</b> Pushing the commits to GitHub</a></li>
+</ul></li>
+<li class="chapter" data-level="12.8" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#collaboration"><i class="fa fa-check"></i><b>12.8</b> Collaboration</a>
+<ul>
+<li class="chapter" data-level="12.8.1" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#giving-collaborators-access-to-your-project"><i class="fa fa-check"></i><b>12.8.1</b> Giving collaborators access to your project</a></li>
+<li class="chapter" data-level="12.8.2" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#pulling-changes-from-github-using-jupyter"><i class="fa fa-check"></i><b>12.8.2</b> Pulling changes from GitHub using Jupyter</a></li>
+<li class="chapter" data-level="12.8.3" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#handling-merge-conflicts"><i class="fa fa-check"></i><b>12.8.3</b> Handling merge conflicts</a></li>
+<li class="chapter" data-level="12.8.4" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#communicating-using-github-issues"><i class="fa fa-check"></i><b>12.8.4</b> Communicating using GitHub issues</a></li>
+</ul></li>
+<li class="chapter" data-level="12.9" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#exercises-10"><i class="fa fa-check"></i><b>12.9</b> Exercises</a></li>
+<li class="chapter" data-level="12.10" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#vc-add-res"><i class="fa fa-check"></i><b>12.10</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="13" data-path="setup.html"><a class="link-to-diff" href="setup.html"><i class="fa fa-check"></i><b>13</b> Setting up your computer</a>
+<ul>
+<li class="chapter" data-level="13.1" data-path="setup.html"><a class="link-to-diff" href="setup.html#overview-13"><i class="fa fa-check"></i><b>13.1</b> Overview</a></li>
+<li class="chapter" data-level="13.2" data-path="setup.html"><a class="link-to-diff" href="setup.html#chapter-learning-objectives-12"><i class="fa fa-check"></i><b>13.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="13.3" data-path="setup.html"><a class="link-to-diff" href="setup.html#obtaining-the-worksheets-for-this-book"><i class="fa fa-check"></i><b>13.3</b> Obtaining the worksheets for this book</a></li>
+<li class="chapter" data-level="13.4" data-path="setup.html"><a class="link-to-diff" href="setup.html#working-with-docker"><i class="fa fa-check"></i><b>13.4</b> Working with Docker</a>
+<ul>
+<li class="chapter" data-level="13.4.1" data-path="setup.html"><a class="link-to-diff" href="setup.html#windows"><i class="fa fa-check"></i><b>13.4.1</b> Windows</a></li>
+<li class="chapter" data-level="13.4.2" data-path="setup.html"><a class="link-to-diff" href="setup.html#macos"><i class="fa fa-check"></i><b>13.4.2</b> MacOS</a></li>
+<li class="chapter" data-level="13.4.3" data-path="setup.html"><a class="link-to-diff" href="setup.html#ubuntu"><i class="fa fa-check"></i><b>13.4.3</b> Ubuntu</a></li>
+</ul></li>
+<li class="chapter" data-level="13.5" data-path="setup.html"><a class="link-to-diff" href="setup.html#working-with-jupyterlab-desktop"><i class="fa fa-check"></i><b>13.5</b> Working with JupyterLab Desktop</a>
+<ul>
+<li class="chapter" data-level="13.5.1" data-path="setup.html"><a class="link-to-diff" href="setup.html#windows-1"><i class="fa fa-check"></i><b>13.5.1</b> Windows</a></li>
+<li class="chapter" data-level="13.5.2" data-path="setup.html"><a class="link-to-diff" href="setup.html#macos-1"><i class="fa fa-check"></i><b>13.5.2</b> MacOS</a></li>
+<li class="chapter" data-level="13.5.3" data-path="setup.html"><a class="link-to-diff" href="setup.html#ubuntu-1"><i class="fa fa-check"></i><b>13.5.3</b> Ubuntu</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+</ul>
+</nav>
+</div>
+<div class="book-body">
+<div class="body-inner">
+<div class="book-header" role="navigation">
+<h1>
+<i class="fa fa-circle-o-notch fa-spin"></i><a href="./"><p><img src="img/frontmatter/ds-a-first-intro-graphic.jpg"/>
+Data Science</p></a>
+</h1>
+</div>
+<div class="page-wrapper" role="main" tabindex="-1">
+<div class="page-inner">
+<section class="normal" id="section-">
+<div class="section level1 hasAnchor" id="regression1" number="7">
+<h1><span class="header-section-number">Chapter 7</span> Regression I: K-nearest neighbors<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="regression1.html#regression1"></a></h1>
+<div class="section level2 hasAnchor" id="overview-6" number="7.1">
+<h2><span class="header-section-number">7.1</span> Overview<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="regression1.html#overview-6"></a></h2>
+<p>This chapter continues our foray into answering predictive questions.
+Here we will focus on predicting <em>numerical</em> variables
+and will use <em>regression</em> to perform this task.
+This is unlike the past two chapters, which focused on predicting categorical
+variables via classification. However, regression does have many similarities
+to classification: for example, just as in the case of classification,
+we will split our data into training, validation, and test sets, we will
+use <code>tidymodels</code> workflows, we will use a K-nearest neighbors (K-NN)
+approach to make predictions, and we will use cross-validation to choose K.
+Because of how similar these procedures are, make sure to read Chapters
+<a class="link-to-diff" href="classification1.html#classification1">5</a> and <a class="link-to-diff" href="classification2.html#classification2">6</a> before reading
+this one—we will move a little bit faster here with the
+concepts that have already been covered.
+This chapter will primarily focus on the case where there is a single predictor,
+but the end of the chapter shows how to perform
+regression with more than one predictor variable, i.e., <em>multivariable regression</em>.
+It is important to note that regression
+can also be used to answer inferential and causal questions,
+however that is beyond the scope of this book.</p>
+</div>
+<div class="section level2 hasAnchor" id="chapter-learning-objectives-6" number="7.2">
+<h2><span class="header-section-number">7.2</span> Chapter learning objectives<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="regression1.html#chapter-learning-objectives-6"></a></h2>
+<p>By the end of the chapter, readers will be able to do the following:</p>
+<ul>
+<li>Recognize situations where a regression analysis would be appropriate for making predictions.</li>
+<li>Explain the K-nearest neighbors (K-NN) regression algorithm and describe how it differs from K-NN classification.</li>
+<li>Interpret the output of a K-NN regression.</li>
+<li>In a data set with two or more variables, perform K-nearest neighbors regression in R.</li>
+<li>Evaluate K-NN regression prediction quality in R using the root mean squared prediction error (RMSPE).</li>
+<li>Estimate the RMSPE in R using cross-validation or a test set.</li>
+<li>Choose the number of neighbors in K-nearest neighbors regression by minimizing estimated cross-validation RMSPE.</li>
+<li>Describe underfitting and overfitting, and relate it to the number of neighbors in K-nearest neighbors regression.</li>
+<li>Describe the advantages and disadvantages of K-nearest neighbors regression.</li>
+</ul>
+</div>
+<div class="section level2 hasAnchor" id="the-regression-problem" number="7.3">
+<h2><span class="header-section-number">7.3</span> The regression problem<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="regression1.html#the-regression-problem"></a></h2>
+<p>Regression, like classification, is a predictive problem setting where we want
+to use past information to predict future observations. But in the case of
+regression, the goal is to predict <em>numerical</em> values instead of <em>categorical</em> values.
+The variable that you want to predict is often called the <em>response variable</em>.
+For example, we could try to use the number of hours a person spends on
+exercise each week to predict their race time in the annual Boston marathon. As
+another example, we could try to use the size of a house to
+predict its sale price. Both of these response variables—race time and sale price—are
+numerical, and so predicting them given past data is considered a regression problem.</p>
+<p>Just like in the
+classification setting, there are many possible methods that we can use
+to predict numerical response variables. In this chapter we will
+focus on the <strong>K-nearest neighbors</strong> algorithm <span class="citation">(<a href="#ref-knnfix">Fix and Hodges 1951</a>; <a href="#ref-knncover">Cover and Hart 1967</a>)</span>, and in the next chapter
+we will study <strong>linear regression</strong>.
+In your future studies, you might encounter regression trees, splines,
+and general local regression methods; see the additional resources
+section at the end of the next chapter for where to begin learning more about
+these other methods.</p>
+<p>Many of the concepts from classification map over to the setting of regression. For example,
+a regression model predicts a new observation’s response variable based on the response variables
+for similar observations in the data set of past observations. When building a regression model,
+we first split the data into training and test sets, in order to ensure that we assess the performance
+of our method on observations not seen during training. And finally, we can use cross-validation to evaluate different
+choices of model parameters (e.g., K in a K-nearest neighbors model). The major difference
+is that we are now predicting numerical variables instead of categorical variables.</p>
+<div style="page-break-after: always;"></div>
+<blockquote>
+<p><strong>Note:</strong> You can usually tell whether a variable is numerical or
+categorical—and therefore whether you need to perform regression or
+classification—by taking the response variable for two observations X and Y from your data,
+and asking the question, “is response variable X <em>more</em> than response
+variable Y?” If the variable is categorical, the question will make no sense.
+(Is blue more than red? Is benign more than malignant?) If the variable is
+numerical, it will make sense. (Is 1.5 hours more than 2.25 hours? Is
+$500,000 more than $400,000?) Be careful when applying this heuristic,
+though: sometimes categorical variables will be encoded as numbers in your
+data (e.g., “1” represents “benign”, and “0” represents “malignant”). In
+these cases you have to ask the question about the <em>meaning</em> of the labels
+(“benign” and “malignant”), not their values (“1” and “0”).</p>
+</blockquote>
+</div>
+<div class="section level2 hasAnchor" id="exploring-a-data-set-1" number="7.4">
+<h2><span class="header-section-number">7.4</span> Exploring a data set<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="regression1.html#exploring-a-data-set-1"></a></h2>
+<p>In this chapter and the next, we will study
+a data set of
+<a href="https://support.spatialkey.com/spatialkey-sample-csv-data/">932 real estate transactions in Sacramento, California</a>
+originally reported in the <em>Sacramento Bee</em> newspaper.
+We first need to formulate a precise question that
+we want to answer. In this example, our question is again predictive:
+Can we use the size of a house in the Sacramento, CA area to predict
+its sale price? A rigorous, quantitative answer to this question might help
+a realtor advise a client as to whether the price of a particular listing
+is fair, or perhaps how to set the price of a new listing.
+We begin the analysis by loading and examining the data, and setting the seed value.</p>
+<p></p>
+<div class="sourceCode" id="cb388"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb388-1"><a class="link-to-diff" href="regression1.html#cb388-1" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb388-2"><a class="link-to-diff" href="regression1.html#cb388-2" tabindex="-1"></a><span class="fu">library</span>(tidymodels)</span>
+<span id="cb388-3"><a class="link-to-diff" href="regression1.html#cb388-3" tabindex="-1"></a><span class="fu">library</span>(gridExtra)</span>
+<span id="cb388-4"><a class="link-to-diff" href="regression1.html#cb388-4" tabindex="-1"></a></span>
+<span id="cb388-5"><a class="link-to-diff" href="regression1.html#cb388-5" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">5</span>)</span>
+<span id="cb388-6"><a class="link-to-diff" href="regression1.html#cb388-6" tabindex="-1"></a></span>
+<span id="cb388-7"><a class="link-to-diff" href="regression1.html#cb388-7" tabindex="-1"></a>sacramento <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/sacramento.csv"</span>)</span>
+<span id="cb388-8"><a class="link-to-diff" href="regression1.html#cb388-8" tabindex="-1"></a>sacramento</span></code></pre></div>
+<pre><code>## # A tibble: 932 × 9
+##    city           zip     beds baths  sqft type        price latitude longitude
+##    &lt;chr&gt;          &lt;chr&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;
+##  1 SACRAMENTO     z95838     2     1   836 Residential 59222     38.6     -121.
+##  2 SACRAMENTO     z95823     3     1  1167 Residential 68212     38.5     -121.
+##  3 SACRAMENTO     z95815     2     1   796 Residential 68880     38.6     -121.
+##  4 SACRAMENTO     z95815     2     1   852 Residential 69307     38.6     -121.
+##  5 SACRAMENTO     z95824     2     1   797 Residential 81900     38.5     -121.
+##  6 SACRAMENTO     z95841     3     1  1122 Condo       89921     38.7     -121.
+##  7 SACRAMENTO     z95842     3     2  1104 Residential 90895     38.7     -121.
+##  8 SACRAMENTO     z95820     3     1  1177 Residential 91002     38.5     -121.
+##  9 RANCHO_CORDOVA z95670     2     2   941 Condo       94905     38.6     -121.
+## 10 RIO_LINDA      z95673     3     2  1146 Residential 98937     38.7     -121.
+## # ℹ 922 more rows</code></pre>
+<p>The scientific question guides our initial exploration: the columns in the
+data that we are interested in are <code>sqft</code> (house size, in livable square feet)
+and <code>price</code> (house sale price, in US dollars (USD)). The first step is to visualize
+the data as a scatter plot where we place the predictor variable
+(house size) on the x-axis, and we place the response variable that we
+want to predict (sale price) on the y-axis.
+</p>
+<blockquote>
+<p><strong>Note:</strong> Given that the y-axis unit is dollars in Figure <a class="link-to-diff" href="regression1.html#fig:07-edaRegr">7.1</a>,
+we format the axis labels to put dollar signs in front of the house prices,
+as well as commas to increase the readability of the larger numbers.
+We can do this in R by passing the <code>dollar_format</code> function
+(from the <code>scales</code> package)
+to the <code>labels</code> argument of the <code>scale_y_continuous</code> function.</p>
+</blockquote>
+<div class="sourceCode" id="cb390"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb390-1"><a class="link-to-diff" href="regression1.html#cb390-1" tabindex="-1"></a>eda <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(sacramento, <span class="fu">aes</span>(<span class="at">x =</span> sqft, <span class="at">y =</span> price)) <span class="sc">+</span></span>
+<span id="cb390-2"><a class="link-to-diff" href="regression1.html#cb390-2" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>) <span class="sc">+</span></span>
+<span id="cb390-3"><a class="link-to-diff" href="regression1.html#cb390-3" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"House size (square feet)"</span>) <span class="sc">+</span></span>
+<span id="cb390-4"><a class="link-to-diff" href="regression1.html#cb390-4" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Price (USD)"</span>) <span class="sc">+</span></span>
+<span id="cb390-5"><a class="link-to-diff" href="regression1.html#cb390-5" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="fu">dollar_format</span>()) <span class="sc">+</span></span>
+<span id="cb390-6"><a class="link-to-diff" href="regression1.html#cb390-6" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
+<span id="cb390-7"><a class="link-to-diff" href="regression1.html#cb390-7" tabindex="-1"></a></span>
+<span id="cb390-8"><a class="link-to-diff" href="regression1.html#cb390-8" tabindex="-1"></a>eda</span></code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:07-edaRegr" style="display:block;"></span>
+<img alt="Scatter plot of price (USD) versus house size (square feet)." src="_main_files/figure-html/07-edaRegr-1.png" width="432"/>
+<p class="caption">
+Figure 7.1: Scatter plot of price (USD) versus house size (square feet).
+</p>
+</div>
+<p>The plot is shown in Figure <a class="link-to-diff" href="regression1.html#fig:07-edaRegr">7.1</a>.
+We can see that in Sacramento, CA, as the
+size of a house increases, so does its sale price. Thus, we can reason that we
+may be able to use the size of a not-yet-sold house (for which we don’t know
+the sale price) to predict its final sale price. Note that we do not suggest here
+that a larger house size <em>causes</em> a higher sale price; just that house price
+tends to increase with house size, and that we may be able to use the latter to
+predict the former.</p>
+</div>
+<div class="section level2 hasAnchor" id="k-nearest-neighbors-regression" number="7.5">
+<h2><span class="header-section-number">7.5</span> K-nearest neighbors regression<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="regression1.html#k-nearest-neighbors-regression"></a></h2>
+<p>Much like in the case of classification,
+we can use a K-nearest neighbors-based
+approach in regression to make predictions.
+Let’s take a small sample of the data in Figure <a class="link-to-diff" href="regression1.html#fig:07-edaRegr">7.1</a>
+and walk through how K-nearest neighbors (K-NN) works
+in a regression context before we dive in to creating our model and assessing
+how well it predicts house sale price. This subsample is taken to allow us to
+illustrate the mechanics of K-NN regression with a few data points; later in
+this chapter we will use all the data.</p>
+<p>To take a small random sample of size 30, we’ll use the function
+<code>slice_sample</code>, and input the data frame to sample from and the number of rows
+to randomly select. </p>
+<div class="sourceCode" id="cb391"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb391-1"><a class="link-to-diff" href="regression1.html#cb391-1" tabindex="-1"></a>small_sacramento <span class="ot">&lt;-</span> <span class="fu">slice_sample</span>(sacramento, <span class="at">n =</span> <span class="dv">30</span>)</span></code></pre></div>
+<p>Next let’s say we come across a 2,000 square-foot house in Sacramento we are
+interested in purchasing, with an advertised list price of $350,000. Should we
+offer to pay the asking price for this house, or is it overpriced and we should
+offer less? Absent any other information, we can get a sense for a good answer
+to this question by using the data we have to predict the sale price given the
+sale prices we have already observed. But in Figure <a class="link-to-diff" href="regression1.html#fig:07-small-eda-regr">7.2</a>,
+you can see that we have no
+observations of a house of size <em>exactly</em> 2,000 square feet. How can we predict
+the sale price?</p>
+<div class="sourceCode" id="cb392"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb392-1"><a class="link-to-diff" href="regression1.html#cb392-1" tabindex="-1"></a>small_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(small_sacramento, <span class="fu">aes</span>(<span class="at">x =</span> sqft, <span class="at">y =</span> price)) <span class="sc">+</span></span>
+<span id="cb392-2"><a class="link-to-diff" href="regression1.html#cb392-2" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb392-3"><a class="link-to-diff" href="regression1.html#cb392-3" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"House size (square feet)"</span>) <span class="sc">+</span></span>
+<span id="cb392-4"><a class="link-to-diff" href="regression1.html#cb392-4" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Price (USD)"</span>) <span class="sc">+</span></span>
+<span id="cb392-5"><a class="link-to-diff" href="regression1.html#cb392-5" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="fu">dollar_format</span>()) <span class="sc">+</span></span>
+<span id="cb392-6"><a class="link-to-diff" href="regression1.html#cb392-6" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">2000</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
+<span id="cb392-7"><a class="link-to-diff" href="regression1.html#cb392-7" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
+<span id="cb392-8"><a class="link-to-diff" href="regression1.html#cb392-8" tabindex="-1"></a></span>
+<span id="cb392-9"><a class="link-to-diff" href="regression1.html#cb392-9" tabindex="-1"></a>small_plot</span></code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:07-small-eda-regr" style="display:block;"></span>
+<img alt="Scatter plot of price (USD) versus house size (square feet) with vertical line indicating 2,000 square feet on x-axis." src="_main_files/figure-html/07-small-eda-regr-1.png" width="432"/>
+<p class="caption">
+Figure 7.2: Scatter plot of price (USD) versus house size (square feet) with vertical line indicating 2,000 square feet on x-axis.
+</p>
+</div>
+<p>We will employ the same intuition from the classification chapter, and use the
+neighboring points to the new point of interest to suggest/predict what its
+sale price might be.
+For the example shown in Figure <a class="link-to-diff" href="regression1.html#fig:07-small-eda-regr">7.2</a>,
+we find and label the 5 nearest neighbors to our observation
+of a house that is 2,000 square feet.
+</p>
+<div class="sourceCode" id="cb393"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb393-1"><a class="link-to-diff" href="regression1.html#cb393-1" tabindex="-1"></a>nearest_neighbors <span class="ot">&lt;-</span> small_sacramento <span class="sc">|&gt;</span></span>
+<span id="cb393-2"><a class="link-to-diff" href="regression1.html#cb393-2" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">diff =</span> <span class="fu">abs</span>(<span class="dv">2000</span> <span class="sc">-</span> sqft)) <span class="sc">|&gt;</span></span>
+<span id="cb393-3"><a class="link-to-diff" href="regression1.html#cb393-3" tabindex="-1"></a>  <span class="fu">slice_min</span>(diff, <span class="at">n =</span> <span class="dv">5</span>)</span>
+<span id="cb393-4"><a class="link-to-diff" href="regression1.html#cb393-4" tabindex="-1"></a></span>
+<span id="cb393-5"><a class="link-to-diff" href="regression1.html#cb393-5" tabindex="-1"></a>nearest_neighbors</span></code></pre></div>
+<pre><code>## # A tibble: 5 × 10
+##   city       zip     beds baths  sqft type        price latitude longitude  diff
+##   &lt;chr&gt;      &lt;chr&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;
+## 1 ROSEVILLE  z95661     3   2    2049 Residenti… 395500     38.7     -121.    49
+## 2 ANTELOPE   z95843     4   3    2085 Residenti… 408431     38.7     -121.    85
+## 3 SACRAMENTO z95823     4   2    1876 Residenti… 299940     38.5     -121.   124
+## 4 ROSEVILLE  z95747     3   2.5  1829 Residenti… 306500     38.8     -121.   171
+## 5 SACRAMENTO z95825     4   2    1776 Multi_Fam… 221250     38.6     -121.   224</code></pre>
+<div class="figure" style="text-align: center"><span id="fig:07-knn3-example" style="display:block;"></span>
+<img alt="Scatter plot of price (USD) versus house size (square feet) with lines to 5 nearest neighbors (highlighted in orange)." src="_main_files/figure-html/07-knn3-example-1.png" width="432"/>
+<p class="caption">
+Figure 7.3: Scatter plot of price (USD) versus house size (square feet) with lines to 5 nearest neighbors (highlighted in orange).
+</p>
+</div>
+<p>Figure <a class="link-to-diff" href="regression1.html#fig:07-knn3-example">7.3</a> illustrates the difference between the house sizes
+of the 5 nearest neighbors (in terms of house size) to our new
+2,000 square-foot house of interest. Now that we have obtained these nearest neighbors,
+we can use their values to predict the
+sale price for the new home. Specifically, we can take the mean (or
+average) of these 5 values as our predicted value, as illustrated by
+the red point in Figure <a class="link-to-diff" href="regression1.html#fig:07-predictedViz-knn">7.4</a>.</p>
+<div class="sourceCode" id="cb395"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb395-1"><a class="link-to-diff" href="regression1.html#cb395-1" tabindex="-1"></a>prediction <span class="ot">&lt;-</span> nearest_neighbors <span class="sc">|&gt;</span></span>
+<span id="cb395-2"><a class="link-to-diff" href="regression1.html#cb395-2" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">predicted =</span> <span class="fu">mean</span>(price))</span>
+<span id="cb395-3"><a class="link-to-diff" href="regression1.html#cb395-3" tabindex="-1"></a></span>
+<span id="cb395-4"><a class="link-to-diff" href="regression1.html#cb395-4" tabindex="-1"></a>prediction</span></code></pre></div>
+<pre><code>## # A tibble: 1 × 1
+##   predicted
+##       &lt;dbl&gt;
+## 1   326324.</code></pre>
+<div class="figure" style="text-align: center"><span id="fig:07-predictedViz-knn" style="display:block;"></span>
+<img alt="Scatter plot of price (USD) versus house size (square feet) with predicted price for a 2,000 square-foot house based on 5 nearest neighbors represented as a red dot." src="_main_files/figure-html/07-predictedViz-knn-1.png" width="432"/>
+<p class="caption">
+Figure 7.4: Scatter plot of price (USD) versus house size (square feet) with predicted price for a 2,000 square-foot house based on 5 nearest neighbors represented as a red dot.
+</p>
+</div>
+<p>Our predicted price is $326,324
+(shown as a red point in Figure <a class="link-to-diff" href="regression1.html#fig:07-predictedViz-knn">7.4</a>), which is much less than $350,000; perhaps we
+might want to offer less than the list price at which the house is advertised.
+But this is only the very beginning of the story. We still have all the same
+unanswered questions here with K-NN regression that we had with K-NN
+classification: which <span class="math inline">\(K\)</span> do we choose, and is our model any good at making
+predictions? In the next few sections, we will address these questions in the
+context of K-NN regression.</p>
+<p>One strength of the K-NN regression algorithm
+that we would like to draw attention to at this point
+is its ability to work well with non-linear relationships
+(i.e., if the relationship is not a straight line).
+This stems from the use of nearest neighbors to predict values.
+The algorithm really has very few assumptions
+about what the data must look like for it to work.</p>
+</div>
+<div class="section level2 hasAnchor" id="training-evaluating-and-tuning-the-model" number="7.6">
+<h2><span class="header-section-number">7.6</span> Training, evaluating, and tuning the model<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="regression1.html#training-evaluating-and-tuning-the-model"></a></h2>
+<p>As usual,
+we must start by putting some test data away in a lock box
+that we will come back to only after we choose our final model.
+Let’s take care of that now.
+Note that for the remainder of the chapter
+we’ll be working with the entire Sacramento data set,
+as opposed to the smaller sample of 30 points
+that we used earlier in the chapter (Figure <a class="link-to-diff" href="regression1.html#fig:07-small-eda-regr">7.2</a>).
+</p>
+<div class="sourceCode" id="cb397"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb397-1"><a class="link-to-diff" href="regression1.html#cb397-1" tabindex="-1"></a>sacramento_split <span class="ot">&lt;-</span> <span class="fu">initial_split</span>(sacramento, <span class="at">prop =</span> <span class="fl">0.75</span>, <span class="at">strata =</span> price)</span>
+<span id="cb397-2"><a class="link-to-diff" href="regression1.html#cb397-2" tabindex="-1"></a>sacramento_train <span class="ot">&lt;-</span> <span class="fu">training</span>(sacramento_split)</span>
+<span id="cb397-3"><a class="link-to-diff" href="regression1.html#cb397-3" tabindex="-1"></a>sacramento_test <span class="ot">&lt;-</span> <span class="fu">testing</span>(sacramento_split)</span></code></pre></div>
+<p>Next, we’ll use cross-validation to choose <span class="math inline">\(K\)</span>. In K-NN classification, we used
+accuracy to see how well our predictions matched the true labels. We cannot use
+the same metric in the regression setting, since our predictions will almost never
+<em>exactly</em> match the true response variable values. Therefore in the
+context of K-NN regression we will use root mean square prediction error
+(RMSPE) instead. The mathematical formula for calculating RMSPE is:</p>
+<p><span class="math display">\[\text{RMSPE} = \sqrt{\frac{1}{n}\sum\limits_{i=1}^{n}(y_i - \hat{y}_i)^2}\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(n\)</span> is the number of observations,</li>
+<li><span class="math inline">\(y_i\)</span> is the observed value for the <span class="math inline">\(i^\text{th}\)</span> observation, and</li>
+<li><span class="math inline">\(\hat{y}_i\)</span> is the forecasted/predicted value for the <span class="math inline">\(i^\text{th}\)</span> observation.</li>
+</ul>
+<p>In other words, we compute the <em>squared</em> difference between the predicted and true response
+value for each observation in our test (or validation) set, compute the average, and then finally
+take the square root. The reason we use the <em>squared</em> difference (and not just the difference)
+is that the differences can be positive or negative, i.e., we can overshoot or undershoot the true
+response value. Figure <a class="link-to-diff" href="regression1.html#fig:07-verticalerrors">7.5</a> illustrates both positive and negative differences
+between predicted and true response values.
+So if we want to measure error—a notion of distance between our predicted and true response values—we
+want to make sure that we are only adding up positive values, with larger positive values representing larger
+mistakes.
+If the predictions are very close to the true values, then
+RMSPE will be small. If, on the other-hand, the predictions are very
+different from the true values, then RMSPE will be quite large. When we
+use cross-validation, we will choose the <span class="math inline">\(K\)</span> that gives
+us the smallest RMSPE.</p>
+<div class="figure" style="text-align: center"><span id="fig:07-verticalerrors" style="display:block;"></span>
+<img alt="Scatter plot of price (USD) versus house size (square feet) with example predictions (blue line) and the error in those predictions compared with true response values (vertical lines)." src="_main_files/figure-html/07-verticalerrors-1.png" width="432"/>
+<p class="caption">
+Figure 7.5: Scatter plot of price (USD) versus house size (square feet) with example predictions (blue line) and the error in those predictions compared with true response values (vertical lines).
+</p>
+</div>
+<blockquote>
+<p><strong>Note:</strong> When using many code packages (<code>tidymodels</code> included), the evaluation output
+we will get to assess the prediction quality of
+our K-NN regression models is labeled “RMSE”, or “root mean squared
+error”. Why is this so, and why not RMSPE?
+In statistics, we try to be very precise with our
+language to indicate whether we are calculating the prediction error on the
+training data (<em>in-sample</em> prediction) versus on the testing data
+(<em>out-of-sample</em> prediction). When predicting and evaluating prediction quality on the training data, we
+say RMSE. By contrast, when predicting and evaluating prediction quality
+on the testing or validation data, we say RMSPE.
+The equation for calculating RMSE and RMSPE is exactly the same; all that changes is whether the <span class="math inline">\(y\)</span>s are
+training or testing data. But many people just use RMSE for both,
+and rely on context to denote which data the root mean squared error is being calculated on.</p>
+</blockquote>
+<p>Now that we know how we can assess how well our model predicts a numerical
+value, let’s use R to perform cross-validation and to choose the optimal <span class="math inline">\(K\)</span>.
+First, we will create a recipe for preprocessing our data.
+Note that we include standardization
+in our preprocessing to build good habits, but since we only have one
+predictor, it is technically not necessary; there is no risk of comparing two predictors
+of different scales.
+Next we create a model specification for K-nearest neighbors regression. Note
+that we use <code>set_mode("regression")</code>
+now in the model specification to denote a regression problem, as opposed to the classification
+problems from the previous chapters.
+The use of <code>set_mode("regression")</code> essentially
+tells <code>tidymodels</code> that we need to use different metrics (RMSPE, not accuracy)
+for tuning and evaluation.
+Then we create a 5-fold cross-validation object, and put the recipe and model specification together
+in a workflow.
+</p>
+<div class="sourceCode" id="cb398"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb398-1"><a class="link-to-diff" href="regression1.html#cb398-1" tabindex="-1"></a>sacr_recipe <span class="ot">&lt;-</span> <span class="fu">recipe</span>(price <span class="sc">~</span> sqft, <span class="at">data =</span> sacramento_train) <span class="sc">|&gt;</span></span>
+<span id="cb398-2"><a class="link-to-diff" href="regression1.html#cb398-2" tabindex="-1"></a>  <span class="fu">step_scale</span>(<span class="fu">all_predictors</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb398-3"><a class="link-to-diff" href="regression1.html#cb398-3" tabindex="-1"></a>  <span class="fu">step_center</span>(<span class="fu">all_predictors</span>())</span>
+<span id="cb398-4"><a class="link-to-diff" href="regression1.html#cb398-4" tabindex="-1"></a></span>
+<span id="cb398-5"><a class="link-to-diff" href="regression1.html#cb398-5" tabindex="-1"></a>sacr_spec <span class="ot">&lt;-</span> <span class="fu">nearest_neighbor</span>(<span class="at">weight_func =</span> <span class="st">"rectangular"</span>,</span>
+<span id="cb398-6"><a class="link-to-diff" href="regression1.html#cb398-6" tabindex="-1"></a>                              <span class="at">neighbors =</span> <span class="fu">tune</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb398-7"><a class="link-to-diff" href="regression1.html#cb398-7" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"kknn"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb398-8"><a class="link-to-diff" href="regression1.html#cb398-8" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">"regression"</span>)</span>
+<span id="cb398-9"><a class="link-to-diff" href="regression1.html#cb398-9" tabindex="-1"></a></span>
+<span id="cb398-10"><a class="link-to-diff" href="regression1.html#cb398-10" tabindex="-1"></a>sacr_vfold <span class="ot">&lt;-</span> <span class="fu">vfold_cv</span>(sacramento_train, <span class="at">v =</span> <span class="dv">5</span>, <span class="at">strata =</span> price)</span>
+<span id="cb398-11"><a class="link-to-diff" href="regression1.html#cb398-11" tabindex="-1"></a></span>
+<span id="cb398-12"><a class="link-to-diff" href="regression1.html#cb398-12" tabindex="-1"></a>sacr_wkflw <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb398-13"><a class="link-to-diff" href="regression1.html#cb398-13" tabindex="-1"></a>  <span class="fu">add_recipe</span>(sacr_recipe) <span class="sc">|&gt;</span></span>
+<span id="cb398-14"><a class="link-to-diff" href="regression1.html#cb398-14" tabindex="-1"></a>  <span class="fu">add_model</span>(sacr_spec)</span>
+<span id="cb398-15"><a class="link-to-diff" href="regression1.html#cb398-15" tabindex="-1"></a></span>
+<span id="cb398-16"><a class="link-to-diff" href="regression1.html#cb398-16" tabindex="-1"></a>sacr_wkflw</span></code></pre></div>
+<pre><code>## ══ Workflow ══════════
+## Preprocessor: Recipe
+## Model: nearest_neighbor()
+## 
+## ── Preprocessor ──────────
+## 2 Recipe Steps
+## 
+## • step_scale()
+## • step_center()
+## 
+## ── Model ──────────
+## K-Nearest Neighbor Model Specification (regression)
+## 
+## Main Arguments:
+##   neighbors = tune()
+##   weight_func = rectangular
+## 
+## Computational engine: kknn</code></pre>
+<p>Next we run cross-validation for a grid of numbers of neighbors ranging from 1 to 200.
+The following code tunes
+the model and returns the RMSPE for each number of neighbors. In the output of the <code>sacr_results</code>
+results data frame, we see that the <code>neighbors</code> variable contains the value of <span class="math inline">\(K\)</span>,
+the mean (<code>mean</code>) contains the value of the RMSPE estimated via cross-validation,
+and the standard error (<code>std_err</code>) contains a value corresponding to a measure of how uncertain we are in the mean value. A detailed treatment of this
+is beyond the scope of this chapter; but roughly, if your estimated mean RMSPE is $100,000 and standard
+error is $1,000, you can expect the <em>true</em> RMSPE to be somewhere roughly between $99,000 and $101,000 (although it may
+fall outside this range). You may ignore the other columns in the metrics data frame,
+as they do not provide any additional insight.
+</p>
+<div class="sourceCode" id="cb400"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb400-1"><a class="link-to-diff" href="regression1.html#cb400-1" tabindex="-1"></a>gridvals <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">neighbors =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="dv">1</span>, <span class="at">to =</span> <span class="dv">200</span>, <span class="at">by =</span> <span class="dv">3</span>))</span>
+<span id="cb400-2"><a class="link-to-diff" href="regression1.html#cb400-2" tabindex="-1"></a></span>
+<span id="cb400-3"><a class="link-to-diff" href="regression1.html#cb400-3" tabindex="-1"></a>sacr_results <span class="ot">&lt;-</span> sacr_wkflw <span class="sc">|&gt;</span></span>
+<span id="cb400-4"><a class="link-to-diff" href="regression1.html#cb400-4" tabindex="-1"></a>  <span class="fu">tune_grid</span>(<span class="at">resamples =</span> sacr_vfold, <span class="at">grid =</span> gridvals) <span class="sc">|&gt;</span></span>
+<span id="cb400-5"><a class="link-to-diff" href="regression1.html#cb400-5" tabindex="-1"></a>  <span class="fu">collect_metrics</span>() <span class="sc">|&gt;</span></span>
+<span id="cb400-6"><a class="link-to-diff" href="regression1.html#cb400-6" tabindex="-1"></a>  <span class="fu">filter</span>(.metric <span class="sc">==</span> <span class="st">"rmse"</span>)</span>
+<span id="cb400-7"><a class="link-to-diff" href="regression1.html#cb400-7" tabindex="-1"></a></span>
+<span id="cb400-8"><a class="link-to-diff" href="regression1.html#cb400-8" tabindex="-1"></a><span class="co"># show the results</span></span>
+<span id="cb400-9"><a class="link-to-diff" href="regression1.html#cb400-9" tabindex="-1"></a>sacr_results</span></code></pre></div>
+<pre><code>## # A tibble: 67 × 7
+##    neighbors .metric .estimator    mean     n std_err .config              
+##        &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;        &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;                
+##  1         1 rmse    standard   107206.     5   4102. Preprocessor1_Model01
+##  2         4 rmse    standard    90469.     5   3312. Preprocessor1_Model02
+##  3         7 rmse    standard    86580.     5   3062. Preprocessor1_Model03
+##  4        10 rmse    standard    85321.     5   3395. Preprocessor1_Model04
+##  5        13 rmse    standard    85045.     5   3641. Preprocessor1_Model05
+##  6        16 rmse    standard    84675.     5   3679. Preprocessor1_Model06
+##  7        19 rmse    standard    84776.     5   3984. Preprocessor1_Model07
+##  8        22 rmse    standard    84617.     5   3952. Preprocessor1_Model08
+##  9        25 rmse    standard    84953.     5   3929. Preprocessor1_Model09
+## 10        28 rmse    standard    84612.     5   3917. Preprocessor1_Model10
+## # ℹ 57 more rows</code></pre>
+<div class="figure" style="text-align: center"><span id="fig:07-choose-k-knn-plot" style="display:block;"></span>
+<img alt="Effect of the number of neighbors on the RMSPE." src="_main_files/figure-html/07-choose-k-knn-plot-1.png" width="432"/>
+<p class="caption">
+Figure 7.6: Effect of the number of neighbors on the RMSPE.
+</p>
+</div>
+<p>Figure <a class="link-to-diff" href="regression1.html#fig:07-choose-k-knn-plot">7.6</a> visualizes how the RMSPE varies with the number of neighbors <span class="math inline">\(K\)</span>.
+We take the <em>minimum</em> RMSPE to find the best setting for the number of neighbors:</p>
+<div class="sourceCode" id="cb402"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb402-1"><a class="link-to-diff" href="regression1.html#cb402-1" tabindex="-1"></a><span class="co"># show only the row of minimum RMSPE</span></span>
+<span id="cb402-2"><a class="link-to-diff" href="regression1.html#cb402-2" tabindex="-1"></a>sacr_min <span class="ot">&lt;-</span> sacr_results <span class="sc">|&gt;</span></span>
+<span id="cb402-3"><a class="link-to-diff" href="regression1.html#cb402-3" tabindex="-1"></a>  <span class="fu">filter</span>(mean <span class="sc">==</span> <span class="fu">min</span>(mean))</span>
+<span id="cb402-4"><a class="link-to-diff" href="regression1.html#cb402-4" tabindex="-1"></a></span>
+<span id="cb402-5"><a class="link-to-diff" href="regression1.html#cb402-5" tabindex="-1"></a>sacr_min</span></code></pre></div>
+<pre><code>## # A tibble: 1 × 7
+##   neighbors .metric .estimator   mean     n std_err .config              
+##       &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;       &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;                
+## 1        52 rmse    standard   84561.     5   4470. Preprocessor1_Model18</code></pre>
+<p>The smallest RMSPE occurs when <span class="math inline">\(K =\)</span> 52.</p>
+</div>
+<div class="section level2 hasAnchor" id="underfitting-and-overfitting" number="7.7">
+<h2><span class="header-section-number">7.7</span> Underfitting and overfitting<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="regression1.html#underfitting-and-overfitting"></a></h2>
+<p>Similar to the setting of classification, by setting the number of neighbors
+to be too small or too large, we cause the RMSPE to increase, as shown in
+Figure <a class="link-to-diff" href="regression1.html#fig:07-choose-k-knn-plot">7.6</a>. What is happening here?</p>
+<p>Figure <a class="link-to-diff" href="regression1.html#fig:07-howK">7.7</a> visualizes the effect of different settings of <span class="math inline">\(K\)</span> on the
+regression model. Each plot shows the predicted values for house sale price from
+our K-NN regression model on the training data for 6 different values for <span class="math inline">\(K\)</span>: 1, 3, 25, 52, 250, and 680 (almost the entire training set).
+For each model, we predict prices for the range of possible home sizes we
+observed in the data set (here 500 to 5,000 square feet) and we plot the
+predicted prices as a blue line.</p>
+<div class="figure" style="text-align: center"><span id="fig:07-howK" style="display:block;"></span>
+<img alt="Predicted values for house price (represented as a blue line) from K-NN regression models for six different values for $K$." src="_main_files/figure-html/07-howK-1.png" width="960"/>
+<p class="caption">
+Figure 7.7: Predicted values for house price (represented as a blue line) from K-NN regression models for six different values for <span class="math inline">\(K\)</span>.
+</p>
+</div>
+<p>Figure <a class="link-to-diff" href="regression1.html#fig:07-howK">7.7</a> shows that when <span class="math inline">\(K\)</span> = 1, the blue line runs perfectly
+through (almost) all of our training observations.
+This happens because our
+predicted values for a given region (typically) depend on just a single observation.
+In general, when <span class="math inline">\(K\)</span> is too small, the line follows the training data quite
+closely, even if it does not match it perfectly.
+If we used a different training data set of house prices and sizes
+from the Sacramento real estate market, we would end up with completely different
+predictions. In other words, the model is <em>influenced too much</em> by the data.
+Because the model follows the training data so closely, it will not make accurate
+predictions on new observations which, generally, will not have the same fluctuations
+as the original training data.
+Recall from the classification
+chapters that this behavior—where the model is influenced too much
+by the noisy data—is called <em>overfitting</em>; we use this same term
+in the context of regression. </p>
+<p>What about the plots in Figure <a class="link-to-diff" href="regression1.html#fig:07-howK">7.7</a> where <span class="math inline">\(K\)</span> is quite large,
+say, <span class="math inline">\(K\)</span> = 250 or 680?
+In this case the blue line becomes extremely smooth, and actually becomes flat
+once <span class="math inline">\(K\)</span> is equal to the number of datapoints in the training set.
+This happens because our predicted values for a given x value (here, home
+size), depend on many neighboring observations; in the case where <span class="math inline">\(K\)</span> is equal
+to the size of the training set, the prediction is just the mean of the house prices
+(completely ignoring the house size). In contrast to the <span class="math inline">\(K=1\)</span> example,
+the smooth, inflexible blue line does not follow the training observations very closely.
+In other words, the model is <em>not influenced enough</em> by the training data.
+Recall from the classification
+chapters that this behavior is called <em>underfitting</em>; we again use this same
+term in the context of regression. </p>
+<p>Ideally, what we want is neither of the two situations discussed above. Instead,
+we would like a model that (1) follows the overall “trend” in the training data, so the model
+actually uses the training data to learn something useful, and (2) does not follow
+the noisy fluctuations, so that we can be confident that our model will transfer/generalize
+well to other new data. If we explore
+the other values for <span class="math inline">\(K\)</span>, in particular <span class="math inline">\(K\)</span> = 52
+(as suggested by cross-validation),
+we can see it achieves this goal: it follows the increasing trend of house price
+versus house size, but is not influenced too much by the idiosyncratic variations
+in price. All of this is similar to how
+the choice of <span class="math inline">\(K\)</span> affects K-nearest neighbors classification, as discussed in the previous
+chapter.</p>
+</div>
+<div class="section level2 hasAnchor" id="evaluating-on-the-test-set-1" number="7.8">
+<h2><span class="header-section-number">7.8</span> Evaluating on the test set<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="regression1.html#evaluating-on-the-test-set-1"></a></h2>
+<p>To assess how well our model might do at predicting on unseen data, we will
+assess its RMSPE on the test data. To do this, we will first
+re-train our K-NN regression model on the entire training data set,
+using <span class="math inline">\(K =\)</span> 52 neighbors. Then we will
+use <code>predict</code> to make predictions on the test data, and use the <code>metrics</code>
+function again to compute the summary of regression quality. Because
+we specify that we are performing regression in <code>set_mode</code>, the <code>metrics</code>
+function knows to output a quality summary related to regression, and not, say, classification.</p>
+<div class="sourceCode" id="cb404"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb404-1"><a class="link-to-diff" href="regression1.html#cb404-1" tabindex="-1"></a>kmin <span class="ot">&lt;-</span> sacr_min <span class="sc">|&gt;</span> <span class="fu">pull</span>(neighbors)</span>
+<span id="cb404-2"><a class="link-to-diff" href="regression1.html#cb404-2" tabindex="-1"></a></span>
+<span id="cb404-3"><a class="link-to-diff" href="regression1.html#cb404-3" tabindex="-1"></a>sacr_spec <span class="ot">&lt;-</span> <span class="fu">nearest_neighbor</span>(<span class="at">weight_func =</span> <span class="st">"rectangular"</span>, <span class="at">neighbors =</span> kmin) <span class="sc">|&gt;</span></span>
+<span id="cb404-4"><a class="link-to-diff" href="regression1.html#cb404-4" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"kknn"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb404-5"><a class="link-to-diff" href="regression1.html#cb404-5" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">"regression"</span>)</span>
+<span id="cb404-6"><a class="link-to-diff" href="regression1.html#cb404-6" tabindex="-1"></a></span>
+<span id="cb404-7"><a class="link-to-diff" href="regression1.html#cb404-7" tabindex="-1"></a>sacr_fit <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb404-8"><a class="link-to-diff" href="regression1.html#cb404-8" tabindex="-1"></a>  <span class="fu">add_recipe</span>(sacr_recipe) <span class="sc">|&gt;</span></span>
+<span id="cb404-9"><a class="link-to-diff" href="regression1.html#cb404-9" tabindex="-1"></a>  <span class="fu">add_model</span>(sacr_spec) <span class="sc">|&gt;</span></span>
+<span id="cb404-10"><a class="link-to-diff" href="regression1.html#cb404-10" tabindex="-1"></a>  <span class="fu">fit</span>(<span class="at">data =</span> sacramento_train)</span>
+<span id="cb404-11"><a class="link-to-diff" href="regression1.html#cb404-11" tabindex="-1"></a></span>
+<span id="cb404-12"><a class="link-to-diff" href="regression1.html#cb404-12" tabindex="-1"></a>sacr_summary <span class="ot">&lt;-</span> sacr_fit <span class="sc">|&gt;</span></span>
+<span id="cb404-13"><a class="link-to-diff" href="regression1.html#cb404-13" tabindex="-1"></a>  <span class="fu">predict</span>(sacramento_test) <span class="sc">|&gt;</span></span>
+<span id="cb404-14"><a class="link-to-diff" href="regression1.html#cb404-14" tabindex="-1"></a>  <span class="fu">bind_cols</span>(sacramento_test) <span class="sc">|&gt;</span></span>
+<span id="cb404-15"><a class="link-to-diff" href="regression1.html#cb404-15" tabindex="-1"></a>  <span class="fu">metrics</span>(<span class="at">truth =</span> price, <span class="at">estimate =</span> .pred) <span class="sc">|&gt;</span></span>
+<span id="cb404-16"><a class="link-to-diff" href="regression1.html#cb404-16" tabindex="-1"></a>  <span class="fu">filter</span>(.metric <span class="sc">==</span> <span class="st">'rmse'</span>)</span>
+<span id="cb404-17"><a class="link-to-diff" href="regression1.html#cb404-17" tabindex="-1"></a></span>
+<span id="cb404-18"><a class="link-to-diff" href="regression1.html#cb404-18" tabindex="-1"></a>sacr_summary</span></code></pre></div>
+<pre><code>## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard      90529.</code></pre>
+<p>Our final model’s test error as assessed by RMSPE
+is $90,529.
+Note that RMSPE is measured in the same units as the response variable.
+In other words, on new observations, we expect the error in our prediction to be
+<em>roughly</em> $90,529.
+From one perspective, this is good news: this is about the same as the cross-validation
+RMSPE estimate of our tuned model
+(which was $84,561),
+so we can say that the model appears to generalize well
+to new data that it has never seen before.
+However, much like in the case of K-NN classification, whether this value for RMSPE is <em>good</em>—i.e.,
+whether an error of around $90,529
+is acceptable—depends entirely on the application.
+In this application, this error
+is not prohibitively large, but it is not negligible either;
+$90,529
+might represent a substantial fraction of a home buyer’s budget, and
+could make or break whether or not they could afford put an offer on a house.</p>
+<p>Finally, Figure <a class="link-to-diff" href="regression1.html#fig:07-predict-all">7.8</a> shows the predictions that our final
+model makes across the range of house sizes we might encounter in the
+Sacramento area.
+Note that instead of predicting the house price only for those house sizes that happen to appear in our data,
+we predict it for evenly spaced values between the minimum and maximum in the data set
+(roughly 500 to 5000 square feet).
+We superimpose this prediction line on a scatter
+plot of the original housing price data,
+so that we can qualitatively assess if the model seems to fit the data well.
+You have already seen a
+few plots like this in this chapter, but here we also provide the code that
+generated it as a learning opportunity.</p>
+<div class="sourceCode" id="cb406"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb406-1"><a class="link-to-diff" href="regression1.html#cb406-1" tabindex="-1"></a>sqft_prediction_grid <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb406-2"><a class="link-to-diff" href="regression1.html#cb406-2" tabindex="-1"></a>    <span class="at">sqft =</span> <span class="fu">seq</span>(</span>
+<span id="cb406-3"><a class="link-to-diff" href="regression1.html#cb406-3" tabindex="-1"></a>        <span class="at">from =</span> sacramento <span class="sc">|&gt;</span> <span class="fu">select</span>(sqft) <span class="sc">|&gt;</span> <span class="fu">min</span>(),</span>
+<span id="cb406-4"><a class="link-to-diff" href="regression1.html#cb406-4" tabindex="-1"></a>        <span class="at">to =</span> sacramento <span class="sc">|&gt;</span> <span class="fu">select</span>(sqft) <span class="sc">|&gt;</span> <span class="fu">max</span>(),</span>
+<span id="cb406-5"><a class="link-to-diff" href="regression1.html#cb406-5" tabindex="-1"></a>        <span class="at">by =</span> <span class="dv">10</span></span>
+<span id="cb406-6"><a class="link-to-diff" href="regression1.html#cb406-6" tabindex="-1"></a>    )</span>
+<span id="cb406-7"><a class="link-to-diff" href="regression1.html#cb406-7" tabindex="-1"></a>)</span>
+<span id="cb406-8"><a class="link-to-diff" href="regression1.html#cb406-8" tabindex="-1"></a></span>
+<span id="cb406-9"><a class="link-to-diff" href="regression1.html#cb406-9" tabindex="-1"></a>sacr_preds <span class="ot">&lt;-</span> sacr_fit <span class="sc">|&gt;</span></span>
+<span id="cb406-10"><a class="link-to-diff" href="regression1.html#cb406-10" tabindex="-1"></a>  <span class="fu">predict</span>(sqft_prediction_grid) <span class="sc">|&gt;</span></span>
+<span id="cb406-11"><a class="link-to-diff" href="regression1.html#cb406-11" tabindex="-1"></a>  <span class="fu">bind_cols</span>(sqft_prediction_grid)</span>
+<span id="cb406-12"><a class="link-to-diff" href="regression1.html#cb406-12" tabindex="-1"></a></span>
+<span id="cb406-13"><a class="link-to-diff" href="regression1.html#cb406-13" tabindex="-1"></a>plot_final <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(sacramento, <span class="fu">aes</span>(<span class="at">x =</span> sqft, <span class="at">y =</span> price)) <span class="sc">+</span></span>
+<span id="cb406-14"><a class="link-to-diff" href="regression1.html#cb406-14" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>) <span class="sc">+</span></span>
+<span id="cb406-15"><a class="link-to-diff" href="regression1.html#cb406-15" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">data =</span> sacr_preds,</span>
+<span id="cb406-16"><a class="link-to-diff" href="regression1.html#cb406-16" tabindex="-1"></a>            <span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> sqft, <span class="at">y =</span> .pred),</span>
+<span id="cb406-17"><a class="link-to-diff" href="regression1.html#cb406-17" tabindex="-1"></a>            <span class="at">color =</span> <span class="st">"steelblue"</span>,</span>
+<span id="cb406-18"><a class="link-to-diff" href="regression1.html#cb406-18" tabindex="-1"></a>            <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb406-19"><a class="link-to-diff" href="regression1.html#cb406-19" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">"House size (square feet)"</span>) <span class="sc">+</span></span>
+<span id="cb406-20"><a class="link-to-diff" href="regression1.html#cb406-20" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">"Price (USD)"</span>) <span class="sc">+</span></span>
+<span id="cb406-21"><a class="link-to-diff" href="regression1.html#cb406-21" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="fu">dollar_format</span>()) <span class="sc">+</span></span>
+<span id="cb406-22"><a class="link-to-diff" href="regression1.html#cb406-22" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="fu">paste0</span>(<span class="st">"K = "</span>, kmin)) <span class="sc">+</span></span>
+<span id="cb406-23"><a class="link-to-diff" href="regression1.html#cb406-23" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
+<span id="cb406-24"><a class="link-to-diff" href="regression1.html#cb406-24" tabindex="-1"></a></span>
+<span id="cb406-25"><a class="link-to-diff" href="regression1.html#cb406-25" tabindex="-1"></a>plot_final</span></code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:07-predict-all" style="display:block;"></span>
+<img alt="Predicted values of house price (blue line) for the final K-NN regression model." src="_main_files/figure-html/07-predict-all-1.png" width="432"/>
+<p class="caption">
+Figure 7.8: Predicted values of house price (blue line) for the final K-NN regression model.
+</p>
+</div>
+</div>
+<div class="section level2 hasAnchor" id="multivariable-k-nn-regression" number="7.9">
+<h2><span class="header-section-number">7.9</span> Multivariable K-NN regression<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="regression1.html#multivariable-k-nn-regression"></a></h2>
+<p>As in K-NN classification, we can use multiple predictors in K-NN regression.
+In this setting, we have the same concerns regarding the scale of the predictors. Once again,
+predictions are made by identifying the <span class="math inline">\(K\)</span>
+observations that are nearest to the new point we want to predict; any
+variables that are on a large scale will have a much larger effect than
+variables on a small scale. But since the <code>recipe</code> we built above scales and centers
+all predictor variables, this is handled for us.</p>
+<p>Note that we also have the same concern regarding the selection of predictors
+in K-NN regression as in K-NN classification: having more predictors is <strong>not</strong> always
+better, and the choice of which predictors to use has a potentially large influence
+on the quality of predictions. Fortunately, we can use the predictor selection
+algorithm from the classification chapter in K-NN regression as well.
+As the algorithm is the same, we will not cover it again in this chapter.</p>
+<p>We will now demonstrate a multivariable K-NN regression analysis of the
+Sacramento real estate data using <code>tidymodels</code>. This time we will use
+house size (measured in square feet) as well as number of bedrooms as our
+predictors, and continue to use house sale price as our response variable
+that we are trying to predict.
+It is always a good practice to do exploratory data analysis, such as
+visualizing the data, before we start modeling the data. Figure <a class="link-to-diff" href="regression1.html#fig:07-bedscatter">7.9</a>
+shows that the number of bedrooms might provide useful information
+to help predict the sale price of a house.</p>
+<div class="sourceCode" id="cb407"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb407-1"><a class="link-to-diff" href="regression1.html#cb407-1" tabindex="-1"></a>plot_beds <span class="ot">&lt;-</span> sacramento <span class="sc">|&gt;</span></span>
+<span id="cb407-2"><a class="link-to-diff" href="regression1.html#cb407-2" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> beds, <span class="at">y =</span> price)) <span class="sc">+</span></span>
+<span id="cb407-3"><a class="link-to-diff" href="regression1.html#cb407-3" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>) <span class="sc">+</span></span>
+<span id="cb407-4"><a class="link-to-diff" href="regression1.html#cb407-4" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">'Number of Bedrooms'</span>, <span class="at">y =</span> <span class="st">'Price (USD)'</span>) <span class="sc">+</span></span>
+<span id="cb407-5"><a class="link-to-diff" href="regression1.html#cb407-5" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
+<span id="cb407-6"><a class="link-to-diff" href="regression1.html#cb407-6" tabindex="-1"></a>plot_beds</span></code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:07-bedscatter" style="display:block;"></span>
+<img alt="Scatter plot of the sale price of houses versus the number of bedrooms." src="_main_files/figure-html/07-bedscatter-1.png" width="432"/>
+<p class="caption">
+Figure 7.9: Scatter plot of the sale price of houses versus the number of bedrooms.
+</p>
+</div>
+<p>Figure <a class="link-to-diff" href="regression1.html#fig:07-bedscatter">7.9</a> shows that as the number of bedrooms increases,
+the house sale price tends to increase as well, but that the relationship
+is quite weak. Does adding the number of bedrooms
+to our model improve our ability to predict price? To answer that
+question, we will have to create a new K-NN regression
+model using house size and number of bedrooms, and then we can compare it to
+the model we previously came up with that only used house
+size. Let’s do that now!</p>
+<p>First we’ll build a new model specification and recipe for the analysis. Note that
+we use the formula <code>price ~ sqft + beds</code> to denote that we have two predictors,
+and set <code>neighbors = tune()</code> to tell <code>tidymodels</code> to tune the number of neighbors for us.</p>
+<div class="sourceCode" id="cb408"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb408-1"><a class="link-to-diff" href="regression1.html#cb408-1" tabindex="-1"></a>sacr_recipe <span class="ot">&lt;-</span> <span class="fu">recipe</span>(price <span class="sc">~</span> sqft <span class="sc">+</span> beds, <span class="at">data =</span> sacramento_train) <span class="sc">|&gt;</span></span>
+<span id="cb408-2"><a class="link-to-diff" href="regression1.html#cb408-2" tabindex="-1"></a>  <span class="fu">step_scale</span>(<span class="fu">all_predictors</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb408-3"><a class="link-to-diff" href="regression1.html#cb408-3" tabindex="-1"></a>  <span class="fu">step_center</span>(<span class="fu">all_predictors</span>())</span>
+<span id="cb408-4"><a class="link-to-diff" href="regression1.html#cb408-4" tabindex="-1"></a>sacr_spec <span class="ot">&lt;-</span> <span class="fu">nearest_neighbor</span>(<span class="at">weight_func =</span> <span class="st">"rectangular"</span>,</span>
+<span id="cb408-5"><a class="link-to-diff" href="regression1.html#cb408-5" tabindex="-1"></a>                              <span class="at">neighbors =</span> <span class="fu">tune</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb408-6"><a class="link-to-diff" href="regression1.html#cb408-6" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"kknn"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb408-7"><a class="link-to-diff" href="regression1.html#cb408-7" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">"regression"</span>)</span></code></pre></div>
+<p>Next, we’ll use 5-fold cross-validation to choose the number of neighbors via the minimum RMSPE:</p>
+<div class="sourceCode" id="cb409"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb409-1"><a class="link-to-diff" href="regression1.html#cb409-1" tabindex="-1"></a>gridvals <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">neighbors =</span> <span class="fu">seq</span>(<span class="dv">1</span>, <span class="dv">200</span>))</span>
+<span id="cb409-2"><a class="link-to-diff" href="regression1.html#cb409-2" tabindex="-1"></a></span>
+<span id="cb409-3"><a class="link-to-diff" href="regression1.html#cb409-3" tabindex="-1"></a>sacr_multi <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb409-4"><a class="link-to-diff" href="regression1.html#cb409-4" tabindex="-1"></a>  <span class="fu">add_recipe</span>(sacr_recipe) <span class="sc">|&gt;</span></span>
+<span id="cb409-5"><a class="link-to-diff" href="regression1.html#cb409-5" tabindex="-1"></a>  <span class="fu">add_model</span>(sacr_spec) <span class="sc">|&gt;</span></span>
+<span id="cb409-6"><a class="link-to-diff" href="regression1.html#cb409-6" tabindex="-1"></a>  <span class="fu">tune_grid</span>(sacr_vfold, <span class="at">grid =</span> gridvals) <span class="sc">|&gt;</span></span>
+<span id="cb409-7"><a class="link-to-diff" href="regression1.html#cb409-7" tabindex="-1"></a>  <span class="fu">collect_metrics</span>() <span class="sc">|&gt;</span></span>
+<span id="cb409-8"><a class="link-to-diff" href="regression1.html#cb409-8" tabindex="-1"></a>  <span class="fu">filter</span>(.metric <span class="sc">==</span> <span class="st">"rmse"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb409-9"><a class="link-to-diff" href="regression1.html#cb409-9" tabindex="-1"></a>  <span class="fu">filter</span>(mean <span class="sc">==</span> <span class="fu">min</span>(mean))</span>
+<span id="cb409-10"><a class="link-to-diff" href="regression1.html#cb409-10" tabindex="-1"></a></span>
+<span id="cb409-11"><a class="link-to-diff" href="regression1.html#cb409-11" tabindex="-1"></a>sacr_k <span class="ot">&lt;-</span> sacr_multi <span class="sc">|&gt;</span></span>
+<span id="cb409-12"><a class="link-to-diff" href="regression1.html#cb409-12" tabindex="-1"></a>              <span class="fu">pull</span>(neighbors)</span>
+<span id="cb409-13"><a class="link-to-diff" href="regression1.html#cb409-13" tabindex="-1"></a>sacr_multi</span></code></pre></div>
+<pre><code>## # A tibble: 1 × 7
+##   neighbors .metric .estimator   mean     n std_err .config               
+##       &lt;int&gt; &lt;chr&gt;   &lt;chr&gt;       &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;                 
+## 1        11 rmse    standard   81839.     5   3108. Preprocessor1_Model011</code></pre>
+<p>Here we see that the smallest estimated RMSPE from cross-validation occurs when <span class="math inline">\(K =\)</span> 11.
+If we want to compare this multivariable K-NN regression model to the model with only a single
+predictor <em>as part of the model tuning process</em> (e.g., if we are running forward selection as described
+in the chapter on evaluating and tuning classification models),
+then we must compare the RMSPE estimated using only the training data via cross-validation.
+Looking back, the estimated cross-validation RMSPE for the single-predictor
+model was $84,561.
+The estimated cross-validation RMSPE for the multivariable model is
+$81,839.
+Thus in this case, we did not improve the model
+by a large amount by adding this additional predictor.</p>
+<p>Regardless, let’s continue the analysis to see how we can make predictions with a multivariable K-NN regression model
+and evaluate its performance on test data. We first need to re-train the model on the entire
+training data set with <span class="math inline">\(K =\)</span> 11, and then use that model to make predictions
+on the test data.</p>
+<div class="sourceCode" id="cb411"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb411-1"><a class="link-to-diff" href="regression1.html#cb411-1" tabindex="-1"></a>sacr_spec <span class="ot">&lt;-</span> <span class="fu">nearest_neighbor</span>(<span class="at">weight_func =</span> <span class="st">"rectangular"</span>,</span>
+<span id="cb411-2"><a class="link-to-diff" href="regression1.html#cb411-2" tabindex="-1"></a>                              <span class="at">neighbors =</span> sacr_k) <span class="sc">|&gt;</span></span>
+<span id="cb411-3"><a class="link-to-diff" href="regression1.html#cb411-3" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"kknn"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb411-4"><a class="link-to-diff" href="regression1.html#cb411-4" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">"regression"</span>)</span>
+<span id="cb411-5"><a class="link-to-diff" href="regression1.html#cb411-5" tabindex="-1"></a></span>
+<span id="cb411-6"><a class="link-to-diff" href="regression1.html#cb411-6" tabindex="-1"></a>knn_mult_fit <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb411-7"><a class="link-to-diff" href="regression1.html#cb411-7" tabindex="-1"></a>  <span class="fu">add_recipe</span>(sacr_recipe) <span class="sc">|&gt;</span></span>
+<span id="cb411-8"><a class="link-to-diff" href="regression1.html#cb411-8" tabindex="-1"></a>  <span class="fu">add_model</span>(sacr_spec) <span class="sc">|&gt;</span></span>
+<span id="cb411-9"><a class="link-to-diff" href="regression1.html#cb411-9" tabindex="-1"></a>  <span class="fu">fit</span>(<span class="at">data =</span> sacramento_train)</span>
+<span id="cb411-10"><a class="link-to-diff" href="regression1.html#cb411-10" tabindex="-1"></a></span>
+<span id="cb411-11"><a class="link-to-diff" href="regression1.html#cb411-11" tabindex="-1"></a>knn_mult_preds <span class="ot">&lt;-</span> knn_mult_fit <span class="sc">|&gt;</span></span>
+<span id="cb411-12"><a class="link-to-diff" href="regression1.html#cb411-12" tabindex="-1"></a>  <span class="fu">predict</span>(sacramento_test) <span class="sc">|&gt;</span></span>
+<span id="cb411-13"><a class="link-to-diff" href="regression1.html#cb411-13" tabindex="-1"></a>  <span class="fu">bind_cols</span>(sacramento_test)</span>
+<span id="cb411-14"><a class="link-to-diff" href="regression1.html#cb411-14" tabindex="-1"></a></span>
+<span id="cb411-15"><a class="link-to-diff" href="regression1.html#cb411-15" tabindex="-1"></a>knn_mult_mets <span class="ot">&lt;-</span> <span class="fu">metrics</span>(knn_mult_preds, <span class="at">truth =</span> price, <span class="at">estimate =</span> .pred) <span class="sc">|&gt;</span></span>
+<span id="cb411-16"><a class="link-to-diff" href="regression1.html#cb411-16" tabindex="-1"></a>                     <span class="fu">filter</span>(.metric <span class="sc">==</span> <span class="st">'rmse'</span>)</span>
+<span id="cb411-17"><a class="link-to-diff" href="regression1.html#cb411-17" tabindex="-1"></a></span>
+<span id="cb411-18"><a class="link-to-diff" href="regression1.html#cb411-18" tabindex="-1"></a>knn_mult_mets</span></code></pre></div>
+<pre><code>## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard      90862.</code></pre>
+<p>This time, when we performed K-NN regression on the same data set, but also
+included number of bedrooms as a predictor, we obtained a RMSPE test error
+of $90,862.
+Figure <a class="link-to-diff" href="regression1.html#fig:07-knn-mult-viz">7.10</a> visualizes the model’s predictions overlaid on top of the data. This
+time the predictions are a surface in 3D space, instead of a line in 2D space, as we have 2
+predictors instead of 1.</p>
+<div class="figure" style="text-align: center"><span id="fig:07-knn-mult-viz" style="display:block;"></span>
+<img src="prerendered/htmlwidget-3f8521140010cc3d742c.png"/>
+<p class="caption">
+Figure 7.10: K-NN regression model’s predictions represented as a surface in 3D space overlaid on top of the data using three predictors (price, house size, and the number of bedrooms). Note that in general we recommend against using 3D visualizations; here we use a 3D visualization only to illustrate what the surface of predictions looks like for learning purposes.
+</p>
+</div>
+<p>We can see that the predictions in this case, where we have 2 predictors, form
+a surface instead of a line. Because the newly added predictor (number of bedrooms) is
+related to price (as price changes, so does number of bedrooms)
+and is not totally determined by house size (our other predictor),
+we get additional and useful information for making our
+predictions. For example, in this model we would predict that the cost of a
+house with a size of 2,500 square feet generally increases slightly as the number
+of bedrooms increases. Without having the additional predictor of number of
+bedrooms, we would predict the same price for these two houses.</p>
+</div>
+<div class="section level2 hasAnchor" id="strengths-and-limitations-of-k-nn-regression" number="7.10">
+<h2><span class="header-section-number">7.10</span> Strengths and limitations of K-NN regression<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="regression1.html#strengths-and-limitations-of-k-nn-regression"></a></h2>
+<p>As with K-NN classification (or any prediction algorithm for that matter), K-NN
+regression has both strengths and weaknesses. Some are listed here:</p>
+<p><strong>Strengths:</strong> K-nearest neighbors regression</p>
+<ol style="list-style-type: decimal">
+<li>is a simple, intuitive algorithm,</li>
+<li>requires few assumptions about what the data must look like, and</li>
+<li>works well with non-linear relationships (i.e., if the relationship is not a straight line).</li>
+</ol>
+<p><strong>Weaknesses:</strong> K-nearest neighbors regression</p>
+<ol style="list-style-type: decimal">
+<li>becomes very slow as the training data gets larger,</li>
+<li>may not perform well with a large number of predictors, and</li>
+<li>may not predict well beyond the range of values input in your training data.</li>
+</ol>
+</div>
+<div class="section level2 hasAnchor" id="exercises-6" number="7.11">
+<h2><span class="header-section-number">7.11</span> Exercises<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="regression1.html#exercises-6"></a></h2>
+<p>Practice exercises for the material covered in this chapter<ins class="diff"> </ins>can be found in the<ins class="diff">accompanying</ins> <del class="diff">accompanying</del><a href="https://worksheets.datasciencebook.ca">worksheets repository</a><ins class="diff"> in</ins>
+<del class="diff">in </del>the “Regression I: K-nearest neighbors” row.<ins class="diff"> </ins>You can <ins class="diff">preview</ins><del class="diff">launch</del> <ins class="diff">anon-interactive</ins><del class="diff">an</del> <del class="diff">interactive </del>version of the worksheet <ins class="diff">for</ins><del class="diff">in</del> <ins class="diff">this</ins><del class="diff">your</del> <ins class="diff">chapter</ins><del class="diff">browser</del> by clicking <ins class="diff">“view</ins><del class="diff">the “launch binder” button.</del>
+<ins class="diff">worksheet.”</ins><del class="diff">You</del> <ins class="diff">To</ins><del class="diff">can</del> <ins class="diff">work</ins><del class="diff">also</del> <ins class="diff">on</ins><del class="diff">preview</del> <ins class="diff">the</ins><del class="diff">a</del> <ins class="diff">exercises</ins><del class="diff">non-interactive</del> <ins class="diff">interactively,</ins><del class="diff">version</del> <ins class="diff">follow</ins><del class="diff">of</del> the <ins class="diff">instructions</ins><del class="diff">worksheet</del> <ins class="diff">in</ins><del class="diff">by clicking “view worksheet.”</del>
+<ins class="diff">the</ins><del class="diff">If</del> <ins class="diff">worksheets</ins><del class="diff">you</del> <ins class="diff">repository</ins><del class="diff">instead</del> <del class="diff">decide </del>to download <ins class="diff">all</ins><del class="diff">the</del> <ins class="diff">worksheets,</ins><del class="diff">worksheet</del> and <del class="diff">run it on your own machine,make sure to </del>follow the<del class="diff"> </del>instructions for computer setup<ins class="diff"> </ins>found in Chapter <a class="link-to-diff" href="setup.html#setup">13</a>. This will ensure<del class="diff"> </del>that the automated feedback<ins class="diff"> </ins>and guidance that the worksheets provide will<del class="diff"> </del>function as intended.</p>
+</div>
+</div>
+<h3>References<a aria-label="Anchor link to header" class="anchor-section" href="references.html#references"></a></h3>
+<div class="references csl-bib-body hanging-indent" id="refs">
+<div class="csl-entry" id="ref-knncover">
+Cover, Thomas, and Peter Hart. 1967. <span>“Nearest Neighbor Pattern Classification.”</span> <em>IEEE Transactions on Information Theory</em> 13 (1): 21–27.
+</div>
+<div class="csl-entry" id="ref-knnfix">
+Fix, Evelyn, and Joseph Hodges. 1951. <span>“Discriminatory Analysis. Nonparametric Discrimination: Consistency Properties.”</span> USAF School of Aviation Medicine, Randolph Field, Texas.
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+<a aria-label="Previous page" class="navigation navigation-prev link-to-diff" href="classification2.html"><i class="fa fa-angle-left"></i></a>
+<a aria-label="Next page" class="navigation navigation-next link-to-diff" href="regression2.html"><i class="fa fa-angle-right"></i></a>
+</div>
+</div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": null,
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"search": {
+"engine": "fuse",
+"options": null
+},
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+</html>

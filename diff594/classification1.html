@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+
+<html lang="" xml:lang="">
+<head>
+<meta charset="utf-8"/>
+<meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+<title>Chapter 5 Classification I: training &amp; predicting |  Data Science</title>
+<meta content="This is a textbook for teaching a first introduction to data science." name="description"/>
+<meta content="bookdown 0.34 and GitBook 2.6.7" name="generator"/>
+<meta content="Chapter 5 Classification I: training &amp; predicting |  Data Science" property="og:title"/>
+<meta content="book" property="og:type"/>
+<meta content="This is a textbook for teaching a first introduction to data science." property="og:description"/>
+<meta content="UBC-DSCI/introduction-to-datascience" name="github-repo"/>
+<meta content="summary" name="twitter:card"/>
+<meta content="Chapter 5 Classification I: training &amp; predicting |  Data Science" name="twitter:title"/>
+<meta content="This is a textbook for teaching a first introduction to data science." name="twitter:description"/>
+<meta content="Tiffany Timbers, Trevor Campbell, and Melissa Lee" name="author"/>
+<meta content="2024-12-30" name="date"/><meta content="2024-08-21" name="date"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black" name="apple-mobile-web-app-status-bar-style"/>
+<link href="viz.html" rel="prev"/>
+<link href="classification2.html" rel="next"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet"/>
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet"/>
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet"/>
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet"/>
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet"/>
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet"/>
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet"/>
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet"/>
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet"/>
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+<script src="libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="libs/lightable-0.0.1/lightable.css" rel="stylesheet"/>
+<script src="libs/htmlwidgets-1.6.2/htmlwidgets.js"></script>
+<script src="libs/plotly-binding-4.10.2/plotly.js"></script>
+<script src="libs/typedarray-0.1/typedarray.min.js"></script>
+<link href="libs/crosstalk-1.2.0/css/crosstalk.min.css" rel="stylesheet"/>
+<script src="libs/crosstalk-1.2.0/js/crosstalk.min.js"></script>
+<link href="libs/plotly-htmlwidgets-css-2.11.1/plotly-htmlwidgets.css" rel="stylesheet"/>
+<script src="libs/plotly-main-2.11.1/plotly-latest.min.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-JJ9MD0LBF5"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-JJ9MD0LBF5');
+</script>
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+<style type="text/css">
+/* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+<link href="source/style.css" rel="stylesheet" type="text/css"/>
+<script src="website_diff.js"></script><link href="website_diff.css" rel="stylesheet" type="text/css"/></head>
+<body>
+<div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+<div class="book-summary">
+<nav role="navigation">
+<ul class="summary">
+<li><a href="https://datasciencebook.ca">Data Science: A First Introduction</a></li>
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a class="link-to-diff" href="index.html"><i class="fa fa-check"></i>Welcome!</a></li>
+<li class="chapter" data-level="" data-path="foreword.html"><a href="foreword.html"><i class="fa fa-check"></i>Foreword</a></li>
+<li class="chapter" data-level="" data-path="preface.html"><a class="link-to-diff" href="preface.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="" data-path="acknowledgments.html"><a href="acknowledgments.html"><i class="fa fa-check"></i>Acknowledgments</a></li>
+<li class="chapter" data-level="" data-path="about-the-authors.html"><a href="about-the-authors.html"><i class="fa fa-check"></i>About the authors</a></li>
+<li class="chapter" data-level="1" data-path="intro.html"><a class="link-to-diff" href="intro.html"><i class="fa fa-check"></i><b>1</b> R and the Tidyverse</a>
+<ul>
+<li class="chapter" data-level="1.1" data-path="intro.html"><a class="link-to-diff" href="intro.html#overview"><i class="fa fa-check"></i><b>1.1</b> Overview</a></li>
+<li class="chapter" data-level="1.2" data-path="intro.html"><a class="link-to-diff" href="intro.html#chapter-learning-objectives"><i class="fa fa-check"></i><b>1.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="1.3" data-path="intro.html"><a class="link-to-diff" href="intro.html#canadian-languages-data-set"><i class="fa fa-check"></i><b>1.3</b> Canadian languages data set</a></li>
+<li class="chapter" data-level="1.4" data-path="intro.html"><a class="link-to-diff" href="intro.html#asking-a-question"><i class="fa fa-check"></i><b>1.4</b> Asking a question</a></li>
+<li class="chapter" data-level="1.5" data-path="intro.html"><a class="link-to-diff" href="intro.html#loading-a-tabular-data-set"><i class="fa fa-check"></i><b>1.5</b> Loading a tabular data set</a></li>
+<li class="chapter" data-level="1.6" data-path="intro.html"><a class="link-to-diff" href="intro.html#naming-things-in-r"><i class="fa fa-check"></i><b>1.6</b> Naming things in R</a></li>
+<li class="chapter" data-level="1.7" data-path="intro.html"><a class="link-to-diff" href="intro.html#creating-subsets-of-data-frames-with-filter-select"><i class="fa fa-check"></i><b>1.7</b> Creating subsets of data frames with <code>filter</code> &amp; <code>select</code></a>
+<ul>
+<li class="chapter" data-level="1.7.1" data-path="intro.html"><a class="link-to-diff" href="intro.html#using-filter-to-extract-rows"><i class="fa fa-check"></i><b>1.7.1</b> Using <code>filter</code> to extract rows</a></li>
+<li class="chapter" data-level="1.7.2" data-path="intro.html"><a class="link-to-diff" href="intro.html#using-select-to-extract-columns"><i class="fa fa-check"></i><b>1.7.2</b> Using <code>select</code> to extract columns</a></li>
+</ul></li>
+<li class="chapter" data-level="1.8" data-path="intro.html"><a class="link-to-diff" href="intro.html#arrangesliceintro"><i class="fa fa-check"></i><b>1.8</b> Using <code>arrange</code> to order and <code>slice</code> to select rows by index number</a></li>
+<li class="chapter" data-level="1.9" data-path="intro.html"><a class="link-to-diff" href="intro.html#adding-and-modifying-columns-using-mutate"><i class="fa fa-check"></i><b>1.9</b> Adding and modifying columns using <code>mutate</code></a></li>
+<li class="chapter" data-level="1.10" data-path="intro.html"><a class="link-to-diff" href="intro.html#exploring-data-with-visualizations"><i class="fa fa-check"></i><b>1.10</b> Exploring data with visualizations</a>
+<ul>
+<li class="chapter" data-level="1.10.1" data-path="intro.html"><a class="link-to-diff" href="intro.html#using-ggplot-to-create-a-bar-plot"><i class="fa fa-check"></i><b>1.10.1</b> Using <code>ggplot</code> to create a bar plot</a></li>
+<li class="chapter" data-level="1.10.2" data-path="intro.html"><a class="link-to-diff" href="intro.html#formatting-ggplot-objects"><i class="fa fa-check"></i><b>1.10.2</b> Formatting ggplot objects</a></li>
+<li class="chapter" data-level="1.10.3" data-path="intro.html"><a class="link-to-diff" href="intro.html#putting-it-all-together"><i class="fa fa-check"></i><b>1.10.3</b> Putting it all together</a></li>
+</ul></li>
+<li class="chapter" data-level="1.11" data-path="intro.html"><a class="link-to-diff" href="intro.html#accessing-documentation"><i class="fa fa-check"></i><b>1.11</b> Accessing documentation</a></li>
+<li class="chapter" data-level="1.12" data-path="intro.html"><a class="link-to-diff" href="intro.html#exercises"><i class="fa fa-check"></i><b>1.12</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="reading.html"><a class="link-to-diff" href="reading.html"><i class="fa fa-check"></i><b>2</b> Reading in data locally and from the web</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="reading.html"><a class="link-to-diff" href="reading.html#overview-1"><i class="fa fa-check"></i><b>2.1</b> Overview</a></li>
+<li class="chapter" data-level="2.2" data-path="reading.html"><a class="link-to-diff" href="reading.html#chapter-learning-objectives-1"><i class="fa fa-check"></i><b>2.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="2.3" data-path="reading.html"><a class="link-to-diff" href="reading.html#absolute-and-relative-file-paths"><i class="fa fa-check"></i><b>2.3</b> Absolute and relative file paths</a></li>
+<li class="chapter" data-level="2.4" data-path="reading.html"><a class="link-to-diff" href="reading.html#reading-tabular-data-from-a-plain-text-file-into-r"><i class="fa fa-check"></i><b>2.4</b> Reading tabular data from a plain text file into R</a>
+<ul>
+<li class="chapter" data-level="2.4.1" data-path="reading.html"><a class="link-to-diff" href="reading.html#readcsv"><i class="fa fa-check"></i><b>2.4.1</b> <code>read_csv</code> to read in comma-separated values files</a></li>
+<li class="chapter" data-level="2.4.2" data-path="reading.html"><a class="link-to-diff" href="reading.html#skipping-rows-when-reading-in-data"><i class="fa fa-check"></i><b>2.4.2</b> Skipping rows when reading in data</a></li>
+<li class="chapter" data-level="2.4.3" data-path="reading.html"><a class="link-to-diff" href="reading.html#read_tsv-to-read-in-tab-separated-values-files"><i class="fa fa-check"></i><b>2.4.3</b> <code>read_tsv</code> to read in tab-separated values files</a></li>
+<li class="chapter" data-level="2.4.4" data-path="reading.html"><a class="link-to-diff" href="reading.html#read_delim-as-a-more-flexible-method-to-get-tabular-data-into-r"><i class="fa fa-check"></i><b>2.4.4</b> <code>read_delim</code> as a more flexible method to get tabular data into R</a></li>
+<li class="chapter" data-level="2.4.5" data-path="reading.html"><a class="link-to-diff" href="reading.html#reading-tabular-data-directly-from-a-url"><i class="fa fa-check"></i><b>2.4.5</b> Reading tabular data directly from a URL</a></li>
+<li class="chapter" data-level="2.4.6" data-path="reading.html"><a class="link-to-diff" href="reading.html#downloading-data-from-a-url"><i class="fa fa-check"></i><b>2.4.6</b> Downloading data from a URL</a></li>
+<li class="chapter" data-level="2.4.7" data-path="reading.html"><a class="link-to-diff" href="reading.html#previewing-a-data-file-before-reading-it-into-r"><i class="fa fa-check"></i><b>2.4.7</b> Previewing a data file before reading it into R</a></li>
+</ul></li>
+<li class="chapter" data-level="2.5" data-path="reading.html"><a class="link-to-diff" href="reading.html#reading-tabular-data-from-a-microsoft-excel-file"><i class="fa fa-check"></i><b>2.5</b> Reading tabular data from a Microsoft Excel file</a></li>
+<li class="chapter" data-level="2.6" data-path="reading.html"><a class="link-to-diff" href="reading.html#reading-data-from-a-database"><i class="fa fa-check"></i><b>2.6</b> Reading data from a database</a>
+<ul>
+<li class="chapter" data-level="2.6.1" data-path="reading.html"><a class="link-to-diff" href="reading.html#reading-data-from-a-sqlite-database"><i class="fa fa-check"></i><b>2.6.1</b> Reading data from a SQLite database</a></li>
+<li class="chapter" data-level="2.6.2" data-path="reading.html"><a class="link-to-diff" href="reading.html#reading-data-from-a-postgresql-database"><i class="fa fa-check"></i><b>2.6.2</b> Reading data from a PostgreSQL database</a></li>
+<li class="chapter" data-level="2.6.3" data-path="reading.html"><a class="link-to-diff" href="reading.html#why-should-we-bother-with-databases-at-all"><i class="fa fa-check"></i><b>2.6.3</b> Why should we bother with databases at all?</a></li>
+</ul></li>
+<li class="chapter" data-level="2.7" data-path="reading.html"><a class="link-to-diff" href="reading.html#writing-data-from-r-to-a-.csv-file"><i class="fa fa-check"></i><b>2.7</b> Writing data from R to a <code>.csv</code> file</a></li>
+<li class="chapter" data-level="2.8" data-path="reading.html"><a class="link-to-diff" href="reading.html#obtaining-data-from-the-web"><i class="fa fa-check"></i><b>2.8</b> Obtaining data from the web</a>
+<ul>
+<li class="chapter" data-level="2.8.1" data-path="reading.html"><a class="link-to-diff" href="reading.html#web-scraping"><i class="fa fa-check"></i><b>2.8.1</b> Web scraping</a></li>
+<li class="chapter" data-level="2.8.2" data-path="reading.html"><a class="link-to-diff" href="reading.html#using-an-api"><i class="fa fa-check"></i><b>2.8.2</b> Using an API</a></li>
+</ul></li>
+<li class="chapter" data-level="2.9" data-path="reading.html"><a class="link-to-diff" href="reading.html#exercises-1"><i class="fa fa-check"></i><b>2.9</b> Exercises</a></li>
+<li class="chapter" data-level="2.10" data-path="reading.html"><a class="link-to-diff" href="reading.html#additional-resources"><i class="fa fa-check"></i><b>2.10</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html"><i class="fa fa-check"></i><b>3</b> Cleaning and wrangling data</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#overview-2"><i class="fa fa-check"></i><b>3.1</b> Overview</a></li>
+<li class="chapter" data-level="3.2" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#chapter-learning-objectives-2"><i class="fa fa-check"></i><b>3.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="3.3" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#data-frames-vectors-and-lists"><i class="fa fa-check"></i><b>3.3</b> Data frames, vectors, and lists</a>
+<ul>
+<li class="chapter" data-level="3.3.1" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#what-is-a-data-frame"><i class="fa fa-check"></i><b>3.3.1</b> What is a data frame?</a></li>
+<li class="chapter" data-level="3.3.2" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#what-is-a-vector"><i class="fa fa-check"></i><b>3.3.2</b> What is a vector?</a></li>
+<li class="chapter" data-level="3.3.3" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#what-is-a-list"><i class="fa fa-check"></i><b>3.3.3</b> What is a list?</a></li>
+<li class="chapter" data-level="3.3.4" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#what-does-this-have-to-do-with-data-frames"><i class="fa fa-check"></i><b>3.3.4</b> What does this have to do with data frames?</a></li>
+</ul></li>
+<li class="chapter" data-level="3.4" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#tidy-data"><i class="fa fa-check"></i><b>3.4</b> Tidy data</a>
+<ul>
+<li class="chapter" data-level="3.4.1" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#tidying-up-going-from-wide-to-long-using-pivot_longer"><i class="fa fa-check"></i><b>3.4.1</b> Tidying up: going from wide to long using <code>pivot_longer</code></a></li>
+<li class="chapter" data-level="3.4.2" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#pivot-wider"><i class="fa fa-check"></i><b>3.4.2</b> Tidying up: going from long to wide using <code>pivot_wider</code></a></li>
+<li class="chapter" data-level="3.4.3" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#separate"><i class="fa fa-check"></i><b>3.4.3</b> Tidying up: using <code>separate</code> to deal with multiple delimiters</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#using-select-to-extract-a-range-of-columns"><i class="fa fa-check"></i><b>3.5</b> Using <code>select</code> to extract a range of columns</a></li>
+<li class="chapter" data-level="3.6" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#using-filter-to-extract-rows-1"><i class="fa fa-check"></i><b>3.6</b> Using <code>filter</code> to extract rows</a>
+<ul>
+<li class="chapter" data-level="3.6.1" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#extracting-rows-that-have-a-certain-value-with"><i class="fa fa-check"></i><b>3.6.1</b> Extracting rows that have a certain value with <code>==</code></a></li>
+<li class="chapter" data-level="3.6.2" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#extracting-rows-that-do-not-have-a-certain-value-with"><i class="fa fa-check"></i><b>3.6.2</b> Extracting rows that do not have a certain value with <code>!=</code></a></li>
+<li class="chapter" data-level="3.6.3" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#filter-and"><i class="fa fa-check"></i><b>3.6.3</b> Extracting rows satisfying multiple conditions using <code>,</code> or <code>&amp;</code></a></li>
+<li class="chapter" data-level="3.6.4" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#extracting-rows-satisfying-at-least-one-condition-using"><i class="fa fa-check"></i><b>3.6.4</b> Extracting rows satisfying at least one condition using <code>|</code></a></li>
+<li class="chapter" data-level="3.6.5" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#extracting-rows-with-values-in-a-vector-using-in"><i class="fa fa-check"></i><b>3.6.5</b> Extracting rows with values in a vector using <code>%in%</code></a></li>
+<li class="chapter" data-level="3.6.6" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#extracting-rows-above-or-below-a-threshold-using-and"><i class="fa fa-check"></i><b>3.6.6</b> Extracting rows above or below a threshold using <code>&gt;</code> and <code>&lt;</code></a></li>
+</ul></li>
+<li class="chapter" data-level="3.7" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#using-mutate-to-modify-or-add-columns"><i class="fa fa-check"></i><b>3.7</b> Using <code>mutate</code> to modify or add columns</a>
+<ul>
+<li class="chapter" data-level="3.7.1" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#using-mutate-to-modify-columns"><i class="fa fa-check"></i><b>3.7.1</b> Using <code>mutate</code> to modify columns</a></li>
+<li class="chapter" data-level="3.7.2" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#using-mutate-to-create-new-columns"><i class="fa fa-check"></i><b>3.7.2</b> Using <code>mutate</code> to create new columns</a></li>
+</ul></li>
+<li class="chapter" data-level="3.8" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#combining-functions-using-the-pipe-operator"><i class="fa fa-check"></i><b>3.8</b> Combining functions using the pipe operator, <code>|&gt;</code></a>
+<ul>
+<li class="chapter" data-level="3.8.1" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#using-to-combine-filter-and-select"><i class="fa fa-check"></i><b>3.8.1</b> Using <code>|&gt;</code> to combine <code>filter</code> and <code>select</code></a></li>
+<li class="chapter" data-level="3.8.2" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#using-with-more-than-two-functions"><i class="fa fa-check"></i><b>3.8.2</b> Using <code>|&gt;</code> with more than two functions</a></li>
+</ul></li>
+<li class="chapter" data-level="3.9" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#aggregating-data-with-summarize-and-map"><i class="fa fa-check"></i><b>3.9</b> Aggregating data with <code>summarize</code> and <code>map</code></a>
+<ul>
+<li class="chapter" data-level="3.9.1" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#calculating-summary-statistics-on-whole-columns"><i class="fa fa-check"></i><b>3.9.1</b> Calculating summary statistics on whole columns</a></li>
+<li class="chapter" data-level="3.9.2" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#calculating-summary-statistics-when-there-are-nas"><i class="fa fa-check"></i><b>3.9.2</b> Calculating summary statistics when there are <code>NA</code>s</a></li>
+<li class="chapter" data-level="3.9.3" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#calculating-summary-statistics-for-groups-of-rows"><i class="fa fa-check"></i><b>3.9.3</b> Calculating summary statistics for groups of rows</a></li>
+<li class="chapter" data-level="3.9.4" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#calculating-summary-statistics-on-many-columns"><i class="fa fa-check"></i><b>3.9.4</b> Calculating summary statistics on many columns</a></li>
+</ul></li>
+<li class="chapter" data-level="3.10" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#apply-functions-across-many-columns-with-mutate-and-across"><i class="fa fa-check"></i><b>3.10</b> Apply functions across many columns with <code>mutate</code> and <code>across</code></a></li>
+<li class="chapter" data-level="3.11" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#apply-functions-across-columns-within-one-row-with-rowwise-and-mutate"><i class="fa fa-check"></i><b>3.11</b> Apply functions across columns within one row with <code>rowwise</code> and <code>mutate</code></a></li>
+<li class="chapter" data-level="3.12" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#summary"><i class="fa fa-check"></i><b>3.12</b> Summary</a></li>
+<li class="chapter" data-level="3.13" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#exercises-2"><i class="fa fa-check"></i><b>3.13</b> Exercises</a></li>
+<li class="chapter" data-level="3.14" data-path="wrangling.html"><a class="link-to-diff" href="wrangling.html#additional-resources-1"><i class="fa fa-check"></i><b>3.14</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="viz.html"><a class="link-to-diff" href="viz.html"><i class="fa fa-check"></i><b>4</b> Effective data visualization</a>
+<ul>
+<li class="chapter" data-level="4.1" data-path="viz.html"><a class="link-to-diff" href="viz.html#overview-3"><i class="fa fa-check"></i><b>4.1</b> Overview</a></li>
+<li class="chapter" data-level="4.2" data-path="viz.html"><a class="link-to-diff" href="viz.html#chapter-learning-objectives-3"><i class="fa fa-check"></i><b>4.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="4.3" data-path="viz.html"><a class="link-to-diff" href="viz.html#choosing-the-visualization"><i class="fa fa-check"></i><b>4.3</b> Choosing the visualization</a></li>
+<li class="chapter" data-level="4.4" data-path="viz.html"><a class="link-to-diff" href="viz.html#refining-the-visualization"><i class="fa fa-check"></i><b>4.4</b> Refining the visualization</a></li>
+<li class="chapter" data-level="4.5" data-path="viz.html"><a class="link-to-diff" href="viz.html#creating-visualizations-with-ggplot2"><i class="fa fa-check"></i><b>4.5</b> Creating visualizations with <code>ggplot2</code></a>
+<ul>
+<li class="chapter" data-level="4.5.1" data-path="viz.html"><a class="link-to-diff" href="viz.html#scatter-plots-and-line-plots-the-mauna-loa-co_text2-data-set"><i class="fa fa-check"></i><b>4.5.1</b> Scatter plots and line plots: the Mauna Loa CO<span class="math inline">\(_{\text{2}}\)</span> data set</a></li>
+<li class="chapter" data-level="4.5.2" data-path="viz.html"><a class="link-to-diff" href="viz.html#scatter-plots-the-old-faithful-eruption-time-data-set"><i class="fa fa-check"></i><b>4.5.2</b> Scatter plots: the Old Faithful eruption time data set</a></li>
+<li class="chapter" data-level="4.5.3" data-path="viz.html"><a class="link-to-diff" href="viz.html#axis-transformation-and-colored-scatter-plots-the-canadian-languages-data-set"><i class="fa fa-check"></i><b>4.5.3</b> Axis transformation and colored scatter plots: the Canadian languages data set</a></li>
+<li class="chapter" data-level="4.5.4" data-path="viz.html"><a class="link-to-diff" href="viz.html#bar-plots-the-island-landmass-data-set"><i class="fa fa-check"></i><b>4.5.4</b> Bar plots: the island landmass data set</a></li>
+<li class="chapter" data-level="4.5.5" data-path="viz.html"><a class="link-to-diff" href="viz.html#histogramsviz"><i class="fa fa-check"></i><b>4.5.5</b> Histograms: the Michelson speed of light data set</a></li>
+</ul></li>
+<li class="chapter" data-level="4.6" data-path="viz.html"><a class="link-to-diff" href="viz.html#explaining-the-visualization"><i class="fa fa-check"></i><b>4.6</b> Explaining the visualization</a></li>
+<li class="chapter" data-level="4.7" data-path="viz.html"><a class="link-to-diff" href="viz.html#saving-the-visualization"><i class="fa fa-check"></i><b>4.7</b> Saving the visualization</a></li>
+<li class="chapter" data-level="4.8" data-path="viz.html"><a class="link-to-diff" href="viz.html#exercises-3"><i class="fa fa-check"></i><b>4.8</b> Exercises</a></li>
+<li class="chapter" data-level="4.9" data-path="viz.html"><a class="link-to-diff" href="viz.html#additional-resources-2"><i class="fa fa-check"></i><b>4.9</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="classification1.html"><a class="link-to-diff" href="classification1.html"><i class="fa fa-check"></i><b>5</b> Classification I: training &amp; predicting</a>
+<ul>
+<li class="chapter" data-level="5.1" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#overview-4"><i class="fa fa-check"></i><b>5.1</b> Overview</a></li>
+<li class="chapter" data-level="5.2" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#chapter-learning-objectives-4"><i class="fa fa-check"></i><b>5.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="5.3" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#the-classification-problem"><i class="fa fa-check"></i><b>5.3</b> The classification problem</a></li>
+<li class="chapter" data-level="5.4" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#exploring-a-data-set"><i class="fa fa-check"></i><b>5.4</b> Exploring a data set</a>
+<ul>
+<li class="chapter" data-level="5.4.1" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#loading-the-cancer-data"><i class="fa fa-check"></i><b>5.4.1</b> Loading the cancer data</a></li>
+<li class="chapter" data-level="5.4.2" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#describing-the-variables-in-the-cancer-data-set"><i class="fa fa-check"></i><b>5.4.2</b> Describing the variables in the cancer data set</a></li>
+<li class="chapter" data-level="5.4.3" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#exploring-the-cancer-data"><i class="fa fa-check"></i><b>5.4.3</b> Exploring the cancer data</a></li>
+</ul></li>
+<li class="chapter" data-level="5.5" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#classification-with-k-nearest-neighbors"><i class="fa fa-check"></i><b>5.5</b> Classification with K-nearest neighbors</a>
+<ul>
+<li class="chapter" data-level="5.5.1" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#distance-between-points"><i class="fa fa-check"></i><b>5.5.1</b> Distance between points</a></li>
+<li class="chapter" data-level="5.5.2" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#more-than-two-explanatory-variables"><i class="fa fa-check"></i><b>5.5.2</b> More than two explanatory variables</a></li>
+<li class="chapter" data-level="5.5.3" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#summary-of-k-nearest-neighbors-algorithm"><i class="fa fa-check"></i><b>5.5.3</b> Summary of K-nearest neighbors algorithm</a></li>
+</ul></li>
+<li class="chapter" data-level="5.6" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#k-nearest-neighbors-with-tidymodels"><i class="fa fa-check"></i><b>5.6</b> K-nearest neighbors with <code>tidymodels</code></a></li>
+<li class="chapter" data-level="5.7" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#data-preprocessing-with-tidymodels"><i class="fa fa-check"></i><b>5.7</b> Data preprocessing with <code>tidymodels</code></a>
+<ul>
+<li class="chapter" data-level="5.7.1" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#centering-and-scaling"><i class="fa fa-check"></i><b>5.7.1</b> Centering and scaling</a></li>
+<li class="chapter" data-level="5.7.2" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#balancing"><i class="fa fa-check"></i><b>5.7.2</b> Balancing</a></li>
+<li class="chapter" data-level="5.7.3" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#missing-data"><i class="fa fa-check"></i><b>5.7.3</b> Missing data</a></li>
+</ul></li>
+<li class="chapter" data-level="5.8" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#puttingittogetherworkflow"><i class="fa fa-check"></i><b>5.8</b> Putting it together in a <code>workflow</code></a></li>
+<li class="chapter" data-level="5.9" data-path="classification1.html"><a class="link-to-diff" href="classification1.html#exercises-4"><i class="fa fa-check"></i><b>5.9</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="classification2.html"><a class="link-to-diff" href="classification2.html"><i class="fa fa-check"></i><b>6</b> Classification II: evaluation &amp; tuning</a>
+<ul>
+<li class="chapter" data-level="6.1" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#overview-5"><i class="fa fa-check"></i><b>6.1</b> Overview</a></li>
+<li class="chapter" data-level="6.2" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#chapter-learning-objectives-5"><i class="fa fa-check"></i><b>6.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="6.3" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#evaluating-performance"><i class="fa fa-check"></i><b>6.3</b> Evaluating performance</a></li>
+<li class="chapter" data-level="6.4" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#randomseeds"><i class="fa fa-check"></i><b>6.4</b> Randomness and seeds</a></li>
+<li class="chapter" data-level="6.5" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#evaluating-performance-with-tidymodels"><i class="fa fa-check"></i><b>6.5</b> Evaluating performance with <code>tidymodels</code></a>
+<ul>
+<li class="chapter" data-level="6.5.1" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#create-the-train-test-split"><i class="fa fa-check"></i><b>6.5.1</b> Create the train / test split</a></li>
+<li class="chapter" data-level="6.5.2" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#preprocess-the-data"><i class="fa fa-check"></i><b>6.5.2</b> Preprocess the data</a></li>
+<li class="chapter" data-level="6.5.3" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#train-the-classifier"><i class="fa fa-check"></i><b>6.5.3</b> Train the classifier</a></li>
+<li class="chapter" data-level="6.5.4" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#predict-the-labels-in-the-test-set"><i class="fa fa-check"></i><b>6.5.4</b> Predict the labels in the test set</a></li>
+<li class="chapter" data-level="6.5.5" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#eval-performance-cls2"><i class="fa fa-check"></i><b>6.5.5</b> Evaluate performance</a></li>
+<li class="chapter" data-level="6.5.6" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#critically-analyze-performance"><i class="fa fa-check"></i><b>6.5.6</b> Critically analyze performance</a></li>
+</ul></li>
+<li class="chapter" data-level="6.6" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#tuning-the-classifier"><i class="fa fa-check"></i><b>6.6</b> Tuning the classifier</a>
+<ul>
+<li class="chapter" data-level="6.6.1" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#cross-validation"><i class="fa fa-check"></i><b>6.6.1</b> Cross-validation</a></li>
+<li class="chapter" data-level="6.6.2" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#parameter-value-selection"><i class="fa fa-check"></i><b>6.6.2</b> Parameter value selection</a></li>
+<li class="chapter" data-level="6.6.3" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#underoverfitting"><i class="fa fa-check"></i><b>6.6.3</b> Under/Overfitting</a></li>
+<li class="chapter" data-level="6.6.4" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#evaluating-on-the-test-set"><i class="fa fa-check"></i><b>6.6.4</b> Evaluating on the test set</a></li>
+</ul></li>
+<li class="chapter" data-level="6.7" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#summary-1"><i class="fa fa-check"></i><b>6.7</b> Summary</a></li>
+<li class="chapter" data-level="6.8" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#predictor-variable-selection"><i class="fa fa-check"></i><b>6.8</b> Predictor variable selection</a>
+<ul>
+<li class="chapter" data-level="6.8.1" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#the-effect-of-irrelevant-predictors"><i class="fa fa-check"></i><b>6.8.1</b> The effect of irrelevant predictors</a></li>
+<li class="chapter" data-level="6.8.2" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#finding-a-good-subset-of-predictors"><i class="fa fa-check"></i><b>6.8.2</b> Finding a good subset of predictors</a></li>
+<li class="chapter" data-level="6.8.3" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#forward-selection-in-r"><i class="fa fa-check"></i><b>6.8.3</b> Forward selection in R</a></li>
+</ul></li>
+<li class="chapter" data-level="6.9" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#exercises-5"><i class="fa fa-check"></i><b>6.9</b> Exercises</a></li>
+<li class="chapter" data-level="6.10" data-path="classification2.html"><a class="link-to-diff" href="classification2.html#additional-resources-3"><i class="fa fa-check"></i><b>6.10</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="regression1.html"><a class="link-to-diff" href="regression1.html"><i class="fa fa-check"></i><b>7</b> Regression I: K-nearest neighbors</a>
+<ul>
+<li class="chapter" data-level="7.1" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#overview-6"><i class="fa fa-check"></i><b>7.1</b> Overview</a></li>
+<li class="chapter" data-level="7.2" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#chapter-learning-objectives-6"><i class="fa fa-check"></i><b>7.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="7.3" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#the-regression-problem"><i class="fa fa-check"></i><b>7.3</b> The regression problem</a></li>
+<li class="chapter" data-level="7.4" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#exploring-a-data-set-1"><i class="fa fa-check"></i><b>7.4</b> Exploring a data set</a></li>
+<li class="chapter" data-level="7.5" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#k-nearest-neighbors-regression"><i class="fa fa-check"></i><b>7.5</b> K-nearest neighbors regression</a></li>
+<li class="chapter" data-level="7.6" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#training-evaluating-and-tuning-the-model"><i class="fa fa-check"></i><b>7.6</b> Training, evaluating, and tuning the model</a></li>
+<li class="chapter" data-level="7.7" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#underfitting-and-overfitting"><i class="fa fa-check"></i><b>7.7</b> Underfitting and overfitting</a></li>
+<li class="chapter" data-level="7.8" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#evaluating-on-the-test-set-1"><i class="fa fa-check"></i><b>7.8</b> Evaluating on the test set</a></li>
+<li class="chapter" data-level="7.9" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#multivariable-k-nn-regression"><i class="fa fa-check"></i><b>7.9</b> Multivariable K-NN regression</a></li>
+<li class="chapter" data-level="7.10" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#strengths-and-limitations-of-k-nn-regression"><i class="fa fa-check"></i><b>7.10</b> Strengths and limitations of K-NN regression</a></li>
+<li class="chapter" data-level="7.11" data-path="regression1.html"><a class="link-to-diff" href="regression1.html#exercises-6"><i class="fa fa-check"></i><b>7.11</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="regression2.html"><a class="link-to-diff" href="regression2.html"><i class="fa fa-check"></i><b>8</b> Regression II: linear regression</a>
+<ul>
+<li class="chapter" data-level="8.1" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#overview-7"><i class="fa fa-check"></i><b>8.1</b> Overview</a></li>
+<li class="chapter" data-level="8.2" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#chapter-learning-objectives-7"><i class="fa fa-check"></i><b>8.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="8.3" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#simple-linear-regression"><i class="fa fa-check"></i><b>8.3</b> Simple linear regression</a></li>
+<li class="chapter" data-level="8.4" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#linear-regression-in-r"><i class="fa fa-check"></i><b>8.4</b> Linear regression in R</a></li>
+<li class="chapter" data-level="8.5" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#comparing-simple-linear-and-k-nn-regression"><i class="fa fa-check"></i><b>8.5</b> Comparing simple linear and K-NN regression</a></li>
+<li class="chapter" data-level="8.6" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#multivariable-linear-regression"><i class="fa fa-check"></i><b>8.6</b> Multivariable linear regression</a></li>
+<li class="chapter" data-level="8.7" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#multicollinearity-and-outliers"><i class="fa fa-check"></i><b>8.7</b> Multicollinearity and outliers</a>
+<ul>
+<li class="chapter" data-level="8.7.1" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#outliers"><i class="fa fa-check"></i><b>8.7.1</b> Outliers</a></li>
+<li class="chapter" data-level="8.7.2" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#multicollinearity"><i class="fa fa-check"></i><b>8.7.2</b> Multicollinearity</a></li>
+</ul></li>
+<li class="chapter" data-level="8.8" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#designing-new-predictors"><i class="fa fa-check"></i><b>8.8</b> Designing new predictors</a></li>
+<li class="chapter" data-level="8.9" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#the-other-sides-of-regression"><i class="fa fa-check"></i><b>8.9</b> The other sides of regression</a></li>
+<li class="chapter" data-level="8.10" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#exercises-7"><i class="fa fa-check"></i><b>8.10</b> Exercises</a></li>
+<li class="chapter" data-level="8.11" data-path="regression2.html"><a class="link-to-diff" href="regression2.html#additional-resources-4"><i class="fa fa-check"></i><b>8.11</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="9" data-path="clustering.html"><a class="link-to-diff" href="clustering.html"><i class="fa fa-check"></i><b>9</b> Clustering</a>
+<ul>
+<li class="chapter" data-level="9.1" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#overview-8"><i class="fa fa-check"></i><b>9.1</b> Overview</a></li>
+<li class="chapter" data-level="9.2" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#chapter-learning-objectives-8"><i class="fa fa-check"></i><b>9.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="9.3" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#clustering-1"><i class="fa fa-check"></i><b>9.3</b> Clustering</a></li>
+<li class="chapter" data-level="9.4" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#an-illustrative-example"><i class="fa fa-check"></i><b>9.4</b> An illustrative example</a></li>
+<li class="chapter" data-level="9.5" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#k-means"><i class="fa fa-check"></i><b>9.5</b> K-means</a>
+<ul>
+<li class="chapter" data-level="9.5.1" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#measuring-cluster-quality"><i class="fa fa-check"></i><b>9.5.1</b> Measuring cluster quality</a></li>
+<li class="chapter" data-level="9.5.2" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#the-clustering-algorithm"><i class="fa fa-check"></i><b>9.5.2</b> The clustering algorithm</a></li>
+<li class="chapter" data-level="9.5.3" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#random-restarts"><i class="fa fa-check"></i><b>9.5.3</b> Random restarts</a></li>
+<li class="chapter" data-level="9.5.4" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#choosing-k"><i class="fa fa-check"></i><b>9.5.4</b> Choosing K</a></li>
+</ul></li>
+<li class="chapter" data-level="9.6" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#k-means-in-r"><i class="fa fa-check"></i><b>9.6</b> K-means in R</a></li>
+<li class="chapter" data-level="9.7" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#exercises-8"><i class="fa fa-check"></i><b>9.7</b> Exercises</a></li>
+<li class="chapter" data-level="9.8" data-path="clustering.html"><a class="link-to-diff" href="clustering.html#additional-resources-5"><i class="fa fa-check"></i><b>9.8</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="10" data-path="inference.html"><a class="link-to-diff" href="inference.html"><i class="fa fa-check"></i><b>10</b> Statistical inference</a>
+<ul>
+<li class="chapter" data-level="10.1" data-path="inference.html"><a class="link-to-diff" href="inference.html#overview-9"><i class="fa fa-check"></i><b>10.1</b> Overview</a></li>
+<li class="chapter" data-level="10.2" data-path="inference.html"><a class="link-to-diff" href="inference.html#chapter-learning-objectives-9"><i class="fa fa-check"></i><b>10.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="10.3" data-path="inference.html"><a class="link-to-diff" href="inference.html#why-do-we-need-sampling"><i class="fa fa-check"></i><b>10.3</b> Why do we need sampling?</a></li>
+<li class="chapter" data-level="10.4" data-path="inference.html"><a class="link-to-diff" href="inference.html#sampling-distributions"><i class="fa fa-check"></i><b>10.4</b> Sampling distributions</a>
+<ul>
+<li class="chapter" data-level="10.4.1" data-path="inference.html"><a class="link-to-diff" href="inference.html#sampling-distributions-for-proportions"><i class="fa fa-check"></i><b>10.4.1</b> Sampling distributions for proportions</a></li>
+<li class="chapter" data-level="10.4.2" data-path="inference.html"><a class="link-to-diff" href="inference.html#sampling-distributions-for-means"><i class="fa fa-check"></i><b>10.4.2</b> Sampling distributions for means</a></li>
+<li class="chapter" data-level="10.4.3" data-path="inference.html"><a class="link-to-diff" href="inference.html#summary-2"><i class="fa fa-check"></i><b>10.4.3</b> Summary</a></li>
+</ul></li>
+<li class="chapter" data-level="10.5" data-path="inference.html"><a class="link-to-diff" href="inference.html#bootstrapping"><i class="fa fa-check"></i><b>10.5</b> Bootstrapping</a>
+<ul>
+<li class="chapter" data-level="10.5.1" data-path="inference.html"><a class="link-to-diff" href="inference.html#overview-10"><i class="fa fa-check"></i><b>10.5.1</b> Overview</a></li>
+<li class="chapter" data-level="10.5.2" data-path="inference.html"><a class="link-to-diff" href="inference.html#bootstrapping-in-r"><i class="fa fa-check"></i><b>10.5.2</b> Bootstrapping in R</a></li>
+<li class="chapter" data-level="10.5.3" data-path="inference.html"><a class="link-to-diff" href="inference.html#using-the-bootstrap-to-calculate-a-plausible-range"><i class="fa fa-check"></i><b>10.5.3</b> Using the bootstrap to calculate a plausible range</a></li>
+</ul></li>
+<li class="chapter" data-level="10.6" data-path="inference.html"><a class="link-to-diff" href="inference.html#exercises-9"><i class="fa fa-check"></i><b>10.6</b> Exercises</a></li>
+<li class="chapter" data-level="10.7" data-path="inference.html"><a class="link-to-diff" href="inference.html#additional-resources-6"><i class="fa fa-check"></i><b>10.7</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="11" data-path="jupyter.html"><a href="jupyter.html"><i class="fa fa-check"></i><b>11</b> Combining code and text with Jupyter</a>
+<ul>
+<li class="chapter" data-level="11.1" data-path="jupyter.html"><a href="jupyter.html#overview-11"><i class="fa fa-check"></i><b>11.1</b> Overview</a></li>
+<li class="chapter" data-level="11.2" data-path="jupyter.html"><a href="jupyter.html#chapter-learning-objectives-10"><i class="fa fa-check"></i><b>11.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="11.3" data-path="jupyter.html"><a href="jupyter.html#jupyter-1"><i class="fa fa-check"></i><b>11.3</b> Jupyter</a>
+<ul>
+<li class="chapter" data-level="11.3.1" data-path="jupyter.html"><a href="jupyter.html#accessing-jupyter"><i class="fa fa-check"></i><b>11.3.1</b> Accessing Jupyter</a></li>
+</ul></li>
+<li class="chapter" data-level="11.4" data-path="jupyter.html"><a href="jupyter.html#code-cells"><i class="fa fa-check"></i><b>11.4</b> Code cells</a>
+<ul>
+<li class="chapter" data-level="11.4.1" data-path="jupyter.html"><a href="jupyter.html#executing-code-cells"><i class="fa fa-check"></i><b>11.4.1</b> Executing code cells</a></li>
+<li class="chapter" data-level="11.4.2" data-path="jupyter.html"><a href="jupyter.html#the-kernel"><i class="fa fa-check"></i><b>11.4.2</b> The Kernel</a></li>
+<li class="chapter" data-level="11.4.3" data-path="jupyter.html"><a href="jupyter.html#creating-new-code-cells"><i class="fa fa-check"></i><b>11.4.3</b> Creating new code cells</a></li>
+</ul></li>
+<li class="chapter" data-level="11.5" data-path="jupyter.html"><a href="jupyter.html#markdown-cells"><i class="fa fa-check"></i><b>11.5</b> Markdown cells</a>
+<ul>
+<li class="chapter" data-level="11.5.1" data-path="jupyter.html"><a href="jupyter.html#editing-markdown-cells"><i class="fa fa-check"></i><b>11.5.1</b> Editing Markdown cells</a></li>
+<li class="chapter" data-level="11.5.2" data-path="jupyter.html"><a href="jupyter.html#creating-new-markdown-cells"><i class="fa fa-check"></i><b>11.5.2</b> Creating new Markdown cells</a></li>
+</ul></li>
+<li class="chapter" data-level="11.6" data-path="jupyter.html"><a href="jupyter.html#saving-your-work"><i class="fa fa-check"></i><b>11.6</b> Saving your work</a></li>
+<li class="chapter" data-level="11.7" data-path="jupyter.html"><a href="jupyter.html#best-practices-for-running-a-notebook"><i class="fa fa-check"></i><b>11.7</b> Best practices for running a notebook</a>
+<ul>
+<li class="chapter" data-level="11.7.1" data-path="jupyter.html"><a href="jupyter.html#best-practices-for-executing-code-cells"><i class="fa fa-check"></i><b>11.7.1</b> Best practices for executing code cells</a></li>
+<li class="chapter" data-level="11.7.2" data-path="jupyter.html"><a href="jupyter.html#best-practices-for-including-r-packages-in-notebooks"><i class="fa fa-check"></i><b>11.7.2</b> Best practices for including R packages in notebooks</a></li>
+<li class="chapter" data-level="11.7.3" data-path="jupyter.html"><a href="jupyter.html#summary-of-best-practices-for-running-a-notebook"><i class="fa fa-check"></i><b>11.7.3</b> Summary of best practices for running a notebook</a></li>
+</ul></li>
+<li class="chapter" data-level="11.8" data-path="jupyter.html"><a href="jupyter.html#exploring-data-files"><i class="fa fa-check"></i><b>11.8</b> Exploring data files</a></li>
+<li class="chapter" data-level="11.9" data-path="jupyter.html"><a href="jupyter.html#exporting-to-a-different-file-format"><i class="fa fa-check"></i><b>11.9</b> Exporting to a different file format</a>
+<ul>
+<li class="chapter" data-level="11.9.1" data-path="jupyter.html"><a href="jupyter.html#exporting-to-html"><i class="fa fa-check"></i><b>11.9.1</b> Exporting to HTML</a></li>
+<li class="chapter" data-level="11.9.2" data-path="jupyter.html"><a href="jupyter.html#exporting-to-pdf"><i class="fa fa-check"></i><b>11.9.2</b> Exporting to PDF</a></li>
+</ul></li>
+<li class="chapter" data-level="11.10" data-path="jupyter.html"><a href="jupyter.html#creating-a-new-jupyter-notebook"><i class="fa fa-check"></i><b>11.10</b> Creating a new Jupyter notebook</a></li>
+<li class="chapter" data-level="11.11" data-path="jupyter.html"><a href="jupyter.html#additional-resources-7"><i class="fa fa-check"></i><b>11.11</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="12" data-path="version-control.html"><a class="link-to-diff" href="version-control.html"><i class="fa fa-check"></i><b>12</b> Collaboration with version control</a>
+<ul>
+<li class="chapter" data-level="12.1" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#overview-12"><i class="fa fa-check"></i><b>12.1</b> Overview</a></li>
+<li class="chapter" data-level="12.2" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#chapter-learning-objectives-11"><i class="fa fa-check"></i><b>12.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="12.3" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#what-is-version-control-and-why-should-i-use-it"><i class="fa fa-check"></i><b>12.3</b> What is version control, and why should I use it?</a></li>
+<li class="chapter" data-level="12.4" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#version-control-repositories"><i class="fa fa-check"></i><b>12.4</b> Version control repositories</a></li>
+<li class="chapter" data-level="12.5" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#version-control-workflows"><i class="fa fa-check"></i><b>12.5</b> Version control workflows</a>
+<ul>
+<li class="chapter" data-level="12.5.1" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#commit-changes"><i class="fa fa-check"></i><b>12.5.1</b> Committing changes to a local repository</a></li>
+<li class="chapter" data-level="12.5.2" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#pushing-changes-to-a-remote-repository"><i class="fa fa-check"></i><b>12.5.2</b> Pushing changes to a remote repository</a></li>
+<li class="chapter" data-level="12.5.3" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#pulling-changes-from-a-remote-repository"><i class="fa fa-check"></i><b>12.5.3</b> Pulling changes from a remote repository</a></li>
+</ul></li>
+<li class="chapter" data-level="12.6" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#working-with-remote-repositories-using-github"><i class="fa fa-check"></i><b>12.6</b> Working with remote repositories using GitHub</a>
+<ul>
+<li class="chapter" data-level="12.6.1" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#creating-a-remote-repository-on-github"><i class="fa fa-check"></i><b>12.6.1</b> Creating a remote repository on GitHub</a></li>
+<li class="chapter" data-level="12.6.2" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#editing-files-on-github-with-the-pen-tool"><i class="fa fa-check"></i><b>12.6.2</b> Editing files on GitHub with the pen tool</a></li>
+<li class="chapter" data-level="12.6.3" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#creating-files-on-github-with-the-add-file-menu"><i class="fa fa-check"></i><b>12.6.3</b> Creating files on GitHub with the “Add file” menu</a></li>
+</ul></li>
+<li class="chapter" data-level="12.7" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#local-repo-jupyter"><i class="fa fa-check"></i><b>12.7</b> Working with local repositories using Jupyter</a>
+<ul>
+<li class="chapter" data-level="12.7.1" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#generating-a-github-personal-access-token"><i class="fa fa-check"></i><b>12.7.1</b> Generating a GitHub personal access token</a></li>
+<li class="chapter" data-level="12.7.2" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#cloning-a-repository-using-jupyter"><i class="fa fa-check"></i><b>12.7.2</b> Cloning a repository using Jupyter</a></li>
+<li class="chapter" data-level="12.7.3" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#specifying-files-to-commit"><i class="fa fa-check"></i><b>12.7.3</b> Specifying files to commit</a></li>
+<li class="chapter" data-level="12.7.4" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#making-the-commit"><i class="fa fa-check"></i><b>12.7.4</b> Making the commit</a></li>
+<li class="chapter" data-level="12.7.5" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#pushing-the-commits-to-github"><i class="fa fa-check"></i><b>12.7.5</b> Pushing the commits to GitHub</a></li>
+</ul></li>
+<li class="chapter" data-level="12.8" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#collaboration"><i class="fa fa-check"></i><b>12.8</b> Collaboration</a>
+<ul>
+<li class="chapter" data-level="12.8.1" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#giving-collaborators-access-to-your-project"><i class="fa fa-check"></i><b>12.8.1</b> Giving collaborators access to your project</a></li>
+<li class="chapter" data-level="12.8.2" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#pulling-changes-from-github-using-jupyter"><i class="fa fa-check"></i><b>12.8.2</b> Pulling changes from GitHub using Jupyter</a></li>
+<li class="chapter" data-level="12.8.3" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#handling-merge-conflicts"><i class="fa fa-check"></i><b>12.8.3</b> Handling merge conflicts</a></li>
+<li class="chapter" data-level="12.8.4" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#communicating-using-github-issues"><i class="fa fa-check"></i><b>12.8.4</b> Communicating using GitHub issues</a></li>
+</ul></li>
+<li class="chapter" data-level="12.9" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#exercises-10"><i class="fa fa-check"></i><b>12.9</b> Exercises</a></li>
+<li class="chapter" data-level="12.10" data-path="version-control.html"><a class="link-to-diff" href="version-control.html#vc-add-res"><i class="fa fa-check"></i><b>12.10</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="13" data-path="setup.html"><a class="link-to-diff" href="setup.html"><i class="fa fa-check"></i><b>13</b> Setting up your computer</a>
+<ul>
+<li class="chapter" data-level="13.1" data-path="setup.html"><a class="link-to-diff" href="setup.html#overview-13"><i class="fa fa-check"></i><b>13.1</b> Overview</a></li>
+<li class="chapter" data-level="13.2" data-path="setup.html"><a class="link-to-diff" href="setup.html#chapter-learning-objectives-12"><i class="fa fa-check"></i><b>13.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="13.3" data-path="setup.html"><a class="link-to-diff" href="setup.html#obtaining-the-worksheets-for-this-book"><i class="fa fa-check"></i><b>13.3</b> Obtaining the worksheets for this book</a></li>
+<li class="chapter" data-level="13.4" data-path="setup.html"><a class="link-to-diff" href="setup.html#working-with-docker"><i class="fa fa-check"></i><b>13.4</b> Working with Docker</a>
+<ul>
+<li class="chapter" data-level="13.4.1" data-path="setup.html"><a class="link-to-diff" href="setup.html#windows"><i class="fa fa-check"></i><b>13.4.1</b> Windows</a></li>
+<li class="chapter" data-level="13.4.2" data-path="setup.html"><a class="link-to-diff" href="setup.html#macos"><i class="fa fa-check"></i><b>13.4.2</b> MacOS</a></li>
+<li class="chapter" data-level="13.4.3" data-path="setup.html"><a class="link-to-diff" href="setup.html#ubuntu"><i class="fa fa-check"></i><b>13.4.3</b> Ubuntu</a></li>
+</ul></li>
+<li class="chapter" data-level="13.5" data-path="setup.html"><a class="link-to-diff" href="setup.html#working-with-jupyterlab-desktop"><i class="fa fa-check"></i><b>13.5</b> Working with JupyterLab Desktop</a>
+<ul>
+<li class="chapter" data-level="13.5.1" data-path="setup.html"><a class="link-to-diff" href="setup.html#windows-1"><i class="fa fa-check"></i><b>13.5.1</b> Windows</a></li>
+<li class="chapter" data-level="13.5.2" data-path="setup.html"><a class="link-to-diff" href="setup.html#macos-1"><i class="fa fa-check"></i><b>13.5.2</b> MacOS</a></li>
+<li class="chapter" data-level="13.5.3" data-path="setup.html"><a class="link-to-diff" href="setup.html#ubuntu-1"><i class="fa fa-check"></i><b>13.5.3</b> Ubuntu</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+</ul>
+</nav>
+</div>
+<div class="book-body">
+<div class="body-inner">
+<div class="book-header" role="navigation">
+<h1>
+<i class="fa fa-circle-o-notch fa-spin"></i><a href="./"><p><img src="img/frontmatter/ds-a-first-intro-graphic.jpg"/>
+Data Science</p></a>
+</h1>
+</div>
+<div class="page-wrapper" role="main" tabindex="-1">
+<div class="page-inner">
+<section class="normal" id="section-">
+<div class="section level1 hasAnchor" id="classification1" number="5">
+<h1><span class="header-section-number">Chapter 5</span> Classification I: training &amp; predicting<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#classification1"></a></h1>
+<div class="section level2 hasAnchor" id="overview-4" number="5.1">
+<h2><span class="header-section-number">5.1</span> Overview<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#overview-4"></a></h2>
+<p>In previous chapters, we focused solely on descriptive and exploratory
+data analysis questions.
+This chapter and the next together serve as our first
+foray into answering <em>predictive</em> questions about data. In particular, we will
+focus on <em>classification</em>, i.e., using one or more
+variables to predict the value of a categorical variable of interest. This chapter
+will cover the basics of classification, how to preprocess data to make it
+suitable for use in a classifier, and how to use our observed data to make
+predictions. The next chapter will focus on how to evaluate how accurate the
+predictions from our classifier are, as well as how to improve our classifier
+(where possible) to maximize its accuracy.</p>
+</div>
+<div class="section level2 hasAnchor" id="chapter-learning-objectives-4" number="5.2">
+<h2><span class="header-section-number">5.2</span> Chapter learning objectives<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#chapter-learning-objectives-4"></a></h2>
+<p>By the end of the chapter, readers will be able to do the following:</p>
+<ul>
+<li>Recognize situations where a classifier would be appropriate for making predictions.</li>
+<li>Describe what a training data set is and how it is used in classification.</li>
+<li>Interpret the output of a classifier.</li>
+<li>Compute, by hand, the straight-line (Euclidean) distance between points on a graph when there are two predictor variables.</li>
+<li>Explain the K-nearest neighbors classification algorithm.</li>
+<li>Perform K-nearest neighbors classification in R using <code>tidymodels</code>.</li>
+<li>Use a <code>recipe</code> to center, scale, balance, and impute data as a preprocessing step.</li>
+<li>Combine preprocessing and model training using a <code>workflow</code>.</li>
+</ul>
+</div>
+<div class="section level2 hasAnchor" id="the-classification-problem" number="5.3">
+<h2><span class="header-section-number">5.3</span> The classification problem<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#the-classification-problem"></a></h2>
+<p>In many situations, we want to make predictions based on the current situation
+as well as past experiences. For instance, a doctor may want to diagnose a
+patient as either diseased or healthy based on their symptoms and the doctor’s
+past experience with patients; an email provider might want to tag a given
+email as “spam” or “not spam” based on the email’s text and past email text data;
+or a credit card company may want to predict whether a purchase is fraudulent based
+on the current purchase item, amount, and location as well as past purchases.
+These tasks are all examples of <strong>classification</strong>, i.e., predicting a
+categorical class (sometimes called a <em>label</em>) for an observation given its
+other variables (sometimes called <em>features</em>). </p>
+<p>Generally, a classifier assigns an observation without a known class (e.g., a new patient)
+to a class (e.g., diseased or healthy) on the basis of how similar it is to other observations
+for which we do know the class (e.g., previous patients with known diseases and
+symptoms). These observations with known classes that we use as a basis for
+prediction are called a <strong>training set</strong>; this name comes from the fact that
+we use these data to train, or teach, our classifier. Once taught, we can use
+the classifier to make predictions on new data for which we do not know the class.</p>
+<p>There are many possible methods that we could use to predict
+a categorical class/label for an observation. In this book, we will
+focus on the widely used <strong>K-nearest neighbors</strong> algorithm <span class="citation">(<a href="#ref-knnfix">Fix and Hodges 1951</a>; <a href="#ref-knncover">Cover and Hart 1967</a>)</span>.
+In your future studies, you might encounter decision trees, support vector machines (SVMs),
+logistic regression, neural networks, and more; see the additional resources
+section at the end of the next chapter for where to begin learning more about
+these other methods. It is also worth mentioning that there are many
+variations on the basic classification problem. For example,
+we focus on the setting of <strong>binary classification</strong> where only two
+classes are involved (e.g., a diagnosis of either healthy or diseased), but you may
+also run into multiclass classification problems with more than two
+categories (e.g., a diagnosis of healthy, bronchitis, pneumonia, or a common cold).</p>
+</div>
+<div class="section level2 hasAnchor" id="exploring-a-data-set" number="5.4">
+<h2><span class="header-section-number">5.4</span> Exploring a data set<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#exploring-a-data-set"></a></h2>
+<p>In this chapter and the next, we will study a data set of
+<a href="https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29">digitized breast cancer image features</a>,
+created by Dr. William H. Wolberg, W. Nick Street, and Olvi L. Mangasarian <span class="citation">(<a href="#ref-streetbreastcancer">Street, Wolberg, and Mangasarian 1993</a>)</span>.
+Each row in the data set represents an
+image of a tumor sample, including the diagnosis (benign or malignant) and
+several other measurements (nucleus texture, perimeter, area, and more).
+Diagnosis for each image was conducted by physicians.</p>
+<p>As with all data analyses, we first need to formulate a precise question that
+we want to answer. Here, the question is <em>predictive</em>: can
+we use the tumor
+image measurements available to us to predict whether a future tumor image
+(with unknown diagnosis) shows a benign or malignant tumor? Answering this
+question is important because traditional, non-data-driven methods for tumor
+diagnosis are quite subjective and dependent upon how skilled and experienced
+the diagnosing physician is. Furthermore, benign tumors are not normally
+dangerous; the cells stay in the same place, and the tumor stops growing before
+it gets very large. By contrast, in malignant tumors, the cells invade the
+surrounding tissue and spread into nearby organs, where they can cause serious
+damage <span class="citation">(<a href="#ref-stanfordhealthcare">Stanford Health Care 2021</a>)</span>.
+Thus, it is important to quickly and accurately diagnose the tumor type to
+guide patient treatment.</p>
+<div class="section level3 hasAnchor" id="loading-the-cancer-data" number="5.4.1">
+<h3><span class="header-section-number">5.4.1</span> Loading the cancer data<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#loading-the-cancer-data"></a></h3>
+<p>Our first step is to load, wrangle, and explore the data using visualizations
+in order to better understand the data we are working with. We start by
+loading the <code>tidyverse</code> package needed for our analysis.</p>
+<div class="sourceCode" id="cb259"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb259-1"><a class="link-to-diff" href="classification1.html#cb259-1" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code></pre></div>
+<p>In this case, the file containing the breast cancer data set is a <code>.csv</code>
+file with headers. We’ll use the <code>read_csv</code> function with no additional
+arguments, and then inspect its contents:</p>
+<p></p>
+<div class="sourceCode" id="cb260"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb260-1"><a class="link-to-diff" href="classification1.html#cb260-1" tabindex="-1"></a>cancer <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/wdbc.csv"</span>)</span>
+<span id="cb260-2"><a class="link-to-diff" href="classification1.html#cb260-2" tabindex="-1"></a>cancer</span></code></pre></div>
+<pre><code>## # A tibble: 569 × 12
+##        ID Class Radius Texture Perimeter   Area Smoothness Compactness Concavity
+##     &lt;dbl&gt; &lt;chr&gt;  &lt;dbl&gt;   &lt;dbl&gt;     &lt;dbl&gt;  &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt;     &lt;dbl&gt;
+##  1 8.42e5 M      1.10   -2.07     1.27    0.984      1.57       3.28      2.65  
+##  2 8.43e5 M      1.83   -0.353    1.68    1.91      -0.826     -0.487    -0.0238
+##  3 8.43e7 M      1.58    0.456    1.57    1.56       0.941      1.05      1.36  
+##  4 8.43e7 M     -0.768   0.254   -0.592  -0.764      3.28       3.40      1.91  
+##  5 8.44e7 M      1.75   -1.15     1.78    1.82       0.280      0.539     1.37  
+##  6 8.44e5 M     -0.476  -0.835   -0.387  -0.505      2.24       1.24      0.866 
+##  7 8.44e5 M      1.17    0.161    1.14    1.09      -0.123      0.0882    0.300 
+##  8 8.45e7 M     -0.118   0.358   -0.0728 -0.219      1.60       1.14      0.0610
+##  9 8.45e5 M     -0.320   0.588   -0.184  -0.384      2.20       1.68      1.22  
+## 10 8.45e7 M     -0.473   1.10    -0.329  -0.509      1.58       2.56      1.74  
+## # ℹ 559 more rows
+## # ℹ 3 more variables: Concave_Points &lt;dbl&gt;, Symmetry &lt;dbl&gt;,
+## #   Fractal_Dimension &lt;dbl&gt;</code></pre>
+</div>
+<div class="section level3 hasAnchor" id="describing-the-variables-in-the-cancer-data-set" number="5.4.2">
+<h3><span class="header-section-number">5.4.2</span> Describing the variables in the cancer data set<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#describing-the-variables-in-the-cancer-data-set"></a></h3>
+<p>Breast tumors can be diagnosed by performing a <em>biopsy</em>, a process where
+tissue is removed from the body and examined for the presence of disease.
+Traditionally these procedures were quite invasive; modern methods such as fine
+needle aspiration, used to collect the present data set, extract only a small
+amount of tissue and are less invasive. Based on a digital image of each breast
+tissue sample collected for this data set, ten different variables were measured
+for each cell nucleus in the image (items 3–12 of the list of variables below), and then the mean
+for each variable across the nuclei was recorded. As part of the
+data preparation, these values have been <em>standardized (centered and scaled)</em>; we will discuss what this
+means and why we do it later in this chapter. Each image additionally was given
+a unique ID and a diagnosis by a physician. Therefore, the
+total set of variables per image in this data set is:</p>
+<ol style="list-style-type: decimal">
+<li>ID: identification number</li>
+<li>Class: the diagnosis (M = malignant or B = benign)</li>
+<li>Radius: the mean of distances from center to points on the perimeter</li>
+<li>Texture: the standard deviation of gray-scale values</li>
+<li>Perimeter: the length of the surrounding contour</li>
+<li>Area: the area inside the contour</li>
+<li>Smoothness: the local variation in radius lengths</li>
+<li>Compactness: the ratio of squared perimeter and area</li>
+<li>Concavity: severity of concave portions of the contour</li>
+<li>Concave Points: the number of concave portions of the contour</li>
+<li>Symmetry: how similar the nucleus is when mirrored</li>
+<li>Fractal Dimension: a measurement of how “rough” the perimeter is</li>
+</ol>
+<div style="page-break-after: always;"></div>
+<p>Below we use <code>glimpse</code> to preview the data frame. This function can
+make it easier to inspect the data when we have a lot of columns,
+as it prints the data such that the columns go down
+the page (instead of across).</p>
+<div class="sourceCode" id="cb262"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb262-1"><a class="link-to-diff" href="classification1.html#cb262-1" tabindex="-1"></a><span class="fu">glimpse</span>(cancer)</span></code></pre></div>
+<pre><code>## Rows: 569
+## Columns: 12
+## $ ID                &lt;dbl&gt; 842302, 842517, 84300903, 84348301, 84358402, 843786…
+## $ Class             &lt;chr&gt; "M", "M", "M", "M", "M", "M", "M", "M", "M", "M", "M…
+## $ Radius            &lt;dbl&gt; 1.0960995, 1.8282120, 1.5784992, -0.7682333, 1.74875…
+## $ Texture           &lt;dbl&gt; -2.0715123, -0.3533215, 0.4557859, 0.2535091, -1.150…
+## $ Perimeter         &lt;dbl&gt; 1.26881726, 1.68447255, 1.56512598, -0.59216612, 1.7…
+## $ Area              &lt;dbl&gt; 0.98350952, 1.90703027, 1.55751319, -0.76379174, 1.8…
+## $ Smoothness        &lt;dbl&gt; 1.56708746, -0.82623545, 0.94138212, 3.28066684, 0.2…
+## $ Compactness       &lt;dbl&gt; 3.28062806, -0.48664348, 1.05199990, 3.39991742, 0.5…
+## $ Concavity         &lt;dbl&gt; 2.65054179, -0.02382489, 1.36227979, 1.91421287, 1.3…
+## $ Concave_Points    &lt;dbl&gt; 2.53024886, 0.54766227, 2.03543978, 1.45043113, 1.42…
+## $ Symmetry          &lt;dbl&gt; 2.215565542, 0.001391139, 0.938858720, 2.864862154, …
+## $ Fractal_Dimension &lt;dbl&gt; 2.25376381, -0.86788881, -0.39765801, 4.90660199, -0…</code></pre>
+<p>From the summary of the data above, we can see that <code>Class</code> is of type character
+(denoted by <code>&lt;chr&gt;</code>). We can use the <code>distinct</code> function to see all the unique
+values present in that column. We see that there are two diagnoses: benign, represented by “B”,
+and malignant, represented by “M”.</p>
+<div class="sourceCode" id="cb264"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb264-1"><a class="link-to-diff" href="classification1.html#cb264-1" tabindex="-1"></a>cancer <span class="sc">|&gt;</span></span>
+<span id="cb264-2"><a class="link-to-diff" href="classification1.html#cb264-2" tabindex="-1"></a>  <span class="fu">distinct</span>(Class)</span></code></pre></div>
+<pre><code>## # A tibble: 2 × 1
+##   Class
+##   &lt;chr&gt;
+## 1 M    
+## 2 B</code></pre>
+<p>Since we will be working with <code>Class</code> as a categorical
+variable, it is a good idea to convert it to a factor type using the <code>as_factor</code> function.
+We will also improve the readability of our analysis by renaming “M” to
+“Malignant” and “B” to “Benign” using the <code>fct_recode</code> method. The <code>fct_recode</code> method
+is used to replace the names of factor values with other names. The arguments of <code>fct_recode</code> are the column that you
+want to modify, followed any number of arguments of the form <code>"new name" = "old name"</code> to specify the renaming scheme.</p>
+<div class="sourceCode" id="cb266"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb266-1"><a class="link-to-diff" href="classification1.html#cb266-1" tabindex="-1"></a>cancer <span class="ot">&lt;-</span> cancer <span class="sc">|&gt;</span></span>
+<span id="cb266-2"><a class="link-to-diff" href="classification1.html#cb266-2" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Class =</span> <span class="fu">as_factor</span>(Class)) <span class="sc">|&gt;</span></span>
+<span id="cb266-3"><a class="link-to-diff" href="classification1.html#cb266-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Class =</span> <span class="fu">fct_recode</span>(Class, <span class="st">"Malignant"</span> <span class="ot">=</span> <span class="st">"M"</span>, <span class="st">"Benign"</span> <span class="ot">=</span> <span class="st">"B"</span>))</span>
+<span id="cb266-4"><a class="link-to-diff" href="classification1.html#cb266-4" tabindex="-1"></a><span class="fu">glimpse</span>(cancer)</span></code></pre></div>
+<pre><code>## Rows: 569
+## Columns: 12
+## $ ID                &lt;dbl&gt; 842302, 842517, 84300903, 84348301, 84358402, 843786…
+## $ Class             &lt;fct&gt; Malignant, Malignant, Malignant, Malignant, Malignan…
+## $ Radius            &lt;dbl&gt; 1.0960995, 1.8282120, 1.5784992, -0.7682333, 1.74875…
+## $ Texture           &lt;dbl&gt; -2.0715123, -0.3533215, 0.4557859, 0.2535091, -1.150…
+## $ Perimeter         &lt;dbl&gt; 1.26881726, 1.68447255, 1.56512598, -0.59216612, 1.7…
+## $ Area              &lt;dbl&gt; 0.98350952, 1.90703027, 1.55751319, -0.76379174, 1.8…
+## $ Smoothness        &lt;dbl&gt; 1.56708746, -0.82623545, 0.94138212, 3.28066684, 0.2…
+## $ Compactness       &lt;dbl&gt; 3.28062806, -0.48664348, 1.05199990, 3.39991742, 0.5…
+## $ Concavity         &lt;dbl&gt; 2.65054179, -0.02382489, 1.36227979, 1.91421287, 1.3…
+## $ Concave_Points    &lt;dbl&gt; 2.53024886, 0.54766227, 2.03543978, 1.45043113, 1.42…
+## $ Symmetry          &lt;dbl&gt; 2.215565542, 0.001391139, 0.938858720, 2.864862154, …
+## $ Fractal_Dimension &lt;dbl&gt; 2.25376381, -0.86788881, -0.39765801, 4.90660199, -0…</code></pre>
+<p>Let’s verify that we have successfully converted the <code>Class</code> column to a factor variable
+and renamed its values to “Benign” and “Malignant” using the <code>distinct</code> function once more.</p>
+<div class="sourceCode" id="cb268"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb268-1"><a class="link-to-diff" href="classification1.html#cb268-1" tabindex="-1"></a>cancer <span class="sc">|&gt;</span></span>
+<span id="cb268-2"><a class="link-to-diff" href="classification1.html#cb268-2" tabindex="-1"></a>  <span class="fu">distinct</span>(Class)</span></code></pre></div>
+<pre><code>## # A tibble: 2 × 1
+##   Class    
+##   &lt;fct&gt;    
+## 1 Malignant
+## 2 Benign</code></pre>
+</div>
+<div class="section level3 hasAnchor" id="exploring-the-cancer-data" number="5.4.3">
+<h3><span class="header-section-number">5.4.3</span> Exploring the cancer data<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#exploring-the-cancer-data"></a></h3>
+<p>Before we start doing any modeling, let’s explore our data set. Below we use
+the <code>group_by</code>, <code>summarize</code> and <code>n</code> functions to find the number and percentage
+of benign and malignant tumor observations in our data set. The <code>n</code> function within
+<code>summarize</code>, when paired with <code>group_by</code>, counts the number of observations in each <code>Class</code> group.
+Then we calculate the percentage in each group by dividing by the total number of observations
+and multiplying by 100. We have 357 (63%) benign and 212 (37%) malignant tumor observations.</p>
+<div class="sourceCode" id="cb270"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb270-1"><a class="link-to-diff" href="classification1.html#cb270-1" tabindex="-1"></a>num_obs <span class="ot">&lt;-</span> <span class="fu">nrow</span>(cancer)</span>
+<span id="cb270-2"><a class="link-to-diff" href="classification1.html#cb270-2" tabindex="-1"></a>cancer <span class="sc">|&gt;</span></span>
+<span id="cb270-3"><a class="link-to-diff" href="classification1.html#cb270-3" tabindex="-1"></a>  <span class="fu">group_by</span>(Class) <span class="sc">|&gt;</span></span>
+<span id="cb270-4"><a class="link-to-diff" href="classification1.html#cb270-4" tabindex="-1"></a>  <span class="fu">summarize</span>(</span>
+<span id="cb270-5"><a class="link-to-diff" href="classification1.html#cb270-5" tabindex="-1"></a>    <span class="at">count =</span> <span class="fu">n</span>(),</span>
+<span id="cb270-6"><a class="link-to-diff" href="classification1.html#cb270-6" tabindex="-1"></a>    <span class="at">percentage =</span> <span class="fu">n</span>() <span class="sc">/</span> num_obs <span class="sc">*</span> <span class="dv">100</span></span>
+<span id="cb270-7"><a class="link-to-diff" href="classification1.html#cb270-7" tabindex="-1"></a>  )</span></code></pre></div>
+<pre><code>## # A tibble: 2 × 3
+##   Class     count percentage
+##   &lt;fct&gt;     &lt;int&gt;      &lt;dbl&gt;
+## 1 Malignant   212       37.3
+## 2 Benign      357       62.7</code></pre>
+<p>Next, let’s draw a scatter plot to visualize the relationship between the
+perimeter and concavity variables. Rather than use <code>ggplot's</code> default palette,
+we select our own colorblind-friendly colors—<code>"darkorange"</code>
+for orange and <code>"steelblue"</code> for blue—and
+pass them as the <code>values</code> argument to the <code>scale_color_manual</code> function.</p>
+<div class="sourceCode" id="cb272"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb272-1"><a class="link-to-diff" href="classification1.html#cb272-1" tabindex="-1"></a>perim_concav <span class="ot">&lt;-</span> cancer <span class="sc">|&gt;</span></span>
+<span id="cb272-2"><a class="link-to-diff" href="classification1.html#cb272-2" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> Perimeter, <span class="at">y =</span> Concavity, <span class="at">color =</span> Class)) <span class="sc">+</span></span>
+<span id="cb272-3"><a class="link-to-diff" href="classification1.html#cb272-3" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb272-4"><a class="link-to-diff" href="classification1.html#cb272-4" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Perimeter (standardized)"</span>,</span>
+<span id="cb272-5"><a class="link-to-diff" href="classification1.html#cb272-5" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Concavity (standardized)"</span>,</span>
+<span id="cb272-6"><a class="link-to-diff" href="classification1.html#cb272-6" tabindex="-1"></a>       <span class="at">color =</span> <span class="st">"Diagnosis"</span>) <span class="sc">+</span></span>
+<span id="cb272-7"><a class="link-to-diff" href="classification1.html#cb272-7" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"darkorange"</span>, <span class="st">"steelblue"</span>)) <span class="sc">+</span></span>
+<span id="cb272-8"><a class="link-to-diff" href="classification1.html#cb272-8" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
+<span id="cb272-9"><a class="link-to-diff" href="classification1.html#cb272-9" tabindex="-1"></a>perim_concav</span></code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:05-scatter" style="display:block;"></span>
+<img alt="Scatter plot of concavity versus perimeter colored by diagnosis label." src="_main_files/figure-html/05-scatter-1.png" width="432"/>
+<p class="caption">
+Figure 5.1: Scatter plot of concavity versus perimeter colored by diagnosis label.
+</p>
+</div>
+<p>In Figure <a class="link-to-diff" href="classification1.html#fig:05-scatter">5.1</a>, we can see that malignant observations typically fall in
+the upper right-hand corner of the plot area. By contrast, benign
+observations typically fall in the lower left-hand corner of the plot. In other words,
+benign observations tend to have lower concavity and perimeter values, and malignant
+ones tend to have larger values. Suppose we
+obtain a new observation not in the current data set that has all the variables
+measured <em>except</em> the label (i.e., an image without the physician’s diagnosis
+for the tumor class). We could compute the standardized perimeter and concavity values,
+resulting in values of, say, 1 and 1. Could we use this information to classify
+that observation as benign or malignant? Based on the scatter plot, how might
+you classify that new observation? If the standardized concavity and perimeter
+values are 1 and 1 respectively, the point would lie in the middle of the
+orange cloud of malignant points and thus we could probably classify it as
+malignant. Based on our visualization, it seems like it may be possible
+to make accurate predictions of the <code>Class</code> variable (i.e., a diagnosis) for
+tumor images with unknown diagnoses.</p>
+</div>
+</div>
+<div class="section level2 hasAnchor" id="classification-with-k-nearest-neighbors" number="5.5">
+<h2><span class="header-section-number">5.5</span> Classification with K-nearest neighbors<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#classification-with-k-nearest-neighbors"></a></h2>
+<p>In order to actually make predictions for new observations in practice, we
+will need a classification algorithm.
+In this book, we will use the K-nearest neighbors classification algorithm.
+To predict the label of a new observation (here, classify it as either benign
+or malignant), the K-nearest neighbors classifier generally finds the <span class="math inline">\(K\)</span>
+“nearest” or “most similar” observations in our training set, and then uses
+their diagnoses to make a prediction for the new observation’s diagnosis. <span class="math inline">\(K\)</span>
+is a number that we must choose in advance; for now, we will assume that someone has chosen
+<span class="math inline">\(K\)</span> for us. We will cover how to choose <span class="math inline">\(K\)</span> ourselves in the next chapter.</p>
+<p>To illustrate the concept of K-nearest neighbors classification, we
+will walk through an example. Suppose we have a
+new observation, with standardized perimeter of 2 and standardized concavity of 4, whose
+diagnosis “Class” is unknown. This new observation is depicted by the red, diamond point in
+Figure <a class="link-to-diff" href="classification1.html#fig:05-knn-1">5.2</a>.</p>
+<div class="figure" style="text-align: center"><span id="fig:05-knn-1" style="display:block;"></span>
+<img alt="Scatter plot of concavity versus perimeter with new observation represented as a red diamond." src="_main_files/figure-html/05-knn-1-1.png" width="432"/>
+<p class="caption">
+Figure 5.2: Scatter plot of concavity versus perimeter with new observation represented as a red diamond.
+</p>
+</div>
+<p>Figure <a class="link-to-diff" href="classification1.html#fig:05-knn-2">5.3</a> shows that the nearest point to this new observation is <strong>malignant</strong> and
+located at the coordinates (2.1, 3.6). The idea here is that if a point is close to another in the scatter plot,
+then the perimeter and concavity values are similar, and so we may expect that
+they would have the same diagnosis.</p>
+<div class="figure" style="text-align: center"><span id="fig:05-knn-2" style="display:block;"></span>
+<img alt="Scatter plot of concavity versus perimeter. The new observation is represented as a red diamond with a line to the one nearest neighbor, which has a malignant label." src="_main_files/figure-html/05-knn-2-1.png" width="432"/>
+<p class="caption">
+Figure 5.3: Scatter plot of concavity versus perimeter. The new observation is represented as a red diamond with a line to the one nearest neighbor, which has a malignant label.
+</p>
+</div>
+<p>Suppose we have another new observation with standardized perimeter 0.2 and
+concavity of 3.3. Looking at the scatter plot in Figure <a class="link-to-diff" href="classification1.html#fig:05-knn-4">5.4</a>, how would you
+classify this red, diamond observation? The nearest neighbor to this new point is a
+<strong>benign</strong> observation at (0.2, 2.7).
+Does this seem like the right prediction to make for this observation? Probably
+not, if you consider the other nearby points.</p>
+<div class="figure" style="text-align: center"><span id="fig:05-knn-4" style="display:block;"></span>
+<img alt="Scatter plot of concavity versus perimeter. The new observation is represented as a red diamond with a line to the one nearest neighbor, which has a benign label." src="_main_files/figure-html/05-knn-4-1.png" width="432"/>
+<p class="caption">
+Figure 5.4: Scatter plot of concavity versus perimeter. The new observation is represented as a red diamond with a line to the one nearest neighbor, which has a benign label.
+</p>
+</div>
+<p>To improve the prediction we can consider several
+neighboring points, say <span class="math inline">\(K = 3\)</span>, that are closest to the new observation
+to predict its diagnosis class. Among those 3 closest points, we use the
+<em>majority class</em> as our prediction for the new observation. As shown in Figure <a class="link-to-diff" href="classification1.html#fig:05-knn-5">5.5</a>, we
+see that the diagnoses of 2 of the 3 nearest neighbors to our new observation
+are malignant. Therefore we take majority vote and classify our new red, diamond
+observation as malignant.</p>
+<div class="figure" style="text-align: center"><span id="fig:05-knn-5" style="display:block;"></span>
+<img alt="Scatter plot of concavity versus perimeter with three nearest neighbors." src="_main_files/figure-html/05-knn-5-1.png" width="432"/>
+<p class="caption">
+Figure 5.5: Scatter plot of concavity versus perimeter with three nearest neighbors.
+</p>
+</div>
+<p>Here we chose the <span class="math inline">\(K=3\)</span> nearest observations, but there is nothing special
+about <span class="math inline">\(K=3\)</span>. We could have used <span class="math inline">\(K=4, 5\)</span> or more (though we may want to choose
+an odd number to avoid ties). We will discuss more about choosing <span class="math inline">\(K\)</span> in the
+next chapter.</p>
+<div class="section level3 hasAnchor" id="distance-between-points" number="5.5.1">
+<h3><span class="header-section-number">5.5.1</span> Distance between points<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#distance-between-points"></a></h3>
+<p>We decide which points are the <span class="math inline">\(K\)</span> “nearest” to our new observation
+using the <em>straight-line distance</em> (we will often just refer to this as <em>distance</em>).
+Suppose we have two observations <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span>, each having two predictor variables, <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span>.
+Denote <span class="math inline">\(a_x\)</span> and <span class="math inline">\(a_y\)</span> to be the values of variables <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> for observation <span class="math inline">\(a\)</span>;
+<span class="math inline">\(b_x\)</span> and <span class="math inline">\(b_y\)</span> have similar definitions for observation <span class="math inline">\(b\)</span>.
+Then the straight-line distance between observation <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> on the x-y plane can
+be computed using the following formula:</p>
+<p><span class="math display">\[\mathrm{Distance} = \sqrt{(a_x -b_x)^2 + (a_y - b_y)^2}\]</span></p>
+<p>To find the <span class="math inline">\(K\)</span> nearest neighbors to our new observation, we compute the distance
+from that new observation to each observation in our training data, and select the <span class="math inline">\(K\)</span> observations corresponding to the
+<span class="math inline">\(K\)</span> <em>smallest</em> distance values. For example, suppose we want to use <span class="math inline">\(K=5\)</span> neighbors to classify a new
+observation with perimeter of 0 and
+concavity of 3.5, shown as a red diamond in Figure <a class="link-to-diff" href="classification1.html#fig:05-multiknn-1">5.6</a>. Let’s calculate the distances
+between our new point and each of the observations in the training set to find
+the <span class="math inline">\(K=5\)</span> neighbors that are nearest to our new point.
+You will see in the <code>mutate</code> step below, we compute the straight-line
+distance using the formula above: we square the differences between the two observations’ perimeter
+and concavity coordinates, add the squared differences, and then take the square root.
+In order to find the <span class="math inline">\(K=5\)</span> nearest neighbors, we will use the <code>slice_min</code> function. </p>
+<div class="figure" style="text-align: center"><span id="fig:05-multiknn-1" style="display:block;"></span>
+<img alt="Scatter plot of concavity versus perimeter with new observation represented as a red diamond." src="_main_files/figure-html/05-multiknn-1-1.png" width="432"/>
+<p class="caption">
+Figure 5.6: Scatter plot of concavity versus perimeter with new observation represented as a red diamond.
+</p>
+</div>
+<div class="sourceCode" id="cb273"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb273-1"><a class="link-to-diff" href="classification1.html#cb273-1" tabindex="-1"></a>new_obs_Perimeter <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb273-2"><a class="link-to-diff" href="classification1.html#cb273-2" tabindex="-1"></a>new_obs_Concavity <span class="ot">&lt;-</span> <span class="fl">3.5</span></span>
+<span id="cb273-3"><a class="link-to-diff" href="classification1.html#cb273-3" tabindex="-1"></a>cancer <span class="sc">|&gt;</span></span>
+<span id="cb273-4"><a class="link-to-diff" href="classification1.html#cb273-4" tabindex="-1"></a>  <span class="fu">select</span>(ID, Perimeter, Concavity, Class) <span class="sc">|&gt;</span></span>
+<span id="cb273-5"><a class="link-to-diff" href="classification1.html#cb273-5" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dist_from_new =</span> <span class="fu">sqrt</span>((Perimeter <span class="sc">-</span> new_obs_Perimeter)<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span></span>
+<span id="cb273-6"><a class="link-to-diff" href="classification1.html#cb273-6" tabindex="-1"></a>                              (Concavity <span class="sc">-</span> new_obs_Concavity)<span class="sc">^</span><span class="dv">2</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb273-7"><a class="link-to-diff" href="classification1.html#cb273-7" tabindex="-1"></a>  <span class="fu">slice_min</span>(dist_from_new, <span class="at">n =</span> <span class="dv">5</span>) <span class="co"># take the 5 rows of minimum distance</span></span></code></pre></div>
+<pre><code>## # A tibble: 5 × 5
+##        ID Perimeter Concavity Class     dist_from_new
+##     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;fct&gt;             &lt;dbl&gt;
+## 1   86409     0.241      2.65 Benign            0.881
+## 2  887181     0.750      2.87 Malignant         0.980
+## 3  899667     0.623      2.54 Malignant         1.14 
+## 4  907914     0.417      2.31 Malignant         1.26 
+## 5 8710441    -1.16       4.04 Benign            1.28</code></pre>
+<p>In Table <a class="link-to-diff" href="classification1.html#tab:05-multiknn-mathtable">5.1</a> we show in mathematical detail how
+the <code>mutate</code> step was used to compute the <code>dist_from_new</code> variable (the
+distance to the new observation) for each of the 5 nearest neighbors in the
+training data.</p>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+<span id="tab:05-multiknn-mathtable">Table 5.1: </span>Evaluating the distances from the new observation to each of its 5 nearest neighbors
+</caption>
+<thead>
+<tr>
+<th style="text-align:right;">
+Perimeter
+</th>
+<th style="text-align:right;">
+Concavity
+</th>
+<th style="text-align:left;">
+Distance
+</th>
+<th style="text-align:left;">
+Class
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+0.24
+</td>
+<td style="text-align:right;">
+2.65
+</td>
+<td style="text-align:left;">
+<span class="math inline">\(\sqrt{(0 - 0.24)^2 + (3.5 - 2.65)^2} = 0.88\)</span>
+</td>
+<td style="text-align:left;">
+Benign
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.75
+</td>
+<td style="text-align:right;">
+2.87
+</td>
+<td style="text-align:left;">
+<span class="math inline">\(\sqrt{(0 - 0.75)^2 + (3.5 - 2.87)^2} = 0.98\)</span>
+</td>
+<td style="text-align:left;">
+Malignant
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.62
+</td>
+<td style="text-align:right;">
+2.54
+</td>
+<td style="text-align:left;">
+<span class="math inline">\(\sqrt{(0 - 0.62)^2 + (3.5 - 2.54)^2} = 1.14\)</span>
+</td>
+<td style="text-align:left;">
+Malignant
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+0.42
+</td>
+<td style="text-align:right;">
+2.31
+</td>
+<td style="text-align:left;">
+<span class="math inline">\(\sqrt{(0 - 0.42)^2 + (3.5 - 2.31)^2} = 1.26\)</span>
+</td>
+<td style="text-align:left;">
+Malignant
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+-1.16
+</td>
+<td style="text-align:right;">
+4.04
+</td>
+<td style="text-align:left;">
+<span class="math inline">\(\sqrt{(0 - (-1.16))^2 + (3.5 - 4.04)^2} = 1.28\)</span>
+</td>
+<td style="text-align:left;">
+Benign
+</td>
+</tr>
+</tbody>
+</table>
+<p>The result of this computation shows that 3 of the 5 nearest neighbors to our new observation are
+malignant; since this is the majority, we classify our new observation as malignant.
+These 5 neighbors are circled in Figure <a class="link-to-diff" href="classification1.html#fig:05-multiknn-3">5.7</a>.</p>
+<div class="figure" style="text-align: center"><span id="fig:05-multiknn-3" style="display:block;"></span>
+<img alt="Scatter plot of concavity versus perimeter with 5 nearest neighbors circled." src="_main_files/figure-html/05-multiknn-3-1.png" width="432"/>
+<p class="caption">
+Figure 5.7: Scatter plot of concavity versus perimeter with 5 nearest neighbors circled.
+</p>
+</div>
+</div>
+<div class="section level3 hasAnchor" id="more-than-two-explanatory-variables" number="5.5.2">
+<h3><span class="header-section-number">5.5.2</span> More than two explanatory variables<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#more-than-two-explanatory-variables"></a></h3>
+<p>Although the above description is directed toward two predictor variables,
+exactly the same K-nearest neighbors algorithm applies when you
+have a higher number of predictor variables. Each predictor variable may give us new
+information to help create our classifier. The only difference is the formula
+for the distance between points. Suppose we have <span class="math inline">\(m\)</span> predictor
+variables for two observations <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span>, i.e.,
+<span class="math inline">\(a = (a_{1}, a_{2}, \dots, a_{m})\)</span> and
+<span class="math inline">\(b = (b_{1}, b_{2}, \dots, b_{m})\)</span>.</p>
+<p>The distance formula becomes </p>
+<p><span class="math display">\[\mathrm{Distance} = \sqrt{(a_{1} -b_{1})^2 + (a_{2} - b_{2})^2 + \dots + (a_{m} - b_{m})^2}.\]</span></p>
+<p>This formula still corresponds to a straight-line distance, just in a space
+with more dimensions. Suppose we want to calculate the distance between a new
+observation with a perimeter of 0, concavity of 3.5, and symmetry of 1, and
+another observation with a perimeter, concavity, and symmetry of 0.417, 2.31, and
+0.837 respectively. We have two observations with three predictor variables:
+perimeter, concavity, and symmetry. Previously, when we had two variables, we
+added up the squared difference between each of our (two) variables, and then
+took the square root. Now we will do the same, except for our three variables.
+We calculate the distance as follows</p>
+<p><span class="math display">\[\mathrm{Distance} =\sqrt{(0 - 0.417)^2 + (3.5 - 2.31)^2 + (1 - 0.837)^2} = 1.27.\]</span></p>
+<p>Let’s calculate the distances between our new observation and each of the
+observations in the training set to find the <span class="math inline">\(K=5\)</span> neighbors when we have these
+three predictors.</p>
+<div class="sourceCode" id="cb275"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb275-1"><a class="link-to-diff" href="classification1.html#cb275-1" tabindex="-1"></a>new_obs_Perimeter <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb275-2"><a class="link-to-diff" href="classification1.html#cb275-2" tabindex="-1"></a>new_obs_Concavity <span class="ot">&lt;-</span> <span class="fl">3.5</span></span>
+<span id="cb275-3"><a class="link-to-diff" href="classification1.html#cb275-3" tabindex="-1"></a>new_obs_Symmetry <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb275-4"><a class="link-to-diff" href="classification1.html#cb275-4" tabindex="-1"></a>cancer <span class="sc">|&gt;</span></span>
+<span id="cb275-5"><a class="link-to-diff" href="classification1.html#cb275-5" tabindex="-1"></a>  <span class="fu">select</span>(ID, Perimeter, Concavity, Symmetry, Class) <span class="sc">|&gt;</span></span>
+<span id="cb275-6"><a class="link-to-diff" href="classification1.html#cb275-6" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dist_from_new =</span> <span class="fu">sqrt</span>((Perimeter <span class="sc">-</span> new_obs_Perimeter)<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span></span>
+<span id="cb275-7"><a class="link-to-diff" href="classification1.html#cb275-7" tabindex="-1"></a>                              (Concavity <span class="sc">-</span> new_obs_Concavity)<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span></span>
+<span id="cb275-8"><a class="link-to-diff" href="classification1.html#cb275-8" tabindex="-1"></a>                                (Symmetry <span class="sc">-</span> new_obs_Symmetry)<span class="sc">^</span><span class="dv">2</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb275-9"><a class="link-to-diff" href="classification1.html#cb275-9" tabindex="-1"></a>  <span class="fu">slice_min</span>(dist_from_new, <span class="at">n =</span> <span class="dv">5</span>) <span class="co"># take the 5 rows of minimum distance</span></span></code></pre></div>
+<pre><code>## # A tibble: 5 × 6
+##         ID Perimeter Concavity Symmetry Class     dist_from_new
+##      &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt; &lt;fct&gt;             &lt;dbl&gt;
+## 1   907914     0.417      2.31    0.837 Malignant          1.27
+## 2 90439701     1.33       2.89    1.10  Malignant          1.47
+## 3   925622     0.470      2.08    1.15  Malignant          1.50
+## 4   859471    -1.37       2.81    1.09  Benign             1.53
+## 5   899667     0.623      2.54    2.06  Malignant          1.56</code></pre>
+<p>Based on <span class="math inline">\(K=5\)</span> nearest neighbors with these three predictors, we would classify
+the new observation as malignant since 4 out of 5 of the nearest neighbors are from the malignant class.
+Figure <a class="link-to-diff" href="classification1.html#fig:05-more">5.8</a> shows what the data look like when we visualize them
+as a 3-dimensional scatter with lines from the new observation to its five nearest neighbors.</p>
+<div class="figure" style="text-align: center"><span id="fig:05-more" style="display:block;"></span>
+<img src="prerendered/htmlwidget-467f3ada599dec390e71.png"/>
+<p class="caption">
+Figure 5.8: 3D scatter plot of the standardized symmetry, concavity, and perimeter variables. Note that in general we recommend against using 3D visualizations; here we show the data in 3D only to illustrate what higher dimensions and nearest neighbors look like, for learning purposes.
+</p>
+</div>
+</div>
+<div class="section level3 hasAnchor" id="summary-of-k-nearest-neighbors-algorithm" number="5.5.3">
+<h3><span class="header-section-number">5.5.3</span> Summary of K-nearest neighbors algorithm<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#summary-of-k-nearest-neighbors-algorithm"></a></h3>
+<p>In order to classify a new observation using a K-nearest neighbors classifier, we have to do the following:</p>
+<ol style="list-style-type: decimal">
+<li>Compute the distance between the new observation and each observation in the training set.</li>
+<li>Sort the data table in ascending order according to the distances.</li>
+<li>Choose the top <span class="math inline">\(K\)</span> rows of the sorted table.</li>
+<li>Classify the new observation based on a majority vote of the neighbor classes.</li>
+</ol>
+</div>
+</div>
+<div class="section level2 hasAnchor" id="k-nearest-neighbors-with-tidymodels" number="5.6">
+<h2><span class="header-section-number">5.6</span> K-nearest neighbors with <code>tidymodels</code><a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#k-nearest-neighbors-with-tidymodels"></a></h2>
+<p>Coding the K-nearest neighbors algorithm in R ourselves can get complicated,
+especially if we want to handle multiple classes, more than two variables,
+or predict the class for multiple new observations. Thankfully, in R,
+the K-nearest neighbors algorithm is
+implemented in <a href="https://parsnip.tidymodels.org/">the <code>parsnip</code> R package</a> <span class="citation">(<a href="#ref-parsnip">Kuhn and Vaughan 2021</a>)</span>
+included in <code>tidymodels</code>, along with
+many <a href="https://www.tidymodels.org/find/parsnip/">other models</a>
+that you will encounter in this and future chapters of the book. The <code>tidymodels</code> collection
+provides tools to help make and use models, such as classifiers. Using the packages
+in this collection will help keep our code simple, readable and accurate; the
+less we have to code ourselves, the fewer mistakes we will likely make. We
+start by loading <code>tidymodels</code>.</p>
+<div class="sourceCode" id="cb277"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb277-1"><a class="link-to-diff" href="classification1.html#cb277-1" tabindex="-1"></a><span class="fu">library</span>(tidymodels)</span></code></pre></div>
+<p>Let’s walk through how to use <code>tidymodels</code> to perform K-nearest neighbors classification.
+We will use the <code>cancer</code> data set from above, with
+perimeter and concavity as predictors and <span class="math inline">\(K = 5\)</span> neighbors to build our classifier. Then
+we will use the classifier to predict the diagnosis label for a new observation with
+perimeter 0, concavity 3.5, and an unknown diagnosis label. Let’s pick out our two desired
+predictor variables and class label and store them as a new data set named <code>cancer_train</code>:</p>
+<div class="sourceCode" id="cb278"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb278-1"><a class="link-to-diff" href="classification1.html#cb278-1" tabindex="-1"></a>cancer_train <span class="ot">&lt;-</span> cancer <span class="sc">|&gt;</span></span>
+<span id="cb278-2"><a class="link-to-diff" href="classification1.html#cb278-2" tabindex="-1"></a>  <span class="fu">select</span>(Class, Perimeter, Concavity)</span>
+<span id="cb278-3"><a class="link-to-diff" href="classification1.html#cb278-3" tabindex="-1"></a>cancer_train</span></code></pre></div>
+<pre><code>## # A tibble: 569 × 3
+##    Class     Perimeter Concavity
+##    &lt;fct&gt;         &lt;dbl&gt;     &lt;dbl&gt;
+##  1 Malignant    1.27      2.65  
+##  2 Malignant    1.68     -0.0238
+##  3 Malignant    1.57      1.36  
+##  4 Malignant   -0.592     1.91  
+##  5 Malignant    1.78      1.37  
+##  6 Malignant   -0.387     0.866 
+##  7 Malignant    1.14      0.300 
+##  8 Malignant   -0.0728    0.0610
+##  9 Malignant   -0.184     1.22  
+## 10 Malignant   -0.329     1.74  
+## # ℹ 559 more rows</code></pre>
+<p>Next, we create a <em>model specification</em> for K-nearest neighbors classification
+by calling the <code>nearest_neighbor</code> function, specifying that we want to use <span class="math inline">\(K = 5\)</span> neighbors
+(we will discuss how to choose <span class="math inline">\(K\)</span> in the next chapter) and that each neighboring point should have the same weight when voting
+(<code>weight_func = "rectangular"</code>). The <code>weight_func</code> argument controls
+how neighbors vote when classifying a new observation; by setting it to <code>"rectangular"</code>,
+each of the <span class="math inline">\(K\)</span> nearest neighbors gets exactly 1 vote as described above. Other choices,
+which weigh each neighbor’s vote differently, can be found on
+<a href="https://parsnip.tidymodels.org/reference/nearest_neighbor.html">the <code>parsnip</code> website</a>.
+In the <code>set_engine</code> argument, we specify which package or system will be used for training
+the model. Here <code>kknn</code> is the R package we will use for performing K-nearest neighbors classification.
+Finally, we specify that this is a classification problem with the <code>set_mode</code> function.</p>
+<div class="sourceCode" id="cb280"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb280-1"><a class="link-to-diff" href="classification1.html#cb280-1" tabindex="-1"></a>knn_spec <span class="ot">&lt;-</span> <span class="fu">nearest_neighbor</span>(<span class="at">weight_func =</span> <span class="st">"rectangular"</span>, <span class="at">neighbors =</span> <span class="dv">5</span>) <span class="sc">|&gt;</span></span>
+<span id="cb280-2"><a class="link-to-diff" href="classification1.html#cb280-2" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"kknn"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb280-3"><a class="link-to-diff" href="classification1.html#cb280-3" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">"classification"</span>)</span>
+<span id="cb280-4"><a class="link-to-diff" href="classification1.html#cb280-4" tabindex="-1"></a>knn_spec</span></code></pre></div>
+<pre><code>## K-Nearest Neighbor Model Specification (classification)
+## 
+## Main Arguments:
+##   neighbors = 5
+##   weight_func = rectangular
+## 
+## Computational engine: kknn</code></pre>
+<p>In order to fit the model on the breast cancer data, we need to pass the model specification
+and the data set to the <code>fit</code> function. We also need to specify what variables to use as predictors
+and what variable to use as the response. Below, the <code>Class ~ Perimeter + Concavity</code> argument specifies
+that <code>Class</code> is the response variable (the one we want to predict),
+and both <code>Perimeter</code> and <code>Concavity</code> are to be used as the predictors.</p>
+<div class="sourceCode" id="cb282"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb282-1"><a class="link-to-diff" href="classification1.html#cb282-1" tabindex="-1"></a>knn_fit <span class="ot">&lt;-</span> knn_spec <span class="sc">|&gt;</span></span>
+<span id="cb282-2"><a class="link-to-diff" href="classification1.html#cb282-2" tabindex="-1"></a>  <span class="fu">fit</span>(Class <span class="sc">~</span> Perimeter <span class="sc">+</span> Concavity, <span class="at">data =</span> cancer_train)</span></code></pre></div>
+<p>We can also use a convenient shorthand syntax using a period, <code>Class ~ .</code>, to indicate
+that we want to use every variable <em>except</em> <code>Class</code> as a predictor in the model.
+In this particular setup, since <code>Concavity</code> and <code>Perimeter</code> are the only two predictors in the <code>cancer_train</code>
+data frame, <code>Class ~ Perimeter + Concavity</code> and <code>Class ~ .</code> are equivalent.
+In general, you can choose individual predictors using the <code>+</code> symbol, or you can specify to
+use <em>all</em> predictors using the <code>.</code> symbol.</p>
+<div class="sourceCode" id="cb283"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb283-1"><a class="link-to-diff" href="classification1.html#cb283-1" tabindex="-1"></a>knn_fit <span class="ot">&lt;-</span> knn_spec <span class="sc">|&gt;</span></span>
+<span id="cb283-2"><a class="link-to-diff" href="classification1.html#cb283-2" tabindex="-1"></a>  <span class="fu">fit</span>(Class <span class="sc">~</span> ., <span class="at">data =</span> cancer_train)</span>
+<span id="cb283-3"><a class="link-to-diff" href="classification1.html#cb283-3" tabindex="-1"></a>knn_fit</span></code></pre></div>
+<pre><code>## parsnip model object
+## 
+## 
+## Call:
+## kknn::train.kknn(formula = Class ~ ., data = data, ks = min_rows(5,     data, 5)
+## , kernel = ~"rectangular")
+## 
+## Type of response variable: nominal
+## Minimal misclassification: 0.07557118
+## Best kernel: rectangular
+## Best k: 5</code></pre>
+<p>Here you can see the final trained model summary. It confirms that the computational engine used
+to train the model was <code>kknn::train.kknn</code>. It also shows the fraction of errors made by
+the K-nearest neighbors model, but we will ignore this for now and discuss it in more detail
+in the next chapter.
+Finally, it shows (somewhat confusingly) that the “best” weight function
+was “rectangular” and “best” setting of <span class="math inline">\(K\)</span> was 5; but since we specified these earlier,
+R is just repeating those settings to us here. In the next chapter, we will actually
+let R find the value of <span class="math inline">\(K\)</span> for us.</p>
+<p>Finally, we make the prediction on the new observation by calling the <code>predict</code> function,
+passing both the fit object we just created and the new observation itself. As above,
+when we ran the K-nearest neighbors
+classification algorithm manually, the <code>knn_fit</code> object classifies the new observation as
+malignant. Note that the <code>predict</code> function outputs a data frame with a single
+variable named <code>.pred_class</code>.</p>
+<div class="sourceCode" id="cb285"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb285-1"><a class="link-to-diff" href="classification1.html#cb285-1" tabindex="-1"></a>new_obs <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">Perimeter =</span> <span class="dv">0</span>, <span class="at">Concavity =</span> <span class="fl">3.5</span>)</span>
+<span id="cb285-2"><a class="link-to-diff" href="classification1.html#cb285-2" tabindex="-1"></a><span class="fu">predict</span>(knn_fit, new_obs)</span></code></pre></div>
+<pre><code>## # A tibble: 1 × 1
+##   .pred_class
+##   &lt;fct&gt;      
+## 1 Malignant</code></pre>
+<p>Is this predicted malignant label the actual class for this observation?
+Well, we don’t know because we do not have this
+observation’s diagnosis— that is what we were trying to predict! The
+classifier’s prediction is not necessarily correct, but in the next chapter, we will
+learn ways to quantify how accurate we think our predictions are.</p>
+</div>
+<div class="section level2 hasAnchor" id="data-preprocessing-with-tidymodels" number="5.7">
+<h2><span class="header-section-number">5.7</span> Data preprocessing with <code>tidymodels</code><a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#data-preprocessing-with-tidymodels"></a></h2>
+<div class="section level3 hasAnchor" id="centering-and-scaling" number="5.7.1">
+<h3><span class="header-section-number">5.7.1</span> Centering and scaling<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#centering-and-scaling"></a></h3>
+<p>When using K-nearest neighbors classification, the <em>scale</em> of each variable
+(i.e., its size and range of values) matters. Since the classifier predicts
+classes by identifying observations nearest to it, any variables with
+a large scale will have a much larger effect than variables with a small
+scale. But just because a variable has a large scale <em>doesn’t mean</em> that it is
+more important for making accurate predictions. For example, suppose you have a
+data set with two features, salary (in dollars) and years of education, and
+you want to predict the corresponding type of job. When we compute the
+neighbor distances, a difference of $1000 is huge compared to a difference of
+10 years of education. But for our conceptual understanding and answering of
+the problem, it’s the opposite; 10 years of education is huge compared to a
+difference of $1000 in yearly salary!</p>
+<p>In many other predictive models, the <em>center</em> of each variable (e.g., its mean)
+matters as well. For example, if we had a data set with a temperature variable
+measured in degrees Kelvin, and the same data set with temperature measured in
+degrees Celsius, the two variables would differ by a constant shift of 273
+(even though they contain exactly the same information). Likewise, in our
+hypothetical job classification example, we would likely see that the center of
+the salary variable is in the tens of thousands, while the center of the years
+of education variable is in the single digits. Although this doesn’t affect the
+K-nearest neighbors classification algorithm, this large shift can change the
+outcome of using many other predictive models. </p>
+<p>To scale and center our data, we need to find
+our variables’ <em>mean</em> (the average, which quantifies the “central” value of a
+set of numbers) and <em>standard deviation</em> (a number quantifying how spread out values are).
+For each observed value of the variable, we subtract the mean (i.e., center the variable)
+and divide by the standard deviation (i.e., scale the variable). When we do this, the data
+is said to be <em>standardized</em>, and all variables in a data set will have a mean of 0
+and a standard deviation of 1. To illustrate the effect that standardization can have on the K-nearest
+neighbors algorithm, we will read in the original, unstandardized Wisconsin breast
+cancer data set; we have been using a standardized version of the data set up
+until now. As before, we will convert the <code>Class</code> variable to the factor type
+and rename the values to “Malignant” and “Benign.”
+To keep things simple, we will just use the <code>Area</code>, <code>Smoothness</code>, and <code>Class</code>
+variables:</p>
+<div class="sourceCode" id="cb287"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb287-1"><a class="link-to-diff" href="classification1.html#cb287-1" tabindex="-1"></a>unscaled_cancer <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/wdbc_unscaled.csv"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb287-2"><a class="link-to-diff" href="classification1.html#cb287-2" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Class =</span> <span class="fu">as_factor</span>(Class)) <span class="sc">|&gt;</span></span>
+<span id="cb287-3"><a class="link-to-diff" href="classification1.html#cb287-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Class =</span> <span class="fu">fct_recode</span>(Class, <span class="st">"Benign"</span> <span class="ot">=</span> <span class="st">"B"</span>, <span class="st">"Malignant"</span> <span class="ot">=</span> <span class="st">"M"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb287-4"><a class="link-to-diff" href="classification1.html#cb287-4" tabindex="-1"></a>  <span class="fu">select</span>(Class, Area, Smoothness)</span>
+<span id="cb287-5"><a class="link-to-diff" href="classification1.html#cb287-5" tabindex="-1"></a>unscaled_cancer</span></code></pre></div>
+<pre><code>## # A tibble: 569 × 3
+##    Class      Area Smoothness
+##    &lt;fct&gt;     &lt;dbl&gt;      &lt;dbl&gt;
+##  1 Malignant 1001      0.118 
+##  2 Malignant 1326      0.0847
+##  3 Malignant 1203      0.110 
+##  4 Malignant  386.     0.142 
+##  5 Malignant 1297      0.100 
+##  6 Malignant  477.     0.128 
+##  7 Malignant 1040      0.0946
+##  8 Malignant  578.     0.119 
+##  9 Malignant  520.     0.127 
+## 10 Malignant  476.     0.119 
+## # ℹ 559 more rows</code></pre>
+<p>Looking at the unscaled and uncentered data above, you can see that the differences
+between the values for area measurements are much larger than those for
+smoothness. Will this affect
+predictions? In order to find out, we will create a scatter plot of these two
+predictors (colored by diagnosis) for both the unstandardized data we just
+loaded, and the standardized version of that same data. But first, we need to
+standardize the <code>unscaled_cancer</code> data set with <code>tidymodels</code>.</p>
+<p>In the <code>tidymodels</code> framework, all data preprocessing happens
+using a <code>recipe</code> from <a href="https://recipes.tidymodels.org/">the <code>recipes</code> R package</a> <span class="citation">(<a href="#ref-recipes">Kuhn and Wickham 2021</a>)</span>.
+Here we will initialize a recipe for
+the <code>unscaled_cancer</code> data above, specifying
+that the <code>Class</code> variable is the response, and all other variables are predictors:</p>
+<div class="sourceCode" id="cb289"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb289-1"><a class="link-to-diff" href="classification1.html#cb289-1" tabindex="-1"></a>uc_recipe <span class="ot">&lt;-</span> <span class="fu">recipe</span>(Class <span class="sc">~</span> ., <span class="at">data =</span> unscaled_cancer)</span>
+<span id="cb289-2"><a class="link-to-diff" href="classification1.html#cb289-2" tabindex="-1"></a>uc_recipe</span></code></pre></div>
+<pre><code>## 
+## ── Recipe ──────────
+## 
+## ── Inputs 
+## Number of variables by role
+## outcome:   1
+## predictor: 2</code></pre>
+<p>So far, there is not much in the recipe; just a statement about the number of response variables
+and predictors. Let’s add
+scaling (<code>step_scale</code>) and
+centering (<code>step_center</code>) steps for
+all of the predictors so that they each have a mean of 0 and standard deviation of 1.
+Note that <code>tidyverse</code> actually provides <code>step_normalize</code>, which does both centering and scaling in
+a single recipe step; in this book we will keep <code>step_scale</code> and <code>step_center</code> separate
+to emphasize conceptually that there are two steps happening.
+The <code>prep</code> function finalizes the recipe by using the data (here, <code>unscaled_cancer</code>)
+to compute anything necessary to run the recipe (in this case, the column means and standard
+deviations):</p>
+<div class="sourceCode" id="cb291"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb291-1"><a class="link-to-diff" href="classification1.html#cb291-1" tabindex="-1"></a>uc_recipe <span class="ot">&lt;-</span> uc_recipe <span class="sc">|&gt;</span></span>
+<span id="cb291-2"><a class="link-to-diff" href="classification1.html#cb291-2" tabindex="-1"></a>  <span class="fu">step_scale</span>(<span class="fu">all_predictors</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb291-3"><a class="link-to-diff" href="classification1.html#cb291-3" tabindex="-1"></a>  <span class="fu">step_center</span>(<span class="fu">all_predictors</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb291-4"><a class="link-to-diff" href="classification1.html#cb291-4" tabindex="-1"></a>  <span class="fu">prep</span>()</span>
+<span id="cb291-5"><a class="link-to-diff" href="classification1.html#cb291-5" tabindex="-1"></a>uc_recipe</span></code></pre></div>
+<pre><code>## 
+## ── Recipe ──────────
+## 
+## ── Inputs 
+## Number of variables by role
+## outcome:   1
+## predictor: 2
+## 
+## ── Training information 
+## Training data contained 569 data points and no incomplete rows.
+## 
+## ── Operations 
+## • Scaling for: Area, Smoothness | Trained
+## • Centering for: Area, Smoothness | Trained</code></pre>
+<p>You can now see that the recipe includes a scaling and centering step for all predictor variables.
+Note that when you add a step to a recipe, you must specify what columns to apply the step to.
+Here we used the <code>all_predictors()</code> function to specify that each step should be applied to
+all predictor variables. However, there are a number of different arguments one could use here,
+as well as naming particular columns with the same syntax as the <code>select</code> function.
+For example:</p>
+<ul>
+<li><code>all_nominal()</code> and <code>all_numeric()</code>: specify all categorical or all numeric variables</li>
+<li><code>all_predictors()</code> and <code>all_outcomes()</code>: specify all predictor or all response variables</li>
+<li><code>Area, Smoothness</code>: specify both the <code>Area</code> and <code>Smoothness</code> variable</li>
+<li><code>-Class</code>: specify everything except the <code>Class</code> variable</li>
+</ul>
+<p>You can find a full set of all the steps and variable selection functions
+on the <a href="https://recipes.tidymodels.org/reference/index.html"><code>recipes</code> reference page</a>.</p>
+<p>At this point, we have calculated the required statistics based on the data input into the
+recipe, but the data are not yet scaled and centered. To actually scale and center
+the data, we need to apply the <code>bake</code> function to the unscaled data.</p>
+<div class="sourceCode" id="cb293"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb293-1"><a class="link-to-diff" href="classification1.html#cb293-1" tabindex="-1"></a>scaled_cancer <span class="ot">&lt;-</span> <span class="fu">bake</span>(uc_recipe, unscaled_cancer)</span>
+<span id="cb293-2"><a class="link-to-diff" href="classification1.html#cb293-2" tabindex="-1"></a>scaled_cancer</span></code></pre></div>
+<pre><code>## # A tibble: 569 × 3
+##      Area Smoothness Class    
+##     &lt;dbl&gt;      &lt;dbl&gt; &lt;fct&gt;    
+##  1  0.984      1.57  Malignant
+##  2  1.91      -0.826 Malignant
+##  3  1.56       0.941 Malignant
+##  4 -0.764      3.28  Malignant
+##  5  1.82       0.280 Malignant
+##  6 -0.505      2.24  Malignant
+##  7  1.09      -0.123 Malignant
+##  8 -0.219      1.60  Malignant
+##  9 -0.384      2.20  Malignant
+## 10 -0.509      1.58  Malignant
+## # ℹ 559 more rows</code></pre>
+<p>It may seem redundant that we had to both <code>bake</code> <em>and</em> <code>prep</code> to scale and center the data.
+However, we do this in two steps so we can specify a different data set in the <code>bake</code> step if we want.
+For example, we may want to specify new data that were not part of the training set.</p>
+<p>You may wonder why we are doing so much work just to center and
+scale our variables. Can’t we just manually scale and center the <code>Area</code> and
+<code>Smoothness</code> variables ourselves before building our K-nearest neighbors model? Well,
+technically <em>yes</em>; but doing so is error-prone. In particular, we might
+accidentally forget to apply the same centering / scaling when making
+predictions, or accidentally apply a <em>different</em> centering / scaling than what
+we used while training. Proper use of a <code>recipe</code> helps keep our code simple,
+readable, and error-free. Furthermore, note that using <code>prep</code> and <code>bake</code> is
+required only when you want to inspect the result of the preprocessing steps
+yourself. You will see further on in Section
+<a class="link-to-diff" href="classification1.html#puttingittogetherworkflow">5.8</a> that <code>tidymodels</code> provides tools to
+automatically apply <code>prep</code> and <code>bake</code> as necessary without additional coding effort.</p>
+<p>Figure <a class="link-to-diff" href="classification1.html#fig:05-scaling-plt">5.9</a> shows the two scatter plots side-by-side—one for <code>unscaled_cancer</code> and one for
+<code>scaled_cancer</code>. Each has the same new observation annotated with its <span class="math inline">\(K=3\)</span> nearest neighbors.
+In the original unstandardized data plot, you can see some odd choices
+for the three nearest neighbors. In particular, the “neighbors” are visually
+well within the cloud of benign observations, and the neighbors are all nearly
+vertically aligned with the new observation (which is why it looks like there
+is only one black line on this plot). Figure <a class="link-to-diff" href="classification1.html#fig:05-scaling-plt-zoomed">5.10</a>
+shows a close-up of that region on the unstandardized plot. Here the computation of nearest
+neighbors is dominated by the much larger-scale area variable. The plot for standardized data
+on the right in Figure <a class="link-to-diff" href="classification1.html#fig:05-scaling-plt">5.9</a> shows a much more intuitively reasonable
+selection of nearest neighbors. Thus, standardizing the data can change things
+in an important way when we are using predictive algorithms.
+Standardizing your data should be a part of the preprocessing you do
+before predictive modeling and you should always think carefully about your problem domain and
+whether you need to standardize your data.</p>
+<div class="figure" style="text-align: center"><span id="fig:05-scaling-plt" style="display:block;"></span>
+<img alt="Comparison of K = 3 nearest neighbors with unstandardized and standardized data." src="_main_files/figure-html/05-scaling-plt-1.png" width="672"/>
+<p class="caption">
+Figure 5.9: Comparison of K = 3 nearest neighbors with unstandardized and standardized data.
+</p>
+</div>
+<div class="figure" style="text-align: center"><span id="fig:05-scaling-plt-zoomed" style="display:block;"></span>
+<img alt="Close-up of three nearest neighbors for unstandardized data." src="_main_files/figure-html/05-scaling-plt-zoomed-1.png" width="864"/>
+<p class="caption">
+Figure 5.10: Close-up of three nearest neighbors for unstandardized data.
+</p>
+</div>
+</div>
+<div class="section level3 hasAnchor" id="balancing" number="5.7.2">
+<h3><span class="header-section-number">5.7.2</span> Balancing<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#balancing"></a></h3>
+<p>Another potential issue in a data set for a classifier is <em>class imbalance</em>,
+i.e., when one label is much more common than another. Since classifiers like
+the K-nearest neighbors algorithm use the labels of nearby points to predict
+the label of a new point, if there are many more data points with one label
+overall, the algorithm is more likely to pick that label in general (even if
+the “pattern” of data suggests otherwise). Class imbalance is actually quite a
+common and important problem: from rare disease diagnosis to malicious email
+detection, there are many cases in which the “important” class to identify
+(presence of disease, malicious email) is much rarer than the “unimportant”
+class (no disease, normal email).</p>
+<p>To better illustrate the problem, let’s revisit the scaled breast cancer data,
+<code>cancer</code>; except now we will remove many of the observations of malignant tumors, simulating
+what the data would look like if the cancer was rare. We will do this by
+picking only 3 observations from the malignant group, and keeping all
+of the benign observations.
+We choose these 3 observations using the <code>slice_head</code>
+function, which takes two arguments: a data frame-like object,
+and the number of rows to select from the top (<code>n</code>).
+We will use the <code>bind_rows</code> function to glue the two resulting filtered
+data frames back together, and name the result <code>rare_cancer</code>.
+The new imbalanced data is shown in Figure <a class="link-to-diff" href="classification1.html#fig:05-unbalanced">5.11</a>.</p>
+<div class="sourceCode" id="cb295"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb295-1"><a class="link-to-diff" href="classification1.html#cb295-1" tabindex="-1"></a>rare_cancer <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
+<span id="cb295-2"><a class="link-to-diff" href="classification1.html#cb295-2" tabindex="-1"></a>      <span class="fu">filter</span>(cancer, Class <span class="sc">==</span> <span class="st">"Benign"</span>),</span>
+<span id="cb295-3"><a class="link-to-diff" href="classification1.html#cb295-3" tabindex="-1"></a>      cancer <span class="sc">|&gt;</span> <span class="fu">filter</span>(Class <span class="sc">==</span> <span class="st">"Malignant"</span>) <span class="sc">|&gt;</span> <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">3</span>)</span>
+<span id="cb295-4"><a class="link-to-diff" href="classification1.html#cb295-4" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb295-5"><a class="link-to-diff" href="classification1.html#cb295-5" tabindex="-1"></a>    <span class="fu">select</span>(Class, Perimeter, Concavity)</span>
+<span id="cb295-6"><a class="link-to-diff" href="classification1.html#cb295-6" tabindex="-1"></a></span>
+<span id="cb295-7"><a class="link-to-diff" href="classification1.html#cb295-7" tabindex="-1"></a>rare_plot <span class="ot">&lt;-</span> rare_cancer <span class="sc">|&gt;</span></span>
+<span id="cb295-8"><a class="link-to-diff" href="classification1.html#cb295-8" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> Perimeter, <span class="at">y =</span> Concavity, <span class="at">color =</span> Class)) <span class="sc">+</span></span>
+<span id="cb295-9"><a class="link-to-diff" href="classification1.html#cb295-9" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb295-10"><a class="link-to-diff" href="classification1.html#cb295-10" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Perimeter (standardized)"</span>,</span>
+<span id="cb295-11"><a class="link-to-diff" href="classification1.html#cb295-11" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Concavity (standardized)"</span>,</span>
+<span id="cb295-12"><a class="link-to-diff" href="classification1.html#cb295-12" tabindex="-1"></a>       <span class="at">color =</span> <span class="st">"Diagnosis"</span>) <span class="sc">+</span></span>
+<span id="cb295-13"><a class="link-to-diff" href="classification1.html#cb295-13" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"darkorange"</span>, <span class="st">"steelblue"</span>)) <span class="sc">+</span></span>
+<span id="cb295-14"><a class="link-to-diff" href="classification1.html#cb295-14" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
+<span id="cb295-15"><a class="link-to-diff" href="classification1.html#cb295-15" tabindex="-1"></a></span>
+<span id="cb295-16"><a class="link-to-diff" href="classification1.html#cb295-16" tabindex="-1"></a>rare_plot</span></code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:05-unbalanced" style="display:block;"></span>
+<img alt="Imbalanced data." src="_main_files/figure-html/05-unbalanced-1.png" width="432"/>
+<p class="caption">
+Figure 5.11: Imbalanced data.
+</p>
+</div>
+<p>Suppose we now decided to use <span class="math inline">\(K = 7\)</span> in K-nearest neighbors classification.
+With only 3 observations of malignant tumors, the classifier
+will <em>always predict that the tumor is benign, no matter what its concavity and perimeter
+are!</em> This is because in a majority vote of 7 observations, at most 3 will be
+malignant (we only have 3 total malignant observations), so at least 4 must be
+benign, and the benign vote will always win. For example, Figure <a class="link-to-diff" href="classification1.html#fig:05-upsample">5.12</a>
+shows what happens for a new tumor observation that is quite close to three observations
+in the training data that were tagged as malignant.</p>
+<div class="figure" style="text-align: center"><span id="fig:05-upsample" style="display:block;"></span>
+<img alt="Imbalanced data with 7 nearest neighbors to a new observation highlighted." src="_main_files/figure-html/05-upsample-1.png" width="432"/>
+<p class="caption">
+Figure 5.12: Imbalanced data with 7 nearest neighbors to a new observation highlighted.
+</p>
+</div>
+<p>Figure <a class="link-to-diff" href="classification1.html#fig:05-upsample-2">5.13</a> shows what happens if we set the background color of
+each area of the plot to the prediction the K-nearest neighbors
+classifier would make for a new observation at that location. We can see that the decision is
+always “benign,” corresponding to the blue color.</p>
+<div class="figure" style="text-align: center"><span id="fig:05-upsample-2" style="display:block;"></span>
+<img alt="Imbalanced data with background color indicating the decision of the classifier and the points represent the labeled data." src="_main_files/figure-html/05-upsample-2-1.png" width="432"/>
+<p class="caption">
+Figure 5.13: Imbalanced data with background color indicating the decision of the classifier and the points represent the labeled data.
+</p>
+</div>
+<p>Despite the simplicity of the problem, solving it in a statistically sound manner is actually
+fairly nuanced, and a careful treatment would require a lot more detail and mathematics than we will cover in this textbook.
+For the present purposes, it will suffice to rebalance the data by <em>oversampling</em> the rare class.
+In other words, we will replicate rare observations multiple times in our data set to give them more
+voting power in the K-nearest neighbors algorithm. In order to do this, we will add an oversampling
+step to the earlier <code>uc_recipe</code> recipe with the <code>step_upsample</code> function from the <code>themis</code> R package.
+We show below how to do this, and also
+use the <code>group_by</code> and <code>summarize</code> functions to see that our classes are now balanced:</p>
+<div class="sourceCode" id="cb296"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb296-1"><a class="link-to-diff" href="classification1.html#cb296-1" tabindex="-1"></a><span class="fu">library</span>(themis)</span>
+<span id="cb296-2"><a class="link-to-diff" href="classification1.html#cb296-2" tabindex="-1"></a></span>
+<span id="cb296-3"><a class="link-to-diff" href="classification1.html#cb296-3" tabindex="-1"></a>ups_recipe <span class="ot">&lt;-</span> <span class="fu">recipe</span>(Class <span class="sc">~</span> ., <span class="at">data =</span> rare_cancer) <span class="sc">|&gt;</span></span>
+<span id="cb296-4"><a class="link-to-diff" href="classification1.html#cb296-4" tabindex="-1"></a>  <span class="fu">step_upsample</span>(Class, <span class="at">over_ratio =</span> <span class="dv">1</span>, <span class="at">skip =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb296-5"><a class="link-to-diff" href="classification1.html#cb296-5" tabindex="-1"></a>  <span class="fu">prep</span>()</span>
+<span id="cb296-6"><a class="link-to-diff" href="classification1.html#cb296-6" tabindex="-1"></a></span>
+<span id="cb296-7"><a class="link-to-diff" href="classification1.html#cb296-7" tabindex="-1"></a>ups_recipe</span></code></pre></div>
+<pre><code>## 
+## ── Recipe ──────────
+## 
+## ── Inputs 
+## Number of variables by role
+## outcome:   1
+## predictor: 2
+## 
+## ── Training information 
+## Training data contained 360 data points and no incomplete rows.
+## 
+## ── Operations 
+## • Up-sampling based on: Class | Trained</code></pre>
+<div class="sourceCode" id="cb298"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb298-1"><a class="link-to-diff" href="classification1.html#cb298-1" tabindex="-1"></a>upsampled_cancer <span class="ot">&lt;-</span> <span class="fu">bake</span>(ups_recipe, rare_cancer)</span>
+<span id="cb298-2"><a class="link-to-diff" href="classification1.html#cb298-2" tabindex="-1"></a></span>
+<span id="cb298-3"><a class="link-to-diff" href="classification1.html#cb298-3" tabindex="-1"></a>upsampled_cancer <span class="sc">|&gt;</span></span>
+<span id="cb298-4"><a class="link-to-diff" href="classification1.html#cb298-4" tabindex="-1"></a>  <span class="fu">group_by</span>(Class) <span class="sc">|&gt;</span></span>
+<span id="cb298-5"><a class="link-to-diff" href="classification1.html#cb298-5" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">n =</span> <span class="fu">n</span>())</span></code></pre></div>
+<pre><code>## # A tibble: 2 × 2
+##   Class         n
+##   &lt;fct&gt;     &lt;int&gt;
+## 1 Malignant   357
+## 2 Benign      357</code></pre>
+<p>Now suppose we train our K-nearest neighbors classifier with <span class="math inline">\(K=7\)</span> on this <em>balanced</em> data.
+Figure <a class="link-to-diff" href="classification1.html#fig:05-upsample-plot">5.14</a> shows what happens now when we set the background color
+of each area of our scatter plot to the decision the K-nearest neighbors
+classifier would make. We can see that the decision is more reasonable; when the points are close
+to those labeled malignant, the classifier predicts a malignant tumor, and vice versa when they are
+closer to the benign tumor observations.</p>
+<div class="figure" style="text-align: center"><span id="fig:05-upsample-plot" style="display:block;"></span>
+<img alt="Upsampled data with background color indicating the decision of the classifier." src="_main_files/figure-html/05-upsample-plot-1.png" width="432"/>
+<p class="caption">
+Figure 5.14: Upsampled data with background color indicating the decision of the classifier.
+</p>
+</div>
+</div>
+<div class="section level3 hasAnchor" id="missing-data" number="5.7.3">
+<h3><span class="header-section-number">5.7.3</span> Missing data<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#missing-data"></a></h3>
+<p>One of the most common issues in real data sets in the wild is <em>missing data</em>,
+i.e., observations where the values of some of the variables were not recorded.
+Unfortunately, as common as it is, handling missing data properly is very
+challenging and generally relies on expert knowledge about the data, setting,
+and how the data were collected. One typical challenge with missing data is
+that missing entries can be <em>informative</em>: the very fact that an entries were
+missing is related to the values of other variables. For example, survey
+participants from a marginalized group of people may be less likely to respond
+to certain kinds of questions if they fear that answering honestly will come
+with negative consequences. In that case, if we were to simply throw away data
+with missing entries, we would bias the conclusions of the survey by
+inadvertently removing many members of that group of respondents. So ignoring
+this issue in real problems can easily lead to misleading analyses, with
+detrimental impacts. In this book, we will cover only those techniques for
+dealing with missing entries in situations where missing entries are just
+“randomly missing”, i.e., where the fact that certain entries are missing
+<em>isn’t related to anything else</em> about the observation.</p>
+<p>Let’s load and examine a modified subset of the tumor image data
+that has a few missing entries:</p>
+<div class="sourceCode" id="cb300"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb300-1"><a class="link-to-diff" href="classification1.html#cb300-1" tabindex="-1"></a>missing_cancer <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/wdbc_missing.csv"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb300-2"><a class="link-to-diff" href="classification1.html#cb300-2" tabindex="-1"></a>  <span class="fu">select</span>(Class, Radius, Texture, Perimeter) <span class="sc">|&gt;</span></span>
+<span id="cb300-3"><a class="link-to-diff" href="classification1.html#cb300-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Class =</span> <span class="fu">as_factor</span>(Class)) <span class="sc">|&gt;</span></span>
+<span id="cb300-4"><a class="link-to-diff" href="classification1.html#cb300-4" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Class =</span> <span class="fu">fct_recode</span>(Class, <span class="st">"Malignant"</span> <span class="ot">=</span> <span class="st">"M"</span>, <span class="st">"Benign"</span> <span class="ot">=</span> <span class="st">"B"</span>))</span>
+<span id="cb300-5"><a class="link-to-diff" href="classification1.html#cb300-5" tabindex="-1"></a>missing_cancer</span></code></pre></div>
+<pre><code>## # A tibble: 7 × 4
+##   Class     Radius Texture Perimeter
+##   &lt;fct&gt;      &lt;dbl&gt;   &lt;dbl&gt;     &lt;dbl&gt;
+## 1 Malignant NA      NA         1.27 
+## 2 Malignant  1.83   -0.353     1.68 
+## 3 Malignant  1.58   NA         1.57 
+## 4 Malignant -0.768   0.254    -0.592
+## 5 Malignant  1.75   -1.15      1.78 
+## 6 Malignant -0.476  -0.835    -0.387
+## 7 Malignant  1.17    0.161     1.14</code></pre>
+<p>Recall that K-nearest neighbors classification makes predictions by computing
+the straight-line distance to nearby training observations, and hence requires
+access to the values of <em>all</em> variables for <em>all</em> observations in the training
+data. So how can we perform K-nearest neighbors classification in the presence
+of missing data? Well, since there are not too many observations with missing
+entries, one option is to simply remove those observations prior to building
+the K-nearest neighbors classifier. We can accomplish this by using the
+<code>drop_na</code> function from <code>tidyverse</code> prior to working with the data.</p>
+<div class="sourceCode" id="cb302"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb302-1"><a class="link-to-diff" href="classification1.html#cb302-1" tabindex="-1"></a>no_missing_cancer <span class="ot">&lt;-</span> missing_cancer <span class="sc">|&gt;</span> <span class="fu">drop_na</span>()</span>
+<span id="cb302-2"><a class="link-to-diff" href="classification1.html#cb302-2" tabindex="-1"></a>no_missing_cancer</span></code></pre></div>
+<pre><code>## # A tibble: 5 × 4
+##   Class     Radius Texture Perimeter
+##   &lt;fct&gt;      &lt;dbl&gt;   &lt;dbl&gt;     &lt;dbl&gt;
+## 1 Malignant  1.83   -0.353     1.68 
+## 2 Malignant -0.768   0.254    -0.592
+## 3 Malignant  1.75   -1.15      1.78 
+## 4 Malignant -0.476  -0.835    -0.387
+## 5 Malignant  1.17    0.161     1.14</code></pre>
+<p>However, this strategy will not work when many of the rows have missing
+entries, as we may end up throwing away too much data. In this case, another
+possible approach is to <em>impute</em> the missing entries, i.e., fill in synthetic
+values based on the other observations in the data set. One reasonable choice
+is to perform <em>mean imputation</em>, where missing entries are filled in using the
+mean of the present entries in each variable. To perform mean imputation, we
+add the <code>step_impute_mean</code>
+step to the <code>tidymodels</code> preprocessing recipe.</p>
+<div class="sourceCode" id="cb304"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb304-1"><a class="link-to-diff" href="classification1.html#cb304-1" tabindex="-1"></a>impute_missing_recipe <span class="ot">&lt;-</span> <span class="fu">recipe</span>(Class <span class="sc">~</span> ., <span class="at">data =</span> missing_cancer) <span class="sc">|&gt;</span></span>
+<span id="cb304-2"><a class="link-to-diff" href="classification1.html#cb304-2" tabindex="-1"></a>  <span class="fu">step_impute_mean</span>(<span class="fu">all_predictors</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb304-3"><a class="link-to-diff" href="classification1.html#cb304-3" tabindex="-1"></a>  <span class="fu">prep</span>()</span>
+<span id="cb304-4"><a class="link-to-diff" href="classification1.html#cb304-4" tabindex="-1"></a>impute_missing_recipe</span></code></pre></div>
+<pre><code>## 
+## ── Recipe ──────────
+## 
+## ── Inputs 
+## Number of variables by role
+## outcome:   1
+## predictor: 3
+## 
+## ── Training information 
+## Training data contained 7 data points and 2 incomplete rows.
+## 
+## ── Operations 
+## • Mean imputation for: Radius, Texture, Perimeter | Trained</code></pre>
+<p>To visualize what mean imputation does, let’s just apply the recipe directly to the <code>missing_cancer</code>
+data frame using the <code>bake</code> function. The imputation step fills in the missing
+entries with the mean values of their corresponding variables.</p>
+<div class="sourceCode" id="cb306"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb306-1"><a class="link-to-diff" href="classification1.html#cb306-1" tabindex="-1"></a>imputed_cancer <span class="ot">&lt;-</span> <span class="fu">bake</span>(impute_missing_recipe, missing_cancer)</span>
+<span id="cb306-2"><a class="link-to-diff" href="classification1.html#cb306-2" tabindex="-1"></a>imputed_cancer</span></code></pre></div>
+<pre><code>## # A tibble: 7 × 4
+##   Radius Texture Perimeter Class    
+##    &lt;dbl&gt;   &lt;dbl&gt;     &lt;dbl&gt; &lt;fct&gt;    
+## 1  0.847  -0.385     1.27  Malignant
+## 2  1.83   -0.353     1.68  Malignant
+## 3  1.58   -0.385     1.57  Malignant
+## 4 -0.768   0.254    -0.592 Malignant
+## 5  1.75   -1.15      1.78  Malignant
+## 6 -0.476  -0.835    -0.387 Malignant
+## 7  1.17    0.161     1.14  Malignant</code></pre>
+<p>Many other options for missing data imputation can be found in
+<a href="https://recipes.tidymodels.org/reference/index.html">the <code>recipes</code> documentation</a>. However
+you decide to handle missing data in your data analysis, it is always crucial
+to think critically about the setting, how the data were collected, and the
+question you are answering.</p>
+</div>
+</div>
+<div class="section level2 hasAnchor" id="puttingittogetherworkflow" number="5.8">
+<h2><span class="header-section-number">5.8</span> Putting it together in a <code>workflow</code><a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#puttingittogetherworkflow"></a></h2>
+<p>The <code>tidymodels</code> package collection also provides the <code>workflow</code>, a way to
+chain together
+multiple data analysis steps without a lot of otherwise necessary code for
+intermediate steps. To illustrate the whole pipeline, let’s start from scratch
+with the <code>wdbc_unscaled.csv</code> data. First we will load the data, create a
+model, and specify a recipe for how the data should be preprocessed:</p>
+<div class="sourceCode" id="cb308"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb308-1"><a class="link-to-diff" href="classification1.html#cb308-1" tabindex="-1"></a><span class="co"># load the unscaled cancer data</span></span>
+<span id="cb308-2"><a class="link-to-diff" href="classification1.html#cb308-2" tabindex="-1"></a><span class="co"># and make sure the response variable, Class, is a factor</span></span>
+<span id="cb308-3"><a class="link-to-diff" href="classification1.html#cb308-3" tabindex="-1"></a>unscaled_cancer <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"data/wdbc_unscaled.csv"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb308-4"><a class="link-to-diff" href="classification1.html#cb308-4" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Class =</span> <span class="fu">as_factor</span>(Class)) <span class="sc">|&gt;</span></span>
+<span id="cb308-5"><a class="link-to-diff" href="classification1.html#cb308-5" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Class =</span> <span class="fu">fct_recode</span>(Class, <span class="st">"Malignant"</span> <span class="ot">=</span> <span class="st">"M"</span>, <span class="st">"Benign"</span> <span class="ot">=</span> <span class="st">"B"</span>))</span>
+<span id="cb308-6"><a class="link-to-diff" href="classification1.html#cb308-6" tabindex="-1"></a></span>
+<span id="cb308-7"><a class="link-to-diff" href="classification1.html#cb308-7" tabindex="-1"></a><span class="co"># create the K-NN model</span></span>
+<span id="cb308-8"><a class="link-to-diff" href="classification1.html#cb308-8" tabindex="-1"></a>knn_spec <span class="ot">&lt;-</span> <span class="fu">nearest_neighbor</span>(<span class="at">weight_func =</span> <span class="st">"rectangular"</span>, <span class="at">neighbors =</span> <span class="dv">7</span>) <span class="sc">|&gt;</span></span>
+<span id="cb308-9"><a class="link-to-diff" href="classification1.html#cb308-9" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">"kknn"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb308-10"><a class="link-to-diff" href="classification1.html#cb308-10" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">"classification"</span>)</span>
+<span id="cb308-11"><a class="link-to-diff" href="classification1.html#cb308-11" tabindex="-1"></a></span>
+<span id="cb308-12"><a class="link-to-diff" href="classification1.html#cb308-12" tabindex="-1"></a><span class="co"># create the centering / scaling recipe</span></span>
+<span id="cb308-13"><a class="link-to-diff" href="classification1.html#cb308-13" tabindex="-1"></a>uc_recipe <span class="ot">&lt;-</span> <span class="fu">recipe</span>(Class <span class="sc">~</span> Area <span class="sc">+</span> Smoothness, <span class="at">data =</span> unscaled_cancer) <span class="sc">|&gt;</span></span>
+<span id="cb308-14"><a class="link-to-diff" href="classification1.html#cb308-14" tabindex="-1"></a>  <span class="fu">step_scale</span>(<span class="fu">all_predictors</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb308-15"><a class="link-to-diff" href="classification1.html#cb308-15" tabindex="-1"></a>  <span class="fu">step_center</span>(<span class="fu">all_predictors</span>())</span></code></pre></div>
+<p>Note that each of these steps is exactly the same as earlier, except for one major difference:
+we did not use the <code>select</code> function to extract the relevant variables from the data frame,
+and instead simply specified the relevant variables to use via the
+formula <code>Class ~ Area + Smoothness</code> (instead of <code>Class ~ .</code>) in the recipe.
+You will also notice that we did not call <code>prep()</code> on the recipe; this is unnecessary when it is
+placed in a workflow.</p>
+<p>We will now place these steps in a <code>workflow</code> using the <code>add_recipe</code> and <code>add_model</code> functions,
+and finally we will use the <code>fit</code> function to run the whole workflow on the <code>unscaled_cancer</code> data.
+Note another difference from earlier here: we do not include a formula in the <code>fit</code> function. This
+is again because we included the formula in the recipe, so there is no need to respecify it:</p>
+<div class="sourceCode" id="cb309"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb309-1"><a class="link-to-diff" href="classification1.html#cb309-1" tabindex="-1"></a>knn_fit <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb309-2"><a class="link-to-diff" href="classification1.html#cb309-2" tabindex="-1"></a>  <span class="fu">add_recipe</span>(uc_recipe) <span class="sc">|&gt;</span></span>
+<span id="cb309-3"><a class="link-to-diff" href="classification1.html#cb309-3" tabindex="-1"></a>  <span class="fu">add_model</span>(knn_spec) <span class="sc">|&gt;</span></span>
+<span id="cb309-4"><a class="link-to-diff" href="classification1.html#cb309-4" tabindex="-1"></a>  <span class="fu">fit</span>(<span class="at">data =</span> unscaled_cancer)</span>
+<span id="cb309-5"><a class="link-to-diff" href="classification1.html#cb309-5" tabindex="-1"></a></span>
+<span id="cb309-6"><a class="link-to-diff" href="classification1.html#cb309-6" tabindex="-1"></a>knn_fit</span></code></pre></div>
+<pre><code>## ══ Workflow [trained] ══════════
+## Preprocessor: Recipe
+## Model: nearest_neighbor()
+## 
+## ── Preprocessor ──────────
+## 2 Recipe Steps
+## 
+## • step_scale()
+## • step_center()
+## 
+## ── Model ──────────
+## 
+## Call:
+## kknn::train.kknn(formula = ..y ~ ., data = data, ks = min_rows(7,     data, 5), 
+## kernel = ~"rectangular")
+## 
+## Type of response variable: nominal
+## Minimal misclassification: 0.112478
+## Best kernel: rectangular
+## Best k: 7</code></pre>
+<p>As before, the fit object lists the function that trains the model as well as the “best” settings
+for the number of neighbors and weight function (for now, these are just the values we chose
+manually when we created <code>knn_spec</code> above). But now the fit object also includes information about
+the overall workflow, including the centering and scaling preprocessing steps.
+In other words, when we use the <code>predict</code> function with the <code>knn_fit</code> object to make a prediction for a new
+observation, it will first apply the same recipe steps to the new observation.
+As an example, we will predict the class label of two new observations:
+one with <code>Area = 500</code> and <code>Smoothness = 0.075</code>, and one with <code>Area = 1500</code> and <code>Smoothness = 0.1</code>.</p>
+<div class="sourceCode" id="cb311"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb311-1"><a class="link-to-diff" href="classification1.html#cb311-1" tabindex="-1"></a>new_observation <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">Area =</span> <span class="fu">c</span>(<span class="dv">500</span>, <span class="dv">1500</span>), <span class="at">Smoothness =</span> <span class="fu">c</span>(<span class="fl">0.075</span>, <span class="fl">0.1</span>))</span>
+<span id="cb311-2"><a class="link-to-diff" href="classification1.html#cb311-2" tabindex="-1"></a>prediction <span class="ot">&lt;-</span> <span class="fu">predict</span>(knn_fit, new_observation)</span>
+<span id="cb311-3"><a class="link-to-diff" href="classification1.html#cb311-3" tabindex="-1"></a></span>
+<span id="cb311-4"><a class="link-to-diff" href="classification1.html#cb311-4" tabindex="-1"></a>prediction</span></code></pre></div>
+<pre><code>## # A tibble: 2 × 1
+##   .pred_class
+##   &lt;fct&gt;      
+## 1 Benign     
+## 2 Malignant</code></pre>
+<p>The classifier predicts that the first observation is benign, while the second is
+malignant. Figure <a class="link-to-diff" href="classification1.html#fig:05-workflow-plot-show">5.15</a> visualizes the predictions that this
+trained K-nearest neighbors model will make on a large range of new observations.
+Although you have seen colored prediction map visualizations like this a few times now,
+we have not included the code to generate them, as it is a little bit complicated.
+For the interested reader who wants a learning challenge, we now include it below.
+The basic idea is to create a grid of synthetic new observations using the <code>expand.grid</code> function,
+predict the label of each, and visualize the predictions with a colored scatter having a very high transparency
+(low <code>alpha</code> value) and large point radius. See if you can figure out what each line is doing!</p>
+<div style="page-break-after: always;"></div>
+<blockquote>
+<p><strong>Note:</strong> Understanding this code is not required for the remainder of the
+textbook. It is included for those readers who would like to use similar
+visualizations in their own data analyses.</p>
+</blockquote>
+<div class="sourceCode" id="cb313"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb313-1"><a class="link-to-diff" href="classification1.html#cb313-1" tabindex="-1"></a><span class="co"># create the grid of area/smoothness vals, and arrange in a data frame</span></span>
+<span id="cb313-2"><a class="link-to-diff" href="classification1.html#cb313-2" tabindex="-1"></a>are_grid <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="fu">min</span>(unscaled_cancer<span class="sc">$</span>Area),</span>
+<span id="cb313-3"><a class="link-to-diff" href="classification1.html#cb313-3" tabindex="-1"></a>                <span class="fu">max</span>(unscaled_cancer<span class="sc">$</span>Area),</span>
+<span id="cb313-4"><a class="link-to-diff" href="classification1.html#cb313-4" tabindex="-1"></a>                <span class="at">length.out =</span> <span class="dv">100</span>)</span>
+<span id="cb313-5"><a class="link-to-diff" href="classification1.html#cb313-5" tabindex="-1"></a>smo_grid <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="fu">min</span>(unscaled_cancer<span class="sc">$</span>Smoothness),</span>
+<span id="cb313-6"><a class="link-to-diff" href="classification1.html#cb313-6" tabindex="-1"></a>                <span class="fu">max</span>(unscaled_cancer<span class="sc">$</span>Smoothness),</span>
+<span id="cb313-7"><a class="link-to-diff" href="classification1.html#cb313-7" tabindex="-1"></a>                <span class="at">length.out =</span> <span class="dv">100</span>)</span>
+<span id="cb313-8"><a class="link-to-diff" href="classification1.html#cb313-8" tabindex="-1"></a>asgrid <span class="ot">&lt;-</span> <span class="fu">as_tibble</span>(<span class="fu">expand.grid</span>(<span class="at">Area =</span> are_grid,</span>
+<span id="cb313-9"><a class="link-to-diff" href="classification1.html#cb313-9" tabindex="-1"></a>                                <span class="at">Smoothness =</span> smo_grid))</span>
+<span id="cb313-10"><a class="link-to-diff" href="classification1.html#cb313-10" tabindex="-1"></a></span>
+<span id="cb313-11"><a class="link-to-diff" href="classification1.html#cb313-11" tabindex="-1"></a><span class="co"># use the fit workflow to make predictions at the grid points</span></span>
+<span id="cb313-12"><a class="link-to-diff" href="classification1.html#cb313-12" tabindex="-1"></a>knnPredGrid <span class="ot">&lt;-</span> <span class="fu">predict</span>(knn_fit, asgrid)</span>
+<span id="cb313-13"><a class="link-to-diff" href="classification1.html#cb313-13" tabindex="-1"></a></span>
+<span id="cb313-14"><a class="link-to-diff" href="classification1.html#cb313-14" tabindex="-1"></a><span class="co"># bind the predictions as a new column with the grid points</span></span>
+<span id="cb313-15"><a class="link-to-diff" href="classification1.html#cb313-15" tabindex="-1"></a>prediction_table <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(knnPredGrid, asgrid) <span class="sc">|&gt;</span></span>
+<span id="cb313-16"><a class="link-to-diff" href="classification1.html#cb313-16" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">Class =</span> .pred_class)</span>
+<span id="cb313-17"><a class="link-to-diff" href="classification1.html#cb313-17" tabindex="-1"></a></span>
+<span id="cb313-18"><a class="link-to-diff" href="classification1.html#cb313-18" tabindex="-1"></a><span class="co"># plot:</span></span>
+<span id="cb313-19"><a class="link-to-diff" href="classification1.html#cb313-19" tabindex="-1"></a><span class="co"># 1. the colored scatter of the original data</span></span>
+<span id="cb313-20"><a class="link-to-diff" href="classification1.html#cb313-20" tabindex="-1"></a><span class="co"># 2. the faded colored scatter for the grid points</span></span>
+<span id="cb313-21"><a class="link-to-diff" href="classification1.html#cb313-21" tabindex="-1"></a>wkflw_plot <span class="ot">&lt;-</span></span>
+<span id="cb313-22"><a class="link-to-diff" href="classification1.html#cb313-22" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb313-23"><a class="link-to-diff" href="classification1.html#cb313-23" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> unscaled_cancer,</span>
+<span id="cb313-24"><a class="link-to-diff" href="classification1.html#cb313-24" tabindex="-1"></a>             <span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> Area,</span>
+<span id="cb313-25"><a class="link-to-diff" href="classification1.html#cb313-25" tabindex="-1"></a>                           <span class="at">y =</span> Smoothness,</span>
+<span id="cb313-26"><a class="link-to-diff" href="classification1.html#cb313-26" tabindex="-1"></a>                           <span class="at">color =</span> Class),</span>
+<span id="cb313-27"><a class="link-to-diff" href="classification1.html#cb313-27" tabindex="-1"></a>             <span class="at">alpha =</span> <span class="fl">0.75</span>) <span class="sc">+</span></span>
+<span id="cb313-28"><a class="link-to-diff" href="classification1.html#cb313-28" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">data =</span> prediction_table,</span>
+<span id="cb313-29"><a class="link-to-diff" href="classification1.html#cb313-29" tabindex="-1"></a>             <span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> Area,</span>
+<span id="cb313-30"><a class="link-to-diff" href="classification1.html#cb313-30" tabindex="-1"></a>                           <span class="at">y =</span> Smoothness,</span>
+<span id="cb313-31"><a class="link-to-diff" href="classification1.html#cb313-31" tabindex="-1"></a>                           <span class="at">color =</span> Class),</span>
+<span id="cb313-32"><a class="link-to-diff" href="classification1.html#cb313-32" tabindex="-1"></a>             <span class="at">alpha =</span> <span class="fl">0.02</span>,</span>
+<span id="cb313-33"><a class="link-to-diff" href="classification1.html#cb313-33" tabindex="-1"></a>             <span class="at">size =</span> <span class="dv">5</span>) <span class="sc">+</span></span>
+<span id="cb313-34"><a class="link-to-diff" href="classification1.html#cb313-34" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">color =</span> <span class="st">"Diagnosis"</span>,</span>
+<span id="cb313-35"><a class="link-to-diff" href="classification1.html#cb313-35" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Area"</span>,</span>
+<span id="cb313-36"><a class="link-to-diff" href="classification1.html#cb313-36" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Smoothness"</span>) <span class="sc">+</span></span>
+<span id="cb313-37"><a class="link-to-diff" href="classification1.html#cb313-37" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"darkorange"</span>, <span class="st">"steelblue"</span>)) <span class="sc">+</span></span>
+<span id="cb313-38"><a class="link-to-diff" href="classification1.html#cb313-38" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
+<span id="cb313-39"><a class="link-to-diff" href="classification1.html#cb313-39" tabindex="-1"></a></span>
+<span id="cb313-40"><a class="link-to-diff" href="classification1.html#cb313-40" tabindex="-1"></a>wkflw_plot</span></code></pre></div>
+<div class="figure" style="text-align: center"><span id="fig:05-workflow-plot-show" style="display:block;"></span>
+<img alt="Scatter plot of smoothness versus area where background color indicates the decision of the classifier." src="_main_files/figure-html/05-workflow-plot-show-1.png" width="441.6"/>
+<p class="caption">
+Figure 5.15: Scatter plot of smoothness versus area where background color indicates the decision of the classifier.
+</p>
+</div>
+</div>
+<div class="section level2 hasAnchor" id="exercises-4" number="5.9">
+<h2><span class="header-section-number">5.9</span> Exercises<a aria-label="Anchor link to header" class="anchor-section link-to-diff" href="classification1.html#exercises-4"></a></h2>
+<p>Practice exercises for the material covered in this chapter<ins class="diff"> </ins>can be found in the<ins class="diff">accompanying</ins> <del class="diff">accompanying</del><a href="https://worksheets.datasciencebook.ca">worksheets repository</a><ins class="diff"> in</ins>
+<del class="diff">in </del>the “Classification I: training and predicting” row.<ins class="diff"> </ins>You can <ins class="diff">preview</ins><del class="diff">launch</del> <ins class="diff">anon-interactive</ins><del class="diff">an</del> <del class="diff">interactive </del>version of the worksheet <ins class="diff">for</ins><del class="diff">in</del> <ins class="diff">this</ins><del class="diff">your</del> <ins class="diff">chapter</ins><del class="diff">browser</del> by clicking <ins class="diff">“view</ins><del class="diff">the “launch binder” button.</del>
+<ins class="diff">worksheet.”</ins><del class="diff">You</del> <ins class="diff">To</ins><del class="diff">can</del> <ins class="diff">work</ins><del class="diff">also</del> <ins class="diff">on</ins><del class="diff">preview</del> <ins class="diff">the</ins><del class="diff">a</del> <ins class="diff">exercises</ins><del class="diff">non-interactive</del> <ins class="diff">interactively,</ins><del class="diff">version</del> <ins class="diff">follow</ins><del class="diff">of</del> the <ins class="diff">instructions</ins><del class="diff">worksheet</del> <ins class="diff">in</ins><del class="diff">by clicking “view worksheet.”</del>
+<ins class="diff">the</ins><del class="diff">If</del> <ins class="diff">worksheets</ins><del class="diff">you</del> <ins class="diff">repository</ins><del class="diff">instead</del> <del class="diff">decide </del>to download <ins class="diff">all</ins><del class="diff">the</del> <ins class="diff">worksheets,</ins><del class="diff">worksheet</del> and <del class="diff">run it on your own machine,make sure to </del>follow the<del class="diff"> </del>instructions for computer setup<ins class="diff"> </ins>found in Chapter <a class="link-to-diff" href="setup.html#setup">13</a>. This will ensure<del class="diff"> </del>that the automated feedback<ins class="diff"> </ins>and guidance that the worksheets provide will<del class="diff"> </del>function as intended.</p>
+</div>
+</div>
+<h3>References<a aria-label="Anchor link to header" class="anchor-section" href="references.html#references"></a></h3>
+<div class="references csl-bib-body hanging-indent" id="refs">
+<div class="csl-entry" id="ref-knncover">
+Cover, Thomas, and Peter Hart. 1967. <span>“Nearest Neighbor Pattern Classification.”</span> <em>IEEE Transactions on Information Theory</em> 13 (1): 21–27.
+</div>
+<div class="csl-entry" id="ref-knnfix">
+Fix, Evelyn, and Joseph Hodges. 1951. <span>“Discriminatory Analysis. Nonparametric Discrimination: Consistency Properties.”</span> USAF School of Aviation Medicine, Randolph Field, Texas.
+</div>
+<div class="csl-entry" id="ref-parsnip">
+Kuhn, Max, and David Vaughan. 2021. <em><span class="nocase">parsnip R package</span></em>. <a href="https://parsnip.tidymodels.org/">https://parsnip.tidymodels.org/</a>.
+</div>
+<div class="csl-entry" id="ref-recipes">
+Kuhn, Max, and Hadley Wickham. 2021. <em><span class="nocase">recipes R package</span></em>. <a href="https://recipes.tidymodels.org/">https://recipes.tidymodels.org/</a>.
+</div>
+<div class="csl-entry" id="ref-stanfordhealthcare">
+Stanford Health Care. 2021. <span>“What Is Cancer?”</span> <a href="https://stanfordhealthcare.org/medical-conditions/cancer/cancer.html">https://stanfordhealthcare.org/medical-conditions/cancer/cancer.html</a>.
+</div>
+<div class="csl-entry" id="ref-streetbreastcancer">
+Street, William Nick, William Wolberg, and Olvi Mangasarian. 1993. <span>“Nuclear Feature Extraction for Breast Tumor Diagnosis.”</span> In <em>International Symposium on Electronic Imaging: Science and Technology</em>.
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+<a aria-label="Previous page" class="navigation navigation-prev link-to-diff" href="viz.html"><i class="fa fa-angle-left"></i></a>
+<a aria-label="Next page" class="navigation navigation-next link-to-diff" href="classification2.html"><i class="fa fa-angle-right"></i></a>
+</div>
+</div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": null,
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"search": {
+"engine": "fuse",
+"options": null
+},
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+</html>
