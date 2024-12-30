@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Chapter 7 Regression I: K-nearest neighbors |  Data Science</title>
+  <meta name="description" content="This is a textbook for teaching a first introduction to data science." />
+  <meta name="generator" content="bookdown 0.34 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Chapter 7 Regression I: K-nearest neighbors |  Data Science" />
+  <meta property="og:type" content="book" />
+  
+  <meta property="og:description" content="This is a textbook for teaching a first introduction to data science." />
+  <meta name="github-repo" content="UBC-DSCI/introduction-to-datascience" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 7 Regression I: K-nearest neighbors |  Data Science" />
+  
+  <meta name="twitter:description" content="This is a textbook for teaching a first introduction to data science." />
+  
+
+<meta name="author" content="Tiffany Timbers, Trevor Campbell, and Melissa Lee" />
+
+
+<meta name="date" content="2024-12-30" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="classification2.html"/>
+<link rel="next" href="regression2.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+<script src="libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="libs/lightable-0.0.1/lightable.css" rel="stylesheet" />
+<script src="libs/htmlwidgets-1.6.2/htmlwidgets.js"></script>
+<script src="libs/plotly-binding-4.10.2/plotly.js"></script>
+<script src="libs/typedarray-0.1/typedarray.min.js"></script>
+<link href="libs/crosstalk-1.2.0/css/crosstalk.min.css" rel="stylesheet" />
+<script src="libs/crosstalk-1.2.0/js/crosstalk.min.js"></script>
+<link href="libs/plotly-htmlwidgets-css-2.11.1/plotly-htmlwidgets.css" rel="stylesheet" />
+<script src="libs/plotly-main-2.11.1/plotly-latest.min.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-JJ9MD0LBF5"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-JJ9MD0LBF5');
+</script>
+
+
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+<style type="text/css">
+/* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+<link rel="stylesheet" href="source/style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="https://datasciencebook.ca">Data Science: A First Introduction</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Welcome!</a></li>
+<li class="chapter" data-level="" data-path="foreword.html"><a href="foreword.html"><i class="fa fa-check"></i>Foreword</a></li>
+<li class="chapter" data-level="" data-path="preface.html"><a href="preface.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="" data-path="acknowledgments.html"><a href="acknowledgments.html"><i class="fa fa-check"></i>Acknowledgments</a></li>
+<li class="chapter" data-level="" data-path="about-the-authors.html"><a href="about-the-authors.html"><i class="fa fa-check"></i>About the authors</a></li>
+<li class="chapter" data-level="1" data-path="intro.html"><a href="intro.html"><i class="fa fa-check"></i><b>1</b> R and the Tidyverse</a>
+<ul>
+<li class="chapter" data-level="1.1" data-path="intro.html"><a href="intro.html#overview"><i class="fa fa-check"></i><b>1.1</b> Overview</a></li>
+<li class="chapter" data-level="1.2" data-path="intro.html"><a href="intro.html#chapter-learning-objectives"><i class="fa fa-check"></i><b>1.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="1.3" data-path="intro.html"><a href="intro.html#canadian-languages-data-set"><i class="fa fa-check"></i><b>1.3</b> Canadian languages data set</a></li>
+<li class="chapter" data-level="1.4" data-path="intro.html"><a href="intro.html#asking-a-question"><i class="fa fa-check"></i><b>1.4</b> Asking a question</a></li>
+<li class="chapter" data-level="1.5" data-path="intro.html"><a href="intro.html#loading-a-tabular-data-set"><i class="fa fa-check"></i><b>1.5</b> Loading a tabular data set</a></li>
+<li class="chapter" data-level="1.6" data-path="intro.html"><a href="intro.html#naming-things-in-r"><i class="fa fa-check"></i><b>1.6</b> Naming things in R</a></li>
+<li class="chapter" data-level="1.7" data-path="intro.html"><a href="intro.html#creating-subsets-of-data-frames-with-filter-select"><i class="fa fa-check"></i><b>1.7</b> Creating subsets of data frames with <code>filter</code> &amp; <code>select</code></a>
+<ul>
+<li class="chapter" data-level="1.7.1" data-path="intro.html"><a href="intro.html#using-filter-to-extract-rows"><i class="fa fa-check"></i><b>1.7.1</b> Using <code>filter</code> to extract rows</a></li>
+<li class="chapter" data-level="1.7.2" data-path="intro.html"><a href="intro.html#using-select-to-extract-columns"><i class="fa fa-check"></i><b>1.7.2</b> Using <code>select</code> to extract columns</a></li>
+</ul></li>
+<li class="chapter" data-level="1.8" data-path="intro.html"><a href="intro.html#arrangesliceintro"><i class="fa fa-check"></i><b>1.8</b> Using <code>arrange</code> to order and <code>slice</code> to select rows by index number</a></li>
+<li class="chapter" data-level="1.9" data-path="intro.html"><a href="intro.html#adding-and-modifying-columns-using-mutate"><i class="fa fa-check"></i><b>1.9</b> Adding and modifying columns using <code>mutate</code></a></li>
+<li class="chapter" data-level="1.10" data-path="intro.html"><a href="intro.html#exploring-data-with-visualizations"><i class="fa fa-check"></i><b>1.10</b> Exploring data with visualizations</a>
+<ul>
+<li class="chapter" data-level="1.10.1" data-path="intro.html"><a href="intro.html#using-ggplot-to-create-a-bar-plot"><i class="fa fa-check"></i><b>1.10.1</b> Using <code>ggplot</code> to create a bar plot</a></li>
+<li class="chapter" data-level="1.10.2" data-path="intro.html"><a href="intro.html#formatting-ggplot-objects"><i class="fa fa-check"></i><b>1.10.2</b> Formatting ggplot objects</a></li>
+<li class="chapter" data-level="1.10.3" data-path="intro.html"><a href="intro.html#putting-it-all-together"><i class="fa fa-check"></i><b>1.10.3</b> Putting it all together</a></li>
+</ul></li>
+<li class="chapter" data-level="1.11" data-path="intro.html"><a href="intro.html#accessing-documentation"><i class="fa fa-check"></i><b>1.11</b> Accessing documentation</a></li>
+<li class="chapter" data-level="1.12" data-path="intro.html"><a href="intro.html#exercises"><i class="fa fa-check"></i><b>1.12</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="reading.html"><a href="reading.html"><i class="fa fa-check"></i><b>2</b> Reading in data locally and from the web</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="reading.html"><a href="reading.html#overview-1"><i class="fa fa-check"></i><b>2.1</b> Overview</a></li>
+<li class="chapter" data-level="2.2" data-path="reading.html"><a href="reading.html#chapter-learning-objectives-1"><i class="fa fa-check"></i><b>2.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="2.3" data-path="reading.html"><a href="reading.html#absolute-and-relative-file-paths"><i class="fa fa-check"></i><b>2.3</b> Absolute and relative file paths</a></li>
+<li class="chapter" data-level="2.4" data-path="reading.html"><a href="reading.html#reading-tabular-data-from-a-plain-text-file-into-r"><i class="fa fa-check"></i><b>2.4</b> Reading tabular data from a plain text file into R</a>
+<ul>
+<li class="chapter" data-level="2.4.1" data-path="reading.html"><a href="reading.html#readcsv"><i class="fa fa-check"></i><b>2.4.1</b> <code>read_csv</code> to read in comma-separated values files</a></li>
+<li class="chapter" data-level="2.4.2" data-path="reading.html"><a href="reading.html#skipping-rows-when-reading-in-data"><i class="fa fa-check"></i><b>2.4.2</b> Skipping rows when reading in data</a></li>
+<li class="chapter" data-level="2.4.3" data-path="reading.html"><a href="reading.html#read_tsv-to-read-in-tab-separated-values-files"><i class="fa fa-check"></i><b>2.4.3</b> <code>read_tsv</code> to read in tab-separated values files</a></li>
+<li class="chapter" data-level="2.4.4" data-path="reading.html"><a href="reading.html#read_delim-as-a-more-flexible-method-to-get-tabular-data-into-r"><i class="fa fa-check"></i><b>2.4.4</b> <code>read_delim</code> as a more flexible method to get tabular data into R</a></li>
+<li class="chapter" data-level="2.4.5" data-path="reading.html"><a href="reading.html#reading-tabular-data-directly-from-a-url"><i class="fa fa-check"></i><b>2.4.5</b> Reading tabular data directly from a URL</a></li>
+<li class="chapter" data-level="2.4.6" data-path="reading.html"><a href="reading.html#downloading-data-from-a-url"><i class="fa fa-check"></i><b>2.4.6</b> Downloading data from a URL</a></li>
+<li class="chapter" data-level="2.4.7" data-path="reading.html"><a href="reading.html#previewing-a-data-file-before-reading-it-into-r"><i class="fa fa-check"></i><b>2.4.7</b> Previewing a data file before reading it into R</a></li>
+</ul></li>
+<li class="chapter" data-level="2.5" data-path="reading.html"><a href="reading.html#reading-tabular-data-from-a-microsoft-excel-file"><i class="fa fa-check"></i><b>2.5</b> Reading tabular data from a Microsoft Excel file</a></li>
+<li class="chapter" data-level="2.6" data-path="reading.html"><a href="reading.html#reading-data-from-a-database"><i class="fa fa-check"></i><b>2.6</b> Reading data from a database</a>
+<ul>
+<li class="chapter" data-level="2.6.1" data-path="reading.html"><a href="reading.html#reading-data-from-a-sqlite-database"><i class="fa fa-check"></i><b>2.6.1</b> Reading data from a SQLite database</a></li>
+<li class="chapter" data-level="2.6.2" data-path="reading.html"><a href="reading.html#reading-data-from-a-postgresql-database"><i class="fa fa-check"></i><b>2.6.2</b> Reading data from a PostgreSQL database</a></li>
+<li class="chapter" data-level="2.6.3" data-path="reading.html"><a href="reading.html#why-should-we-bother-with-databases-at-all"><i class="fa fa-check"></i><b>2.6.3</b> Why should we bother with databases at all?</a></li>
+</ul></li>
+<li class="chapter" data-level="2.7" data-path="reading.html"><a href="reading.html#writing-data-from-r-to-a-.csv-file"><i class="fa fa-check"></i><b>2.7</b> Writing data from R to a <code>.csv</code> file</a></li>
+<li class="chapter" data-level="2.8" data-path="reading.html"><a href="reading.html#obtaining-data-from-the-web"><i class="fa fa-check"></i><b>2.8</b> Obtaining data from the web</a>
+<ul>
+<li class="chapter" data-level="2.8.1" data-path="reading.html"><a href="reading.html#web-scraping"><i class="fa fa-check"></i><b>2.8.1</b> Web scraping</a></li>
+<li class="chapter" data-level="2.8.2" data-path="reading.html"><a href="reading.html#using-an-api"><i class="fa fa-check"></i><b>2.8.2</b> Using an API</a></li>
+</ul></li>
+<li class="chapter" data-level="2.9" data-path="reading.html"><a href="reading.html#exercises-1"><i class="fa fa-check"></i><b>2.9</b> Exercises</a></li>
+<li class="chapter" data-level="2.10" data-path="reading.html"><a href="reading.html#additional-resources"><i class="fa fa-check"></i><b>2.10</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="wrangling.html"><a href="wrangling.html"><i class="fa fa-check"></i><b>3</b> Cleaning and wrangling data</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="wrangling.html"><a href="wrangling.html#overview-2"><i class="fa fa-check"></i><b>3.1</b> Overview</a></li>
+<li class="chapter" data-level="3.2" data-path="wrangling.html"><a href="wrangling.html#chapter-learning-objectives-2"><i class="fa fa-check"></i><b>3.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="3.3" data-path="wrangling.html"><a href="wrangling.html#data-frames-vectors-and-lists"><i class="fa fa-check"></i><b>3.3</b> Data frames, vectors, and lists</a>
+<ul>
+<li class="chapter" data-level="3.3.1" data-path="wrangling.html"><a href="wrangling.html#what-is-a-data-frame"><i class="fa fa-check"></i><b>3.3.1</b> What is a data frame?</a></li>
+<li class="chapter" data-level="3.3.2" data-path="wrangling.html"><a href="wrangling.html#what-is-a-vector"><i class="fa fa-check"></i><b>3.3.2</b> What is a vector?</a></li>
+<li class="chapter" data-level="3.3.3" data-path="wrangling.html"><a href="wrangling.html#what-is-a-list"><i class="fa fa-check"></i><b>3.3.3</b> What is a list?</a></li>
+<li class="chapter" data-level="3.3.4" data-path="wrangling.html"><a href="wrangling.html#what-does-this-have-to-do-with-data-frames"><i class="fa fa-check"></i><b>3.3.4</b> What does this have to do with data frames?</a></li>
+</ul></li>
+<li class="chapter" data-level="3.4" data-path="wrangling.html"><a href="wrangling.html#tidy-data"><i class="fa fa-check"></i><b>3.4</b> Tidy data</a>
+<ul>
+<li class="chapter" data-level="3.4.1" data-path="wrangling.html"><a href="wrangling.html#tidying-up-going-from-wide-to-long-using-pivot_longer"><i class="fa fa-check"></i><b>3.4.1</b> Tidying up: going from wide to long using <code>pivot_longer</code></a></li>
+<li class="chapter" data-level="3.4.2" data-path="wrangling.html"><a href="wrangling.html#pivot-wider"><i class="fa fa-check"></i><b>3.4.2</b> Tidying up: going from long to wide using <code>pivot_wider</code></a></li>
+<li class="chapter" data-level="3.4.3" data-path="wrangling.html"><a href="wrangling.html#separate"><i class="fa fa-check"></i><b>3.4.3</b> Tidying up: using <code>separate</code> to deal with multiple delimiters</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="wrangling.html"><a href="wrangling.html#using-select-to-extract-a-range-of-columns"><i class="fa fa-check"></i><b>3.5</b> Using <code>select</code> to extract a range of columns</a></li>
+<li class="chapter" data-level="3.6" data-path="wrangling.html"><a href="wrangling.html#using-filter-to-extract-rows-1"><i class="fa fa-check"></i><b>3.6</b> Using <code>filter</code> to extract rows</a>
+<ul>
+<li class="chapter" data-level="3.6.1" data-path="wrangling.html"><a href="wrangling.html#extracting-rows-that-have-a-certain-value-with"><i class="fa fa-check"></i><b>3.6.1</b> Extracting rows that have a certain value with <code>==</code></a></li>
+<li class="chapter" data-level="3.6.2" data-path="wrangling.html"><a href="wrangling.html#extracting-rows-that-do-not-have-a-certain-value-with"><i class="fa fa-check"></i><b>3.6.2</b> Extracting rows that do not have a certain value with <code>!=</code></a></li>
+<li class="chapter" data-level="3.6.3" data-path="wrangling.html"><a href="wrangling.html#filter-and"><i class="fa fa-check"></i><b>3.6.3</b> Extracting rows satisfying multiple conditions using <code>,</code> or <code>&amp;</code></a></li>
+<li class="chapter" data-level="3.6.4" data-path="wrangling.html"><a href="wrangling.html#extracting-rows-satisfying-at-least-one-condition-using"><i class="fa fa-check"></i><b>3.6.4</b> Extracting rows satisfying at least one condition using <code>|</code></a></li>
+<li class="chapter" data-level="3.6.5" data-path="wrangling.html"><a href="wrangling.html#extracting-rows-with-values-in-a-vector-using-in"><i class="fa fa-check"></i><b>3.6.5</b> Extracting rows with values in a vector using <code>%in%</code></a></li>
+<li class="chapter" data-level="3.6.6" data-path="wrangling.html"><a href="wrangling.html#extracting-rows-above-or-below-a-threshold-using-and"><i class="fa fa-check"></i><b>3.6.6</b> Extracting rows above or below a threshold using <code>&gt;</code> and <code>&lt;</code></a></li>
+</ul></li>
+<li class="chapter" data-level="3.7" data-path="wrangling.html"><a href="wrangling.html#using-mutate-to-modify-or-add-columns"><i class="fa fa-check"></i><b>3.7</b> Using <code>mutate</code> to modify or add columns</a>
+<ul>
+<li class="chapter" data-level="3.7.1" data-path="wrangling.html"><a href="wrangling.html#using-mutate-to-modify-columns"><i class="fa fa-check"></i><b>3.7.1</b> Using <code>mutate</code> to modify columns</a></li>
+<li class="chapter" data-level="3.7.2" data-path="wrangling.html"><a href="wrangling.html#using-mutate-to-create-new-columns"><i class="fa fa-check"></i><b>3.7.2</b> Using <code>mutate</code> to create new columns</a></li>
+</ul></li>
+<li class="chapter" data-level="3.8" data-path="wrangling.html"><a href="wrangling.html#combining-functions-using-the-pipe-operator"><i class="fa fa-check"></i><b>3.8</b> Combining functions using the pipe operator, <code>|&gt;</code></a>
+<ul>
+<li class="chapter" data-level="3.8.1" data-path="wrangling.html"><a href="wrangling.html#using-to-combine-filter-and-select"><i class="fa fa-check"></i><b>3.8.1</b> Using <code>|&gt;</code> to combine <code>filter</code> and <code>select</code></a></li>
+<li class="chapter" data-level="3.8.2" data-path="wrangling.html"><a href="wrangling.html#using-with-more-than-two-functions"><i class="fa fa-check"></i><b>3.8.2</b> Using <code>|&gt;</code> with more than two functions</a></li>
+</ul></li>
+<li class="chapter" data-level="3.9" data-path="wrangling.html"><a href="wrangling.html#aggregating-data-with-summarize-and-map"><i class="fa fa-check"></i><b>3.9</b> Aggregating data with <code>summarize</code> and <code>map</code></a>
+<ul>
+<li class="chapter" data-level="3.9.1" data-path="wrangling.html"><a href="wrangling.html#calculating-summary-statistics-on-whole-columns"><i class="fa fa-check"></i><b>3.9.1</b> Calculating summary statistics on whole columns</a></li>
+<li class="chapter" data-level="3.9.2" data-path="wrangling.html"><a href="wrangling.html#calculating-summary-statistics-when-there-are-nas"><i class="fa fa-check"></i><b>3.9.2</b> Calculating summary statistics when there are <code>NA</code>s</a></li>
+<li class="chapter" data-level="3.9.3" data-path="wrangling.html"><a href="wrangling.html#calculating-summary-statistics-for-groups-of-rows"><i class="fa fa-check"></i><b>3.9.3</b> Calculating summary statistics for groups of rows</a></li>
+<li class="chapter" data-level="3.9.4" data-path="wrangling.html"><a href="wrangling.html#calculating-summary-statistics-on-many-columns"><i class="fa fa-check"></i><b>3.9.4</b> Calculating summary statistics on many columns</a></li>
+</ul></li>
+<li class="chapter" data-level="3.10" data-path="wrangling.html"><a href="wrangling.html#apply-functions-across-many-columns-with-mutate-and-across"><i class="fa fa-check"></i><b>3.10</b> Apply functions across many columns with <code>mutate</code> and <code>across</code></a></li>
+<li class="chapter" data-level="3.11" data-path="wrangling.html"><a href="wrangling.html#apply-functions-across-columns-within-one-row-with-rowwise-and-mutate"><i class="fa fa-check"></i><b>3.11</b> Apply functions across columns within one row with <code>rowwise</code> and <code>mutate</code></a></li>
+<li class="chapter" data-level="3.12" data-path="wrangling.html"><a href="wrangling.html#summary"><i class="fa fa-check"></i><b>3.12</b> Summary</a></li>
+<li class="chapter" data-level="3.13" data-path="wrangling.html"><a href="wrangling.html#exercises-2"><i class="fa fa-check"></i><b>3.13</b> Exercises</a></li>
+<li class="chapter" data-level="3.14" data-path="wrangling.html"><a href="wrangling.html#additional-resources-1"><i class="fa fa-check"></i><b>3.14</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="viz.html"><a href="viz.html"><i class="fa fa-check"></i><b>4</b> Effective data visualization</a>
+<ul>
+<li class="chapter" data-level="4.1" data-path="viz.html"><a href="viz.html#overview-3"><i class="fa fa-check"></i><b>4.1</b> Overview</a></li>
+<li class="chapter" data-level="4.2" data-path="viz.html"><a href="viz.html#chapter-learning-objectives-3"><i class="fa fa-check"></i><b>4.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="4.3" data-path="viz.html"><a href="viz.html#choosing-the-visualization"><i class="fa fa-check"></i><b>4.3</b> Choosing the visualization</a></li>
+<li class="chapter" data-level="4.4" data-path="viz.html"><a href="viz.html#refining-the-visualization"><i class="fa fa-check"></i><b>4.4</b> Refining the visualization</a></li>
+<li class="chapter" data-level="4.5" data-path="viz.html"><a href="viz.html#creating-visualizations-with-ggplot2"><i class="fa fa-check"></i><b>4.5</b> Creating visualizations with <code>ggplot2</code></a>
+<ul>
+<li class="chapter" data-level="4.5.1" data-path="viz.html"><a href="viz.html#scatter-plots-and-line-plots-the-mauna-loa-co_text2-data-set"><i class="fa fa-check"></i><b>4.5.1</b> Scatter plots and line plots: the Mauna Loa CO<span class="math inline">\(_{\text{2}}\)</span> data set</a></li>
+<li class="chapter" data-level="4.5.2" data-path="viz.html"><a href="viz.html#scatter-plots-the-old-faithful-eruption-time-data-set"><i class="fa fa-check"></i><b>4.5.2</b> Scatter plots: the Old Faithful eruption time data set</a></li>
+<li class="chapter" data-level="4.5.3" data-path="viz.html"><a href="viz.html#axis-transformation-and-colored-scatter-plots-the-canadian-languages-data-set"><i class="fa fa-check"></i><b>4.5.3</b> Axis transformation and colored scatter plots: the Canadian languages data set</a></li>
+<li class="chapter" data-level="4.5.4" data-path="viz.html"><a href="viz.html#bar-plots-the-island-landmass-data-set"><i class="fa fa-check"></i><b>4.5.4</b> Bar plots: the island landmass data set</a></li>
+<li class="chapter" data-level="4.5.5" data-path="viz.html"><a href="viz.html#histogramsviz"><i class="fa fa-check"></i><b>4.5.5</b> Histograms: the Michelson speed of light data set</a></li>
+</ul></li>
+<li class="chapter" data-level="4.6" data-path="viz.html"><a href="viz.html#explaining-the-visualization"><i class="fa fa-check"></i><b>4.6</b> Explaining the visualization</a></li>
+<li class="chapter" data-level="4.7" data-path="viz.html"><a href="viz.html#saving-the-visualization"><i class="fa fa-check"></i><b>4.7</b> Saving the visualization</a></li>
+<li class="chapter" data-level="4.8" data-path="viz.html"><a href="viz.html#exercises-3"><i class="fa fa-check"></i><b>4.8</b> Exercises</a></li>
+<li class="chapter" data-level="4.9" data-path="viz.html"><a href="viz.html#additional-resources-2"><i class="fa fa-check"></i><b>4.9</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="classification1.html"><a href="classification1.html"><i class="fa fa-check"></i><b>5</b> Classification I: training &amp; predicting</a>
+<ul>
+<li class="chapter" data-level="5.1" data-path="classification1.html"><a href="classification1.html#overview-4"><i class="fa fa-check"></i><b>5.1</b> Overview</a></li>
+<li class="chapter" data-level="5.2" data-path="classification1.html"><a href="classification1.html#chapter-learning-objectives-4"><i class="fa fa-check"></i><b>5.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="5.3" data-path="classification1.html"><a href="classification1.html#the-classification-problem"><i class="fa fa-check"></i><b>5.3</b> The classification problem</a></li>
+<li class="chapter" data-level="5.4" data-path="classification1.html"><a href="classification1.html#exploring-a-data-set"><i class="fa fa-check"></i><b>5.4</b> Exploring a data set</a>
+<ul>
+<li class="chapter" data-level="5.4.1" data-path="classification1.html"><a href="classification1.html#loading-the-cancer-data"><i class="fa fa-check"></i><b>5.4.1</b> Loading the cancer data</a></li>
+<li class="chapter" data-level="5.4.2" data-path="classification1.html"><a href="classification1.html#describing-the-variables-in-the-cancer-data-set"><i class="fa fa-check"></i><b>5.4.2</b> Describing the variables in the cancer data set</a></li>
+<li class="chapter" data-level="5.4.3" data-path="classification1.html"><a href="classification1.html#exploring-the-cancer-data"><i class="fa fa-check"></i><b>5.4.3</b> Exploring the cancer data</a></li>
+</ul></li>
+<li class="chapter" data-level="5.5" data-path="classification1.html"><a href="classification1.html#classification-with-k-nearest-neighbors"><i class="fa fa-check"></i><b>5.5</b> Classification with K-nearest neighbors</a>
+<ul>
+<li class="chapter" data-level="5.5.1" data-path="classification1.html"><a href="classification1.html#distance-between-points"><i class="fa fa-check"></i><b>5.5.1</b> Distance between points</a></li>
+<li class="chapter" data-level="5.5.2" data-path="classification1.html"><a href="classification1.html#more-than-two-explanatory-variables"><i class="fa fa-check"></i><b>5.5.2</b> More than two explanatory variables</a></li>
+<li class="chapter" data-level="5.5.3" data-path="classification1.html"><a href="classification1.html#summary-of-k-nearest-neighbors-algorithm"><i class="fa fa-check"></i><b>5.5.3</b> Summary of K-nearest neighbors algorithm</a></li>
+</ul></li>
+<li class="chapter" data-level="5.6" data-path="classification1.html"><a href="classification1.html#k-nearest-neighbors-with-tidymodels"><i class="fa fa-check"></i><b>5.6</b> K-nearest neighbors with <code>tidymodels</code></a></li>
+<li class="chapter" data-level="5.7" data-path="classification1.html"><a href="classification1.html#data-preprocessing-with-tidymodels"><i class="fa fa-check"></i><b>5.7</b> Data preprocessing with <code>tidymodels</code></a>
+<ul>
+<li class="chapter" data-level="5.7.1" data-path="classification1.html"><a href="classification1.html#centering-and-scaling"><i class="fa fa-check"></i><b>5.7.1</b> Centering and scaling</a></li>
+<li class="chapter" data-level="5.7.2" data-path="classification1.html"><a href="classification1.html#balancing"><i class="fa fa-check"></i><b>5.7.2</b> Balancing</a></li>
+<li class="chapter" data-level="5.7.3" data-path="classification1.html"><a href="classification1.html#missing-data"><i class="fa fa-check"></i><b>5.7.3</b> Missing data</a></li>
+</ul></li>
+<li class="chapter" data-level="5.8" data-path="classification1.html"><a href="classification1.html#puttingittogetherworkflow"><i class="fa fa-check"></i><b>5.8</b> Putting it together in a <code>workflow</code></a></li>
+<li class="chapter" data-level="5.9" data-path="classification1.html"><a href="classification1.html#exercises-4"><i class="fa fa-check"></i><b>5.9</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="classification2.html"><a href="classification2.html"><i class="fa fa-check"></i><b>6</b> Classification II: evaluation &amp; tuning</a>
+<ul>
+<li class="chapter" data-level="6.1" data-path="classification2.html"><a href="classification2.html#overview-5"><i class="fa fa-check"></i><b>6.1</b> Overview</a></li>
+<li class="chapter" data-level="6.2" data-path="classification2.html"><a href="classification2.html#chapter-learning-objectives-5"><i class="fa fa-check"></i><b>6.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="6.3" data-path="classification2.html"><a href="classification2.html#evaluating-performance"><i class="fa fa-check"></i><b>6.3</b> Evaluating performance</a></li>
+<li class="chapter" data-level="6.4" data-path="classification2.html"><a href="classification2.html#randomseeds"><i class="fa fa-check"></i><b>6.4</b> Randomness and seeds</a></li>
+<li class="chapter" data-level="6.5" data-path="classification2.html"><a href="classification2.html#evaluating-performance-with-tidymodels"><i class="fa fa-check"></i><b>6.5</b> Evaluating performance with <code>tidymodels</code></a>
+<ul>
+<li class="chapter" data-level="6.5.1" data-path="classification2.html"><a href="classification2.html#create-the-train-test-split"><i class="fa fa-check"></i><b>6.5.1</b> Create the train / test split</a></li>
+<li class="chapter" data-level="6.5.2" data-path="classification2.html"><a href="classification2.html#preprocess-the-data"><i class="fa fa-check"></i><b>6.5.2</b> Preprocess the data</a></li>
+<li class="chapter" data-level="6.5.3" data-path="classification2.html"><a href="classification2.html#train-the-classifier"><i class="fa fa-check"></i><b>6.5.3</b> Train the classifier</a></li>
+<li class="chapter" data-level="6.5.4" data-path="classification2.html"><a href="classification2.html#predict-the-labels-in-the-test-set"><i class="fa fa-check"></i><b>6.5.4</b> Predict the labels in the test set</a></li>
+<li class="chapter" data-level="6.5.5" data-path="classification2.html"><a href="classification2.html#eval-performance-cls2"><i class="fa fa-check"></i><b>6.5.5</b> Evaluate performance</a></li>
+<li class="chapter" data-level="6.5.6" data-path="classification2.html"><a href="classification2.html#critically-analyze-performance"><i class="fa fa-check"></i><b>6.5.6</b> Critically analyze performance</a></li>
+</ul></li>
+<li class="chapter" data-level="6.6" data-path="classification2.html"><a href="classification2.html#tuning-the-classifier"><i class="fa fa-check"></i><b>6.6</b> Tuning the classifier</a>
+<ul>
+<li class="chapter" data-level="6.6.1" data-path="classification2.html"><a href="classification2.html#cross-validation"><i class="fa fa-check"></i><b>6.6.1</b> Cross-validation</a></li>
+<li class="chapter" data-level="6.6.2" data-path="classification2.html"><a href="classification2.html#parameter-value-selection"><i class="fa fa-check"></i><b>6.6.2</b> Parameter value selection</a></li>
+<li class="chapter" data-level="6.6.3" data-path="classification2.html"><a href="classification2.html#underoverfitting"><i class="fa fa-check"></i><b>6.6.3</b> Under/Overfitting</a></li>
+<li class="chapter" data-level="6.6.4" data-path="classification2.html"><a href="classification2.html#evaluating-on-the-test-set"><i class="fa fa-check"></i><b>6.6.4</b> Evaluating on the test set</a></li>
+</ul></li>
+<li class="chapter" data-level="6.7" data-path="classification2.html"><a href="classification2.html#summary-1"><i class="fa fa-check"></i><b>6.7</b> Summary</a></li>
+<li class="chapter" data-level="6.8" data-path="classification2.html"><a href="classification2.html#predictor-variable-selection"><i class="fa fa-check"></i><b>6.8</b> Predictor variable selection</a>
+<ul>
+<li class="chapter" data-level="6.8.1" data-path="classification2.html"><a href="classification2.html#the-effect-of-irrelevant-predictors"><i class="fa fa-check"></i><b>6.8.1</b> The effect of irrelevant predictors</a></li>
+<li class="chapter" data-level="6.8.2" data-path="classification2.html"><a href="classification2.html#finding-a-good-subset-of-predictors"><i class="fa fa-check"></i><b>6.8.2</b> Finding a good subset of predictors</a></li>
+<li class="chapter" data-level="6.8.3" data-path="classification2.html"><a href="classification2.html#forward-selection-in-r"><i class="fa fa-check"></i><b>6.8.3</b> Forward selection in R</a></li>
+</ul></li>
+<li class="chapter" data-level="6.9" data-path="classification2.html"><a href="classification2.html#exercises-5"><i class="fa fa-check"></i><b>6.9</b> Exercises</a></li>
+<li class="chapter" data-level="6.10" data-path="classification2.html"><a href="classification2.html#additional-resources-3"><i class="fa fa-check"></i><b>6.10</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="regression1.html"><a href="regression1.html"><i class="fa fa-check"></i><b>7</b> Regression I: K-nearest neighbors</a>
+<ul>
+<li class="chapter" data-level="7.1" data-path="regression1.html"><a href="regression1.html#overview-6"><i class="fa fa-check"></i><b>7.1</b> Overview</a></li>
+<li class="chapter" data-level="7.2" data-path="regression1.html"><a href="regression1.html#chapter-learning-objectives-6"><i class="fa fa-check"></i><b>7.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="7.3" data-path="regression1.html"><a href="regression1.html#the-regression-problem"><i class="fa fa-check"></i><b>7.3</b> The regression problem</a></li>
+<li class="chapter" data-level="7.4" data-path="regression1.html"><a href="regression1.html#exploring-a-data-set-1"><i class="fa fa-check"></i><b>7.4</b> Exploring a data set</a></li>
+<li class="chapter" data-level="7.5" data-path="regression1.html"><a href="regression1.html#k-nearest-neighbors-regression"><i class="fa fa-check"></i><b>7.5</b> K-nearest neighbors regression</a></li>
+<li class="chapter" data-level="7.6" data-path="regression1.html"><a href="regression1.html#training-evaluating-and-tuning-the-model"><i class="fa fa-check"></i><b>7.6</b> Training, evaluating, and tuning the model</a></li>
+<li class="chapter" data-level="7.7" data-path="regression1.html"><a href="regression1.html#underfitting-and-overfitting"><i class="fa fa-check"></i><b>7.7</b> Underfitting and overfitting</a></li>
+<li class="chapter" data-level="7.8" data-path="regression1.html"><a href="regression1.html#evaluating-on-the-test-set-1"><i class="fa fa-check"></i><b>7.8</b> Evaluating on the test set</a></li>
+<li class="chapter" data-level="7.9" data-path="regression1.html"><a href="regression1.html#multivariable-k-nn-regression"><i class="fa fa-check"></i><b>7.9</b> Multivariable K-NN regression</a></li>
+<li class="chapter" data-level="7.10" data-path="regression1.html"><a href="regression1.html#strengths-and-limitations-of-k-nn-regression"><i class="fa fa-check"></i><b>7.10</b> Strengths and limitations of K-NN regression</a></li>
+<li class="chapter" data-level="7.11" data-path="regression1.html"><a href="regression1.html#exercises-6"><i class="fa fa-check"></i><b>7.11</b> Exercises</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="regression2.html"><a href="regression2.html"><i class="fa fa-check"></i><b>8</b> Regression II: linear regression</a>
+<ul>
+<li class="chapter" data-level="8.1" data-path="regression2.html"><a href="regression2.html#overview-7"><i class="fa fa-check"></i><b>8.1</b> Overview</a></li>
+<li class="chapter" data-level="8.2" data-path="regression2.html"><a href="regression2.html#chapter-learning-objectives-7"><i class="fa fa-check"></i><b>8.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="8.3" data-path="regression2.html"><a href="regression2.html#simple-linear-regression"><i class="fa fa-check"></i><b>8.3</b> Simple linear regression</a></li>
+<li class="chapter" data-level="8.4" data-path="regression2.html"><a href="regression2.html#linear-regression-in-r"><i class="fa fa-check"></i><b>8.4</b> Linear regression in R</a></li>
+<li class="chapter" data-level="8.5" data-path="regression2.html"><a href="regression2.html#comparing-simple-linear-and-k-nn-regression"><i class="fa fa-check"></i><b>8.5</b> Comparing simple linear and K-NN regression</a></li>
+<li class="chapter" data-level="8.6" data-path="regression2.html"><a href="regression2.html#multivariable-linear-regression"><i class="fa fa-check"></i><b>8.6</b> Multivariable linear regression</a></li>
+<li class="chapter" data-level="8.7" data-path="regression2.html"><a href="regression2.html#multicollinearity-and-outliers"><i class="fa fa-check"></i><b>8.7</b> Multicollinearity and outliers</a>
+<ul>
+<li class="chapter" data-level="8.7.1" data-path="regression2.html"><a href="regression2.html#outliers"><i class="fa fa-check"></i><b>8.7.1</b> Outliers</a></li>
+<li class="chapter" data-level="8.7.2" data-path="regression2.html"><a href="regression2.html#multicollinearity"><i class="fa fa-check"></i><b>8.7.2</b> Multicollinearity</a></li>
+</ul></li>
+<li class="chapter" data-level="8.8" data-path="regression2.html"><a href="regression2.html#designing-new-predictors"><i class="fa fa-check"></i><b>8.8</b> Designing new predictors</a></li>
+<li class="chapter" data-level="8.9" data-path="regression2.html"><a href="regression2.html#the-other-sides-of-regression"><i class="fa fa-check"></i><b>8.9</b> The other sides of regression</a></li>
+<li class="chapter" data-level="8.10" data-path="regression2.html"><a href="regression2.html#exercises-7"><i class="fa fa-check"></i><b>8.10</b> Exercises</a></li>
+<li class="chapter" data-level="8.11" data-path="regression2.html"><a href="regression2.html#additional-resources-4"><i class="fa fa-check"></i><b>8.11</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="9" data-path="clustering.html"><a href="clustering.html"><i class="fa fa-check"></i><b>9</b> Clustering</a>
+<ul>
+<li class="chapter" data-level="9.1" data-path="clustering.html"><a href="clustering.html#overview-8"><i class="fa fa-check"></i><b>9.1</b> Overview</a></li>
+<li class="chapter" data-level="9.2" data-path="clustering.html"><a href="clustering.html#chapter-learning-objectives-8"><i class="fa fa-check"></i><b>9.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="9.3" data-path="clustering.html"><a href="clustering.html#clustering-1"><i class="fa fa-check"></i><b>9.3</b> Clustering</a></li>
+<li class="chapter" data-level="9.4" data-path="clustering.html"><a href="clustering.html#an-illustrative-example"><i class="fa fa-check"></i><b>9.4</b> An illustrative example</a></li>
+<li class="chapter" data-level="9.5" data-path="clustering.html"><a href="clustering.html#k-means"><i class="fa fa-check"></i><b>9.5</b> K-means</a>
+<ul>
+<li class="chapter" data-level="9.5.1" data-path="clustering.html"><a href="clustering.html#measuring-cluster-quality"><i class="fa fa-check"></i><b>9.5.1</b> Measuring cluster quality</a></li>
+<li class="chapter" data-level="9.5.2" data-path="clustering.html"><a href="clustering.html#the-clustering-algorithm"><i class="fa fa-check"></i><b>9.5.2</b> The clustering algorithm</a></li>
+<li class="chapter" data-level="9.5.3" data-path="clustering.html"><a href="clustering.html#random-restarts"><i class="fa fa-check"></i><b>9.5.3</b> Random restarts</a></li>
+<li class="chapter" data-level="9.5.4" data-path="clustering.html"><a href="clustering.html#choosing-k"><i class="fa fa-check"></i><b>9.5.4</b> Choosing K</a></li>
+</ul></li>
+<li class="chapter" data-level="9.6" data-path="clustering.html"><a href="clustering.html#k-means-in-r"><i class="fa fa-check"></i><b>9.6</b> K-means in R</a></li>
+<li class="chapter" data-level="9.7" data-path="clustering.html"><a href="clustering.html#exercises-8"><i class="fa fa-check"></i><b>9.7</b> Exercises</a></li>
+<li class="chapter" data-level="9.8" data-path="clustering.html"><a href="clustering.html#additional-resources-5"><i class="fa fa-check"></i><b>9.8</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="10" data-path="inference.html"><a href="inference.html"><i class="fa fa-check"></i><b>10</b> Statistical inference</a>
+<ul>
+<li class="chapter" data-level="10.1" data-path="inference.html"><a href="inference.html#overview-9"><i class="fa fa-check"></i><b>10.1</b> Overview</a></li>
+<li class="chapter" data-level="10.2" data-path="inference.html"><a href="inference.html#chapter-learning-objectives-9"><i class="fa fa-check"></i><b>10.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="10.3" data-path="inference.html"><a href="inference.html#why-do-we-need-sampling"><i class="fa fa-check"></i><b>10.3</b> Why do we need sampling?</a></li>
+<li class="chapter" data-level="10.4" data-path="inference.html"><a href="inference.html#sampling-distributions"><i class="fa fa-check"></i><b>10.4</b> Sampling distributions</a>
+<ul>
+<li class="chapter" data-level="10.4.1" data-path="inference.html"><a href="inference.html#sampling-distributions-for-proportions"><i class="fa fa-check"></i><b>10.4.1</b> Sampling distributions for proportions</a></li>
+<li class="chapter" data-level="10.4.2" data-path="inference.html"><a href="inference.html#sampling-distributions-for-means"><i class="fa fa-check"></i><b>10.4.2</b> Sampling distributions for means</a></li>
+<li class="chapter" data-level="10.4.3" data-path="inference.html"><a href="inference.html#summary-2"><i class="fa fa-check"></i><b>10.4.3</b> Summary</a></li>
+</ul></li>
+<li class="chapter" data-level="10.5" data-path="inference.html"><a href="inference.html#bootstrapping"><i class="fa fa-check"></i><b>10.5</b> Bootstrapping</a>
+<ul>
+<li class="chapter" data-level="10.5.1" data-path="inference.html"><a href="inference.html#overview-10"><i class="fa fa-check"></i><b>10.5.1</b> Overview</a></li>
+<li class="chapter" data-level="10.5.2" data-path="inference.html"><a href="inference.html#bootstrapping-in-r"><i class="fa fa-check"></i><b>10.5.2</b> Bootstrapping in R</a></li>
+<li class="chapter" data-level="10.5.3" data-path="inference.html"><a href="inference.html#using-the-bootstrap-to-calculate-a-plausible-range"><i class="fa fa-check"></i><b>10.5.3</b> Using the bootstrap to calculate a plausible range</a></li>
+</ul></li>
+<li class="chapter" data-level="10.6" data-path="inference.html"><a href="inference.html#exercises-9"><i class="fa fa-check"></i><b>10.6</b> Exercises</a></li>
+<li class="chapter" data-level="10.7" data-path="inference.html"><a href="inference.html#additional-resources-6"><i class="fa fa-check"></i><b>10.7</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="11" data-path="jupyter.html"><a href="jupyter.html"><i class="fa fa-check"></i><b>11</b> Combining code and text with Jupyter</a>
+<ul>
+<li class="chapter" data-level="11.1" data-path="jupyter.html"><a href="jupyter.html#overview-11"><i class="fa fa-check"></i><b>11.1</b> Overview</a></li>
+<li class="chapter" data-level="11.2" data-path="jupyter.html"><a href="jupyter.html#chapter-learning-objectives-10"><i class="fa fa-check"></i><b>11.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="11.3" data-path="jupyter.html"><a href="jupyter.html#jupyter-1"><i class="fa fa-check"></i><b>11.3</b> Jupyter</a>
+<ul>
+<li class="chapter" data-level="11.3.1" data-path="jupyter.html"><a href="jupyter.html#accessing-jupyter"><i class="fa fa-check"></i><b>11.3.1</b> Accessing Jupyter</a></li>
+</ul></li>
+<li class="chapter" data-level="11.4" data-path="jupyter.html"><a href="jupyter.html#code-cells"><i class="fa fa-check"></i><b>11.4</b> Code cells</a>
+<ul>
+<li class="chapter" data-level="11.4.1" data-path="jupyter.html"><a href="jupyter.html#executing-code-cells"><i class="fa fa-check"></i><b>11.4.1</b> Executing code cells</a></li>
+<li class="chapter" data-level="11.4.2" data-path="jupyter.html"><a href="jupyter.html#the-kernel"><i class="fa fa-check"></i><b>11.4.2</b> The Kernel</a></li>
+<li class="chapter" data-level="11.4.3" data-path="jupyter.html"><a href="jupyter.html#creating-new-code-cells"><i class="fa fa-check"></i><b>11.4.3</b> Creating new code cells</a></li>
+</ul></li>
+<li class="chapter" data-level="11.5" data-path="jupyter.html"><a href="jupyter.html#markdown-cells"><i class="fa fa-check"></i><b>11.5</b> Markdown cells</a>
+<ul>
+<li class="chapter" data-level="11.5.1" data-path="jupyter.html"><a href="jupyter.html#editing-markdown-cells"><i class="fa fa-check"></i><b>11.5.1</b> Editing Markdown cells</a></li>
+<li class="chapter" data-level="11.5.2" data-path="jupyter.html"><a href="jupyter.html#creating-new-markdown-cells"><i class="fa fa-check"></i><b>11.5.2</b> Creating new Markdown cells</a></li>
+</ul></li>
+<li class="chapter" data-level="11.6" data-path="jupyter.html"><a href="jupyter.html#saving-your-work"><i class="fa fa-check"></i><b>11.6</b> Saving your work</a></li>
+<li class="chapter" data-level="11.7" data-path="jupyter.html"><a href="jupyter.html#best-practices-for-running-a-notebook"><i class="fa fa-check"></i><b>11.7</b> Best practices for running a notebook</a>
+<ul>
+<li class="chapter" data-level="11.7.1" data-path="jupyter.html"><a href="jupyter.html#best-practices-for-executing-code-cells"><i class="fa fa-check"></i><b>11.7.1</b> Best practices for executing code cells</a></li>
+<li class="chapter" data-level="11.7.2" data-path="jupyter.html"><a href="jupyter.html#best-practices-for-including-r-packages-in-notebooks"><i class="fa fa-check"></i><b>11.7.2</b> Best practices for including R packages in notebooks</a></li>
+<li class="chapter" data-level="11.7.3" data-path="jupyter.html"><a href="jupyter.html#summary-of-best-practices-for-running-a-notebook"><i class="fa fa-check"></i><b>11.7.3</b> Summary of best practices for running a notebook</a></li>
+</ul></li>
+<li class="chapter" data-level="11.8" data-path="jupyter.html"><a href="jupyter.html#exploring-data-files"><i class="fa fa-check"></i><b>11.8</b> Exploring data files</a></li>
+<li class="chapter" data-level="11.9" data-path="jupyter.html"><a href="jupyter.html#exporting-to-a-different-file-format"><i class="fa fa-check"></i><b>11.9</b> Exporting to a different file format</a>
+<ul>
+<li class="chapter" data-level="11.9.1" data-path="jupyter.html"><a href="jupyter.html#exporting-to-html"><i class="fa fa-check"></i><b>11.9.1</b> Exporting to HTML</a></li>
+<li class="chapter" data-level="11.9.2" data-path="jupyter.html"><a href="jupyter.html#exporting-to-pdf"><i class="fa fa-check"></i><b>11.9.2</b> Exporting to PDF</a></li>
+</ul></li>
+<li class="chapter" data-level="11.10" data-path="jupyter.html"><a href="jupyter.html#creating-a-new-jupyter-notebook"><i class="fa fa-check"></i><b>11.10</b> Creating a new Jupyter notebook</a></li>
+<li class="chapter" data-level="11.11" data-path="jupyter.html"><a href="jupyter.html#additional-resources-7"><i class="fa fa-check"></i><b>11.11</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="12" data-path="version-control.html"><a href="version-control.html"><i class="fa fa-check"></i><b>12</b> Collaboration with version control</a>
+<ul>
+<li class="chapter" data-level="12.1" data-path="version-control.html"><a href="version-control.html#overview-12"><i class="fa fa-check"></i><b>12.1</b> Overview</a></li>
+<li class="chapter" data-level="12.2" data-path="version-control.html"><a href="version-control.html#chapter-learning-objectives-11"><i class="fa fa-check"></i><b>12.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="12.3" data-path="version-control.html"><a href="version-control.html#what-is-version-control-and-why-should-i-use-it"><i class="fa fa-check"></i><b>12.3</b> What is version control, and why should I use it?</a></li>
+<li class="chapter" data-level="12.4" data-path="version-control.html"><a href="version-control.html#version-control-repositories"><i class="fa fa-check"></i><b>12.4</b> Version control repositories</a></li>
+<li class="chapter" data-level="12.5" data-path="version-control.html"><a href="version-control.html#version-control-workflows"><i class="fa fa-check"></i><b>12.5</b> Version control workflows</a>
+<ul>
+<li class="chapter" data-level="12.5.1" data-path="version-control.html"><a href="version-control.html#commit-changes"><i class="fa fa-check"></i><b>12.5.1</b> Committing changes to a local repository</a></li>
+<li class="chapter" data-level="12.5.2" data-path="version-control.html"><a href="version-control.html#pushing-changes-to-a-remote-repository"><i class="fa fa-check"></i><b>12.5.2</b> Pushing changes to a remote repository</a></li>
+<li class="chapter" data-level="12.5.3" data-path="version-control.html"><a href="version-control.html#pulling-changes-from-a-remote-repository"><i class="fa fa-check"></i><b>12.5.3</b> Pulling changes from a remote repository</a></li>
+</ul></li>
+<li class="chapter" data-level="12.6" data-path="version-control.html"><a href="version-control.html#working-with-remote-repositories-using-github"><i class="fa fa-check"></i><b>12.6</b> Working with remote repositories using GitHub</a>
+<ul>
+<li class="chapter" data-level="12.6.1" data-path="version-control.html"><a href="version-control.html#creating-a-remote-repository-on-github"><i class="fa fa-check"></i><b>12.6.1</b> Creating a remote repository on GitHub</a></li>
+<li class="chapter" data-level="12.6.2" data-path="version-control.html"><a href="version-control.html#editing-files-on-github-with-the-pen-tool"><i class="fa fa-check"></i><b>12.6.2</b> Editing files on GitHub with the pen tool</a></li>
+<li class="chapter" data-level="12.6.3" data-path="version-control.html"><a href="version-control.html#creating-files-on-github-with-the-add-file-menu"><i class="fa fa-check"></i><b>12.6.3</b> Creating files on GitHub with the “Add file” menu</a></li>
+</ul></li>
+<li class="chapter" data-level="12.7" data-path="version-control.html"><a href="version-control.html#local-repo-jupyter"><i class="fa fa-check"></i><b>12.7</b> Working with local repositories using Jupyter</a>
+<ul>
+<li class="chapter" data-level="12.7.1" data-path="version-control.html"><a href="version-control.html#generating-a-github-personal-access-token"><i class="fa fa-check"></i><b>12.7.1</b> Generating a GitHub personal access token</a></li>
+<li class="chapter" data-level="12.7.2" data-path="version-control.html"><a href="version-control.html#cloning-a-repository-using-jupyter"><i class="fa fa-check"></i><b>12.7.2</b> Cloning a repository using Jupyter</a></li>
+<li class="chapter" data-level="12.7.3" data-path="version-control.html"><a href="version-control.html#specifying-files-to-commit"><i class="fa fa-check"></i><b>12.7.3</b> Specifying files to commit</a></li>
+<li class="chapter" data-level="12.7.4" data-path="version-control.html"><a href="version-control.html#making-the-commit"><i class="fa fa-check"></i><b>12.7.4</b> Making the commit</a></li>
+<li class="chapter" data-level="12.7.5" data-path="version-control.html"><a href="version-control.html#pushing-the-commits-to-github"><i class="fa fa-check"></i><b>12.7.5</b> Pushing the commits to GitHub</a></li>
+</ul></li>
+<li class="chapter" data-level="12.8" data-path="version-control.html"><a href="version-control.html#collaboration"><i class="fa fa-check"></i><b>12.8</b> Collaboration</a>
+<ul>
+<li class="chapter" data-level="12.8.1" data-path="version-control.html"><a href="version-control.html#giving-collaborators-access-to-your-project"><i class="fa fa-check"></i><b>12.8.1</b> Giving collaborators access to your project</a></li>
+<li class="chapter" data-level="12.8.2" data-path="version-control.html"><a href="version-control.html#pulling-changes-from-github-using-jupyter"><i class="fa fa-check"></i><b>12.8.2</b> Pulling changes from GitHub using Jupyter</a></li>
+<li class="chapter" data-level="12.8.3" data-path="version-control.html"><a href="version-control.html#handling-merge-conflicts"><i class="fa fa-check"></i><b>12.8.3</b> Handling merge conflicts</a></li>
+<li class="chapter" data-level="12.8.4" data-path="version-control.html"><a href="version-control.html#communicating-using-github-issues"><i class="fa fa-check"></i><b>12.8.4</b> Communicating using GitHub issues</a></li>
+</ul></li>
+<li class="chapter" data-level="12.9" data-path="version-control.html"><a href="version-control.html#exercises-10"><i class="fa fa-check"></i><b>12.9</b> Exercises</a></li>
+<li class="chapter" data-level="12.10" data-path="version-control.html"><a href="version-control.html#vc-add-res"><i class="fa fa-check"></i><b>12.10</b> Additional resources</a></li>
+</ul></li>
+<li class="chapter" data-level="13" data-path="setup.html"><a href="setup.html"><i class="fa fa-check"></i><b>13</b> Setting up your computer</a>
+<ul>
+<li class="chapter" data-level="13.1" data-path="setup.html"><a href="setup.html#overview-13"><i class="fa fa-check"></i><b>13.1</b> Overview</a></li>
+<li class="chapter" data-level="13.2" data-path="setup.html"><a href="setup.html#chapter-learning-objectives-12"><i class="fa fa-check"></i><b>13.2</b> Chapter learning objectives</a></li>
+<li class="chapter" data-level="13.3" data-path="setup.html"><a href="setup.html#obtaining-the-worksheets-for-this-book"><i class="fa fa-check"></i><b>13.3</b> Obtaining the worksheets for this book</a></li>
+<li class="chapter" data-level="13.4" data-path="setup.html"><a href="setup.html#working-with-docker"><i class="fa fa-check"></i><b>13.4</b> Working with Docker</a>
+<ul>
+<li class="chapter" data-level="13.4.1" data-path="setup.html"><a href="setup.html#windows"><i class="fa fa-check"></i><b>13.4.1</b> Windows</a></li>
+<li class="chapter" data-level="13.4.2" data-path="setup.html"><a href="setup.html#macos"><i class="fa fa-check"></i><b>13.4.2</b> MacOS</a></li>
+<li class="chapter" data-level="13.4.3" data-path="setup.html"><a href="setup.html#ubuntu"><i class="fa fa-check"></i><b>13.4.3</b> Ubuntu</a></li>
+</ul></li>
+<li class="chapter" data-level="13.5" data-path="setup.html"><a href="setup.html#working-with-jupyterlab-desktop"><i class="fa fa-check"></i><b>13.5</b> Working with JupyterLab Desktop</a>
+<ul>
+<li class="chapter" data-level="13.5.1" data-path="setup.html"><a href="setup.html#windows-1"><i class="fa fa-check"></i><b>13.5.1</b> Windows</a></li>
+<li class="chapter" data-level="13.5.2" data-path="setup.html"><a href="setup.html#macos-1"><i class="fa fa-check"></i><b>13.5.2</b> MacOS</a></li>
+<li class="chapter" data-level="13.5.3" data-path="setup.html"><a href="setup.html#ubuntu-1"><i class="fa fa-check"></i><b>13.5.3</b> Ubuntu</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./"><p><img src="img/frontmatter/ds-a-first-intro-graphic.jpg" />
+Data Science</p></a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="regression1" class="section level1 hasAnchor" number="7">
+<h1><span class="header-section-number">Chapter 7</span> Regression I: K-nearest neighbors<a href="regression1.html#regression1" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div id="overview-6" class="section level2 hasAnchor" number="7.1">
+<h2><span class="header-section-number">7.1</span> Overview<a href="regression1.html#overview-6" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>This chapter continues our foray into answering predictive questions.
+Here we will focus on predicting <em>numerical</em> variables
+and will use <em>regression</em> to perform this task.
+This is unlike the past two chapters, which focused on predicting categorical
+variables via classification. However, regression does have many similarities
+to classification: for example, just as in the case of classification,
+we will split our data into training, validation, and test sets, we will
+use <code>tidymodels</code> workflows, we will use a K-nearest neighbors (K-NN)
+approach to make predictions, and we will use cross-validation to choose K.
+Because of how similar these procedures are, make sure to read Chapters
+<a href="classification1.html#classification1">5</a> and <a href="classification2.html#classification2">6</a> before reading
+this one—we will move a little bit faster here with the
+concepts that have already been covered.
+This chapter will primarily focus on the case where there is a single predictor,
+but the end of the chapter shows how to perform
+regression with more than one predictor variable, i.e., <em>multivariable regression</em>.
+It is important to note that regression
+can also be used to answer inferential and causal questions,
+however that is beyond the scope of this book.</p>
+</div>
+<div id="chapter-learning-objectives-6" class="section level2 hasAnchor" number="7.2">
+<h2><span class="header-section-number">7.2</span> Chapter learning objectives<a href="regression1.html#chapter-learning-objectives-6" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>By the end of the chapter, readers will be able to do the following:</p>
+<ul>
+<li>Recognize situations where a regression analysis would be appropriate for making predictions.</li>
+<li>Explain the K-nearest neighbors (K-NN) regression algorithm and describe how it differs from K-NN classification.</li>
+<li>Interpret the output of a K-NN regression.</li>
+<li>In a data set with two or more variables, perform K-nearest neighbors regression in R.</li>
+<li>Evaluate K-NN regression prediction quality in R using the root mean squared prediction error (RMSPE).</li>
+<li>Estimate the RMSPE in R using cross-validation or a test set.</li>
+<li>Choose the number of neighbors in K-nearest neighbors regression by minimizing estimated cross-validation RMSPE.</li>
+<li>Describe underfitting and overfitting, and relate it to the number of neighbors in K-nearest neighbors regression.</li>
+<li>Describe the advantages and disadvantages of K-nearest neighbors regression.</li>
+</ul>
+</div>
+<div id="the-regression-problem" class="section level2 hasAnchor" number="7.3">
+<h2><span class="header-section-number">7.3</span> The regression problem<a href="regression1.html#the-regression-problem" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Regression, like classification, is a predictive problem setting where we want
+to use past information to predict future observations. But in the case of
+regression, the goal is to predict <em>numerical</em> values instead of <em>categorical</em> values.
+The variable that you want to predict is often called the <em>response variable</em>.
+For example, we could try to use the number of hours a person spends on
+exercise each week to predict their race time in the annual Boston marathon. As
+another example, we could try to use the size of a house to
+predict its sale price. Both of these response variables—race time and sale price—are
+numerical, and so predicting them given past data is considered a regression problem.</p>
+<p>Just like in the
+classification setting, there are many possible methods that we can use
+to predict numerical response variables. In this chapter we will
+focus on the <strong>K-nearest neighbors</strong> algorithm <span class="citation">(<a href="#ref-knnfix">Fix and Hodges 1951</a>; <a href="#ref-knncover">Cover and Hart 1967</a>)</span>, and in the next chapter
+we will study <strong>linear regression</strong>.
+In your future studies, you might encounter regression trees, splines,
+and general local regression methods; see the additional resources
+section at the end of the next chapter for where to begin learning more about
+these other methods.</p>
+<p>Many of the concepts from classification map over to the setting of regression. For example,
+a regression model predicts a new observation’s response variable based on the response variables
+for similar observations in the data set of past observations. When building a regression model,
+we first split the data into training and test sets, in order to ensure that we assess the performance
+of our method on observations not seen during training. And finally, we can use cross-validation to evaluate different
+choices of model parameters (e.g., K in a K-nearest neighbors model). The major difference
+is that we are now predicting numerical variables instead of categorical variables.</p>
+<div style="page-break-after: always;"></div>
+<blockquote>
+<p><strong>Note:</strong> You can usually tell whether a variable is numerical or
+categorical—and therefore whether you need to perform regression or
+classification—by taking the response variable for two observations X and Y from your data,
+and asking the question, “is response variable X <em>more</em> than response
+variable Y?” If the variable is categorical, the question will make no sense.
+(Is blue more than red? Is benign more than malignant?) If the variable is
+numerical, it will make sense. (Is 1.5 hours more than 2.25 hours? Is
+$500,000 more than $400,000?) Be careful when applying this heuristic,
+though: sometimes categorical variables will be encoded as numbers in your
+data (e.g., “1” represents “benign”, and “0” represents “malignant”). In
+these cases you have to ask the question about the <em>meaning</em> of the labels
+(“benign” and “malignant”), not their values (“1” and “0”).</p>
+</blockquote>
+</div>
+<div id="exploring-a-data-set-1" class="section level2 hasAnchor" number="7.4">
+<h2><span class="header-section-number">7.4</span> Exploring a data set<a href="regression1.html#exploring-a-data-set-1" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>In this chapter and the next, we will study
+a data set of
+<a href="https://support.spatialkey.com/spatialkey-sample-csv-data/">932 real estate transactions in Sacramento, California</a>
+originally reported in the <em>Sacramento Bee</em> newspaper.
+We first need to formulate a precise question that
+we want to answer. In this example, our question is again predictive:
+Can we use the size of a house in the Sacramento, CA area to predict
+its sale price? A rigorous, quantitative answer to this question might help
+a realtor advise a client as to whether the price of a particular listing
+is fair, or perhaps how to set the price of a new listing.
+We begin the analysis by loading and examining the data, and setting the seed value.</p>
+<p></p>
+<div class="sourceCode" id="cb388"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb388-1"><a href="regression1.html#cb388-1" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb388-2"><a href="regression1.html#cb388-2" tabindex="-1"></a><span class="fu">library</span>(tidymodels)</span>
+<span id="cb388-3"><a href="regression1.html#cb388-3" tabindex="-1"></a><span class="fu">library</span>(gridExtra)</span>
+<span id="cb388-4"><a href="regression1.html#cb388-4" tabindex="-1"></a></span>
+<span id="cb388-5"><a href="regression1.html#cb388-5" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">5</span>)</span>
+<span id="cb388-6"><a href="regression1.html#cb388-6" tabindex="-1"></a></span>
+<span id="cb388-7"><a href="regression1.html#cb388-7" tabindex="-1"></a>sacramento <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">&quot;data/sacramento.csv&quot;</span>)</span>
+<span id="cb388-8"><a href="regression1.html#cb388-8" tabindex="-1"></a>sacramento</span></code></pre></div>
+<pre><code>## # A tibble: 932 × 9
+##    city           zip     beds baths  sqft type        price latitude longitude
+##    &lt;chr&gt;          &lt;chr&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;
+##  1 SACRAMENTO     z95838     2     1   836 Residential 59222     38.6     -121.
+##  2 SACRAMENTO     z95823     3     1  1167 Residential 68212     38.5     -121.
+##  3 SACRAMENTO     z95815     2     1   796 Residential 68880     38.6     -121.
+##  4 SACRAMENTO     z95815     2     1   852 Residential 69307     38.6     -121.
+##  5 SACRAMENTO     z95824     2     1   797 Residential 81900     38.5     -121.
+##  6 SACRAMENTO     z95841     3     1  1122 Condo       89921     38.7     -121.
+##  7 SACRAMENTO     z95842     3     2  1104 Residential 90895     38.7     -121.
+##  8 SACRAMENTO     z95820     3     1  1177 Residential 91002     38.5     -121.
+##  9 RANCHO_CORDOVA z95670     2     2   941 Condo       94905     38.6     -121.
+## 10 RIO_LINDA      z95673     3     2  1146 Residential 98937     38.7     -121.
+## # ℹ 922 more rows</code></pre>
+<p>The scientific question guides our initial exploration: the columns in the
+data that we are interested in are <code>sqft</code> (house size, in livable square feet)
+and <code>price</code> (house sale price, in US dollars (USD)). The first step is to visualize
+the data as a scatter plot where we place the predictor variable
+(house size) on the x-axis, and we place the response variable that we
+want to predict (sale price) on the y-axis.
+</p>
+<blockquote>
+<p><strong>Note:</strong> Given that the y-axis unit is dollars in Figure <a href="regression1.html#fig:07-edaRegr">7.1</a>,
+we format the axis labels to put dollar signs in front of the house prices,
+as well as commas to increase the readability of the larger numbers.
+We can do this in R by passing the <code>dollar_format</code> function
+(from the <code>scales</code> package)
+to the <code>labels</code> argument of the <code>scale_y_continuous</code> function.</p>
+</blockquote>
+<div class="sourceCode" id="cb390"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb390-1"><a href="regression1.html#cb390-1" tabindex="-1"></a>eda <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(sacramento, <span class="fu">aes</span>(<span class="at">x =</span> sqft, <span class="at">y =</span> price)) <span class="sc">+</span></span>
+<span id="cb390-2"><a href="regression1.html#cb390-2" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>) <span class="sc">+</span></span>
+<span id="cb390-3"><a href="regression1.html#cb390-3" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;House size (square feet)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb390-4"><a href="regression1.html#cb390-4" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Price (USD)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb390-5"><a href="regression1.html#cb390-5" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="fu">dollar_format</span>()) <span class="sc">+</span></span>
+<span id="cb390-6"><a href="regression1.html#cb390-6" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
+<span id="cb390-7"><a href="regression1.html#cb390-7" tabindex="-1"></a></span>
+<span id="cb390-8"><a href="regression1.html#cb390-8" tabindex="-1"></a>eda</span></code></pre></div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:07-edaRegr"></span>
+<img src="_main_files/figure-html/07-edaRegr-1.png" alt="Scatter plot of price (USD) versus house size (square feet)." width="432" />
+<p class="caption">
+Figure 7.1: Scatter plot of price (USD) versus house size (square feet).
+</p>
+</div>
+<p>The plot is shown in Figure <a href="regression1.html#fig:07-edaRegr">7.1</a>.
+We can see that in Sacramento, CA, as the
+size of a house increases, so does its sale price. Thus, we can reason that we
+may be able to use the size of a not-yet-sold house (for which we don’t know
+the sale price) to predict its final sale price. Note that we do not suggest here
+that a larger house size <em>causes</em> a higher sale price; just that house price
+tends to increase with house size, and that we may be able to use the latter to
+predict the former.</p>
+</div>
+<div id="k-nearest-neighbors-regression" class="section level2 hasAnchor" number="7.5">
+<h2><span class="header-section-number">7.5</span> K-nearest neighbors regression<a href="regression1.html#k-nearest-neighbors-regression" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Much like in the case of classification,
+we can use a K-nearest neighbors-based
+approach in regression to make predictions.
+Let’s take a small sample of the data in Figure <a href="regression1.html#fig:07-edaRegr">7.1</a>
+and walk through how K-nearest neighbors (K-NN) works
+in a regression context before we dive in to creating our model and assessing
+how well it predicts house sale price. This subsample is taken to allow us to
+illustrate the mechanics of K-NN regression with a few data points; later in
+this chapter we will use all the data.</p>
+<p>To take a small random sample of size 30, we’ll use the function
+<code>slice_sample</code>, and input the data frame to sample from and the number of rows
+to randomly select. </p>
+<div class="sourceCode" id="cb391"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb391-1"><a href="regression1.html#cb391-1" tabindex="-1"></a>small_sacramento <span class="ot">&lt;-</span> <span class="fu">slice_sample</span>(sacramento, <span class="at">n =</span> <span class="dv">30</span>)</span></code></pre></div>
+<p>Next let’s say we come across a 2,000 square-foot house in Sacramento we are
+interested in purchasing, with an advertised list price of $350,000. Should we
+offer to pay the asking price for this house, or is it overpriced and we should
+offer less? Absent any other information, we can get a sense for a good answer
+to this question by using the data we have to predict the sale price given the
+sale prices we have already observed. But in Figure <a href="regression1.html#fig:07-small-eda-regr">7.2</a>,
+you can see that we have no
+observations of a house of size <em>exactly</em> 2,000 square feet. How can we predict
+the sale price?</p>
+<div class="sourceCode" id="cb392"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb392-1"><a href="regression1.html#cb392-1" tabindex="-1"></a>small_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(small_sacramento, <span class="fu">aes</span>(<span class="at">x =</span> sqft, <span class="at">y =</span> price)) <span class="sc">+</span></span>
+<span id="cb392-2"><a href="regression1.html#cb392-2" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb392-3"><a href="regression1.html#cb392-3" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;House size (square feet)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb392-4"><a href="regression1.html#cb392-4" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Price (USD)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb392-5"><a href="regression1.html#cb392-5" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="fu">dollar_format</span>()) <span class="sc">+</span></span>
+<span id="cb392-6"><a href="regression1.html#cb392-6" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">2000</span>, <span class="at">linetype =</span> <span class="st">&quot;dashed&quot;</span>) <span class="sc">+</span></span>
+<span id="cb392-7"><a href="regression1.html#cb392-7" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
+<span id="cb392-8"><a href="regression1.html#cb392-8" tabindex="-1"></a></span>
+<span id="cb392-9"><a href="regression1.html#cb392-9" tabindex="-1"></a>small_plot</span></code></pre></div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:07-small-eda-regr"></span>
+<img src="_main_files/figure-html/07-small-eda-regr-1.png" alt="Scatter plot of price (USD) versus house size (square feet) with vertical line indicating 2,000 square feet on x-axis." width="432" />
+<p class="caption">
+Figure 7.2: Scatter plot of price (USD) versus house size (square feet) with vertical line indicating 2,000 square feet on x-axis.
+</p>
+</div>
+<p>We will employ the same intuition from the classification chapter, and use the
+neighboring points to the new point of interest to suggest/predict what its
+sale price might be.
+For the example shown in Figure <a href="regression1.html#fig:07-small-eda-regr">7.2</a>,
+we find and label the 5 nearest neighbors to our observation
+of a house that is 2,000 square feet.
+</p>
+<div class="sourceCode" id="cb393"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb393-1"><a href="regression1.html#cb393-1" tabindex="-1"></a>nearest_neighbors <span class="ot">&lt;-</span> small_sacramento <span class="sc">|&gt;</span></span>
+<span id="cb393-2"><a href="regression1.html#cb393-2" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">diff =</span> <span class="fu">abs</span>(<span class="dv">2000</span> <span class="sc">-</span> sqft)) <span class="sc">|&gt;</span></span>
+<span id="cb393-3"><a href="regression1.html#cb393-3" tabindex="-1"></a>  <span class="fu">slice_min</span>(diff, <span class="at">n =</span> <span class="dv">5</span>)</span>
+<span id="cb393-4"><a href="regression1.html#cb393-4" tabindex="-1"></a></span>
+<span id="cb393-5"><a href="regression1.html#cb393-5" tabindex="-1"></a>nearest_neighbors</span></code></pre></div>
+<pre><code>## # A tibble: 5 × 10
+##   city       zip     beds baths  sqft type        price latitude longitude  diff
+##   &lt;chr&gt;      &lt;chr&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;       &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;
+## 1 ROSEVILLE  z95661     3   2    2049 Residenti… 395500     38.7     -121.    49
+## 2 ANTELOPE   z95843     4   3    2085 Residenti… 408431     38.7     -121.    85
+## 3 SACRAMENTO z95823     4   2    1876 Residenti… 299940     38.5     -121.   124
+## 4 ROSEVILLE  z95747     3   2.5  1829 Residenti… 306500     38.8     -121.   171
+## 5 SACRAMENTO z95825     4   2    1776 Multi_Fam… 221250     38.6     -121.   224</code></pre>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:07-knn3-example"></span>
+<img src="_main_files/figure-html/07-knn3-example-1.png" alt="Scatter plot of price (USD) versus house size (square feet) with lines to 5 nearest neighbors (highlighted in orange)." width="432" />
+<p class="caption">
+Figure 7.3: Scatter plot of price (USD) versus house size (square feet) with lines to 5 nearest neighbors (highlighted in orange).
+</p>
+</div>
+<p>Figure <a href="regression1.html#fig:07-knn3-example">7.3</a> illustrates the difference between the house sizes
+of the 5 nearest neighbors (in terms of house size) to our new
+2,000 square-foot house of interest. Now that we have obtained these nearest neighbors,
+we can use their values to predict the
+sale price for the new home. Specifically, we can take the mean (or
+average) of these 5 values as our predicted value, as illustrated by
+the red point in Figure <a href="regression1.html#fig:07-predictedViz-knn">7.4</a>.</p>
+<div class="sourceCode" id="cb395"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb395-1"><a href="regression1.html#cb395-1" tabindex="-1"></a>prediction <span class="ot">&lt;-</span> nearest_neighbors <span class="sc">|&gt;</span></span>
+<span id="cb395-2"><a href="regression1.html#cb395-2" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">predicted =</span> <span class="fu">mean</span>(price))</span>
+<span id="cb395-3"><a href="regression1.html#cb395-3" tabindex="-1"></a></span>
+<span id="cb395-4"><a href="regression1.html#cb395-4" tabindex="-1"></a>prediction</span></code></pre></div>
+<pre><code>## # A tibble: 1 × 1
+##   predicted
+##       &lt;dbl&gt;
+## 1   326324.</code></pre>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:07-predictedViz-knn"></span>
+<img src="_main_files/figure-html/07-predictedViz-knn-1.png" alt="Scatter plot of price (USD) versus house size (square feet) with predicted price for a 2,000 square-foot house based on 5 nearest neighbors represented as a red dot." width="432" />
+<p class="caption">
+Figure 7.4: Scatter plot of price (USD) versus house size (square feet) with predicted price for a 2,000 square-foot house based on 5 nearest neighbors represented as a red dot.
+</p>
+</div>
+<p>Our predicted price is $326,324
+(shown as a red point in Figure <a href="regression1.html#fig:07-predictedViz-knn">7.4</a>), which is much less than $350,000; perhaps we
+might want to offer less than the list price at which the house is advertised.
+But this is only the very beginning of the story. We still have all the same
+unanswered questions here with K-NN regression that we had with K-NN
+classification: which <span class="math inline">\(K\)</span> do we choose, and is our model any good at making
+predictions? In the next few sections, we will address these questions in the
+context of K-NN regression.</p>
+<p>One strength of the K-NN regression algorithm
+that we would like to draw attention to at this point
+is its ability to work well with non-linear relationships
+(i.e., if the relationship is not a straight line).
+This stems from the use of nearest neighbors to predict values.
+The algorithm really has very few assumptions
+about what the data must look like for it to work.</p>
+</div>
+<div id="training-evaluating-and-tuning-the-model" class="section level2 hasAnchor" number="7.6">
+<h2><span class="header-section-number">7.6</span> Training, evaluating, and tuning the model<a href="regression1.html#training-evaluating-and-tuning-the-model" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>As usual,
+we must start by putting some test data away in a lock box
+that we will come back to only after we choose our final model.
+Let’s take care of that now.
+Note that for the remainder of the chapter
+we’ll be working with the entire Sacramento data set,
+as opposed to the smaller sample of 30 points
+that we used earlier in the chapter (Figure <a href="regression1.html#fig:07-small-eda-regr">7.2</a>).
+</p>
+<div class="sourceCode" id="cb397"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb397-1"><a href="regression1.html#cb397-1" tabindex="-1"></a>sacramento_split <span class="ot">&lt;-</span> <span class="fu">initial_split</span>(sacramento, <span class="at">prop =</span> <span class="fl">0.75</span>, <span class="at">strata =</span> price)</span>
+<span id="cb397-2"><a href="regression1.html#cb397-2" tabindex="-1"></a>sacramento_train <span class="ot">&lt;-</span> <span class="fu">training</span>(sacramento_split)</span>
+<span id="cb397-3"><a href="regression1.html#cb397-3" tabindex="-1"></a>sacramento_test <span class="ot">&lt;-</span> <span class="fu">testing</span>(sacramento_split)</span></code></pre></div>
+<p>Next, we’ll use cross-validation to choose <span class="math inline">\(K\)</span>. In K-NN classification, we used
+accuracy to see how well our predictions matched the true labels. We cannot use
+the same metric in the regression setting, since our predictions will almost never
+<em>exactly</em> match the true response variable values. Therefore in the
+context of K-NN regression we will use root mean square prediction error
+(RMSPE) instead. The mathematical formula for calculating RMSPE is:</p>
+<p><span class="math display">\[\text{RMSPE} = \sqrt{\frac{1}{n}\sum\limits_{i=1}^{n}(y_i - \hat{y}_i)^2}\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(n\)</span> is the number of observations,</li>
+<li><span class="math inline">\(y_i\)</span> is the observed value for the <span class="math inline">\(i^\text{th}\)</span> observation, and</li>
+<li><span class="math inline">\(\hat{y}_i\)</span> is the forecasted/predicted value for the <span class="math inline">\(i^\text{th}\)</span> observation.</li>
+</ul>
+<p>In other words, we compute the <em>squared</em> difference between the predicted and true response
+value for each observation in our test (or validation) set, compute the average, and then finally
+take the square root. The reason we use the <em>squared</em> difference (and not just the difference)
+is that the differences can be positive or negative, i.e., we can overshoot or undershoot the true
+response value. Figure <a href="regression1.html#fig:07-verticalerrors">7.5</a> illustrates both positive and negative differences
+between predicted and true response values.
+So if we want to measure error—a notion of distance between our predicted and true response values—we
+want to make sure that we are only adding up positive values, with larger positive values representing larger
+mistakes.
+If the predictions are very close to the true values, then
+RMSPE will be small. If, on the other-hand, the predictions are very
+different from the true values, then RMSPE will be quite large. When we
+use cross-validation, we will choose the <span class="math inline">\(K\)</span> that gives
+us the smallest RMSPE.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:07-verticalerrors"></span>
+<img src="_main_files/figure-html/07-verticalerrors-1.png" alt="Scatter plot of price (USD) versus house size (square feet) with example predictions (blue line) and the error in those predictions compared with true response values (vertical lines)." width="432" />
+<p class="caption">
+Figure 7.5: Scatter plot of price (USD) versus house size (square feet) with example predictions (blue line) and the error in those predictions compared with true response values (vertical lines).
+</p>
+</div>
+<blockquote>
+<p><strong>Note:</strong> When using many code packages (<code>tidymodels</code> included), the evaluation output
+we will get to assess the prediction quality of
+our K-NN regression models is labeled “RMSE”, or “root mean squared
+error”. Why is this so, and why not RMSPE?
+In statistics, we try to be very precise with our
+language to indicate whether we are calculating the prediction error on the
+training data (<em>in-sample</em> prediction) versus on the testing data
+(<em>out-of-sample</em> prediction). When predicting and evaluating prediction quality on the training data, we
+say RMSE. By contrast, when predicting and evaluating prediction quality
+on the testing or validation data, we say RMSPE.
+The equation for calculating RMSE and RMSPE is exactly the same; all that changes is whether the <span class="math inline">\(y\)</span>s are
+training or testing data. But many people just use RMSE for both,
+and rely on context to denote which data the root mean squared error is being calculated on.</p>
+</blockquote>
+<p>Now that we know how we can assess how well our model predicts a numerical
+value, let’s use R to perform cross-validation and to choose the optimal <span class="math inline">\(K\)</span>.
+First, we will create a recipe for preprocessing our data.
+Note that we include standardization
+in our preprocessing to build good habits, but since we only have one
+predictor, it is technically not necessary; there is no risk of comparing two predictors
+of different scales.
+Next we create a model specification for K-nearest neighbors regression. Note
+that we use <code>set_mode("regression")</code>
+now in the model specification to denote a regression problem, as opposed to the classification
+problems from the previous chapters.
+The use of <code>set_mode("regression")</code> essentially
+tells <code>tidymodels</code> that we need to use different metrics (RMSPE, not accuracy)
+for tuning and evaluation.
+Then we create a 5-fold cross-validation object, and put the recipe and model specification together
+in a workflow.
+</p>
+<div class="sourceCode" id="cb398"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb398-1"><a href="regression1.html#cb398-1" tabindex="-1"></a>sacr_recipe <span class="ot">&lt;-</span> <span class="fu">recipe</span>(price <span class="sc">~</span> sqft, <span class="at">data =</span> sacramento_train) <span class="sc">|&gt;</span></span>
+<span id="cb398-2"><a href="regression1.html#cb398-2" tabindex="-1"></a>  <span class="fu">step_scale</span>(<span class="fu">all_predictors</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb398-3"><a href="regression1.html#cb398-3" tabindex="-1"></a>  <span class="fu">step_center</span>(<span class="fu">all_predictors</span>())</span>
+<span id="cb398-4"><a href="regression1.html#cb398-4" tabindex="-1"></a></span>
+<span id="cb398-5"><a href="regression1.html#cb398-5" tabindex="-1"></a>sacr_spec <span class="ot">&lt;-</span> <span class="fu">nearest_neighbor</span>(<span class="at">weight_func =</span> <span class="st">&quot;rectangular&quot;</span>,</span>
+<span id="cb398-6"><a href="regression1.html#cb398-6" tabindex="-1"></a>                              <span class="at">neighbors =</span> <span class="fu">tune</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb398-7"><a href="regression1.html#cb398-7" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">&quot;kknn&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb398-8"><a href="regression1.html#cb398-8" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">&quot;regression&quot;</span>)</span>
+<span id="cb398-9"><a href="regression1.html#cb398-9" tabindex="-1"></a></span>
+<span id="cb398-10"><a href="regression1.html#cb398-10" tabindex="-1"></a>sacr_vfold <span class="ot">&lt;-</span> <span class="fu">vfold_cv</span>(sacramento_train, <span class="at">v =</span> <span class="dv">5</span>, <span class="at">strata =</span> price)</span>
+<span id="cb398-11"><a href="regression1.html#cb398-11" tabindex="-1"></a></span>
+<span id="cb398-12"><a href="regression1.html#cb398-12" tabindex="-1"></a>sacr_wkflw <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb398-13"><a href="regression1.html#cb398-13" tabindex="-1"></a>  <span class="fu">add_recipe</span>(sacr_recipe) <span class="sc">|&gt;</span></span>
+<span id="cb398-14"><a href="regression1.html#cb398-14" tabindex="-1"></a>  <span class="fu">add_model</span>(sacr_spec)</span>
+<span id="cb398-15"><a href="regression1.html#cb398-15" tabindex="-1"></a></span>
+<span id="cb398-16"><a href="regression1.html#cb398-16" tabindex="-1"></a>sacr_wkflw</span></code></pre></div>
+<pre><code>## ══ Workflow ══════════
+## Preprocessor: Recipe
+## Model: nearest_neighbor()
+## 
+## ── Preprocessor ──────────
+## 2 Recipe Steps
+## 
+## • step_scale()
+## • step_center()
+## 
+## ── Model ──────────
+## K-Nearest Neighbor Model Specification (regression)
+## 
+## Main Arguments:
+##   neighbors = tune()
+##   weight_func = rectangular
+## 
+## Computational engine: kknn</code></pre>
+<p>Next we run cross-validation for a grid of numbers of neighbors ranging from 1 to 200.
+The following code tunes
+the model and returns the RMSPE for each number of neighbors. In the output of the <code>sacr_results</code>
+results data frame, we see that the <code>neighbors</code> variable contains the value of <span class="math inline">\(K\)</span>,
+the mean (<code>mean</code>) contains the value of the RMSPE estimated via cross-validation,
+and the standard error (<code>std_err</code>) contains a value corresponding to a measure of how uncertain we are in the mean value. A detailed treatment of this
+is beyond the scope of this chapter; but roughly, if your estimated mean RMSPE is $100,000 and standard
+error is $1,000, you can expect the <em>true</em> RMSPE to be somewhere roughly between $99,000 and $101,000 (although it may
+fall outside this range). You may ignore the other columns in the metrics data frame,
+as they do not provide any additional insight.
+</p>
+<div class="sourceCode" id="cb400"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb400-1"><a href="regression1.html#cb400-1" tabindex="-1"></a>gridvals <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">neighbors =</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="dv">1</span>, <span class="at">to =</span> <span class="dv">200</span>, <span class="at">by =</span> <span class="dv">3</span>))</span>
+<span id="cb400-2"><a href="regression1.html#cb400-2" tabindex="-1"></a></span>
+<span id="cb400-3"><a href="regression1.html#cb400-3" tabindex="-1"></a>sacr_results <span class="ot">&lt;-</span> sacr_wkflw <span class="sc">|&gt;</span></span>
+<span id="cb400-4"><a href="regression1.html#cb400-4" tabindex="-1"></a>  <span class="fu">tune_grid</span>(<span class="at">resamples =</span> sacr_vfold, <span class="at">grid =</span> gridvals) <span class="sc">|&gt;</span></span>
+<span id="cb400-5"><a href="regression1.html#cb400-5" tabindex="-1"></a>  <span class="fu">collect_metrics</span>() <span class="sc">|&gt;</span></span>
+<span id="cb400-6"><a href="regression1.html#cb400-6" tabindex="-1"></a>  <span class="fu">filter</span>(.metric <span class="sc">==</span> <span class="st">&quot;rmse&quot;</span>)</span>
+<span id="cb400-7"><a href="regression1.html#cb400-7" tabindex="-1"></a></span>
+<span id="cb400-8"><a href="regression1.html#cb400-8" tabindex="-1"></a><span class="co"># show the results</span></span>
+<span id="cb400-9"><a href="regression1.html#cb400-9" tabindex="-1"></a>sacr_results</span></code></pre></div>
+<pre><code>## # A tibble: 67 × 7
+##    neighbors .metric .estimator    mean     n std_err .config              
+##        &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;        &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;                
+##  1         1 rmse    standard   107206.     5   4102. Preprocessor1_Model01
+##  2         4 rmse    standard    90469.     5   3312. Preprocessor1_Model02
+##  3         7 rmse    standard    86580.     5   3062. Preprocessor1_Model03
+##  4        10 rmse    standard    85321.     5   3395. Preprocessor1_Model04
+##  5        13 rmse    standard    85045.     5   3641. Preprocessor1_Model05
+##  6        16 rmse    standard    84675.     5   3679. Preprocessor1_Model06
+##  7        19 rmse    standard    84776.     5   3984. Preprocessor1_Model07
+##  8        22 rmse    standard    84617.     5   3952. Preprocessor1_Model08
+##  9        25 rmse    standard    84953.     5   3929. Preprocessor1_Model09
+## 10        28 rmse    standard    84612.     5   3917. Preprocessor1_Model10
+## # ℹ 57 more rows</code></pre>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:07-choose-k-knn-plot"></span>
+<img src="_main_files/figure-html/07-choose-k-knn-plot-1.png" alt="Effect of the number of neighbors on the RMSPE." width="432" />
+<p class="caption">
+Figure 7.6: Effect of the number of neighbors on the RMSPE.
+</p>
+</div>
+<p>Figure <a href="regression1.html#fig:07-choose-k-knn-plot">7.6</a> visualizes how the RMSPE varies with the number of neighbors <span class="math inline">\(K\)</span>.
+We take the <em>minimum</em> RMSPE to find the best setting for the number of neighbors:</p>
+<div class="sourceCode" id="cb402"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb402-1"><a href="regression1.html#cb402-1" tabindex="-1"></a><span class="co"># show only the row of minimum RMSPE</span></span>
+<span id="cb402-2"><a href="regression1.html#cb402-2" tabindex="-1"></a>sacr_min <span class="ot">&lt;-</span> sacr_results <span class="sc">|&gt;</span></span>
+<span id="cb402-3"><a href="regression1.html#cb402-3" tabindex="-1"></a>  <span class="fu">filter</span>(mean <span class="sc">==</span> <span class="fu">min</span>(mean))</span>
+<span id="cb402-4"><a href="regression1.html#cb402-4" tabindex="-1"></a></span>
+<span id="cb402-5"><a href="regression1.html#cb402-5" tabindex="-1"></a>sacr_min</span></code></pre></div>
+<pre><code>## # A tibble: 1 × 7
+##   neighbors .metric .estimator   mean     n std_err .config              
+##       &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;       &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;                
+## 1        52 rmse    standard   84561.     5   4470. Preprocessor1_Model18</code></pre>
+<p>The smallest RMSPE occurs when <span class="math inline">\(K =\)</span> 52.</p>
+</div>
+<div id="underfitting-and-overfitting" class="section level2 hasAnchor" number="7.7">
+<h2><span class="header-section-number">7.7</span> Underfitting and overfitting<a href="regression1.html#underfitting-and-overfitting" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Similar to the setting of classification, by setting the number of neighbors
+to be too small or too large, we cause the RMSPE to increase, as shown in
+Figure <a href="regression1.html#fig:07-choose-k-knn-plot">7.6</a>. What is happening here?</p>
+<p>Figure <a href="regression1.html#fig:07-howK">7.7</a> visualizes the effect of different settings of <span class="math inline">\(K\)</span> on the
+regression model. Each plot shows the predicted values for house sale price from
+our K-NN regression model on the training data for 6 different values for <span class="math inline">\(K\)</span>: 1, 3, 25, 52, 250, and 680 (almost the entire training set).
+For each model, we predict prices for the range of possible home sizes we
+observed in the data set (here 500 to 5,000 square feet) and we plot the
+predicted prices as a blue line.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:07-howK"></span>
+<img src="_main_files/figure-html/07-howK-1.png" alt="Predicted values for house price (represented as a blue line) from K-NN regression models for six different values for $K$." width="960" />
+<p class="caption">
+Figure 7.7: Predicted values for house price (represented as a blue line) from K-NN regression models for six different values for <span class="math inline">\(K\)</span>.
+</p>
+</div>
+<p>Figure <a href="regression1.html#fig:07-howK">7.7</a> shows that when <span class="math inline">\(K\)</span> = 1, the blue line runs perfectly
+through (almost) all of our training observations.
+This happens because our
+predicted values for a given region (typically) depend on just a single observation.
+In general, when <span class="math inline">\(K\)</span> is too small, the line follows the training data quite
+closely, even if it does not match it perfectly.
+If we used a different training data set of house prices and sizes
+from the Sacramento real estate market, we would end up with completely different
+predictions. In other words, the model is <em>influenced too much</em> by the data.
+Because the model follows the training data so closely, it will not make accurate
+predictions on new observations which, generally, will not have the same fluctuations
+as the original training data.
+Recall from the classification
+chapters that this behavior—where the model is influenced too much
+by the noisy data—is called <em>overfitting</em>; we use this same term
+in the context of regression. </p>
+<p>What about the plots in Figure <a href="regression1.html#fig:07-howK">7.7</a> where <span class="math inline">\(K\)</span> is quite large,
+say, <span class="math inline">\(K\)</span> = 250 or 680?
+In this case the blue line becomes extremely smooth, and actually becomes flat
+once <span class="math inline">\(K\)</span> is equal to the number of datapoints in the training set.
+This happens because our predicted values for a given x value (here, home
+size), depend on many neighboring observations; in the case where <span class="math inline">\(K\)</span> is equal
+to the size of the training set, the prediction is just the mean of the house prices
+(completely ignoring the house size). In contrast to the <span class="math inline">\(K=1\)</span> example,
+the smooth, inflexible blue line does not follow the training observations very closely.
+In other words, the model is <em>not influenced enough</em> by the training data.
+Recall from the classification
+chapters that this behavior is called <em>underfitting</em>; we again use this same
+term in the context of regression. </p>
+<p>Ideally, what we want is neither of the two situations discussed above. Instead,
+we would like a model that (1) follows the overall “trend” in the training data, so the model
+actually uses the training data to learn something useful, and (2) does not follow
+the noisy fluctuations, so that we can be confident that our model will transfer/generalize
+well to other new data. If we explore
+the other values for <span class="math inline">\(K\)</span>, in particular <span class="math inline">\(K\)</span> = 52
+(as suggested by cross-validation),
+we can see it achieves this goal: it follows the increasing trend of house price
+versus house size, but is not influenced too much by the idiosyncratic variations
+in price. All of this is similar to how
+the choice of <span class="math inline">\(K\)</span> affects K-nearest neighbors classification, as discussed in the previous
+chapter.</p>
+</div>
+<div id="evaluating-on-the-test-set-1" class="section level2 hasAnchor" number="7.8">
+<h2><span class="header-section-number">7.8</span> Evaluating on the test set<a href="regression1.html#evaluating-on-the-test-set-1" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>To assess how well our model might do at predicting on unseen data, we will
+assess its RMSPE on the test data. To do this, we will first
+re-train our K-NN regression model on the entire training data set,
+using <span class="math inline">\(K =\)</span> 52 neighbors. Then we will
+use <code>predict</code> to make predictions on the test data, and use the <code>metrics</code>
+function again to compute the summary of regression quality. Because
+we specify that we are performing regression in <code>set_mode</code>, the <code>metrics</code>
+function knows to output a quality summary related to regression, and not, say, classification.</p>
+<div class="sourceCode" id="cb404"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb404-1"><a href="regression1.html#cb404-1" tabindex="-1"></a>kmin <span class="ot">&lt;-</span> sacr_min <span class="sc">|&gt;</span> <span class="fu">pull</span>(neighbors)</span>
+<span id="cb404-2"><a href="regression1.html#cb404-2" tabindex="-1"></a></span>
+<span id="cb404-3"><a href="regression1.html#cb404-3" tabindex="-1"></a>sacr_spec <span class="ot">&lt;-</span> <span class="fu">nearest_neighbor</span>(<span class="at">weight_func =</span> <span class="st">&quot;rectangular&quot;</span>, <span class="at">neighbors =</span> kmin) <span class="sc">|&gt;</span></span>
+<span id="cb404-4"><a href="regression1.html#cb404-4" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">&quot;kknn&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb404-5"><a href="regression1.html#cb404-5" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">&quot;regression&quot;</span>)</span>
+<span id="cb404-6"><a href="regression1.html#cb404-6" tabindex="-1"></a></span>
+<span id="cb404-7"><a href="regression1.html#cb404-7" tabindex="-1"></a>sacr_fit <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb404-8"><a href="regression1.html#cb404-8" tabindex="-1"></a>  <span class="fu">add_recipe</span>(sacr_recipe) <span class="sc">|&gt;</span></span>
+<span id="cb404-9"><a href="regression1.html#cb404-9" tabindex="-1"></a>  <span class="fu">add_model</span>(sacr_spec) <span class="sc">|&gt;</span></span>
+<span id="cb404-10"><a href="regression1.html#cb404-10" tabindex="-1"></a>  <span class="fu">fit</span>(<span class="at">data =</span> sacramento_train)</span>
+<span id="cb404-11"><a href="regression1.html#cb404-11" tabindex="-1"></a></span>
+<span id="cb404-12"><a href="regression1.html#cb404-12" tabindex="-1"></a>sacr_summary <span class="ot">&lt;-</span> sacr_fit <span class="sc">|&gt;</span></span>
+<span id="cb404-13"><a href="regression1.html#cb404-13" tabindex="-1"></a>  <span class="fu">predict</span>(sacramento_test) <span class="sc">|&gt;</span></span>
+<span id="cb404-14"><a href="regression1.html#cb404-14" tabindex="-1"></a>  <span class="fu">bind_cols</span>(sacramento_test) <span class="sc">|&gt;</span></span>
+<span id="cb404-15"><a href="regression1.html#cb404-15" tabindex="-1"></a>  <span class="fu">metrics</span>(<span class="at">truth =</span> price, <span class="at">estimate =</span> .pred) <span class="sc">|&gt;</span></span>
+<span id="cb404-16"><a href="regression1.html#cb404-16" tabindex="-1"></a>  <span class="fu">filter</span>(.metric <span class="sc">==</span> <span class="st">&#39;rmse&#39;</span>)</span>
+<span id="cb404-17"><a href="regression1.html#cb404-17" tabindex="-1"></a></span>
+<span id="cb404-18"><a href="regression1.html#cb404-18" tabindex="-1"></a>sacr_summary</span></code></pre></div>
+<pre><code>## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard      90529.</code></pre>
+<p>Our final model’s test error as assessed by RMSPE
+is $90,529.
+Note that RMSPE is measured in the same units as the response variable.
+In other words, on new observations, we expect the error in our prediction to be
+<em>roughly</em> $90,529.
+From one perspective, this is good news: this is about the same as the cross-validation
+RMSPE estimate of our tuned model
+(which was $84,561),
+so we can say that the model appears to generalize well
+to new data that it has never seen before.
+However, much like in the case of K-NN classification, whether this value for RMSPE is <em>good</em>—i.e.,
+whether an error of around $90,529
+is acceptable—depends entirely on the application.
+In this application, this error
+is not prohibitively large, but it is not negligible either;
+$90,529
+might represent a substantial fraction of a home buyer’s budget, and
+could make or break whether or not they could afford put an offer on a house.</p>
+<p>Finally, Figure <a href="regression1.html#fig:07-predict-all">7.8</a> shows the predictions that our final
+model makes across the range of house sizes we might encounter in the
+Sacramento area.
+Note that instead of predicting the house price only for those house sizes that happen to appear in our data,
+we predict it for evenly spaced values between the minimum and maximum in the data set
+(roughly 500 to 5000 square feet).
+We superimpose this prediction line on a scatter
+plot of the original housing price data,
+so that we can qualitatively assess if the model seems to fit the data well.
+You have already seen a
+few plots like this in this chapter, but here we also provide the code that
+generated it as a learning opportunity.</p>
+<div class="sourceCode" id="cb406"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb406-1"><a href="regression1.html#cb406-1" tabindex="-1"></a>sqft_prediction_grid <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb406-2"><a href="regression1.html#cb406-2" tabindex="-1"></a>    <span class="at">sqft =</span> <span class="fu">seq</span>(</span>
+<span id="cb406-3"><a href="regression1.html#cb406-3" tabindex="-1"></a>        <span class="at">from =</span> sacramento <span class="sc">|&gt;</span> <span class="fu">select</span>(sqft) <span class="sc">|&gt;</span> <span class="fu">min</span>(),</span>
+<span id="cb406-4"><a href="regression1.html#cb406-4" tabindex="-1"></a>        <span class="at">to =</span> sacramento <span class="sc">|&gt;</span> <span class="fu">select</span>(sqft) <span class="sc">|&gt;</span> <span class="fu">max</span>(),</span>
+<span id="cb406-5"><a href="regression1.html#cb406-5" tabindex="-1"></a>        <span class="at">by =</span> <span class="dv">10</span></span>
+<span id="cb406-6"><a href="regression1.html#cb406-6" tabindex="-1"></a>    )</span>
+<span id="cb406-7"><a href="regression1.html#cb406-7" tabindex="-1"></a>)</span>
+<span id="cb406-8"><a href="regression1.html#cb406-8" tabindex="-1"></a></span>
+<span id="cb406-9"><a href="regression1.html#cb406-9" tabindex="-1"></a>sacr_preds <span class="ot">&lt;-</span> sacr_fit <span class="sc">|&gt;</span></span>
+<span id="cb406-10"><a href="regression1.html#cb406-10" tabindex="-1"></a>  <span class="fu">predict</span>(sqft_prediction_grid) <span class="sc">|&gt;</span></span>
+<span id="cb406-11"><a href="regression1.html#cb406-11" tabindex="-1"></a>  <span class="fu">bind_cols</span>(sqft_prediction_grid)</span>
+<span id="cb406-12"><a href="regression1.html#cb406-12" tabindex="-1"></a></span>
+<span id="cb406-13"><a href="regression1.html#cb406-13" tabindex="-1"></a>plot_final <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(sacramento, <span class="fu">aes</span>(<span class="at">x =</span> sqft, <span class="at">y =</span> price)) <span class="sc">+</span></span>
+<span id="cb406-14"><a href="regression1.html#cb406-14" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>) <span class="sc">+</span></span>
+<span id="cb406-15"><a href="regression1.html#cb406-15" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">data =</span> sacr_preds,</span>
+<span id="cb406-16"><a href="regression1.html#cb406-16" tabindex="-1"></a>            <span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> sqft, <span class="at">y =</span> .pred),</span>
+<span id="cb406-17"><a href="regression1.html#cb406-17" tabindex="-1"></a>            <span class="at">color =</span> <span class="st">&quot;steelblue&quot;</span>,</span>
+<span id="cb406-18"><a href="regression1.html#cb406-18" tabindex="-1"></a>            <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb406-19"><a href="regression1.html#cb406-19" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&quot;House size (square feet)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb406-20"><a href="regression1.html#cb406-20" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Price (USD)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb406-21"><a href="regression1.html#cb406-21" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> <span class="fu">dollar_format</span>()) <span class="sc">+</span></span>
+<span id="cb406-22"><a href="regression1.html#cb406-22" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="fu">paste0</span>(<span class="st">&quot;K = &quot;</span>, kmin)) <span class="sc">+</span></span>
+<span id="cb406-23"><a href="regression1.html#cb406-23" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
+<span id="cb406-24"><a href="regression1.html#cb406-24" tabindex="-1"></a></span>
+<span id="cb406-25"><a href="regression1.html#cb406-25" tabindex="-1"></a>plot_final</span></code></pre></div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:07-predict-all"></span>
+<img src="_main_files/figure-html/07-predict-all-1.png" alt="Predicted values of house price (blue line) for the final K-NN regression model." width="432" />
+<p class="caption">
+Figure 7.8: Predicted values of house price (blue line) for the final K-NN regression model.
+</p>
+</div>
+</div>
+<div id="multivariable-k-nn-regression" class="section level2 hasAnchor" number="7.9">
+<h2><span class="header-section-number">7.9</span> Multivariable K-NN regression<a href="regression1.html#multivariable-k-nn-regression" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>As in K-NN classification, we can use multiple predictors in K-NN regression.
+In this setting, we have the same concerns regarding the scale of the predictors. Once again,
+predictions are made by identifying the <span class="math inline">\(K\)</span>
+observations that are nearest to the new point we want to predict; any
+variables that are on a large scale will have a much larger effect than
+variables on a small scale. But since the <code>recipe</code> we built above scales and centers
+all predictor variables, this is handled for us.</p>
+<p>Note that we also have the same concern regarding the selection of predictors
+in K-NN regression as in K-NN classification: having more predictors is <strong>not</strong> always
+better, and the choice of which predictors to use has a potentially large influence
+on the quality of predictions. Fortunately, we can use the predictor selection
+algorithm from the classification chapter in K-NN regression as well.
+As the algorithm is the same, we will not cover it again in this chapter.</p>
+<p>We will now demonstrate a multivariable K-NN regression analysis of the
+Sacramento real estate data using <code>tidymodels</code>. This time we will use
+house size (measured in square feet) as well as number of bedrooms as our
+predictors, and continue to use house sale price as our response variable
+that we are trying to predict.
+It is always a good practice to do exploratory data analysis, such as
+visualizing the data, before we start modeling the data. Figure <a href="regression1.html#fig:07-bedscatter">7.9</a>
+shows that the number of bedrooms might provide useful information
+to help predict the sale price of a house.</p>
+<div class="sourceCode" id="cb407"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb407-1"><a href="regression1.html#cb407-1" tabindex="-1"></a>plot_beds <span class="ot">&lt;-</span> sacramento <span class="sc">|&gt;</span></span>
+<span id="cb407-2"><a href="regression1.html#cb407-2" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> beds, <span class="at">y =</span> price)) <span class="sc">+</span></span>
+<span id="cb407-3"><a href="regression1.html#cb407-3" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>) <span class="sc">+</span></span>
+<span id="cb407-4"><a href="regression1.html#cb407-4" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">&#39;Number of Bedrooms&#39;</span>, <span class="at">y =</span> <span class="st">&#39;Price (USD)&#39;</span>) <span class="sc">+</span></span>
+<span id="cb407-5"><a href="regression1.html#cb407-5" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">12</span>))</span>
+<span id="cb407-6"><a href="regression1.html#cb407-6" tabindex="-1"></a>plot_beds</span></code></pre></div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:07-bedscatter"></span>
+<img src="_main_files/figure-html/07-bedscatter-1.png" alt="Scatter plot of the sale price of houses versus the number of bedrooms." width="432" />
+<p class="caption">
+Figure 7.9: Scatter plot of the sale price of houses versus the number of bedrooms.
+</p>
+</div>
+<p>Figure <a href="regression1.html#fig:07-bedscatter">7.9</a> shows that as the number of bedrooms increases,
+the house sale price tends to increase as well, but that the relationship
+is quite weak. Does adding the number of bedrooms
+to our model improve our ability to predict price? To answer that
+question, we will have to create a new K-NN regression
+model using house size and number of bedrooms, and then we can compare it to
+the model we previously came up with that only used house
+size. Let’s do that now!</p>
+<p>First we’ll build a new model specification and recipe for the analysis. Note that
+we use the formula <code>price ~ sqft + beds</code> to denote that we have two predictors,
+and set <code>neighbors = tune()</code> to tell <code>tidymodels</code> to tune the number of neighbors for us.</p>
+<div class="sourceCode" id="cb408"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb408-1"><a href="regression1.html#cb408-1" tabindex="-1"></a>sacr_recipe <span class="ot">&lt;-</span> <span class="fu">recipe</span>(price <span class="sc">~</span> sqft <span class="sc">+</span> beds, <span class="at">data =</span> sacramento_train) <span class="sc">|&gt;</span></span>
+<span id="cb408-2"><a href="regression1.html#cb408-2" tabindex="-1"></a>  <span class="fu">step_scale</span>(<span class="fu">all_predictors</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb408-3"><a href="regression1.html#cb408-3" tabindex="-1"></a>  <span class="fu">step_center</span>(<span class="fu">all_predictors</span>())</span>
+<span id="cb408-4"><a href="regression1.html#cb408-4" tabindex="-1"></a>sacr_spec <span class="ot">&lt;-</span> <span class="fu">nearest_neighbor</span>(<span class="at">weight_func =</span> <span class="st">&quot;rectangular&quot;</span>,</span>
+<span id="cb408-5"><a href="regression1.html#cb408-5" tabindex="-1"></a>                              <span class="at">neighbors =</span> <span class="fu">tune</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb408-6"><a href="regression1.html#cb408-6" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">&quot;kknn&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb408-7"><a href="regression1.html#cb408-7" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">&quot;regression&quot;</span>)</span></code></pre></div>
+<p>Next, we’ll use 5-fold cross-validation to choose the number of neighbors via the minimum RMSPE:</p>
+<div class="sourceCode" id="cb409"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb409-1"><a href="regression1.html#cb409-1" tabindex="-1"></a>gridvals <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">neighbors =</span> <span class="fu">seq</span>(<span class="dv">1</span>, <span class="dv">200</span>))</span>
+<span id="cb409-2"><a href="regression1.html#cb409-2" tabindex="-1"></a></span>
+<span id="cb409-3"><a href="regression1.html#cb409-3" tabindex="-1"></a>sacr_multi <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb409-4"><a href="regression1.html#cb409-4" tabindex="-1"></a>  <span class="fu">add_recipe</span>(sacr_recipe) <span class="sc">|&gt;</span></span>
+<span id="cb409-5"><a href="regression1.html#cb409-5" tabindex="-1"></a>  <span class="fu">add_model</span>(sacr_spec) <span class="sc">|&gt;</span></span>
+<span id="cb409-6"><a href="regression1.html#cb409-6" tabindex="-1"></a>  <span class="fu">tune_grid</span>(sacr_vfold, <span class="at">grid =</span> gridvals) <span class="sc">|&gt;</span></span>
+<span id="cb409-7"><a href="regression1.html#cb409-7" tabindex="-1"></a>  <span class="fu">collect_metrics</span>() <span class="sc">|&gt;</span></span>
+<span id="cb409-8"><a href="regression1.html#cb409-8" tabindex="-1"></a>  <span class="fu">filter</span>(.metric <span class="sc">==</span> <span class="st">&quot;rmse&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb409-9"><a href="regression1.html#cb409-9" tabindex="-1"></a>  <span class="fu">filter</span>(mean <span class="sc">==</span> <span class="fu">min</span>(mean))</span>
+<span id="cb409-10"><a href="regression1.html#cb409-10" tabindex="-1"></a></span>
+<span id="cb409-11"><a href="regression1.html#cb409-11" tabindex="-1"></a>sacr_k <span class="ot">&lt;-</span> sacr_multi <span class="sc">|&gt;</span></span>
+<span id="cb409-12"><a href="regression1.html#cb409-12" tabindex="-1"></a>              <span class="fu">pull</span>(neighbors)</span>
+<span id="cb409-13"><a href="regression1.html#cb409-13" tabindex="-1"></a>sacr_multi</span></code></pre></div>
+<pre><code>## # A tibble: 1 × 7
+##   neighbors .metric .estimator   mean     n std_err .config               
+##       &lt;int&gt; &lt;chr&gt;   &lt;chr&gt;       &lt;dbl&gt; &lt;int&gt;   &lt;dbl&gt; &lt;chr&gt;                 
+## 1        11 rmse    standard   81839.     5   3108. Preprocessor1_Model011</code></pre>
+<p>Here we see that the smallest estimated RMSPE from cross-validation occurs when <span class="math inline">\(K =\)</span> 11.
+If we want to compare this multivariable K-NN regression model to the model with only a single
+predictor <em>as part of the model tuning process</em> (e.g., if we are running forward selection as described
+in the chapter on evaluating and tuning classification models),
+then we must compare the RMSPE estimated using only the training data via cross-validation.
+Looking back, the estimated cross-validation RMSPE for the single-predictor
+model was $84,561.
+The estimated cross-validation RMSPE for the multivariable model is
+$81,839.
+Thus in this case, we did not improve the model
+by a large amount by adding this additional predictor.</p>
+<p>Regardless, let’s continue the analysis to see how we can make predictions with a multivariable K-NN regression model
+and evaluate its performance on test data. We first need to re-train the model on the entire
+training data set with <span class="math inline">\(K =\)</span> 11, and then use that model to make predictions
+on the test data.</p>
+<div class="sourceCode" id="cb411"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb411-1"><a href="regression1.html#cb411-1" tabindex="-1"></a>sacr_spec <span class="ot">&lt;-</span> <span class="fu">nearest_neighbor</span>(<span class="at">weight_func =</span> <span class="st">&quot;rectangular&quot;</span>,</span>
+<span id="cb411-2"><a href="regression1.html#cb411-2" tabindex="-1"></a>                              <span class="at">neighbors =</span> sacr_k) <span class="sc">|&gt;</span></span>
+<span id="cb411-3"><a href="regression1.html#cb411-3" tabindex="-1"></a>  <span class="fu">set_engine</span>(<span class="st">&quot;kknn&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb411-4"><a href="regression1.html#cb411-4" tabindex="-1"></a>  <span class="fu">set_mode</span>(<span class="st">&quot;regression&quot;</span>)</span>
+<span id="cb411-5"><a href="regression1.html#cb411-5" tabindex="-1"></a></span>
+<span id="cb411-6"><a href="regression1.html#cb411-6" tabindex="-1"></a>knn_mult_fit <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span></span>
+<span id="cb411-7"><a href="regression1.html#cb411-7" tabindex="-1"></a>  <span class="fu">add_recipe</span>(sacr_recipe) <span class="sc">|&gt;</span></span>
+<span id="cb411-8"><a href="regression1.html#cb411-8" tabindex="-1"></a>  <span class="fu">add_model</span>(sacr_spec) <span class="sc">|&gt;</span></span>
+<span id="cb411-9"><a href="regression1.html#cb411-9" tabindex="-1"></a>  <span class="fu">fit</span>(<span class="at">data =</span> sacramento_train)</span>
+<span id="cb411-10"><a href="regression1.html#cb411-10" tabindex="-1"></a></span>
+<span id="cb411-11"><a href="regression1.html#cb411-11" tabindex="-1"></a>knn_mult_preds <span class="ot">&lt;-</span> knn_mult_fit <span class="sc">|&gt;</span></span>
+<span id="cb411-12"><a href="regression1.html#cb411-12" tabindex="-1"></a>  <span class="fu">predict</span>(sacramento_test) <span class="sc">|&gt;</span></span>
+<span id="cb411-13"><a href="regression1.html#cb411-13" tabindex="-1"></a>  <span class="fu">bind_cols</span>(sacramento_test)</span>
+<span id="cb411-14"><a href="regression1.html#cb411-14" tabindex="-1"></a></span>
+<span id="cb411-15"><a href="regression1.html#cb411-15" tabindex="-1"></a>knn_mult_mets <span class="ot">&lt;-</span> <span class="fu">metrics</span>(knn_mult_preds, <span class="at">truth =</span> price, <span class="at">estimate =</span> .pred) <span class="sc">|&gt;</span></span>
+<span id="cb411-16"><a href="regression1.html#cb411-16" tabindex="-1"></a>                     <span class="fu">filter</span>(.metric <span class="sc">==</span> <span class="st">&#39;rmse&#39;</span>)</span>
+<span id="cb411-17"><a href="regression1.html#cb411-17" tabindex="-1"></a></span>
+<span id="cb411-18"><a href="regression1.html#cb411-18" tabindex="-1"></a>knn_mult_mets</span></code></pre></div>
+<pre><code>## # A tibble: 1 × 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard      90862.</code></pre>
+<p>This time, when we performed K-NN regression on the same data set, but also
+included number of bedrooms as a predictor, we obtained a RMSPE test error
+of $90,862.
+Figure <a href="regression1.html#fig:07-knn-mult-viz">7.10</a> visualizes the model’s predictions overlaid on top of the data. This
+time the predictions are a surface in 3D space, instead of a line in 2D space, as we have 2
+predictors instead of 1.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:07-knn-mult-viz"></span>
+<div class="plotly html-widget html-fill-item-overflow-hidden html-fill-item" id="htmlwidget-3f8521140010cc3d742c" style="width:100%;height:480px;"></div>
+<script type="application/json" data-for="htmlwidget-3f8521140010cc3d742c">{"x":{"visdat":{"151032152":["function () ","plotlyVisDat"],"17ca27af":["function () ","data"]},"cur_data":"17ca27af","attrs":{"17ca27af":{"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"x":{},"y":{},"z":{},"type":"scatter3d","mode":"markers","marker":{"size":2,"opacity":0.40000000000000002,"color":"red"},"inherit":true},"17ca27af.1":{"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"z":{},"type":"surface","x":{},"y":{},"colorbar":{"title":"Price (USD)"},"inherit":true}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"scene":{"xaxis":{"title":"Size (sq ft)"},"zaxis":{"title":"Price (USD)"},"yaxis":{"title":"Bedrooms"}},"hovermode":"closest","showlegend":false,"legend":{"yanchor":"top","y":0.5}},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"x":[836,1167,796,1122,1177,941,1146,909,1289,871,1020,1022,1134,844,795,1118,1329,1240,901,1088,1119,1039,1152,1380,1116,1039,1418,1082,1472,1146,760,1304,1207,795,1099,840,746,1067,1337,924,1516,1220,722,722,1080,1039,1051,967,1050,1110,888,1120,1080,1264,1080,1266,994,1202,1039,722,1448,1183,1320,1117,1364,1310,1006,1104,810,1123,840,623,932,796,834,924,795,1250,1013,1012,795,918,1082,1404,625,888,1120,1331,1014,1448,966,779,836,1100,1207,1995,804,958,1366,696,1080,1390,1354,795,780,1587,1209,1139,1690,1245,1416,1300,1590,1516,1057,1370,1370,1166,1000,838,1080,990,861,906,1089,832,1292,810,911,1320,1410,1115,1169,1164,1341,1127,1253,1120,1118,1890,1260,1400,1264,1132,1466,1092,960,1075,1512,611,1011,1158,1092,1051,682,1161,1004,1229,1249,1161,1010,1005,1462,1269,1570,1093,962,1127,970,1000,1065,1206,1285,1543,1392,924,1056,1043,1587,1580,1955,1656,1477,1188,1590,1463,1406,1943,1172,1851,1130,1603,1479,1420,1280,1586,1362,2162,1266,1820,936,1665,1511,1590,904,1156,1321,1439,1159,1671,1716,1685,1120,1174,1393,1415,2126,1799,1308,1953,723,1376,948,1578,1317,1360,1351,1452,1162,1182,1100,1280,1280,1039,1204,1120,1638,1152,1154,1353,1329,1356,1009,1144,930,1766,1940,1776,1258,1872,1112,1856,1939,998,1758,2142,1428,1358,2475,1410,1711,1140,1410,1240,1712,1580,1029,1103,2161,1650,1320,1200,1170,1157,1410,1593,1093,1328,1273,1578,796,1386,1452,1513,1232,1578,1498,1473,1127,1144,972,2306,1479,1040,1953,984,1351,1284,1376,1300,1566,1115,1032,1419,1670,1488,1373,1381,1265,881,1917,1608,1344,1202,1859,1232,1582,904,1340,1204,1477,1497,960,1194,1428,1039,1529,1887,1294,1638,1677,1073,1231,1416,1358,1609,1968,1089,1296,1189,1371,1740,1450,1416,888,1302,1418,1462,1319,1770,1596,2136,1616,1478,1287,1277,1448,2235,2093,1193,2163,1269,1473,958,2508,1305,1591,1326,1921,1541,1018,1713,1672,1446,1284,3009,3612,2056,1993,1857,1126,1520,2800,1360,1522,1751,1475,1216,1315,2187,1129,1453,1503,1269,1176,1456,1498,2085,2170,1595,1567,2943,1253,1768,2030,1531,2056,2494,1450,2169,1527,1401,1411,2990,2307,1329,1910,1981,1739,1516,988,1555,1212,1871,1302,756,2026,1250,1187,1324,1936,2382,1798,2652,1816,3076,1844,1306,2447,1176,1182,1160,1424,1574,1830,1724,1255,1718,1808,1713,2724,2550,1928,1922,1510,960,1624,2992,1524,1248,1876,2489,1851,1637,1338,1257,2254,1441,1991,2126,1094,1462,2258,2111,1915,2367,1962,1406,1876,1235,2504,1899,1828,1438,1451,1520,2605,1196,1621,1811,1540,2647,2750,1543,2494,1650,2280,1443,1857,1735,2096,1720,2160,1282,1721,1328,1919,1982,1144,1623,2555,1577,2592,1401,1627,960,1456,1450,1358,1329,2280,1477,1685,1362,2309,2367,3516,2536,1914,1690,2725,2354,1842,1801,1961,3134,1915,2734,2110,3599,2054,1830,3440,2846,2359,3433,3615,2724,3508,2462,2900,3705,3527,2325,4878,1829,1665,3072,1449,2575,539,2208,1108,1595,2159,2295,1838,1900,3389,2190,2607,2724,3746,3969,3192,2829,3928,3577,2581,3992,3397,3881,1598,1929,2272,3117,2222,3059,2846,1829,2218,1394,1410,3468,2346,2347,1659,2590,2155,1673,2789,1606,2166,1871,1800,1683,1625,2752,1596,2716,1639,3281,1697,1993,2085,2548,2730,1939,1788,1691,2002,4246,2962,3056,3198,1905,1320,1873,3741,2660,3357,2896,2025,3788,2048,1502,1327,1800,2169,2457,2264,2004,3134,1360,1951,1276,2962,1888,2155,1744,1548,1322,2484,2212,1616,2606,2877,2960,1704,2100,1924,2295,2577,2616,1727,1485,1655,2049,3042,2875,3566,1304,2334,1493,1944,3913,3151,2787,3261,2053,2379,2480,2418,3282,4091,2806,3173,3380,1348,4090,1252,3229,3863,3901,2356,3579,3782,4400],"y":[2,3,2,3,3,2,3,3,3,1,3,2,2,2,2,3,4,4,3,3,3,2,3,3,3,2,3,3,4,4,1,2,3,2,4,2,2,3,3,3,3,2,1,1,3,3,3,2,3,3,3,3,3,3,3,3,2,3,2,2,4,4,3,3,3,4,2,3,2,2,2,2,2,2,2,2,2,3,3,3,2,2,3,4,1,2,4,3,3,4,3,2,2,2,3,4,2,2,3,3,3,4,4,2,2,4,3,2,2,3,3,3,4,5,2,3,3,3,1,2,2,2,2,2,3,2,4,2,2,3,3,3,3,3,4,4,4,3,2,4,3,3,3,2,3,3,3,3,4,1,2,4,3,3,1,3,3,3,3,3,3,2,4,3,4,3,3,3,2,3,1,3,3,3,4,2,3,2,4,4,4,4,3,3,4,3,3,4,3,4,3,4,3,3,3,3,3,4,3,3,3,2,3,4,2,3,2,3,3,3,3,4,4,3,3,3,4,4,3,4,2,2,2,4,3,3,4,3,2,3,3,4,4,3,3,3,4,3,3,3,3,3,3,3,2,4,4,4,3,4,2,4,4,3,3,3,3,4,6,3,3,3,3,3,5,4,3,3,3,3,3,3,3,3,3,3,3,3,3,4,2,3,3,3,3,4,2,3,3,3,3,4,3,2,4,1,3,3,4,3,4,2,2,4,3,3,3,4,3,2,4,4,3,3,4,3,3,2,3,3,4,4,3,1,3,3,3,4,3,3,3,3,3,3,3,4,4,2,3,2,3,4,3,3,3,3,3,3,4,4,4,5,4,3,3,4,4,4,3,3,3,3,3,3,5,3,4,2,4,3,3,4,3,3,2,4,8,4,4,3,2,2,5,3,3,4,4,3,2,3,2,3,3,2,3,4,3,5,3,4,3,4,4,4,4,3,4,4,3,4,3,3,3,4,4,3,4,3,4,3,3,4,3,4,3,2,4,2,3,2,4,5,4,4,4,5,4,3,4,4,4,3,3,4,3,4,2,3,4,3,4,4,4,3,3,2,3,5,4,3,4,5,4,2,3,2,5,3,4,4,3,3,5,4,4,4,3,2,4,3,4,4,3,4,3,3,4,3,3,3,3,4,2,3,5,3,5,3,3,3,4,3,4,3,4,4,3,4,2,2,6,3,5,3,4,3,3,3,3,4,4,3,4,3,4,5,5,4,4,2,3,4,3,4,3,4,4,4,3,5,4,4,4,3,4,5,5,4,5,4,5,4,4,3,6,3,3,5,2,3,2,4,3,4,4,4,3,4,5,4,4,4,5,5,4,3,5,5,4,4,4,5,2,4,4,5,4,4,5,3,4,3,3,5,5,5,4,4,4,3,4,4,4,4,3,3,3,4,2,4,3,5,3,3,4,3,4,4,2,3,4,5,4,4,3,3,3,2,5,4,4,5,3,5,4,3,3,4,4,5,3,4,5,3,4,3,4,4,3,3,3,2,4,3,3,5,5,3,2,3,3,4,4,5,3,3,3,3,4,5,5,2,3,3,3,5,5,5,4,4,4,3,3,4,5,4,3,4,3,4,2,4,5,5,4,5,4,4],"z":[59222,68212,68880,89921,91002,94905,98937,100309,106250,106852,107502,108750,110700,113263,116250,122000,122682,123000,125000,126640,129000,133000,134555,136500,138750,141000,146250,147308,148750,149593,150000,152000,154000,69000,70000,71000,78400,80000,90000,92000,97750,98000,98000,100000,106716,111000,111000,114800,123225,123750,125000,125000,126000,135500,140000,140000,142500,143500,145000,145000,145000,146000,148500,149000,150000,150000,152000,156000,156000,156000,40000,62050,65000,65000,68000,77000,82732,84000,85000,90000,90000,91000,95000,100000,100000,101000,102750,112500,113000,114000,114000,114750,115000,115000,119250,120000,120000,120000,120108,121725,122000,125573,126714,126960,127000,127500,130000,133105,136500,139500,140000,140800,147000,150000,150000,155435,155500,30000,30000,55422,65000,66500,75000,77000,95625,96140,105000,108000,115000,115500,115620,116000,122000,122500,123000,124000,125000,130000,131750,137721,137760,138000,140000,145000,150000,150000,155000,155800,56950,60000,70000,80000,85500,105000,107666,109000,110000,110000,112500,114800,116000,119000,121500,122000,126854,127059,128687,130000,132000,134000,138000,142000,143012,145846,150000,150454,156896,161250,161500,165000,166357,166357,168000,170000,173000,174250,178760,179580,181000,182587,182750,183200,188741,189000,192067,194000,194818,195000,198000,200000,200000,206000,208000,212864,157788,161653,161829,168000,169000,175000,180400,182000,189000,195000,200000,201000,202500,205000,205000,205000,207000,210000,211500,215000,215000,215500,158000,160000,164000,164000,167000,167293,167293,168000,174000,178000,180000,188325,191500,192000,192700,195000,198000,200345,203000,207000,208000,210000,212000,213675,213697,215000,215000,215100,217500,218000,156142,158000,159900,160000,161500,162000,165000,167293,168000,168000,168750,170000,170250,173000,175000,176095,176250,180000,180000,181000,182000,188335,190000,190000,190000,191250,193000,193500,194818,195000,195000,195000,199900,200000,201000,204918,205000,205000,207744,210944,215000,215000,215000,216033,220000,220000,220000,220000,157296,160000,160000,161250,164000,165000,165000,165750,166000,169000,170000,170000,172000,173056,174000,174250,176850,179500,185000,188000,188700,189000,189000,190000,191250,191675,195500,198000,200000,200000,201528,204750,205000,205000,205900,207000,208250,211500,213000,216000,216021,219794,220000,220000,220000,220000,221000,223058,227887,231477,234697,235000,236000,236685,237800,240122,242638,244000,244500,244960,245918,250000,250000,250134,254200,260000,260014,263500,265000,275086,280908,280987,282400,285000,287417,291000,292024,299000,304037,222381,225000,225000,229665,230000,230000,235000,240000,242000,245000,245000,250000,250000,250000,256054,257729,260000,261000,261800,264469,265000,270000,270000,275000,280000,286013,292000,293993,294000,296769,297500,300000,300000,300500,305000,221000,222900,223139,225500,228327,230000,230000,230522,231200,232500,234000,234500,235000,236000,238861,239700,240000,240000,241000,245000,246000,247234,247480,249862,251000,252155,254172,258000,260000,261000,262500,266000,274425,277980,280000,284686,285000,285000,289000,295000,296056,297359,299940,304000,305000,220702,222000,222500,222750,225000,225000,228750,229000,230095,232500,233500,240000,240000,240971,242000,243500,246544,246750,249000,250000,252000,255000,255000,257200,260000,260000,263500,266510,267750,270000,275000,276000,276500,279000,280000,285000,288000,289000,290000,290000,294000,294173,295000,298000,298000,299000,300000,300000,300567,303000,305000,223000,224252,225000,228000,229027,229500,232425,234000,235301,235738,311000,315537,320000,320000,328360,334150,335750,335750,339500,346210,347029,347650,351300,370500,372000,381300,381942,387731,394470,395000,400186,425000,430000,461000,510000,539000,585000,600000,606238,660000,830000,306500,312500,315000,330000,331000,334000,336000,339000,339000,345000,350000,356000,361745,370000,380000,402000,406026,420000,425000,425000,433500,436746,438700,450000,460000,465000,471750,484000,485000,500500,541000,582000,614000,680000,307000,311328,313138,316630,320000,320000,325000,328578,331500,340000,344755,351000,353767,356035,360552,362305,365000,367554,368500,370000,371086,388000,395100,400000,400000,408431,413000,420000,423000,427500,430922,445000,452000,471000,475000,487500,500000,506688,512000,579093,636000,668365,676200,677048,691659,306000,310000,310000,310000,311518,312000,313000,315000,315000,315000,315000,320000,322000,325000,325500,326951,328370,330000,331200,334000,335000,346375,349000,350000,350000,350000,356200,360000,367463,375000,380000,380578,386222,395500,396000,397000,400000,413500,415000,425000,425000,433500,438000,441000,446000,450000,455000,460000,490000,493000,508000,511000,525000,533000,545000,560000,575000,575000,598695,600000,600000,610000,879000,884790],"type":"scatter3d","mode":"markers","marker":{"color":"red","size":2,"opacity":0.40000000000000002,"line":{"color":"rgba(31,119,180,1)"}},"error_y":{"color":"rgba(31,119,180,1)"},"error_x":{"color":"rgba(31,119,180,1)"},"line":{"color":"rgba(31,119,180,1)"},"frame":null},{"colorbar":{"title":"Price (USD)","ticklen":2,"len":0.5,"lenmode":"fraction","y":1,"yanchor":"top"},"colorscale":[["0","rgba(68,1,84,1)"],["0.0416666666666667","rgba(70,19,97,1)"],["0.0833333333333334","rgba(72,32,111,1)"],["0.125","rgba(71,45,122,1)"],["0.166666666666667","rgba(68,58,128,1)"],["0.208333333333333","rgba(64,70,135,1)"],["0.25","rgba(60,82,138,1)"],["0.291666666666667","rgba(56,93,140,1)"],["0.333333333333333","rgba(49,104,142,1)"],["0.375","rgba(46,114,142,1)"],["0.416666666666667","rgba(42,123,142,1)"],["0.458333333333333","rgba(38,133,141,1)"],["0.5","rgba(37,144,140,1)"],["0.541666666666667","rgba(33,154,138,1)"],["0.583333333333333","rgba(39,164,133,1)"],["0.625","rgba(47,174,127,1)"],["0.666666666666667","rgba(53,183,121,1)"],["0.708333333333333","rgba(79,191,110,1)"],["0.75","rgba(98,199,98,1)"],["0.791666666666667","rgba(119,207,85,1)"],["0.833333333333333","rgba(147,214,70,1)"],["0.875","rgba(172,220,52,1)"],["0.916666666666667","rgba(199,225,42,1)"],["0.958333333333333","rgba(226,228,40,1)"],["1","rgba(253,231,37,1)"]],"showscale":true,"z":[[117223.81818181818,117223.81818181818,117223.81818181818,117223.81818181818,117223.81818181818,117223.81818181818,117223.81818181818,117223.81818181818,117223.81818181818,117223.81818181818,133769.27272727274,167799.63636363635,232136.18181818182,236208.72727272726,250345.09090909091,299713.81818181818,320804.72727272729,320804.72727272729,320804.72727272729,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,330168.36363636365,383740.90909090912,401854.54545454547,401568.18181818182,407295.45454545453,407295.45454545453,407295.45454545453,410250,410250,410250,410250,408250,408250,408250,444140,453230.90909090912,457503.63636363635,457503.63636363635,507321.81818181818,507321.81818181818,507321.81818181818,507321.81818181818],[117223.81818181818,117223.81818181818,117223.81818181818,117223.81818181818,117223.81818181818,117223.81818181818,117223.81818181818,117223.81818181818,117223.81818181818,146736,190890.54545454544,235799.63636363635,252799.63636363635,250668.36363636365,320804.72727272729,320804.72727272729,320804.72727272729,320804.72727272729,330895.63636363635,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,326441.09090909088,383740.90909090912,383886.36363636365,407295.45454545453,407295.45454545453,407295.45454545453,410250,410250,410250,410250,408250,408250,408250,408250,408250,453230.90909090912,457503.63636363635,457503.63636363635,507321.81818181818,507321.81818181818,507321.81818181818,531344.54545454541,531344.54545454541],[130496.54545454546,105773.81818181818,117223.81818181818,117223.81818181818,117223.81818181818,117223.81818181818,117223.81818181818,144769.27272727274,189936,208523.54545454544,211598,253358.54545454544,275122.90909090912,301441.09090909088,320804.72727272729,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,340945.45454545453,401854.54545454547,407295.45454545453,407295.45454545453,410250,410250,410250,410250,408250,408250,408250,408250,408250,408250,414613.63636363635,453230.90909090912,457503.63636363635,507321.81818181818,507321.81818181818,507321.81818181818,531344.54545454541,531344.54545454541,531344.54545454541],[133688,133688,119587.45454545454,111042,117223.81818181818,120723.81818181818,143186,160509.18181818182,225532,235351.90909090909,242769.36363636365,276791.09090909088,293213.81818181818,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,340945.45454545453,401568.18181818182,407295.45454545453,407295.45454545453,410250,410250,410250,408250,408250,408250,408250,408250,408250,408250,414613.63636363635,414613.63636363635,457503.63636363635,507321.81818181818,507321.81818181818,507321.81818181818,531344.54545454541,531344.54545454541,531344.54545454541,531344.54545454541],[144336.72727272726,144336.72727272726,126146.72727272728,108438.36363636363,125936.18181818182,138368.18181818182,159449.72727272726,190779.90909090909,265128,249988.27272727274,263269.36363636365,290077.45454545453,293213.81818181818,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,329191.09090909088,394795.45454545453,407295.45454545453,410250,410250,410250,408250,408250,408250,408250,408250,408250,408250,408250,408250,414613.63636363635,457503.63636363635,507321.81818181818,507321.81818181818,507321.81818181818,531344.54545454541,531344.54545454541,531344.54545454541,531344.54545454541,531344.54545454541],[144336.72727272726,144336.72727272726,126146.72727272728,108438.36363636363,125936.18181818182,138368.18181818182,159449.72727272726,190779.90909090909,265128,249988.27272727274,263269.36363636365,272109.27272727271,293213.81818181818,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,321509.27272727271,388886.36363636365,407295.45454545453,410250,410250,408250,408250,408250,408250,408250,408250,408250,408250,408250,408250,405522.72727272729,414613.63636363635,507321.81818181818,507321.81818181818,507321.81818181818,531344.54545454541,531344.54545454541,531344.54545454541,531344.54545454541,531344.54545454541,547048],[144336.72727272726,144336.72727272726,126146.72727272728,108438.36363636363,125936.18181818182,138368.18181818182,159449.72727272726,190779.90909090909,265128,249988.27272727274,263269.36363636365,272109.27272727271,293213.81818181818,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,328259.27272727271,328259.27272727271,328259.27272727271,328259.27272727271,343263.63636363635,401613.63636363635,401613.63636363635,410250,408250,408250,408250,408250,408250,408250,408250,408250,408250,408250,408250,405522.72727272729,414613.63636363635,507321.81818181818,507321.81818181818,507321.81818181818,531344.54545454541,531344.54545454541,531344.54545454541,531344.54545454541,531344.54545454541,547048,547048],[144336.72727272726,144336.72727272726,126146.72727272728,108438.36363636363,125936.18181818182,138368.18181818182,159449.72727272726,190779.90909090909,265128,249988.27272727274,263269.36363636365,272109.27272727271,293213.81818181818,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,328259.27272727271,328259.27272727271,328259.27272727271,357286.36363636365,431613.63636363635,400477.27272727271,400477.27272727271,408250,408250,408250,408250,408250,408250,408250,408250,408250,408250,408250,408250,443613.63636363635,456977.27272727271,507321.81818181818,507321.81818181818,531344.54545454541,531344.54545454541,531344.54545454541,531344.54545454541,547048,547048,547048,546999.81818181823],[144062,144062,126146.72727272728,108438.36363636363,125936.18181818182,138368.18181818182,159449.72727272726,190779.90909090909,265128,249988.27272727274,263269.36363636365,272109.27272727271,293213.81818181818,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,328259.27272727271,349532,421954.54545454547,420659.09090909088,428659.09090909088,413931.81818181818,401659.09090909088,408250,408250,408250,408250,408250,408250,408250,408250,408250,408250,408250,443613.63636363635,456977.27272727271,481431.81818181818,507321.81818181818,531344.54545454541,531344.54545454541,531344.54545454541,531344.54545454541,547048,547048,546999.81818181823,546999.81818181823,564727.09090909094],[140041.27272727274,144062,126146.72727272728,108438.36363636363,125936.18181818182,138368.18181818182,159449.72727272726,190779.90909090909,265128,249988.27272727274,239496.63636363635,272109.27272727271,293213.81818181818,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,330895.63636363635,309304.72727272729,310228.81818181818,377897,403000,386977.27272727271,410568.18181818182,413931.81818181818,401659.09090909088,408250,408250,408250,408250,408250,408250,408250,408250,408250,408250,418250,456340.90909090912,481431.81818181818,481431.81818181818,531344.54545454541,531344.54545454541,531344.54545454541,547048,547048,558363.45454545459,564727.09090909094,564727.09090909094,564727.09090909094,564727.09090909094],[148357.45454545456,148357.45454545456,126146.72727272728,108438.36363636363,125936.18181818182,138368.18181818182,159449.72727272726,190779.90909090909,265128,249988.27272727274,239496.63636363635,272109.27272727271,293213.81818181818,330895.63636363635,330895.63636363635,330168.36363636365,330940.90909090912,387713.45454545453,295901.54545454547,322101.54545454547,332828.81818181818,379884.45454545453,386977.27272727271,410568.18181818182,413931.81818181818,401659.09090909088,408250,408250,408250,408250,408250,408250,408250,408250,408250,418250,456340.90909090912,481431.81818181818,481431.81818181818,531344.54545454541,531344.54545454541,561911.63636363635,561911.63636363635,558363.45454545459,564727.09090909094,564727.09090909094,564727.09090909094,564727.09090909094,564727.09090909094,581363.45454545459],[158638.81818181818,157100.45454545456,162660.63636363635,162660.63636363635,163293.54545454544,175921.63636363635,132214.54545454544,150108.63636363635,178343.09090909091,228685,200441.90909090909,235103.90909090909,267254.18181818182,279406.63636363635,286902.54545454547,307924.72727272729,384494,360758.90909090912,285310.63636363635,322101.54545454547,332828.81818181818,377397,385861.72727272729,410568.18181818182,413931.81818181818,401659.09090909088,408250,408250,408250,408250,408250,408250,408250,408250,418817.09090909088,431544.36363636365,485635.27272727271,481431.81818181818,511998.90909090912,561911.63636363635,561911.63636363635,558363.45454545459,564727.09090909094,564727.09090909094,564727.09090909094,564727.09090909094,564727.09090909094,581363.45454545459,581363.45454545459,581363.45454545459],[162660.63636363635,162660.63636363635,162660.63636363635,162660.63636363635,163293.54545454544,175921.63636363635,132214.54545454544,150108.63636363635,178343.09090909091,228685,200441.90909090909,235103.90909090909,267254.18181818182,279406.63636363635,286902.54545454547,307924.72727272729,384494,360758.90909090912,285310.63636363635,322101.54545454547,332828.81818181818,377397,385861.72727272729,416386.36363636365,417840.90909090912,437113.63636363635,421431.81818181818,408250,408250,408250,408250,408250,408250,399565.45454545453,412859.81818181818,479678,496950.72727272729,517337.09090909088,517337.09090909088,558363.45454545459,564727.09090909094,564727.09090909094,564727.09090909094,564727.09090909094,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459],[162660.63636363635,162660.63636363635,162660.63636363635,162660.63636363635,163293.54545454544,175921.63636363635,132214.54545454544,150108.63636363635,178343.09090909091,228685,200441.90909090909,235103.90909090909,267254.18181818182,279406.63636363635,286902.54545454547,307924.72727272729,384494,360758.90909090912,285310.63636363635,322101.54545454547,332828.81818181818,377397,385861.72727272729,416386.36363636365,417840.90909090912,437113.63636363635,421431.81818181818,421431.81818181818,421431.81818181818,408250,408250,408250,448374.09090909088,430587.09090909088,465950.72727272729,497405.27272727271,508700.72727272729,517337.09090909088,564727.09090909094,564727.09090909094,564727.09090909094,564727.09090909094,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459],[162660.63636363635,162660.63636363635,162660.63636363635,162660.63636363635,163293.54545454544,175921.63636363635,132214.54545454544,150108.63636363635,178343.09090909091,228685,200441.90909090909,235103.90909090909,267254.18181818182,279406.63636363635,286902.54545454547,307924.72727272729,384494,360758.90909090912,285310.63636363635,322101.54545454547,332828.81818181818,377397,385861.72727272729,416386.36363636365,417840.90909090912,437113.63636363635,421431.81818181818,421431.81818181818,421431.81818181818,421431.81818181818,422340.90909090912,424522.72727272729,447144.09090909088,472165.72727272729,465950.72727272729,515337.09090909088,517746.18181818182,532746.18181818177,564727.09090909094,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459],[162660.63636363635,162660.63636363635,162660.63636363635,162660.63636363635,163293.54545454544,175921.63636363635,132214.54545454544,150108.63636363635,178343.09090909091,228685,200441.90909090909,235103.90909090909,267254.18181818182,279406.63636363635,286902.54545454547,307924.72727272729,384494,360758.90909090912,285310.63636363635,322101.54545454547,332828.81818181818,377397,385861.72727272729,416386.36363636365,417840.90909090912,437113.63636363635,421431.81818181818,421431.81818181818,409248.81818181818,426581.81818181818,419854.54545454547,466737.72727272729,461871.36363636365,486461.18181818182,496188.45454545453,542597.54545454541,532746.18181818177,561688.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,581363.45454545459,594396.63636363635,594396.63636363635,594396.63636363635,591169.36363636365],[162660.63636363635,162660.63636363635,162660.63636363635,162660.63636363635,163293.54545454544,175921.63636363635,132214.54545454544,150108.63636363635,178343.09090909091,228685,200441.90909090909,235103.90909090909,267254.18181818182,279406.63636363635,286902.54545454547,307924.72727272729,384494,360758.90909090912,285310.63636363635,322101.54545454547,332828.81818181818,377397,385861.72727272729,416386.36363636365,417840.90909090912,437113.63636363635,421431.81818181818,407504.54545454547,385930.63636363635,426400,437581.81818181818,484669.54545454547,471894.09090909088,503961.18181818182,545597.54545454541,555597.54545454541,561688.45454545459,561688.45454545459,581363.45454545459,581363.45454545459,594396.63636363635,594396.63636363635,594396.63636363635,594396.63636363635,594396.63636363635,594396.63636363635,594396.63636363635,591169.36363636365,591169.36363636365,576590.72727272729],[162660.63636363635,162660.63636363635,162660.63636363635,162660.63636363635,163293.54545454544,175921.63636363635,132214.54545454544,150108.63636363635,178343.09090909091,228685,200441.90909090909,235103.90909090909,267254.18181818182,279406.63636363635,286902.54545454547,307924.72727272729,384494,360758.90909090912,285310.63636363635,322101.54545454547,332828.81818181818,377397,392540.90909090912,431883,395609.09090909088,389388.72727272729,374640.90909090912,378185.18181818182,417294.27272727271,429967,466740.90909090912,483228.63636363635,510779.36363636365,526688.45454545459,554324.81818181823,555597.54545454541,558779.36363636365,558779.36363636365,594896.63636363635,594896.63636363635,594896.63636363635,594896.63636363635,594896.63636363635,594896.63636363635,594896.63636363635,591169.36363636365,591169.36363636365,576590.72727272729,576590.72727272729,566772.54545454541],[162660.63636363635,162660.63636363635,148637.72727272726,133255,154279.81818181818,158502.36363636365,145823.36363636365,145823.36363636365,179797.18181818182,172990.54545454544,170483.90909090909,184693.18181818182,228211.90909090909,233219,248142.81818181818,248659.45454545456,241607.36363636365,317052.09090909088,280300.27272727271,339408.27272727271,348616.27272727271,360277.63636363635,349535.72727272729,312758.45454545453,373244.27272727271,400839.72727272729,383386.45454545453,395344.27272727271,405994.27272727271,422739.72727272729,477636.54545454547,494225.90909090912,506156.63636363635,553188.45454545459,553188.45454545459,556370.27272727271,555006.63636363635,555006.63636363635,594896.63636363635,594896.63636363635,594896.63636363635,594896.63636363635,594896.63636363635,594896.63636363635,591169.36363636365,591169.36363636365,576590.72727272729,576590.72727272729,566772.54545454541,564204],[140938.45454545456,145707.45454545456,145525.63636363635,145823.36363636365,145823.36363636365,145823.36363636365,145823.36363636365,145823.36363636365,179797.18181818182,172990.54545454544,170483.90909090909,184693.18181818182,228211.90909090909,233219,248142.81818181818,248659.45454545456,241607.36363636365,317052.09090909088,280300.27272727271,339408.27272727271,348616.27272727271,360277.63636363635,349535.72727272729,312758.45454545453,373244.27272727271,400839.72727272729,383386.45454545453,395344.27272727271,405994.27272727271,422739.72727272729,477636.54545454547,494225.90909090912,506156.63636363635,553188.45454545459,553188.45454545459,556370.27272727271,555006.63636363635,555006.63636363635,594896.63636363635,594896.63636363635,594896.63636363635,594896.63636363635,594896.63636363635,591169.36363636365,576590.72727272729,576590.72727272729,566772.54545454541,564204,567752.18181818177,567752.18181818177],[145525.63636363635,145823.36363636365,145823.36363636365,145823.36363636365,145823.36363636365,145823.36363636365,145823.36363636365,145823.36363636365,179797.18181818182,172990.54545454544,170483.90909090909,184693.18181818182,228211.90909090909,233219,248142.81818181818,248659.45454545456,241607.36363636365,317052.09090909088,280300.27272727271,339408.27272727271,348616.27272727271,360277.63636363635,349535.72727272729,312758.45454545453,373244.27272727271,400839.72727272729,383386.45454545453,395344.27272727271,405994.27272727271,422739.72727272729,477636.54545454547,494225.90909090912,506156.63636363635,553188.45454545459,553188.45454545459,556370.27272727271,555006.63636363635,555006.63636363635,594896.63636363635,594896.63636363635,594896.63636363635,594896.63636363635,591169.36363636365,576590.72727272729,566772.54545454541,564204,567752.18181818177,567752.18181818177,567752.18181818177,567185.09090909094],[145823.36363636365,145823.36363636365,158502.36363636365,158502.36363636365,145823.36363636365,145823.36363636365,145823.36363636365,145823.36363636365,179797.18181818182,172990.54545454544,170483.90909090909,184693.18181818182,228211.90909090909,233219,248142.81818181818,248659.45454545456,241607.36363636365,317052.09090909088,280300.27272727271,339408.27272727271,348616.27272727271,360277.63636363635,349535.72727272729,312758.45454545453,373244.27272727271,400839.72727272729,383386.45454545453,395344.27272727271,405994.27272727271,422739.72727272729,477636.54545454547,494225.90909090912,506156.63636363635,553188.45454545459,553188.45454545459,556370.27272727271,555006.63636363635,555006.63636363635,594896.63636363635,594896.63636363635,594896.63636363635,591169.36363636365,566772.54545454541,564204,567752.18181818177,567752.18181818177,567185.09090909094,567185.09090909094,567185.09090909094,567185.09090909094],[145823.36363636365,158502.36363636365,158502.36363636365,158502.36363636365,145823.36363636365,145823.36363636365,145823.36363636365,145823.36363636365,179797.18181818182,172990.54545454544,170483.90909090909,184693.18181818182,228211.90909090909,233219,248142.81818181818,248659.45454545456,241607.36363636365,317052.09090909088,280300.27272727271,339408.27272727271,348616.27272727271,360277.63636363635,349535.72727272729,312758.45454545453,373244.27272727271,400839.72727272729,383386.45454545453,395344.27272727271,405994.27272727271,422739.72727272729,477636.54545454547,494225.90909090912,506156.63636363635,553188.45454545459,553188.45454545459,556370.27272727271,555006.63636363635,555006.63636363635,594896.63636363635,588714.81818181823,565385.81818181823,564204,567752.18181818177,567185.09090909094,567185.09090909094,567185.09090909094,567185.09090909094,567185.09090909094,567185.09090909094,567185.09090909094],[158502.36363636365,158502.36363636365,158502.36363636365,158502.36363636365,145823.36363636365,145823.36363636365,145823.36363636365,145823.36363636365,179797.18181818182,172990.54545454544,170483.90909090909,184693.18181818182,228211.90909090909,233219,248142.81818181818,248659.45454545456,241607.36363636365,317052.09090909088,280300.27272727271,339408.27272727271,348616.27272727271,360277.63636363635,349535.72727272729,312758.45454545453,373244.27272727271,400839.72727272729,383386.45454545453,395344.27272727271,405994.27272727271,422739.72727272729,477636.54545454547,494225.90909090912,506156.63636363635,553188.45454545459,553188.45454545459,556370.27272727271,555006.63636363635,586947.90909090906,583272.54545454541,581206.72727272729,567752.18181818177,567185.09090909094,567185.09090909094,567185.09090909094,567185.09090909094,567185.09090909094,555526,555526,555526,555526],[158502.36363636365,158502.36363636365,158502.36363636365,158502.36363636365,158502.36363636365,145823.36363636365,145823.36363636365,145823.36363636365,179797.18181818182,172990.54545454544,170483.90909090909,184693.18181818182,228211.90909090909,233219,248142.81818181818,248659.45454545456,241607.36363636365,317052.09090909088,280300.27272727271,339408.27272727271,348616.27272727271,360277.63636363635,349535.72727272729,312758.45454545453,373244.27272727271,400839.72727272729,383386.45454545453,395344.27272727271,405994.27272727271,422739.72727272729,477636.54545454547,494225.90909090912,483974.81818181818,502370.27272727271,538524.81818181823,546006.63636363635,536978.18181818177,587857.72727272729,559668.18181818177,542971.90909090906,555526,555526,555526,555526,530043.72727272729,530043.72727272729,530043.72727272729,530043.72727272729,530043.72727272729,530043.72727272729],[158502.36363636365,158502.36363636365,158502.36363636365,158502.36363636365,158502.36363636365,145823.36363636365,145823.36363636365,145823.36363636365,170957.72727272726,177081.45454545456,173688.45454545456,179342.81818181818,224406.09090909091,225309.90909090909,234193.18181818182,232942.36363636365,216458.45454545456,298300.36363636365,258286.27272727274,275081.72727272729,276895,278973.18181818182,305348.18181818182,314442.45454545453,362211.81818181818,431964.72727272729,423385.18181818182,438476.09090909088,439200,413300,385372.72727272729,380827.27272727271,418918.18181818182,418190.90909090912,434917.54545454547,463704.72727272729,511017.90909090912,497067.54545454547,508585.72727272729,510585.72727272729,512486.36363636365,512486.36363636365,530043.72727272729,530043.72727272729,530043.72727272729,530043.72727272729,530043.72727272729,530043.72727272729,530043.72727272729,530043.72727272729],[158502.36363636365,158502.36363636365,158502.36363636365,158502.36363636365,148096.09090909091,148096.09090909091,148096.09090909091,148096.09090909091,163732.27272727274,172808.72727272726,173688.45454545456,179342.81818181818,231956.45454545456,229547.36363636365,221214.72727272726,247990.81818181818,247990.81818181818,262718.09090909088,275081.72727272729,275081.72727272729,276895,278973.18181818182,305348.18181818182,314442.45454545453,362211.81818181818,431964.72727272729,423385.18181818182,438476.09090909088,439200,413300,385372.72727272729,380827.27272727271,418918.18181818182,418190.90909090912,434917.54545454547,463704.72727272729,511017.90909090912,497067.54545454547,508585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,551103.63636363635,551103.63636363635,551103.63636363635,530043.72727272729,530043.72727272729,530043.72727272729,563680.09090909094],[148096.09090909091,148096.09090909091,148096.09090909091,148096.09090909091,148096.09090909091,152187,152187,152187,163732.27272727274,172808.72727272726,185550.36363636365,191853,223189,243081.72727272726,247990.81818181818,247990.81818181818,247990.81818181818,262718.09090909088,275081.72727272729,275081.72727272729,276895,278973.18181818182,305348.18181818182,314442.45454545453,362211.81818181818,431964.72727272729,423385.18181818182,438476.09090909088,439200,413300,385372.72727272729,380827.27272727271,418918.18181818182,418190.90909090912,434917.54545454547,463704.72727272729,511017.90909090912,497067.54545454547,508585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,538376.36363636365,538376.36363636365,551103.63636363635,551103.63636363635,563680.09090909094,563680.09090909094],[148096.09090909091,148096.09090909091,148096.09090909091,152187,152187,152187,152187,152187,163732.27272727274,188364.36363636365,192192,203701.63636363635,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,262718.09090909088,275081.72727272729,275081.72727272729,276895,278973.18181818182,305348.18181818182,314442.45454545453,362211.81818181818,431964.72727272729,423385.18181818182,438476.09090909088,439200,413300,385372.72727272729,380827.27272727271,418918.18181818182,418190.90909090912,434917.54545454547,463704.72727272729,511017.90909090912,497067.54545454547,508585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,575649.09090909094,575649.09090909094,575649.09090909094,575649.09090909094],[148096.09090909091,152187,152187,152187,152187,152187,152187,152187,180378.81818181818,188364.36363636365,212669.27272727274,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,262718.09090909088,275081.72727272729,275081.72727272729,276895,278973.18181818182,305348.18181818182,314442.45454545453,362211.81818181818,431964.72727272729,423385.18181818182,438476.09090909088,439200,413300,385372.72727272729,380827.27272727271,418918.18181818182,418190.90909090912,434917.54545454547,463704.72727272729,511017.90909090912,497067.54545454547,508585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,533395.45454545459,533395.45454545459,533395.45454545459,575649.09090909094,575649.09090909094],[152187,152187,152187,152187,152187,152187,162191.90909090909,172197.18181818182,197011.27272727274,220185.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,262718.09090909088,275081.72727272729,275081.72727272729,276895,278973.18181818182,305348.18181818182,314442.45454545453,362211.81818181818,431964.72727272729,423385.18181818182,438476.09090909088,439200,413300,385372.72727272729,380827.27272727271,418918.18181818182,418190.90909090912,434917.54545454547,463704.72727272729,511017.90909090912,497067.54545454547,508585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,575649.09090909094],[152187,152187,152187,152187,152187,162191.90909090909,159971.72727272726,192969.90909090909,233257.36363636365,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,262718.09090909088,275081.72727272729,275081.72727272729,276895,278973.18181818182,305348.18181818182,314442.45454545453,362211.81818181818,431964.72727272729,423385.18181818182,438476.09090909088,439200,413300,385372.72727272729,380827.27272727271,418918.18181818182,418190.90909090912,434917.54545454547,463704.72727272729,511017.90909090912,497067.54545454547,508585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459],[152187,152187,152187,152187,162191.90909090909,159971.72727272726,157745.90909090909,205060.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,247990.81818181818,248890.81818181818,248890.81818181818,260890.81818181818,260890.81818181818,265976.81818181818,279395.90909090912,288520.90909090912,288520.90909090912,339566.36363636365,419410.18181818182,414739.72727272729,438476.09090909088,439200,413300,385372.72727272729,380827.27272727271,418918.18181818182,418190.90909090912,434917.54545454547,463704.72727272729,511017.90909090912,497067.54545454547,508585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459],[152187,152187,152187,162191.90909090909,159971.72727272726,157745.90909090909,183373.81818181818,241072.63636363635,241072.63636363635,241072.63636363635,241072.63636363635,241072.63636363635,241072.63636363635,241072.63636363635,239660.18181818182,239660.18181818182,254709,254709,260890.81818181818,260890.81818181818,265976.81818181818,279395.90909090912,288520.90909090912,288520.90909090912,339566.36363636365,419410.18181818182,414739.72727272729,409285.18181818182,383100,404481.81818181818,385372.72727272729,380827.27272727271,418918.18181818182,418190.90909090912,434917.54545454547,463704.72727272729,511017.90909090912,497067.54545454547,508585.72727272729,510585.72727272729,510585.72727272729,510585.72727272729,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459],[152187,152187,162191.90909090909,159971.72727272726,157745.90909090909,186637.45454545456,241072.63636363635,241072.63636363635,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,254709,254709,260890.81818181818,260890.81818181818,265976.81818181818,279395.90909090912,288520.90909090912,288520.90909090912,339566.36363636365,419410.18181818182,414739.72727272729,409285.18181818182,383100,387290.90909090912,344909.09090909088,380827.27272727271,418918.18181818182,418190.90909090912,434917.54545454547,463704.72727272729,511017.90909090912,497067.54545454547,508585.72727272729,510585.72727272729,510585.72727272729,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459],[152187,162191.90909090909,159971.72727272726,157745.90909090909,186637.45454545456,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,254709,254709,260890.81818181818,260890.81818181818,265976.81818181818,279395.90909090912,288520.90909090912,288520.90909090912,339566.36363636365,419410.18181818182,414739.72727272729,409285.18181818182,383100,387290.90909090912,344909.09090909088,347181.81818181818,411527.27272727271,418190.90909090912,434917.54545454547,463704.72727272729,511017.90909090912,497067.54545454547,508585.72727272729,510585.72727272729,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459],[159971.72727272726,159971.72727272726,152032.27272727274,196728.36363636365,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,254709,254709,260890.81818181818,260890.81818181818,265976.81818181818,279395.90909090912,288520.90909090912,288520.90909090912,339566.36363636365,419410.18181818182,414739.72727272729,409285.18181818182,383100,387290.90909090912,344909.09090909088,347181.81818181818,386245.45454545453,409545.45454545453,434917.54545454547,463704.72727272729,511017.90909090912,497067.54545454547,508585.72727272729,544949.36363636365,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459],[152032.27272727274,152032.27272727274,196728.36363636365,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,254709,254709,260890.81818181818,260890.81818181818,265976.81818181818,279395.90909090912,288520.90909090912,288520.90909090912,339566.36363636365,419410.18181818182,414739.72727272729,409285.18181818182,383100,387290.90909090912,344909.09090909088,347181.81818181818,386245.45454545453,384990.90909090912,409545.45454545453,463704.72727272729,511017.90909090912,497067.54545454547,544949.36363636365,544949.36363636365,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459],[172032.27272727274,196728.36363636365,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,254709,254709,260890.81818181818,260890.81818181818,265976.81818181818,279395.90909090912,288520.90909090912,288520.90909090912,339566.36363636365,419410.18181818182,414739.72727272729,409285.18181818182,383100,387290.90909090912,344909.09090909088,347181.81818181818,386245.45454545453,384990.90909090912,390445.45454545453,461886.54545454547,511017.90909090912,537858.45454545459,544949.36363636365,544949.36363636365,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459,533395.45454545459],[196728.36363636365,216478.36363636365,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,254709,254709,260890.81818181818,260890.81818181818,265976.81818181818,279395.90909090912,288520.90909090912,288520.90909090912,339566.36363636365,419410.18181818182,414739.72727272729,409285.18181818182,383100,351490.90909090912,331945.45454545453,344218.18181818182,356463.63636363635,376000,377481.81818181818,392853.90909090912,505622.45454545453,524440.27272727271,524440.27272727271,517977.27272727271,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,533395.45454545459,533395.45454545459],[196728.36363636365,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,254709,254709,260890.81818181818,260890.81818181818,265976.81818181818,279395.90909090912,288520.90909090912,288520.90909090912,339566.36363636365,391901.09090909088,406321.54545454547,394867,377045.45454545453,351490.90909090912,331945.45454545453,344218.18181818182,356463.63636363635,376000,377481.81818181818,439217.54545454547,480277,513076.63636363635,524440.27272727271,517977.27272727271,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365],[239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,254709,254709,260890.81818181818,260890.81818181818,265976.81818181818,279395.90909090912,280102.72727272729,285508.45454545453,303420.90909090912,391901.09090909088,406321.54545454547,394867,377045.45454545453,351490.90909090912,331945.45454545453,344218.18181818182,356463.63636363635,376000,423845.45454545453,439217.54545454547,480277,513076.63636363635,524440.27272727271,517977.27272727271,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365],[239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,254709,254709,260890.81818181818,265109,271371.54545454547,279705,280102.72727272729,285508.45454545453,303420.90909090912,391901.09090909088,406321.54545454547,394867,377045.45454545453,351490.90909090912,331945.45454545453,344218.18181818182,356463.63636363635,376000,423845.45454545453,439217.54545454547,480277,487908.81818181818,499068.18181818182,517977.27272727271,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365],[239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,254709,265109,265109,265109,271371.54545454547,279705,280102.72727272729,285508.45454545453,303420.90909090912,391901.09090909088,406321.54545454547,394867,377045.45454545453,351490.90909090912,331945.45454545453,344218.18181818182,356463.63636363635,396000,423845.45454545453,439217.54545454547,480277,487908.81818181818,475422.72727272729,507068.18181818182,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365],[239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,235787.45454545456,235787.45454545456,251696.54545454544,265109,265109,265109,271371.54545454547,279705,280102.72727272729,285508.45454545453,303420.90909090912,391901.09090909088,406321.54545454547,394867,377045.45454545453,351490.90909090912,331945.45454545453,344218.18181818182,392036.36363636365,396000,423845.45454545453,439217.54545454547,480277,487908.81818181818,475422.72727272729,458726.45454545453,485281,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365],[239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,251696.54545454544,265109,265109,265109,271371.54545454547,279705,280102.72727272729,285508.45454545453,303420.90909090912,391901.09090909088,406321.54545454547,394867,377045.45454545453,351490.90909090912,331945.45454545453,397854.54545454547,392036.36363636365,396000,423845.45454545453,439217.54545454547,480277,487908.81818181818,475422.72727272729,458726.45454545453,485281,485281,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365],[239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,251696.54545454544,265109,265109,265109,271371.54545454547,279705,280102.72727272729,285508.45454545453,303420.90909090912,391901.09090909088,406321.54545454547,394867,377045.45454545453,351490.90909090912,331945.45454545453,397854.54545454547,392036.36363636365,396000,423845.45454545453,439217.54545454547,480277,487908.81818181818,475422.72727272729,458726.45454545453,445390.54545454547,485281,485281,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365],[239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,251696.54545454544,265109,265109,265109,271371.54545454547,279705,280102.72727272729,285508.45454545453,303420.90909090912,391901.09090909088,406321.54545454547,394867,377045.45454545453,351490.90909090912,380581.81818181818,397854.54545454547,392036.36363636365,396000,423845.45454545453,439217.54545454547,480277,487908.81818181818,475422.72727272729,458726.45454545453,445390.54545454547,445390.54545454547,485281,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365],[239660.18181818182,239660.18181818182,239660.18181818182,239660.18181818182,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,251696.54545454544,265109,265109,265109,271371.54545454547,279705,280102.72727272729,285508.45454545453,303420.90909090912,391901.09090909088,406321.54545454547,394867,377045.45454545453,351490.90909090912,380581.81818181818,397854.54545454547,392036.36363636365,396000,423845.45454545453,439217.54545454547,480277,487908.81818181818,475422.72727272729,458726.45454545453,445390.54545454547,445390.54545454547,445390.54545454547,485281,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365],[239660.18181818182,239660.18181818182,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,235787.45454545456,251696.54545454544,265109,265109,265109,271371.54545454547,279705,280102.72727272729,285508.45454545453,303420.90909090912,391901.09090909088,406321.54545454547,394867,377045.45454545453,373763.63636363635,380581.81818181818,397854.54545454547,392036.36363636365,396000,423845.45454545453,439217.54545454547,480277,487908.81818181818,475422.72727272729,458726.45454545453,445390.54545454547,445390.54545454547,445390.54545454547,445390.54545454547,485281,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365,520886.36363636365]],"type":"surface","x":[539,627.55102040816325,716.10204081632651,804.65306122448987,893.20408163265301,981.75510204081638,1070.3061224489797,1158.8571428571429,1247.408163265306,1335.9591836734694,1424.5102040816328,1513.0612244897959,1601.6122448979593,1690.1632653061224,1778.7142857142858,1867.2653061224489,1955.8163265306123,2044.3673469387757,2132.9183673469388,2221.4693877551022,2310.0204081632655,2398.5714285714284,2487.1224489795918,2575.6734693877552,2664.2244897959185,2752.7755102040819,2841.3265306122448,2929.8775510204082,3018.4285714285716,3106.9795918367349,3195.5306122448978,3284.0816326530612,3372.6326530612246,3461.1836734693879,3549.7346938775513,3638.2857142857142,3726.8367346938776,3815.387755102041,3903.9387755102043,3992.4897959183672,4081.0408163265306,4169.591836734694,4258.1428571428569,4346.6938775510207,4435.2448979591836,4523.7959183673465,4612.3469387755104,4700.8979591836733,4789.4489795918371,4878],"y":[1,1.1428571428571428,1.2857142857142856,1.4285714285714286,1.5714285714285714,1.7142857142857142,1.8571428571428572,2,2.1428571428571428,2.2857142857142856,2.4285714285714284,2.5714285714285712,2.7142857142857144,2.8571428571428568,3,3.1428571428571428,3.2857142857142856,3.4285714285714284,3.5714285714285712,3.714285714285714,3.8571428571428568,4,4.1428571428571423,4.2857142857142856,4.4285714285714288,4.5714285714285712,4.7142857142857135,4.8571428571428568,5,5.1428571428571423,5.2857142857142856,5.4285714285714279,5.5714285714285712,5.7142857142857144,5.8571428571428568,6,6.1428571428571423,6.2857142857142856,6.4285714285714279,6.5714285714285712,6.7142857142857135,6.8571428571428568,7,7.1428571428571423,7.2857142857142856,7.4285714285714279,7.5714285714285712,7.7142857142857135,7.8571428571428568,8],"frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+<p class="caption">
+Figure 7.10: K-NN regression model’s predictions represented as a surface in 3D space overlaid on top of the data using three predictors (price, house size, and the number of bedrooms). Note that in general we recommend against using 3D visualizations; here we use a 3D visualization only to illustrate what the surface of predictions looks like for learning purposes.
+</p>
+</div>
+<p>We can see that the predictions in this case, where we have 2 predictors, form
+a surface instead of a line. Because the newly added predictor (number of bedrooms) is
+related to price (as price changes, so does number of bedrooms)
+and is not totally determined by house size (our other predictor),
+we get additional and useful information for making our
+predictions. For example, in this model we would predict that the cost of a
+house with a size of 2,500 square feet generally increases slightly as the number
+of bedrooms increases. Without having the additional predictor of number of
+bedrooms, we would predict the same price for these two houses.</p>
+</div>
+<div id="strengths-and-limitations-of-k-nn-regression" class="section level2 hasAnchor" number="7.10">
+<h2><span class="header-section-number">7.10</span> Strengths and limitations of K-NN regression<a href="regression1.html#strengths-and-limitations-of-k-nn-regression" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>As with K-NN classification (or any prediction algorithm for that matter), K-NN
+regression has both strengths and weaknesses. Some are listed here:</p>
+<p><strong>Strengths:</strong> K-nearest neighbors regression</p>
+<ol style="list-style-type: decimal">
+<li>is a simple, intuitive algorithm,</li>
+<li>requires few assumptions about what the data must look like, and</li>
+<li>works well with non-linear relationships (i.e., if the relationship is not a straight line).</li>
+</ol>
+<p><strong>Weaknesses:</strong> K-nearest neighbors regression</p>
+<ol style="list-style-type: decimal">
+<li>becomes very slow as the training data gets larger,</li>
+<li>may not perform well with a large number of predictors, and</li>
+<li>may not predict well beyond the range of values input in your training data.</li>
+</ol>
+</div>
+<div id="exercises-6" class="section level2 hasAnchor" number="7.11">
+<h2><span class="header-section-number">7.11</span> Exercises<a href="regression1.html#exercises-6" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Practice exercises for the material covered in this chapter can be found in the
+accompanying <a href="https://worksheets.datasciencebook.ca">worksheets repository</a> in
+the “Regression I: K-nearest neighbors” row. You can preview a
+non-interactive version of the worksheet for this chapter by clicking “view
+worksheet.” To work on the exercises interactively, follow the instructions in
+the worksheets repository to download all worksheets, and follow the
+instructions for computer setup found in Chapter <a href="setup.html#setup">13</a>. This will ensure
+that the automated feedback and guidance that the worksheets provide will
+function as intended.</p>
+
+</div>
+</div>
+<h3>References<a href="references.html#references" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-knncover" class="csl-entry">
+Cover, Thomas, and Peter Hart. 1967. <span>“Nearest Neighbor Pattern Classification.”</span> <em>IEEE Transactions on Information Theory</em> 13 (1): 21–27.
+</div>
+<div id="ref-knnfix" class="csl-entry">
+Fix, Evelyn, and Joseph Hodges. 1951. <span>“Discriminatory Analysis. Nonparametric Discrimination: Consistency Properties.”</span> USAF School of Aviation Medicine, Randolph Field, Texas.
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="classification2.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="regression2.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": null,
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": null,
+"search": {
+"engine": "fuse",
+"options": null
+},
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>
