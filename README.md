@@ -73,7 +73,8 @@ The built preview book will be stored in the `dev/` folder on the `gh-pages` bra
 #### PR deploy previews
 
 Any PR to `source/` will trigger a build of a PR preview site at `https://datasciencebook.ca/pull###`, where `###` is the number of the pull request.
-The built preview book will be stored in the `pull###/` folder on the `gh-pages` branch.
+It will also trigger a build of the diff using [website_diff](https://github.com/trevorcampbell/website_diff) to the current `dev/` site at `https://datasciencebook.ca/diff###`.
+The built preview and diff books will be stored in the `pull###/` and `diff###/` folders on the `gh-pages` branch.
 
 #### Build environment updates
 
